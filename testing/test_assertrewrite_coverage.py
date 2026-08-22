@@ -535,6 +535,26 @@ class TestIntrospectionName:
 class TestIntrospectionSubscript:
     """Subscript / indexing."""
 
+    def test_dict_subscript_shows_key_and_container(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                d = {"a": 1, "b": 2}
+                assert d["a"] == 99
+            """,
+            must_contain=["where 1 = ", "['a']"],
+        )
+
+    def test_list_subscript_shows_index_and_container(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                items = [10, 20, 30]
+                assert items[1] == 99
+            """,
+            must_contain=["where 20 = ", "[1]"],
+        )
+
     def test_subscript_semantics_preserved(self) -> None:
         assert_semantically_equivalent("""
             def check():
@@ -557,12 +577,32 @@ class TestIntrospectionSubscript:
 class TestIntrospectionIfExp:
     """Ternary / if-expression."""
 
+    def test_ifexp_shows_condition_value(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                flag = True
+                assert (0 if flag else 1) == 1
+            """,
+            must_contain=["if True else"],
+        )
+
     def test_ifexp_semantics_preserved(self) -> None:
         assert_semantically_equivalent("""
             def check():
                 flag = True
                 assert (0 if flag else 1) == 1
             """)
+
+    def test_ifexp_in_compare_shows_result(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                flag = True
+                assert (0 if flag else 1) == 99
+            """,
+            must_contain=["assert 0 == 99", "if True else"],
+        )
 
     def test_ifexp_short_circuit_true(self) -> None:
         """Orelse branch must NOT be evaluated when condition is True."""
@@ -638,7 +678,41 @@ class TestIntrospectionFString:
 
 
 class TestIntrospectionMethodCall:
-    """Method calls — currently show the bound method as its own "where" line."""
+    """Method calls — flat obj.method() display without bound-method noise."""
+
+    def test_method_call_flat_format(self) -> None:
+        """Method calls show 'where result = obj.method()' in one line."""
+        assert_introspects(
+            """
+            def check():
+                class Obj:
+                    def compute(self):
+                        return 42
+                    def __repr__(self):
+                        return "Obj()"
+                obj = Obj()
+                assert obj.compute() == 100
+            """,
+            must_contain=["where 42 = Obj().compute()"],
+        )
+
+    def test_method_call_no_bound_method_noise(self) -> None:
+        """No separate 'where compute = obj.compute' line."""
+        msg = get_failure_message("""
+            def check():
+                class Obj:
+                    def compute(self):
+                        return 42
+                    def __repr__(self):
+                        return "Obj()"
+                obj = Obj()
+                assert obj.compute() == 100
+            """)
+        lines = msg.splitlines()
+        for line in lines:
+            assert "where compute = " not in line, (
+                f"Noisy bound-method intermediate found:\n{msg}"
+            )
 
     def test_callable_variable_shows_result(self) -> None:
         # Current behavior: shows full function repr, not variable name
@@ -763,6 +837,33 @@ class TestSingleEvaluation:
                 assert d["a"] == 100
             """)
 
+    def test_walrus_in_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 42
+                assert (x := side_effect()) == 100
+            """)
+
+    def test_walrus_in_boolean_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 42
+                assert (x := side_effect()) and False
+            """)
+
+    def test_walrus_in_chained_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 5
+                assert 1 < (x := side_effect()) < 3
+            """)
+
     def test_method_call_evaluated_once(self) -> None:
         assert_single_evaluation("""
             def check():
@@ -835,6 +936,102 @@ class TestEvaluationOrder:
     between, and the earlier operand then sees a value Python would never have
     given it.
     """
+
+    def test_compare_left_operand_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = "Hello"
+                try:
+                    assert value != identity(value := value.lower())
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_compare_reports_left_operand(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                def identity(v):
+                    return v
+                value = 2
+                assert value == identity(value := 3)
+            """,
+            must_contain=["assert 2 == 3"],
+        )
+
+    def test_call_earlier_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                value = "Hello"
+                try:
+                    assert collect(value, identity(value := value.lower())) == ("Hello", "hello")
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_binop_left_operand_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = 1
+                try:
+                    assert value + identity(value := 5) == 6
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_starred_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                items = [1]
+                try:
+                    assert collect(*items, identity(items := [9])) == (1, [9])
+                except AssertionError:
+                    return "raised", items
+                return "passed", items
+            """)
+
+    def test_chained_compare_operands_in_order(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = 1
+                try:
+                    assert value < identity(value := 5) < 9
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_bare_walrus_argument_in_order(self) -> None:
+        """A walrus argument is evaluated in place, before the ones after it."""
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                try:
+                    assert collect((x := 1), identity(x := 2)) == (1, 2)
+                except AssertionError:
+                    return "raised", x
+                return "passed", x
+            """)
 
     def test_container_literal_operand_in_order(self) -> None:
         """Guard: ``generic_visit`` hoists container literals into a temporary."""
@@ -914,6 +1111,130 @@ class TestEvaluationOrder:
                 return "passed", obj
             """)
 
+    def test_keyword_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(**kwargs):
+                    return kwargs
+                value = 1
+                try:
+                    assert collect(a=value, b=identity(value := 2)) == {"a": 1, "b": 2}
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_double_star_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(**kwargs):
+                    return kwargs
+                mapping = {"a": 1}
+                try:
+                    assert collect(**mapping, b=identity(mapping := {"a": 9})) == {"a": 1, "b": {"a": 9}}
+                except AssertionError:
+                    return "raised", mapping
+                return "passed", mapping
+            """)
+
+    def test_global_rebound_by_call_precedes_compare(self) -> None:
+        assert_evaluation_order("""
+            count = 0
+
+            def bump():
+                global count
+                count = 99
+                return 0
+
+            def check():
+                try:
+                    assert count == bump()
+                except AssertionError:
+                    return "raised", count
+                return "passed", count
+            """)
+
+    def test_nonlocal_rebound_by_call_precedes_compare(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                value = 1
+                def bump():
+                    nonlocal value
+                    value = 99
+                    return 1
+                try:
+                    assert value == bump()
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_global_rebound_by_call_precedes_argument(self) -> None:
+        assert_evaluation_order("""
+            value = "a"
+
+            def bump():
+                global value
+                value = "b"
+                return "x"
+
+            def collect(*args):
+                return args
+
+            def check():
+                try:
+                    assert collect(value, bump()) == ("a", "x")
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_chained_compare_stops_at_the_first_false(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                trace = []
+                def rec(label, value):
+                    trace.append(label)
+                    return value
+                try:
+                    assert rec("a", 1) < rec("b", 0) < rec("c", 5)
+                except AssertionError:
+                    return "raised", trace
+                return "passed", trace
+            """)
+
+    def test_chained_compare_unreached_operand_does_not_raise(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                try:
+                    assert 1 < 0 < 1 / 0
+                except AssertionError:
+                    return "raised", None
+                return "passed", None
+            """)
+
+    def test_method_lookup_precedes_arguments(self) -> None:
+        """Guard: the bound method is looked up before the arguments run."""
+        assert_evaluation_order("""
+            def check():
+                trace = []
+                class Box:
+                    @property
+                    def take(self):
+                        trace.append("lookup")
+                        return lambda value: value
+                obj = Box()
+                try:
+                    assert obj.take(trace.append("argument")) is None
+                except AssertionError:
+                    return "raised", trace
+                return "passed", trace
+            """)
+
     def test_ifexp_branches_in_order(self) -> None:
         """Guard: the condition is evaluated before the selected branch."""
         assert_evaluation_order("""
@@ -936,6 +1257,18 @@ class TestEvaluationOrder:
 
 class TestEdgeCases:
     """Regression and edge-case tests combining multiple expression types."""
+
+    def test_subscript_with_variable_key(self) -> None:
+        """Subscript where the key is a variable (not constant)."""
+        assert_introspects(
+            """
+            def check():
+                d = {"hello": 42}
+                key = "hello"
+                assert d[key] == 100
+            """,
+            must_contain=["where 42 = ", "['hello']"],
+        )
 
     def test_subscript_with_call_key(self) -> None:
         """Subscript where the key is a function call."""
@@ -961,6 +1294,42 @@ class TestEdgeCases:
             must_contain=["42", "100"],
         )
 
+    def test_method_call_with_args(self) -> None:
+        """Method call with arguments shows flat format."""
+        assert_introspects(
+            """
+            def check():
+                class Calculator:
+                    def add(self, a, b):
+                        return a + b
+                    def __repr__(self):
+                        return "Calc()"
+                c = Calculator()
+                assert c.add(2, 3) == 10
+            """,
+            must_contain=["where 5 = Calc().add(2, 3)"],
+        )
+
+    def test_chained_method_calls(self) -> None:
+        """Chained method call: obj.method1().method2()."""
+        assert_introspects(
+            """
+            def check():
+                class Builder:
+                    def __init__(self, val=0):
+                        self.val = val
+                    def add(self, n):
+                        return Builder(self.val + n)
+                    def result(self):
+                        return self.val
+                    def __repr__(self):
+                        return f"Builder({self.val})"
+                b = Builder()
+                assert b.add(5).result() == 100
+            """,
+            must_contain=["where 5 = ", ".result()"],
+        )
+
     def test_subscript_on_method_result(self) -> None:
         """Subscript on method return value: obj.method()[key]."""
         assert_introspects(
@@ -975,6 +1344,18 @@ class TestEdgeCases:
                 assert s.get_data()["x"] == 100
             """,
             must_contain=["42", "100"],
+        )
+
+    def test_ifexp_with_call_condition(self) -> None:
+        """IfExp where condition is a function call."""
+        assert_introspects(
+            """
+            def check():
+                def is_ready():
+                    return False
+                assert (1 if is_ready() else 0) == 1
+            """,
+            must_contain=["if False else"],
         )
 
     def test_walrus_in_subscript(self) -> None:
@@ -1046,3 +1427,14 @@ class TestEdgeCases:
                 assert d["key"] == 100, "custom failure message"
             """)
         assert "custom failure message" in msg
+
+    def test_method_call_on_global(self) -> None:
+        """Method call on a global/module-level object."""
+        assert_introspects(
+            """
+            items = [1, 2, 3]
+            def check():
+                assert items.count(99) == 1
+            """,
+            must_contain=["where 0 = [1, 2, 3].count(99)"],
+        )
