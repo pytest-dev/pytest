@@ -1115,6 +1115,7 @@ class TestAssert_reprcompare:
             ([1, 2, 3], [1, 2, 0, 3], "Right contains one more item: 0"),
             ([1, 2, 0, 3], [1, 2, 3], "Left contains one more item: 0"),
             ([1, 1], [1, 0, 1], "Right contains one more item: 0"),
+            ([3, 4, 5], [1, 2], "Left contains one more item: 5"),
             (
                 [1, 2, 3],
                 [0, 1, 2, 3, 4],
