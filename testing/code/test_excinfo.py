@@ -339,6 +339,70 @@ class TestTraceback_f_g_h:
             f()
         assert excinfo._getreprcrash() is None
 
+    def test_getreprcrash_syntax_error(self):
+        with pytest.raises(SyntaxError) as excinfo:
+            raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.path == "file.py"
+        assert reprcrash.lineno == 1
+        assert reprcrash.column == 5
+        assert reprcrash.message == "SyntaxError: bad syntax"
+        assert str(reprcrash) == "file.py:1:5: SyntaxError: bad syntax"
+
+    def test_getreprcrash_syntax_error_without_offset(self):
+        def f():
+            raise SyntaxError("no location")
+
+        with pytest.raises(SyntaxError) as excinfo:
+            f()
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.column is None
+        assert reprcrash.message == "SyntaxError: no location"
+
+    def test_getreprcrash_syntax_error_without_filename(self):
+        def f():
+            raise SyntaxError("bad syntax", (None, 1, 5, "def foo(:", 1, 6))
+
+        with pytest.raises(SyntaxError) as excinfo:
+            f()
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        co = _pytest._code.Code.from_function(f)
+        assert reprcrash.path == str(co.path)
+        assert reprcrash.lineno == co.firstlineno + 1 + 1
+        assert reprcrash.column is None
+        assert reprcrash.message.endswith("SyntaxError: bad syntax")
+
+    def test_getreprcrash_indentation_error(self):
+        with pytest.raises(IndentationError) as excinfo:
+            raise IndentationError(
+                "unexpected indent", ("file.py", 3, 5, "    foo", 3, 6)
+            )
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.path == "file.py"
+        assert reprcrash.lineno == 3
+        assert reprcrash.column == 5
+        assert reprcrash.message == "IndentationError: unexpected indent"
+        assert str(reprcrash) == "file.py:3:5: IndentationError: unexpected indent"
+
+    def test_getreprcrash_syntax_error_without_lineno(self):
+        def f():
+            raise SyntaxError(
+                "bad syntax", ("file.py", None, 5, "def foo(:", None, None)
+            )
+
+        with pytest.raises(SyntaxError) as excinfo:
+            f()
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.column is None
+        co = _pytest._code.Code.from_function(f)
+        assert reprcrash.path == str(co.path)
+        assert reprcrash.lineno == co.firstlineno + 1 + 1
+
 
 def test_excinfo_exconly():
     with pytest.raises(ValueError) as excinfo:
@@ -1115,6 +1179,82 @@ raise ValueError()
         assert repr.reprcrash.lineno == 3
         assert repr.reprcrash.message == "ValueError"
         assert str(repr.reprcrash).endswith("mod.py:3: ValueError")
+
+    def test_repr_excinfo_reprcrash_syntax_error(self, importasmod) -> None:
+        mod = importasmod(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+        """
+        )
+        with pytest.raises(SyntaxError) as excinfo:
+            mod.entry()
+        repr = excinfo.getrepr()
+        assert repr.reprcrash is not None
+        assert repr.reprcrash.path == "file.py"
+        assert repr.reprcrash.lineno == 1
+        assert repr.reprcrash.column == 5
+        assert repr.reprcrash.message == "SyntaxError: bad syntax"
+        assert str(repr.reprcrash) == "file.py:1:5: SyntaxError: bad syntax"
+
+    def test_syntax_error_default_tb_long(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=long")
+        result.stdout.fnmatch_lines(["file.py:1:5: SyntaxError"])
+
+    def test_syntax_error_default_tb_short(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=short")
+        result.stdout.fnmatch_lines(["file.py:1:5: in entry"])
+        result.stdout.fnmatch_lines(["*SyntaxError: bad syntax*"])
+
+    def test_syntax_error_tb_line(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=line")
+        result.stdout.fnmatch_lines(["file.py:1:5: SyntaxError: bad syntax"])
+
+    def test_syntax_error_no_offset_fallback(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("no location")
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=long")
+        result.stdout.fnmatch_lines(["*SyntaxError: no location*"])
+
+    def test_syntax_error_collection(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def broken(:\n    pass\n")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*.py:1:*: SyntaxError*"])
+
+    def test_indentation_error_collection(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def f():\n    x = 1\n  y = 2\n")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*.py:3:*: IndentationError*"])
 
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(

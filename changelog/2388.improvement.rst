@@ -1,0 +1,1 @@
+SyntaxError crash lines now use the error's own file, line, and column instead of the location of the traceback entry where it was raised.
