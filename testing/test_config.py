@@ -859,10 +859,13 @@ class TestConfigAPI:
             def pytest_cmdline_main(self, config: Config) -> None:
                 raise SystemExit(code)
 
-        with pytest.warns(
-            PytestConfigWarning,
-            match="plugin raised SystemExit from the pytest_cmdline_main hook",
-        ), pytest.raises(SystemExit) as exc_info:
+        with (
+            pytest.warns(
+                PytestConfigWarning,
+                match="plugin raised SystemExit from the pytest_cmdline_main hook",
+            ),
+            pytest.raises(SystemExit) as exc_info,
+        ):
             pytest.main([], plugins=[Plugin()])
 
         assert exc_info.value.code == code
