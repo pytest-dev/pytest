@@ -763,6 +763,33 @@ class TestSingleEvaluation:
                 assert d["a"] == 100
             """)
 
+    def test_walrus_in_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 42
+                assert (x := side_effect()) == 100
+            """)
+
+    def test_walrus_in_boolean_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 42
+                assert (x := side_effect()) and False
+            """)
+
+    def test_walrus_in_chained_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 5
+                assert 1 < (x := side_effect()) < 3
+            """)
+
     def test_method_call_evaluated_once(self) -> None:
         assert_single_evaluation("""
             def check():
@@ -835,6 +862,102 @@ class TestEvaluationOrder:
     between, and the earlier operand then sees a value Python would never have
     given it.
     """
+
+    def test_compare_left_operand_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = "Hello"
+                try:
+                    assert value != identity(value := value.lower())
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_compare_reports_left_operand(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                def identity(v):
+                    return v
+                value = 2
+                assert value == identity(value := 3)
+            """,
+            must_contain=["assert 2 == 3"],
+        )
+
+    def test_call_earlier_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                value = "Hello"
+                try:
+                    assert collect(value, identity(value := value.lower())) == ("Hello", "hello")
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_binop_left_operand_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = 1
+                try:
+                    assert value + identity(value := 5) == 6
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_starred_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                items = [1]
+                try:
+                    assert collect(*items, identity(items := [9])) == (1, [9])
+                except AssertionError:
+                    return "raised", items
+                return "passed", items
+            """)
+
+    def test_chained_compare_operands_in_order(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = 1
+                try:
+                    assert value < identity(value := 5) < 9
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_bare_walrus_argument_in_order(self) -> None:
+        """A walrus argument is evaluated in place, before the ones after it."""
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                try:
+                    assert collect((x := 1), identity(x := 2)) == (1, 2)
+                except AssertionError:
+                    return "raised", x
+                return "passed", x
+            """)
 
     def test_container_literal_operand_in_order(self) -> None:
         """Guard: ``generic_visit`` hoists container literals into a temporary."""
@@ -912,6 +1035,36 @@ class TestEvaluationOrder:
                 except AssertionError:
                     return "raised", obj
                 return "passed", obj
+            """)
+
+    def test_keyword_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(**kwargs):
+                    return kwargs
+                value = 1
+                try:
+                    assert collect(a=value, b=identity(value := 2)) == {"a": 1, "b": 2}
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_double_star_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(**kwargs):
+                    return kwargs
+                mapping = {"a": 1}
+                try:
+                    assert collect(**mapping, b=identity(mapping := {"a": 9})) == {"a": 1, "b": {"a": 9}}
+                except AssertionError:
+                    return "raised", mapping
+                return "passed", mapping
             """)
 
     def test_ifexp_branches_in_order(self) -> None:
