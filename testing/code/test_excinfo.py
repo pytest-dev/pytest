@@ -375,6 +375,34 @@ class TestTraceback_f_g_h:
         assert reprcrash.column is None
         assert reprcrash.message.endswith("SyntaxError: bad syntax")
 
+    def test_getreprcrash_indentation_error(self):
+        with pytest.raises(IndentationError) as excinfo:
+            raise IndentationError(
+                "unexpected indent", ("file.py", 3, 5, "    foo", 3, 6)
+            )
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.path == "file.py"
+        assert reprcrash.lineno == 3
+        assert reprcrash.column == 5
+        assert reprcrash.message == "IndentationError: unexpected indent"
+        assert str(reprcrash) == "file.py:3:5: IndentationError: unexpected indent"
+
+    def test_getreprcrash_syntax_error_without_lineno(self):
+        def f():
+            raise SyntaxError(
+                "bad syntax", ("file.py", None, 5, "def foo(:", None, None)
+            )
+
+        with pytest.raises(SyntaxError) as excinfo:
+            f()
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.column is None
+        co = _pytest._code.Code.from_function(f)
+        assert reprcrash.path == str(co.path)
+        assert reprcrash.lineno == co.firstlineno + 1 + 1
+
 
 def test_excinfo_exconly():
     with pytest.raises(ValueError) as excinfo:
@@ -1217,6 +1245,16 @@ raise ValueError()
         )
         result = pytester.runpytest("--tb=long")
         result.stdout.fnmatch_lines(["*SyntaxError: no location*"])
+
+    def test_syntax_error_collection(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def broken(:\n    pass\n")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*.py:1:*: SyntaxError*"])
+
+    def test_indentation_error_collection(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def f():\n    x = 1\n  y = 2\n")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*.py:3:*: IndentationError*"])
 
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(

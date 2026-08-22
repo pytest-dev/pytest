@@ -496,8 +496,13 @@ E = TypeVar("E", bound=BaseException, covariant=True)
 
 def _syntax_error_location(exc: BaseException) -> tuple[str, int, int] | None:
     """Return (filename, lineno, offset) for a SyntaxError with location info, else None."""
-    if isinstance(exc, SyntaxError) and exc.offset is not None and exc.filename:
-        return (exc.filename, exc.lineno or 0, exc.offset)
+    if (
+        isinstance(exc, SyntaxError)
+        and exc.offset is not None
+        and exc.lineno is not None
+        and exc.filename
+    ):
+        return (exc.filename, exc.lineno, exc.offset)
     return None
 
 
@@ -703,7 +708,7 @@ class ExceptionInfo(Generic[E]):
             return ReprFileLocation(
                 filename,
                 lineno,
-                f"SyntaxError: {self.value.msg}",
+                f"{self.typename}: {self.value.msg}",
                 column=offset,
             )
         # Find last non-hidden traceback entry that led to the exception of the
