@@ -53,6 +53,7 @@ def _compare_eq_sequence(
     len_left = len(left)
     len_right = len(right)
     found_diff = False
+    i = -1
     for i in range(min(len_left, len_right)):
         if left[i] != right[i]:
             if comparing_bytes:
