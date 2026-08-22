@@ -249,6 +249,17 @@ class TestGeneralUsage:
         result = pytester.runpytest(p, "--collect-only")
         result.stdout.fnmatch_lines(["*MyFile*test_issue88*", "*Module*test_issue88*"])
 
+    def test_rewrite(self, pytester: Pytester) -> None:
+        pytester.copy_example("rewrite")
+        result = pytester.runpytest("tests/test_main.py::test_func", "-v")
+        result.stdout.fnmatch_lines(["*Full diff*"])
+
+        result = pytester.runpytest("tests/test_main.py::test_plugin", "-v")
+        result.stdout.fnmatch_lines(["*Full diff*"])
+
+        result = pytester.runpytest("tests/test_main.py::test_lib", "-v")
+        result.stdout.no_fnmatch_line("*Full diff*")
+
     def test_issue93_initialnode_importing_capturing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
