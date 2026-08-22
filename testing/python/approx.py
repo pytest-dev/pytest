@@ -672,7 +672,7 @@ class TestApprox:
 
     def test_list_decimal(self):
         actual = [Decimal("1.000001"), Decimal("2.000001")]
-        expected = [Decimal("1"), Decimal("2")]
+        expected = [Decimal(1), Decimal(2)]
 
         assert actual == approx(expected)
 
@@ -713,7 +713,7 @@ class TestApprox:
         actual = {"a": Decimal("1.000001"), "b": Decimal("2.000001")}
         # Dictionaries became ordered in python3.6, so switch up the order here
         # to make sure it doesn't matter.
-        expected = {"b": Decimal("2"), "a": Decimal("1")}
+        expected = {"b": Decimal(2), "a": Decimal(1)}
 
         assert actual == approx(expected)
 

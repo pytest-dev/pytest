@@ -31,7 +31,7 @@ class Source:
                 self.raw_lines = obj.raw_lines
             case tuple() | list():
                 self.lines = deindent(x.rstrip("\n") for x in obj)
-                self.raw_lines = list(x.rstrip("\n") for x in obj)
+                self.raw_lines = [x.rstrip("\n") for x in obj]
             case str():
                 self.lines = deindent(obj.split("\n"))
                 self.raw_lines = obj.split("\n")

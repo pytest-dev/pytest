@@ -102,7 +102,8 @@ def test_fixturerequest_getmodulepath(pytester: pytest.Pytester) -> None:
 
 class TestFixtureRequestSessionScoped:
     @pytest.fixture(scope="session")
-    def session_request(self, request):
+    @staticmethod
+    def session_request(request):
         return request
 
     def test_session_scoped_unavailable_attributes(self, session_request):

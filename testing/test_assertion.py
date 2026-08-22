@@ -1160,7 +1160,7 @@ class TestAssert_reprcompare:
             def insert(self, index, value):
                 pass
 
-        expl = callequal(TestSequence([0, 1]), list([0, 2]))
+        expl = callequal(TestSequence([0, 1]), [0, 2])
         assert expl is not None
         assert len(expl) > 1
 

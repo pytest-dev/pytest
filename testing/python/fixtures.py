@@ -1293,7 +1293,8 @@ class TestRequestBasic:
 
 class TestRequestSessionScoped:
     @pytest.fixture(scope="session")
-    def session_request(self, request):
+    @staticmethod
+    def session_request(request):
         return request
 
     @pytest.mark.parametrize("name", ["path", "module"])
@@ -4628,7 +4629,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "m1 f1".split()
+        assert request.fixturenames == ["m1", "f1"]
 
     def test_func_closure_with_native_fixtures(self, pytester: Pytester) -> None:
         """Sanity check that verifies the order returned by the closures and the
@@ -4717,7 +4718,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "m1 f1".split()
+        assert request.fixturenames == ["m1", "f1"]
 
     def test_func_closure_scopes_reordered(self, pytester: Pytester) -> None:
         """Test ensures that fixtures are ordered by scope regardless of the order of the parameters, although
@@ -4751,7 +4752,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "s1 m1 c1 f2 f1".split()
+        assert request.fixturenames == ["s1", "m1", "c1", "f2", "f1"]
 
     def test_func_closure_same_scope_closer_root_first(
         self, pytester: Pytester
@@ -4794,7 +4795,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "p_sub m_conf m_sub m_test f1".split()
+        assert request.fixturenames == ["p_sub", "m_conf", "m_sub", "m_test", "f1"]
 
     def test_func_closure_all_scopes_complex(self, pytester: Pytester) -> None:
         """Complex test involving all scopes and mixing autouse with normal fixtures"""
@@ -4839,7 +4840,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "s1 p1 m1 m2 c1 f2 f1".split()
+        assert request.fixturenames == ["s1", "p1", "m1", "m2", "c1", "f2", "f1"]
 
     def test_parametrized_package_scope_reordering(self, pytester: Pytester) -> None:
         """A parameterized package-scoped fixture correctly reorders items to
