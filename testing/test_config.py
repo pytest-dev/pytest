@@ -966,10 +966,14 @@ class TestConfigAPI:
         """
         )
         config = pytester.parseconfig()
-        with pytest.warns(pytest.PytestDeprecationWarning, match="expects a string value"):
+        with pytest.warns(
+            pytest.PytestDeprecationWarning, match="expects a string value"
+        ):
             assert config.getini("mystr") == ["a", "b"]
         # Options registered without an explicit type default to "string".
-        with pytest.warns(pytest.PytestDeprecationWarning, match="expects a string value"):
+        with pytest.warns(
+            pytest.PytestDeprecationWarning, match="expects a string value"
+        ):
             assert config.getini("myuntyped") == ["c", "d"]
 
     @pytest.mark.parametrize("config_type", ["ini", "pyproject"])
