@@ -79,6 +79,7 @@ from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import warn_explicit_for
 
 
@@ -1949,6 +1950,15 @@ class Config:
         elif type == "bool":
             return _strtobool(str(value).strip())
         elif type == "string":
+            if not isinstance(value, str):
+                warnings.warn(
+                    PytestDeprecationWarning(
+                        f"{self.inipath}: config option '{name}' expects a string value, "
+                        f"got {builtins.type(value).__name__}: {value!r}. This will raise "
+                        "a TypeError in pytest 10."
+                    ),
+                    stacklevel=2,
+                )
             return value
         elif type == "int":
             if not isinstance(value, str):

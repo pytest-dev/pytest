@@ -1,0 +1,4 @@
+In ini mode (``.ini`` files and ``[tool.pytest.ini_options]`` in ``pyproject.toml``),
+reading a non-string value for a :confval:`string`-typed ini option (including
+options registered without an explicit type, which default to ``"string"``) is now
+deprecated and will raise a ``TypeError`` in pytest 10.

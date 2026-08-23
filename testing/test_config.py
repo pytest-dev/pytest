@@ -949,6 +949,29 @@ class TestConfigAPI:
         with pytest.raises(ValueError):
             config.getini("other")
 
+    def test_addini_string_type_toml_list_deprecated(self, pytester: Pytester) -> None:
+        # https://github.com/pytest-dev/pytest/issues/14808
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("mystr", "a string option", type="string")
+                parser.addini("myuntyped", "an untyped option")
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            mystr = ["a", "b"]
+            myuntyped = ["c", "d"]
+        """
+        )
+        config = pytester.parseconfig()
+        with pytest.warns(pytest.PytestDeprecationWarning, match="expects a string value"):
+            assert config.getini("mystr") == ["a", "b"]
+        # Options registered without an explicit type default to "string".
+        with pytest.warns(pytest.PytestDeprecationWarning, match="expects a string value"):
+            assert config.getini("myuntyped") == ["c", "d"]
+
     @pytest.mark.parametrize("config_type", ["ini", "pyproject"])
     def test_addini_paths(self, pytester: Pytester, config_type: str) -> None:
         pytester.makeconftest(
