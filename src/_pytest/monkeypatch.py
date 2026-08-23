@@ -282,14 +282,15 @@ class MonkeyPatch:
             # Avoid class descriptors like staticmethod/classmethod.
             if inspect.isclass(target):
                 oldval = target.__dict__.get(name, NOTSET)
-            self._setattr.append((target, name, oldval))
             delattr(target, name)
+            self._setattr.append((target, name, oldval))
 
     def setitem(self, dic: Mapping[K, V], name: K, value: V) -> None:
         """Set dictionary entry ``name`` to value."""
-        self._setitem.append((dic, name, dic.get(name, NOTSET)))
+        oldval = dic.get(name, NOTSET)
         # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
         dic[name] = value  # type: ignore[index]
+        self._setitem.append((dic, name, oldval))
 
     def delitem(self, dic: Mapping[K, V], name: K, raising: bool = True) -> None:
         """Delete ``name`` from dict.
@@ -301,9 +302,10 @@ class MonkeyPatch:
             if raising:
                 raise KeyError(name)
         else:
-            self._setitem.append((dic, name, dic.get(name, NOTSET)))
+            oldval = dic.get(name, NOTSET)
             # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
             del dic[name]  # type: ignore[attr-defined]
+            self._setitem.append((dic, name, oldval))
 
     def setenv(self, name: str, value: str, prepend: str | None = None) -> None:
         """Set environment variable ``name`` to ``value``.
