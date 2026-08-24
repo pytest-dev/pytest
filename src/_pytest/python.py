@@ -1837,6 +1837,6 @@ class FunctionDefinition(Function):
 
 def __getattr__(name: str) -> object:
     if name == "CallSpec2":
-        warnings.warn(CALLSPEC2_RENAMED, stacklevel=2)
+        warnings.warn(CALLSPEC2_RENAMED.format(), stacklevel=2)
         return CallSpec
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

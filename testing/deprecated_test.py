@@ -364,3 +364,37 @@ def test_callspec2_renamed() -> None:
 
     with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
         assert python_mod.CallSpec2 is CallSpec
+
+
+def test_deprecation_warning_instance_not_shared_across_raises() -> None:
+    """Each raise must use a fresh warning instance (#14912).
+
+    When a warning is raised as an error, CPython appends to the exception's
+    existing ``__traceback__`` instead of replacing it, so reusing a single
+    module-level instance accumulates stale frames from previous raises.
+    """
+    import warnings
+
+    class PrivateClass:
+        def __init__(self) -> None:
+            deprecated.check_ispytest(False)
+
+    def count_frames(tb: object) -> int:
+        n = 0
+        while tb is not None:
+            n += 1
+            tb = tb.tb_next
+        return n
+
+    def raise_and_count() -> int:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", PytestDeprecationWarning)
+            with pytest.raises(PytestDeprecationWarning) as excinfo:
+                PrivateClass()
+        return count_frames(excinfo.value.__traceback__)
+
+    first = raise_and_count()
+    second = raise_and_count()
+
+    # The traceback of a shared instance would grow with every raise.
+    assert second <= first

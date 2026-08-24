@@ -359,7 +359,7 @@ class MonkeyPatch:
                     ns_pkg_path = path_obj / ns_pkg.replace(".", os.sep)
                     if ns_pkg_path.is_dir():
                         warnings.warn(
-                            MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES, stacklevel=2
+                            MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES.format(), stacklevel=2
                         )
                         break
 
