@@ -924,6 +924,11 @@ class TestApprox:
         [
             pytest.param([[1]], "data structures", id="nested-list"),
             pytest.param({"key": {"key": 1}}, "dictionaries", id="nested-dict"),
+            # GH#11945: the guard compared each element against type(expected),
+            # so a sequence nested inside a sequence of a *different* type was
+            # not rejected and ended up being compared exactly.
+            pytest.param([(1,)], "data structures", id="tuple-in-list"),
+            pytest.param(([1],), "data structures", id="list-in-tuple"),
         ],
     )
     def test_expected_value_type_error(self, x, name):
@@ -932,6 +937,20 @@ class TestApprox:
             match=rf"pytest.approx\(\) does not support nested {name}:",
         ):
             approx(x)
+
+    @pytest.mark.parametrize(
+        "actual, expected",
+        [
+            pytest.param([(1.2,)], [(1.2,)], id="tuple-in-list"),
+            pytest.param(([1.2],), ([1.2],), id="list-in-tuple"),
+        ],
+    )
+    def test_nested_mixed_sequence_not_silently_compared(self, actual, expected):
+        # GH#11945: these used to return a bool from an exact comparison, so
+        # `[(1.20000000000001,)] == approx([(1.2,)])` was False while the flat
+        # `(1.20000000000001,) == approx((1.2,))` was True.
+        with pytest.raises(TypeError):
+            assert actual == approx(expected)
 
     @pytest.mark.parametrize(
         "x",

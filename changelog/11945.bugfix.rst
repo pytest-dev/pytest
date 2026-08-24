@@ -1,0 +1,4 @@
+:func:`pytest.approx` now rejects a sequence nested inside a sequence of a different type,
+such as a tuple inside a list. Previously only same-type nesting was detected, so these
+values reached the scalar comparison and were compared exactly rather than approximately,
+which silently returned the wrong result instead of raising ``TypeError``.
