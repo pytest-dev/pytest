@@ -3,11 +3,11 @@ django==6.1
 pytest-asyncio==1.4.0
 pytest-bdd==8.1.0
 pytest-cov==7.1.0
-pytest-django==4.13.0
+pytest-django==4.14.0
 pytest-flakes==4.0.5
 pytest-html==4.2.0
 pytest-mock==3.15.1
-pytest-rerunfailures==16.4
+pytest-rerunfailures==16.5
 pytest-sugar==1.1.1
 pytest-trio==0.8.0
 pytest-twisted==1.14.3
