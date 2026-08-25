@@ -504,11 +504,55 @@ class TestNumberedDir:
 
         create_cleanup_lock(p)
 
+        # Lock names the current PID, so ensure_deletable must return False
+        # regardless of the mtime threshold — pid-liveness is the primary
+        # signal, and the current process is alive.
         assert not pathlib.ensure_deletable(
             p, consider_lock_dead_if_created_before=p.stat().st_mtime - 1
         )
-        assert pathlib.ensure_deletable(
+        assert not pathlib.ensure_deletable(
             p, consider_lock_dead_if_created_before=p.stat().st_mtime + 1
+        )
+
+    def test_cleanup_dead_pid_deletable_regardless_of_mtime(
+        self, tmp_path
+    ) -> None:
+        """A lock naming a PID that is provably not running is deletable
+        immediately, without waiting for the 3-day LOCK_TIMEOUT."""
+        p = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+        lock = p / ".lock"
+        # Pick a PID very unlikely to exist. Fall back to trying successive
+        # PIDs if by bad luck the first one is live.
+        dead_pid = 2**30
+        while True:
+            try:
+                os.kill(dead_pid, 0)
+            except (ProcessLookupError, OSError):
+                break
+            dead_pid += 1
+        lock.write_bytes(str(dead_pid).encode())
+        # Pass a threshold in the future — mtime path would say "not old
+        # enough". With the new pid check, dead pid ⇒ deletable anyway.
+        assert pathlib.ensure_deletable(
+            p, consider_lock_dead_if_created_before=lock.stat().st_mtime + 10_000
+        )
+        assert not lock.exists()
+
+    def test_cleanup_unreadable_lock_falls_back_to_mtime(
+        self, tmp_path
+    ) -> None:
+        """If the lock contents can't be parsed as a PID, ensure_deletable
+        falls back to the historical mtime-based check."""
+        p = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+        lock = p / ".lock"
+        lock.write_bytes(b"not-a-pid")
+        # mtime not yet past threshold → not deletable.
+        assert not pathlib.ensure_deletable(
+            p, consider_lock_dead_if_created_before=lock.stat().st_mtime - 1
+        )
+        # mtime past threshold → deletable via legacy path.
+        assert pathlib.ensure_deletable(
+            p, consider_lock_dead_if_created_before=lock.stat().st_mtime + 1
         )
 
     def test_cleanup_ignores_symlink(self, tmp_path):

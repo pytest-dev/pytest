@@ -348,8 +348,90 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
                 pass
 
 
+def _pid_alive(pid: int) -> bool:
+    """Return True if a process with the given PID currently exists.
+
+    Used by :func:`ensure_deletable` to determine whether a lock's owner is
+    still running, so that stale-lock detection does not depend solely on
+    wall-clock age.
+
+    Returns True when we cannot tell (permission errors, unsupported
+    platform behaviour) so that ambiguous cases fall through to the
+    mtime-based check rather than eagerly deleting.
+    """
+    if pid <= 0:
+        return False
+    if sys.platform == "win32":
+        # OpenProcess with PROCESS_QUERY_LIMITED_INFORMATION; if the handle
+        # opens the process still exists in some form. If it doesn't, the
+        # process is gone.
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            STILL_ACTIVE = 259
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            handle = kernel32.OpenProcess(
+                PROCESS_QUERY_LIMITED_INFORMATION, False, pid
+            )
+            if not handle:
+                # ERROR_INVALID_PARAMETER (87) means "no such process".
+                if ctypes.get_last_error() == 87:
+                    return False
+                # Any other failure: be conservative, assume alive.
+                return True
+            try:
+                exit_code = wintypes.DWORD()
+                if not kernel32.GetExitCodeProcess(
+                    handle, ctypes.byref(exit_code)
+                ):
+                    return True
+                return exit_code.value == STILL_ACTIVE
+            finally:
+                kernel32.CloseHandle(handle)
+        except Exception:
+            return True
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        # Process exists but is owned by another user; still alive.
+        return True
+    except OSError:
+        # Unknown; be conservative.
+        return True
+    return True
+
+
+def _read_lock_pid(lock: Path) -> int | None:
+    """Return the PID stored in a lock file, or None if it can't be read."""
+    try:
+        raw = lock.read_bytes()
+    except OSError:
+        return None
+    try:
+        return int(raw.strip())
+    except (ValueError, UnicodeDecodeError):
+        return None
+
+
 def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) -> bool:
-    """Check if `path` is deletable based on whether the lock file is expired."""
+    """Check if ``path`` is deletable.
+
+    A directory is deletable when either:
+
+    - it has no ``.lock`` file, or
+    - the ``.lock`` file names a PID that is provably not running, or
+    - the ``.lock`` file's mtime is older than
+      ``consider_lock_dead_if_created_before`` (legacy fallback for locks
+      whose contents can't be read).
+
+    The PID check is the primary signal so that a dead session's lock is
+    reaped immediately, and a live long-running session's lock is respected
+    regardless of wall-clock age.
+    """
     if path.is_symlink():
         return False
     lock = get_lock_path(path)
@@ -360,20 +442,34 @@ def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) ->
         # we might not have access to the lock file at all, in this case assume
         # we don't have access to the entire directory (#7491).
         return False
+
+    pid = _read_lock_pid(lock)
+    if pid is not None:
+        if _pid_alive(pid):
+            # Owner is still running — respect the lock, regardless of age.
+            return False
+        # Owner is provably gone. Unlink the lock and let the caller delete
+        # the directory. If unlink races with another cleanup we're still
+        # correct: the directory is either already gone, or the next call
+        # will pick it up.
+        with contextlib.suppress(OSError):
+            lock.unlink()
+        return True
+
+    # Couldn't parse the lock (empty, corrupt, or unreadable): fall through
+    # to the historical mtime-based check as a safety net.
     try:
         lock_time = lock.stat().st_mtime
     except Exception:
         return False
-    else:
-        if lock_time < consider_lock_dead_if_created_before:
-            # We want to ignore any errors while trying to remove the lock such as:
-            # - PermissionDenied, like the file permissions have changed since the lock creation;
-            # - FileNotFoundError, in case another pytest process got here first;
-            # and any other cause of failure.
-            with contextlib.suppress(OSError):
-                lock.unlink()
-                return True
-        return False
+    if lock_time < consider_lock_dead_if_created_before:
+        # See original comment: swallow any error unlinking the lock — it
+        # may have already been removed by a concurrent cleanup, or its
+        # permissions may have changed since creation.
+        with contextlib.suppress(OSError):
+            lock.unlink()
+            return True
+    return False
 
 
 def try_cleanup(path: Path, consider_lock_dead_if_created_before: float) -> None:

@@ -1,0 +1,7 @@
+The stale-``.lock`` check in ``ensure_deletable`` now uses PID liveness
+as its primary signal, with the historical ``LOCK_TIMEOUT`` (three days)
+retained as a fallback for locks whose contents cannot be parsed. A
+lock whose owner process is provably not running is reaped immediately
+instead of surviving for three days, and a lock whose owner is still
+running is respected regardless of its ``mtime``, so a long-running
+session can no longer have its own scratch reaped mid-run.
