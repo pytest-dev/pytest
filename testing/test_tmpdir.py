@@ -939,9 +939,7 @@ class TestOriginSidecar:
         assert int(data["pid"]) > 0
         assert data["host"]
 
-    def test_origin_written_when_basetemp_given(
-        self, pytester: Pytester
-    ) -> None:
+    def test_origin_written_when_basetemp_given(self, pytester: Pytester) -> None:
         """--basetemp also gets a .origin so external tooling can attribute
         it consistently regardless of who chose the path."""
         mytemp = pytester.path / "mybasetemp"
@@ -952,9 +950,7 @@ class TestOriginSidecar:
         data = self._parse_origin(origin)
         assert data["rootpath"] == str(pytester.path)
 
-    def test_origin_write_failure_does_not_break_run(
-        self, pytester: Pytester
-    ) -> None:
+    def test_origin_write_failure_does_not_break_run(self, pytester: Pytester) -> None:
         """A read-only basetemp must not fail the run — the sidecar write
         is best-effort and every OSError is swallowed."""
         pytester.makepyfile(
