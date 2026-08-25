@@ -7,6 +7,7 @@ import atexit
 from collections.abc import Generator
 from contextlib import ExitStack
 import dataclasses
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -40,6 +41,7 @@ from _pytest.stash import StashKey
 
 tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
+LayoutType = Literal["flat", "per-rootdir"]
 
 
 @final
@@ -56,6 +58,7 @@ class TempPathFactory:
     _retention_count: int
     _retention_policy: RetentionType
     _rootpath: Path | None
+    _layout: LayoutType
 
     def __init__(
         self,
@@ -65,6 +68,7 @@ class TempPathFactory:
         trace,
         basetemp: Path | None = None,
         rootpath: Path | None = None,
+        layout: LayoutType = "flat",
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -81,6 +85,7 @@ class TempPathFactory:
         self._retention_policy = retention_policy
         self._basetemp = basetemp
         self._rootpath = rootpath
+        self._layout = layout
         # Register cleanups for session finish. Also called atexit as a last
         # resort if sessionfinish for some reason doesn't happen.
         self._exit_stack = ExitStack()
@@ -104,6 +109,7 @@ class TempPathFactory:
             )
 
         policy: RetentionType = config.getini("tmp_path_retention_policy")
+        layout: LayoutType = config.getini("tmp_path_layout")
 
         return cls(
             given_basetemp=config.option.basetemp,
@@ -111,6 +117,7 @@ class TempPathFactory:
             retention_count=count,
             retention_policy=policy,
             rootpath=config.rootpath,
+            layout=layout,
             _ispytest=True,
         )
 
@@ -209,6 +216,14 @@ class TempPathFactory:
                         rootdir_stat.st_mode & ~0o077,
                         follow_symlinks=chmod_follow_symlinks,
                     )
+            # Per-rootdir layout: nest the numbered dirs one level deeper
+            # under a stable token derived from the rootpath. Retention then
+            # applies per project instead of across every rootdir a user has
+            # ever run pytest against. Opt-in via ``tmp_path_layout``.
+            if self._layout == "per-rootdir" and self._rootpath is not None:
+                token = _rootdir_token(self._rootpath)
+                rootdir = rootdir / token
+                rootdir.mkdir(mode=0o700, exist_ok=True)
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0
@@ -245,6 +260,31 @@ def get_user() -> str | None:
 
 
 ORIGIN_FILENAME = ".origin"
+
+
+_ROOTDIR_SLUG_MAX = 32
+_ROOTDIR_HASH_LEN = 8
+
+
+def _rootdir_slug(rootpath: Path) -> str:
+    """Return a portable, filesystem-safe slug for a rootpath's name."""
+    name = rootpath.name or "root"
+    slug = "".join(c if c.isalnum() or c in "-_." else "-" for c in name)
+    slug = slug.strip("-.") or "root"
+    return slug[:_ROOTDIR_SLUG_MAX]
+
+
+def _rootdir_token(rootpath: Path) -> str:
+    """Return a stable ``<slug>-<hash>`` token for a rootpath.
+
+    The slug keeps the directory name human-readable in ``/tmp`` listings; the
+    hash disambiguates homonyms (``~/work/foo`` vs ``~/play/foo``) so two
+    projects with the same basename get distinct subdirectories.
+    """
+    digest = hashlib.blake2b(
+        str(rootpath).encode("utf-8"), digest_size=_ROOTDIR_HASH_LEN // 2
+    ).hexdigest()
+    return f"{_rootdir_slug(rootpath)}-{digest}"
 
 
 def _write_origin_sidecar(basetemp: Path, rootpath: Path | None) -> None:
@@ -313,6 +353,21 @@ def pytest_addoption(parser: Parser) -> None:
         help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome.",
         type=RetentionType,
         default="all",
+    )
+
+    parser.addini(
+        "tmp_path_layout",
+        help=(
+            "Layout for numbered dirs under ``pytest-of-<user>/``. "
+            "'flat' (default) keeps the historical shared pool, where "
+            "``tmp_path_retention_count`` applies across every project that "
+            "shares a user account. 'per-rootdir' nests numbered dirs under "
+            "a stable token derived from ``rootpath``, so retention becomes "
+            "scoped per project and runs in one checkout do not evict scratch "
+            "from another."
+        ),
+        type=LayoutType,
+        default="flat",
     )
 
 

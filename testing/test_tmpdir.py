@@ -50,6 +50,8 @@ class FakeConfig:
             return 3
         elif name == "tmp_path_retention_policy":
             return "all"
+        elif name == "tmp_path_layout":
+            return "flat"
         else:
             assert False
 
@@ -975,3 +977,151 @@ class TestOriginSidecar:
             """
         )
         pytester.runpytest_subprocess().assert_outcomes(passed=1)
+
+
+class TestPerRootdirLayout:
+    """`tmp_path_layout = per-rootdir` scopes retention per project."""
+
+    def test_flat_is_default(self, tmp_path: Path, monkeypatch) -> None:
+        """No config change: numbered dirs sit directly under pytest-of-<user>."""
+        temproot = tmp_path / "temproot"
+        temproot.mkdir()
+        monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(temproot))
+
+        fac = TempPathFactory(
+            given_basetemp=None,
+            retention_count=3,
+            retention_policy="all",
+            trace=lambda *a, **k: None,
+            rootpath=tmp_path,
+            _ispytest=True,
+        )
+        base = fac.getbasetemp()
+        try:
+            assert base.parent.name.startswith("pytest-of-")
+        finally:
+            fac._exit_stack.close()
+
+    def test_per_rootdir_nests_under_token(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        temproot = tmp_path / "temproot"
+        temproot.mkdir()
+        monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(temproot))
+
+        from _pytest.tmpdir import _rootdir_token
+
+        fac = TempPathFactory(
+            given_basetemp=None,
+            retention_count=3,
+            retention_policy="all",
+            trace=lambda *a, **k: None,
+            rootpath=tmp_path,
+            layout="per-rootdir",
+            _ispytest=True,
+        )
+        base = fac.getbasetemp()
+        try:
+            expected = _rootdir_token(tmp_path)
+            assert base.parent.name == expected
+            assert base.parent.parent.name.startswith("pytest-of-")
+        finally:
+            fac._exit_stack.close()
+
+    def test_per_rootdir_retention_is_scoped_per_project(
+        self, pytester: Pytester, tmp_path: Path, monkeypatch
+    ) -> None:
+        """Runs from project A do not evict project B's numbered dirs."""
+        # Shared temproot both projects will write into.
+        temproot = tmp_path / "shared-temproot"
+        temproot.mkdir()
+        monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(temproot))
+
+        from _pytest.tmpdir import _rootdir_token, TempPathFactory
+
+        def _factory(rootpath: Path) -> TempPathFactory:
+            return TempPathFactory(
+                given_basetemp=None,
+                retention_count=1,
+                retention_policy="all",
+                trace=lambda *a, **k: None,
+                rootpath=rootpath,
+                layout="per-rootdir",
+                _ispytest=True,
+            )
+
+        proj_a = tmp_path / "proj-a"
+        proj_a.mkdir()
+        proj_b = tmp_path / "proj-b"
+        proj_b.mkdir()
+
+        def _run_session(rootpath: Path) -> None:
+            # Emulate a full pytest session: build factory, materialize
+            # basetemp (registers cleanup), then close so the lock is
+            # released and retention cleanup fires.
+            fac = _factory(rootpath)
+            fac.getbasetemp()
+            fac._exit_stack.close()
+
+        # Run three sessions in proj_a; retention_count=1 keeps only the
+        # newest one WITHIN proj_a's subtree.
+        for _ in range(3):
+            _run_session(proj_a)
+        # Run three sessions in proj_b — under flat layout these would
+        # rotate proj_a's dirs out. Under per-rootdir they must not.
+        for _ in range(3):
+            _run_session(proj_b)
+
+        user_root = next(temproot.glob("pytest-of-*"))
+        a_dir = user_root / _rootdir_token(proj_a)
+        b_dir = user_root / _rootdir_token(proj_b)
+
+        # Both projects still have their own numbered subtree; proj_a's
+        # scratch was NOT wiped by proj_b's runs.
+        assert a_dir.is_dir()
+        assert b_dir.is_dir()
+        a_runs = [p for p in a_dir.iterdir() if p.is_dir() and not p.is_symlink()]
+        b_runs = [p for p in b_dir.iterdir() if p.is_dir() and not p.is_symlink()]
+        # retention_count=1 → exactly one numbered dir per project.
+        assert len(a_runs) == 1, a_runs
+        assert len(b_runs) == 1, b_runs
+
+    def test_rootdir_token_disambiguates_homonyms(self, tmp_path: Path) -> None:
+        """Same directory basename, different absolute paths → different tokens."""
+        from _pytest.tmpdir import _rootdir_token
+
+        a = tmp_path / "work" / "foo"
+        b = tmp_path / "play" / "foo"
+        a.mkdir(parents=True)
+        b.mkdir(parents=True)
+        assert _rootdir_token(a) != _rootdir_token(b)
+        # Slug portion is identical...
+        assert _rootdir_token(a).startswith("foo-")
+        assert _rootdir_token(b).startswith("foo-")
+
+    def test_rootdir_token_sanitises_unsafe_names(self, tmp_path: Path) -> None:
+        from _pytest.tmpdir import _rootdir_token
+
+        weird = tmp_path / "a b/c$d*e"
+        weird.mkdir(parents=True)
+        token = _rootdir_token(weird)
+        # No shell metacharacters left in the slug portion; only [A-Za-z0-9._-].
+        slug = token.rsplit("-", 1)[0]
+        assert all(c.isalnum() or c in "._-" for c in slug), token
+
+    def test_tmp_path_layout_invalid(self, pytester: Pytester) -> None:
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_layout = "hierarchical"
+            """
+        )
+        pytester.makepyfile("def test(): pass")
+        result = pytester.runpytest()
+        assert result.ret == pytest.ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            [
+                "*ERROR: *config option 'tmp_path_layout' expects one of "
+                "'flat' | 'per-rootdir', got 'hierarchical'"
+            ]
+        )

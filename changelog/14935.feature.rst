@@ -1,0 +1,11 @@
+Added a new ``tmp_path_layout`` ini option controlling the directory
+layout under ``pytest-of-<user>/``.
+
+* ``"flat"`` (default): unchanged historical behaviour.
+* ``"per-rootdir"``: numbered dirs are nested one level deeper, under a
+  stable token derived from the pytest ``rootpath``
+  (``<name>-<8-char-hash>``). ``tmp_path_retention_count`` then applies
+  per project, so runs in one checkout no longer evict scratch created
+  by runs in another. Particularly useful for users who work in multiple
+  git worktrees, multiple clones of the same repository, or several
+  unrelated projects under one user account.
