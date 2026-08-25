@@ -514,9 +514,7 @@ class TestNumberedDir:
             p, consider_lock_dead_if_created_before=p.stat().st_mtime + 1
         )
 
-    def test_cleanup_dead_pid_deletable_regardless_of_mtime(
-        self, tmp_path
-    ) -> None:
+    def test_cleanup_dead_pid_deletable_regardless_of_mtime(self, tmp_path) -> None:
         """A lock naming a PID that is provably not running is deletable
         immediately, without waiting for the 3-day LOCK_TIMEOUT."""
         p = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
@@ -538,9 +536,7 @@ class TestNumberedDir:
         )
         assert not lock.exists()
 
-    def test_cleanup_unreadable_lock_falls_back_to_mtime(
-        self, tmp_path
-    ) -> None:
+    def test_cleanup_unreadable_lock_falls_back_to_mtime(self, tmp_path) -> None:
         """If the lock contents can't be parsed as a PID, ensure_deletable
         falls back to the historical mtime-based check."""
         p = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
