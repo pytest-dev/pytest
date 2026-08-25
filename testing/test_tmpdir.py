@@ -941,9 +941,7 @@ class TestOriginSidecar:
         assert int(data["pid"]) > 0
         assert data["host"]
 
-    def test_origin_written_when_basetemp_given(
-        self, pytester: Pytester
-    ) -> None:
+    def test_origin_written_when_basetemp_given(self, pytester: Pytester) -> None:
         """--basetemp also gets a .origin so external tooling can attribute
         it consistently regardless of who chose the path."""
         mytemp = pytester.path / "mybasetemp"
@@ -954,9 +952,7 @@ class TestOriginSidecar:
         data = self._parse_origin(origin)
         assert data["rootpath"] == str(pytester.path)
 
-    def test_origin_write_failure_does_not_break_run(
-        self, pytester: Pytester
-    ) -> None:
+    def test_origin_write_failure_does_not_break_run(self, pytester: Pytester) -> None:
         """A read-only basetemp must not fail the run — the sidecar write
         is best-effort and every OSError is swallowed."""
         pytester.makepyfile(
@@ -1002,9 +998,7 @@ class TestPerRootdirLayout:
         finally:
             fac._exit_stack.close()
 
-    def test_per_rootdir_nests_under_token(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
+    def test_per_rootdir_nests_under_token(self, tmp_path: Path, monkeypatch) -> None:
         temproot = tmp_path / "temproot"
         temproot.mkdir()
         monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(temproot))
@@ -1037,7 +1031,8 @@ class TestPerRootdirLayout:
         temproot.mkdir()
         monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(temproot))
 
-        from _pytest.tmpdir import _rootdir_token, TempPathFactory
+        from _pytest.tmpdir import _rootdir_token
+        from _pytest.tmpdir import TempPathFactory
 
         def _factory(rootpath: Path) -> TempPathFactory:
             return TempPathFactory(

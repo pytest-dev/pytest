@@ -19,12 +19,12 @@ from typing import Any
 from typing import final
 from typing import Literal
 
-import _pytest
 from .pathlib import cleanup_dead_symlinks
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
+import _pytest
 from _pytest.compat import get_user_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -317,9 +317,7 @@ def _write_origin_sidecar(basetemp: Path, rootpath: Path | None) -> None:
         if host:
             lines.append(f"host={host}")
         lines.append("")
-        (basetemp / ORIGIN_FILENAME).write_text(
-            "\n".join(lines), encoding="utf-8"
-        )
+        (basetemp / ORIGIN_FILENAME).write_text("\n".join(lines), encoding="utf-8")
     except OSError:
         # Best-effort: never break a test run because a sidecar could not
         # be written (read-only mount, permissions, full disk, etc.).
