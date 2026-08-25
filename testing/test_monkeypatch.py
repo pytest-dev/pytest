@@ -232,9 +232,8 @@ def test_failed_delitem(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.undo()
 
 
-@pytest.mark.parametrize("make_mapping", [dict])
 def test_setitem_delitem_oldval_captured_before_mutation(
-    monkeypatch: MonkeyPatch, make_mapping
+    monkeypatch: MonkeyPatch,
 ) -> None:
     """For setitem/delitem the old value must be captured *before* the
     mutation so undo() restores the correct value (#14909). This case
