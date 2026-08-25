@@ -1,0 +1,5 @@
+Each pytest session directory (``pytest-of-<user>/pytest-N``) now contains
+a ``.origin`` sidecar recording the ``rootpath``, pytest version, PID, and
+hostname of the session that created it. This lets external cleanup tooling
+attribute a session directory to a specific project by reading a file,
+rather than by inspecting live process state.

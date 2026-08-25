@@ -57,6 +57,12 @@ class FakeConfig:
     def option(self):
         return self
 
+    @property
+    def rootpath(self) -> Path:
+        # Any real path is fine for tests using TempPathFactory; the .origin
+        # sidecar just records what it is given.
+        return Path(os.getcwd())
+
 
 class TestTmpPathHandler:
     def test_mktemp(self, tmp_path: Path) -> None:
@@ -899,3 +905,73 @@ def test_tmp_path_retention_policy_invalid(pytester: Pytester) -> None:
             "'all' | 'failed' | 'none', got 'compress'"
         ]
     )
+
+
+class TestOriginSidecar:
+    """The .origin file records session ownership for external tooling."""
+
+    def _parse_origin(self, path):
+        data = {}
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line:
+                continue
+            key, _, value = line.partition("=")
+            data[key] = value
+        return data
+
+    def test_origin_written_next_to_basetemp(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_stash_basetemp(tmp_path, tmp_path_factory, pytestconfig):
+                base = tmp_path_factory.getbasetemp()
+                pytestconfig.stash.setdefault('base', base)
+                (pytestconfig.rootpath / '_basetemp.txt').write_text(str(base))
+            """
+        )
+        result = pytester.runpytest_subprocess()
+        result.assert_outcomes(passed=1)
+        base = Path((pytester.path / "_basetemp.txt").read_text().strip())
+        origin = base / ".origin"
+        assert origin.is_file(), f"missing {origin}"
+        data = self._parse_origin(origin)
+        assert data["rootpath"] == str(pytester.path)
+        assert data["version"] == pytest.__version__
+        assert int(data["pid"]) > 0
+        assert data["host"]
+
+    def test_origin_written_when_basetemp_given(
+        self, pytester: Pytester
+    ) -> None:
+        """--basetemp also gets a .origin so external tooling can attribute
+        it consistently regardless of who chose the path."""
+        mytemp = pytester.path / "mybasetemp"
+        pytester.makepyfile("def test_ok(tmp_path): pass")
+        pytester.runpytest(f"--basetemp={mytemp}").assert_outcomes(passed=1)
+        origin = mytemp / ".origin"
+        assert origin.is_file()
+        data = self._parse_origin(origin)
+        assert data["rootpath"] == str(pytester.path)
+
+    def test_origin_write_failure_does_not_break_run(
+        self, pytester: Pytester
+    ) -> None:
+        """A read-only basetemp must not fail the run — the sidecar write
+        is best-effort and every OSError is swallowed."""
+        pytester.makepyfile(
+            """
+            def test_origin_write_is_swallowed(tmp_path, tmp_path_factory):
+                from _pytest import tmpdir as _t
+                base = tmp_path_factory.getbasetemp()
+                origin = base / _t.ORIGIN_FILENAME
+                # Make .origin read-only by removing write perms on its parent
+                # after the fact; then invoke the writer directly and prove
+                # it does not raise.
+                import os, stat
+                os.chmod(base, stat.S_IRUSR | stat.S_IXUSR)
+                try:
+                    _t._write_origin_sidecar(base, None)  # must not raise
+                finally:
+                    os.chmod(base, stat.S_IRWXU)
+            """
+        )
+        pytester.runpytest_subprocess().assert_outcomes(passed=1)

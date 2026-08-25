@@ -11,12 +11,14 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
+import socket
 import stat
 import tempfile
 from typing import Any
 from typing import final
 from typing import Literal
 
+import _pytest
 from .pathlib import cleanup_dead_symlinks
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
@@ -53,6 +55,7 @@ class TempPathFactory:
     _basetemp: Path | None
     _retention_count: int
     _retention_policy: RetentionType
+    _rootpath: Path | None
 
     def __init__(
         self,
@@ -61,6 +64,7 @@ class TempPathFactory:
         retention_policy: RetentionType,
         trace,
         basetemp: Path | None = None,
+        rootpath: Path | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -76,6 +80,7 @@ class TempPathFactory:
         self._retention_count = retention_count
         self._retention_policy = retention_policy
         self._basetemp = basetemp
+        self._rootpath = rootpath
         # Register cleanups for session finish. Also called atexit as a last
         # resort if sessionfinish for some reason doesn't happen.
         self._exit_stack = ExitStack()
@@ -105,6 +110,7 @@ class TempPathFactory:
             trace=config.trace.get("tmpdir"),
             retention_count=count,
             retention_policy=policy,
+            rootpath=config.rootpath,
             _ispytest=True,
         )
 
@@ -221,6 +227,7 @@ class TempPathFactory:
             self._exit_stack.callback(atexit.unregister, self._exit_stack.close)
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
+        _write_origin_sidecar(basetemp, self._rootpath)
         self._trace("new basetemp", basetemp)
         return basetemp
 
@@ -235,6 +242,48 @@ def get_user() -> str | None:
         return getpass.getuser()
     except (ImportError, OSError, KeyError):
         return None
+
+
+ORIGIN_FILENAME = ".origin"
+
+
+def _write_origin_sidecar(basetemp: Path, rootpath: Path | None) -> None:
+    """Write an ``.origin`` file next to ``.lock`` recording who owns this
+    session directory.
+
+    The file is a best-effort record used by external tooling (workstation
+    janitors, CI cleanup, editor temp sweeps) that needs to attribute a
+    session directory to a specific project without walking ``/proc`` or
+    ``lsof``. Writing it must never fail a test run, so all errors are
+    swallowed.
+
+    Fields are ``key=value`` lines, newline-terminated, UTF-8:
+
+    - ``rootpath``: absolute pytest rootpath, if known.
+    - ``version``: pytest version string.
+    - ``pid``: PID of the process that created this basetemp.
+    - ``host``: hostname of the machine that created this basetemp.
+    """
+    try:
+        lines = []
+        if rootpath is not None:
+            lines.append(f"rootpath={rootpath}")
+        lines.append(f"version={_pytest.__version__}")
+        lines.append(f"pid={os.getpid()}")
+        try:
+            host = socket.gethostname()
+        except OSError:
+            host = ""
+        if host:
+            lines.append(f"host={host}")
+        lines.append("")
+        (basetemp / ORIGIN_FILENAME).write_text(
+            "\n".join(lines), encoding="utf-8"
+        )
+    except OSError:
+        # Best-effort: never break a test run because a sidecar could not
+        # be written (read-only mount, permissions, full disk, etc.).
+        pass
 
 
 def pytest_configure(config: Config) -> None:
