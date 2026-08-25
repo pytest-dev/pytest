@@ -87,8 +87,9 @@ def _compare_eq_sequence(
     if len_diff:
         if len_diff > 0:
             dir_with_more = "Left"
-            # Only a single extra item can be an insertion at the diff point:
-            # tails of unequal length can never be equal.
+            # If the longer side has exactly one extra item and the tails after
+            # the first differing index align (offset by one), that item is the
+            # insertion.
             if found_diff and len_diff == 1 and left[i + 1 :] == right[i:]:
                 extra = saferepr(left[i])
             else:
