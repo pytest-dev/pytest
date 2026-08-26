@@ -3038,17 +3038,15 @@ class TestPytestPluginsVariable:
 
 
 def test_conftest_import_error_repr(tmp_path: Path) -> None:
-    """`ConftestImportFailure` should use a short error message and readable
-    path to the failed conftest.py file."""
+    """`ConftestImportFailure` carries the failed conftest.py path as its
+    argument and the original error as its cause."""
     path = tmp_path.joinpath("foo/conftest.py")
-    with pytest.raises(
-        ConftestImportFailure,
-        match=re.escape(f"RuntimeError: some error (from {path})"),
-    ):
+    with pytest.raises(ConftestImportFailure, match=re.escape(str(path))) as excinfo:
         try:
             raise RuntimeError("some error")
         except Exception as exc:
-            raise ConftestImportFailure(path, cause=exc) from exc
+            raise ConftestImportFailure(path) from exc
+    assert str(excinfo.value.__cause__) == "some error"
 
 
 def test_strtobool() -> None:
