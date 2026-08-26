@@ -129,17 +129,11 @@ class ExitCode(enum.IntEnum):
 
 
 class ConftestImportFailure(Exception):
-    def __init__(
-        self,
-        path: pathlib.Path,
-        *,
-        cause: Exception,
-    ) -> None:
-        self.path = path
-        self.cause = cause
+    """A conftest.py raised while being imported.
 
-    def __str__(self) -> str:
-        return f"{type(self.cause).__name__}: {self.cause} (from {self.path})"
+    The path of the failing conftest is the exception argument; the original
+    error is chained as ``__cause__``.
+    """
 
 
 class PluginImportFailure(Exception):
@@ -179,9 +173,8 @@ def _print_import_error(header: str, cause: BaseException, file: TextIO) -> None
 
 
 def print_conftest_import_error(e: ConftestImportFailure, file: TextIO) -> None:
-    _print_import_error(
-        f"ImportError while loading conftest '{e.path}'.", e.cause, file
-    )
+    assert e.__cause__ is not None, f"{e!r} must be raised `from` the original error"
+    _print_import_error(f"ImportError while loading conftest '{e}'.", e.__cause__, file)
 
 
 def print_plugin_import_error(e: PluginImportFailure, file: TextIO) -> None:
@@ -793,7 +786,7 @@ class PytestPluginManager(PluginManager):
             )
         except Exception as e:
             assert e.__traceback__ is not None
-            raise ConftestImportFailure(conftestpath, cause=e) from e
+            raise ConftestImportFailure(conftestpath) from e
 
         self._check_non_top_pytest_plugins(mod, conftestpath)
 
@@ -1748,7 +1741,7 @@ class Config:
                 # we don't want to prevent --help/--version to work
                 # so just let it pass and print a warning at the end
                 self.issue_config_time_warning(
-                    PytestConfigWarning(f"could not load initial conftests: {e.path}"),
+                    PytestConfigWarning(f"could not load initial conftests: {e}"),
                     stacklevel=2,
                 )
             else:
