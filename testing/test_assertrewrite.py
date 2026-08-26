@@ -1637,190 +1637,29 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
-class TestAssertionRewriteWalrusOperator:
-    """See #10743"""
+def test_walrus_rebinding_does_not_outlive_its_statement(
+    pytester: Pytester,
+) -> None:
+    """A walrus target must not be rebound by a later, unrelated assertion.
 
-    def test_assertion_walrus_operator(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def my_func(before, after):
-                return before == after
-
-            def change_value(value):
-                return value.lower()
-
-            def test_walrus_conversion():
-                a = "Hello"
-                assert not my_func(a, a := change_value(a))
-                assert a == "hello"
+    The rest of #10743's suite moved to the coverage matrix, which runs
+    in-process.  This one stays here because it needs two tests in one module
+    to say anything: the rewriter may keep no state that survives a statement,
+    let alone a test.  The matrix cannot express that.
+    """
+    pytester.makepyfile(
         """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
+        def test_walrus_operator_change_value():
+            a = True
+            assert (a := None) is None
 
-    def test_assertion_walrus_operator_dont_rewrite(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            'PYTEST_DONT_REWRITE'
-            def my_func(before, after):
-                return before == after
-
-            def change_value(value):
-                return value.lower()
-
-            def test_walrus_conversion_dont_rewrite():
-                a = "Hello"
-                assert not my_func(a, a := change_value(a))
-                assert a == "hello"
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_inline_walrus_operator(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def my_func(before, after):
-                return before == after
-
-            def test_walrus_conversion_inline():
-                a = "Hello"
-                assert not my_func(a, a := a.lower())
-                assert a == "hello"
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_inline_walrus_operator_reverse(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def my_func(before, after):
-                return before == after
-
-            def test_walrus_conversion_reverse():
-                a = "Hello"
-                assert my_func(a := a.lower(), a)
-                assert a == 'hello'
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_walrus_no_variable_name_conflict(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_conversion_no_conflict():
-                a = "Hello"
-                assert a == (b := a.lower())
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*AssertionError: assert 'Hello' == 'hello'"])
-
-    def test_assertion_walrus_operator_true_assertion_and_changes_variable_value(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_conversion_succeed():
-                a = "Hello"
-                assert a != (a := a.lower())
-                assert a == 'hello'
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_walrus_operator_fail_assertion(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_conversion_fails():
-                a = "Hello"
-                assert a == (a := a.lower())
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*AssertionError: assert 'Hello' == 'hello'"])
-
-    def test_assertion_walrus_operator_boolean_composite(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_operator_change_boolean_value():
-                a = True
-                assert a and True and ((a := False) is False) and (a is False) and ((a := None) is None)
-                assert a is None
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_walrus_operator_compare_boolean_fails(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_operator_change_boolean_value():
-                a = True
-                assert not (a and ((a := False) is False))
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert not (True and False is False)"])
-
-    def test_assertion_walrus_operator_boolean_none_fails(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_operator_change_boolean_value():
-                a = True
-                assert not (a and ((a := None) is None))
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert not (True and None is None)"])
-
-    def test_assertion_walrus_operator_value_changes_cleared_after_each_test(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_operator_change_value():
-                a = True
-                assert (a := None) is None
-
-            def test_walrus_operator_not_override_value():
-                a = True
-                assert a is True
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_namedexpr_compare_left_overwrite(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_namedexpr_compare_left_overwrite():
-                a = "Hello"
-                b = "World"
-                c = "Test"
-                assert (a := b) == c and (a := "Test") == "Test"
-            """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert ('World' == 'Test'*"])
+        def test_walrus_operator_not_override_value():
+            a = True
+            assert a is True
+    """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
 
 
 class TestIssue11028:
@@ -1972,83 +1811,6 @@ class TestIssue14445:
         )
         result = pytester.runpytest()
         assert result.ret == 0
-
-    def test_walrus_no_double_eval_in_function_call(self, pytester: Pytester) -> None:
-        """Walrus in function call arguments not evaluated twice."""
-        pytester.makepyfile(
-            """
-            call_count = 0
-
-            def side_effect():
-                global call_count
-                call_count += 1
-                return call_count
-
-            def test_walrus_side_effect():
-                assert (val := side_effect()) == 1
-                assert val == 1
-                assert (val := side_effect()) == 2
-                assert val == 2
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_walrus_no_double_eval_in_boolop(self, pytester: Pytester) -> None:
-        """Bare walrus as a BoolOp operand must not be evaluated twice."""
-        pytester.makepyfile(
-            """
-            call_count = 0
-
-            def side_effect():
-                global call_count
-                call_count += 1
-                return call_count
-
-            def test_walrus_boolop():
-                assert (x := side_effect()) and x == 1
-                assert call_count == 1
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_walrus_no_double_eval_chained_compare(self, pytester: Pytester) -> None:
-        """Same walrus target in chained comparison must evaluate each once."""
-        pytester.makepyfile(
-            """
-            call_count = 0
-
-            def track(value):
-                global call_count
-                call_count += 1
-                return value
-
-            def test_walrus_chained():
-                assert (x := track(1)) < (x := track(3)) < (x := track(5))
-                assert call_count == 3
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_walrus_boolop_same_target_correct_explanation(
-        self, pytester: Pytester
-    ) -> None:
-        """Multiple walrus operators to the same name in a BoolOp must show
-        each operand's value at evaluation time, not the final value."""
-        pytester.makepyfile(
-            """
-            def side_effect():
-                return True
-
-            def test_walrus_boolop():
-                assert (x := side_effect()) and (x := False)
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert (True and False)"])
 
 
 @pytest.mark.skipif(
