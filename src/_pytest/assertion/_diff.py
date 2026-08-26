@@ -19,17 +19,6 @@ NDIFF_MAX_INPUT_SIZE = 10_000  # characters (left + right)
 DIFF_MAX_LINES = 100  # lines (left + right)
 
 
-def ndiff_too_slow_for_text(left: str, right: str) -> bool:
-    """Whether ``ndiff`` would be pathologically slow for these strings.
-
-    Counts line separators instead of splitting into lines, so the check stays
-    cheap even for huge inputs.
-    """
-    if left.count("\n") + right.count("\n") > DIFF_MAX_LINES:
-        return True
-    return len(left) + len(right) > NDIFF_MAX_INPUT_SIZE
-
-
 def ndiff_too_slow_for_lines(
     left_lines: Sequence[str], right_lines: Sequence[str]
 ) -> bool:

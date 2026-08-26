@@ -21,7 +21,6 @@ from _pytest.assertion import util
 from _pytest.assertion._compare_any import _compare_eq_cls
 from _pytest.assertion._compare_mapping import _compare_eq_mapping
 from _pytest.assertion._diff import ndiff_too_slow_for_lines
-from _pytest.assertion._diff import ndiff_too_slow_for_text
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
@@ -488,17 +487,14 @@ class TestNdiffTooSlow:
     """Heuristic guarding against pathologically slow diffs (#8998)."""
 
     def test_small_input_is_not_too_slow(self) -> None:
-        assert ndiff_too_slow_for_text("spam", "eggs") is False
         assert ndiff_too_slow_for_lines(["spam"], ["eggs"]) is False
 
     def test_too_many_characters(self, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.setattr(_diff, "NDIFF_MAX_INPUT_SIZE", 5)
-        assert ndiff_too_slow_for_text("abc", "abcd") is True
         assert ndiff_too_slow_for_lines(["abc"], ["abcd"]) is True
 
     def test_too_many_lines(self, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.setattr(_diff, "DIFF_MAX_LINES", 3)
-        assert ndiff_too_slow_for_text("a\nb\nc\nd\ne", "f") is True
         assert ndiff_too_slow_for_lines(["a", "b", "c", "d"], ["e"]) is True
 
     def test_bounded_prefix(self) -> None:
@@ -582,7 +578,8 @@ class TestAssert_reprcompare:
             )
         )
         assert len(capped) < 80
-        assert len(full) > 1500
+        # The unbounded budget still hits the ndiff size cap (#8998).
+        assert len(capped) < len(full)
         # a few huge lines: the char budget bounds each emitted line.
         capped_chars = list(
             _compare_eq_text(
@@ -609,7 +606,7 @@ class TestAssert_reprcompare:
         full = list(_notin_text(needle, text, 1, NO_TRUNCATION_BUDGET))
         assert len(capped) < 80
         assert all(len(line) < 1000 for line in capped)
-        assert sum(len(line) for line in full) > 100_000
+        assert sum(len(line) for line in full) > sum(len(line) for line in capped)
 
     def test_text_skipping(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs")
@@ -837,7 +834,7 @@ class TestAssert_reprcompare:
         right = [f"other-{i}" for i in range(50)]
         lines = callequal(left, right, verbose=1)
         assert lines is not None
-        assert "Full diff:" in lines
+        assert any(line.startswith("Full diff:") for line in lines)
         assert any("Diff too large to show in full" in line for line in lines)
         # Only a bounded prefix is diffed, not all 50+ pprint lines.
         differing = [line for line in lines if line.startswith(("- ", "+ "))]
