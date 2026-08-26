@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 import logging
-from typing import cast
 
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
@@ -207,13 +206,17 @@ def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
     assert unfiltered_tuple == ("test_fixture", 20, "handler call")
 
 
-def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> None:
-    def no_capture_filter(log_record: logging.LogRecord) -> bool:
+class DropAllFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
         return False
 
-    with caplog.filtering(cast(logging.Filter, no_capture_filter)):
+
+def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> None:
+    drop_all = DropAllFilter()
+
+    with caplog.filtering(drop_all):
         logger.warning("Will not be captured")
-        with caplog.filtering(cast(logging.Filter, no_capture_filter)):
+        with caplog.filtering(drop_all):
             logger.warning("Will also not be captured")
         logger.warning("Should not be captured either")
 
@@ -223,19 +226,18 @@ def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> No
 def test_with_statement_filtering_already_present(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    def no_capture_filter(log_record: logging.LogRecord) -> bool:
-        return False
+    drop_all = DropAllFilter()
 
-    caplog.handler.addFilter(no_capture_filter)
+    caplog.handler.addFilter(drop_all)
     try:
-        with caplog.filtering(cast(logging.Filter, no_capture_filter)):
+        with caplog.filtering(drop_all):
             logger.warning("Should not be captured")
 
         # After context manager, filter should STILL be present because it was already there
         logger.warning("Should still not be captured")
         assert caplog.records == []
     finally:
-        caplog.handler.removeFilter(no_capture_filter)
+        caplog.handler.removeFilter(drop_all)
 
 
 @pytest.mark.parametrize(
