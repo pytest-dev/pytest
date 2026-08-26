@@ -31,6 +31,41 @@ class TestNewAPI:
         p = config.cache.mkdir("name")
         assert p.is_dir()
 
+    def test_config_cache_mkdir_escape(self, pytester: Pytester) -> None:
+        """`..` is a single path part, so it passes the separator check."""
+        pytester.makeini("[pytest]")
+        config = pytester.parseconfigure()
+        assert config.cache is not None
+        with pytest.raises(ValueError):
+            config.cache.mkdir("..")
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "../escaped",
+            "plugin/../../escaped",
+            "/absolute/escaped",
+            "//absolute/escaped",
+        ],
+    )
+    def test_cache_key_escape(self, pytester: Pytester, key: str) -> None:
+        """Keys must not resolve outside the cache's values directory."""
+        pytester.makeini("[pytest]")
+        config = pytester.parseconfigure()
+        assert config.cache is not None
+        with pytest.raises(ValueError):
+            config.cache.set(key, 1)
+        with pytest.raises(ValueError):
+            config.cache.get(key, None)
+
+    def test_cache_key_normalized(self, pytester: Pytester) -> None:
+        """A `..` that cancels out within the values directory is fine."""
+        pytester.makeini("[pytest]")
+        config = pytester.parseconfigure()
+        assert config.cache is not None
+        config.cache.set("plugin/sub/../value", 42)
+        assert config.cache.get("plugin/value", None) == 42
+
     def test_cache_dir_permissions(self, pytester: Pytester) -> None:
         """The .pytest_cache directory should have world-readable permissions
         (depending on umask).
@@ -279,6 +314,29 @@ def test_cache_show(pytester: Pytester) -> None:
     assert "other/some" not in stdout
     assert "d/mydb/world" not in stdout
     assert result.ret == 0
+
+
+def test_cache_show_escaping_glob(pytester: Pytester) -> None:
+    """A glob with `..` must not reach outside the cache directory."""
+    pytester.makeconftest(
+        """
+        def pytest_configure(config):
+            config.cache.set("my/name", [1, 2, 3])
+            config.cache.mkdir("mydb").joinpath("hello").touch()
+    """
+    )
+    assert pytester.runpytest().ret == 5  # no tests executed
+    pytester.path.joinpath("secret.json").write_text(
+        '{"token": "s3cr3t"}', encoding="utf-8"
+    )
+
+    result = pytester.runpytest("--cache-show", "../../../secret.json")
+    assert result.ret == 0
+    stdout = result.stdout.str()
+    # the glob itself is echoed in the section headers, the contents are not.
+    assert "s3cr3t" not in stdout
+    assert "contains" not in stdout
+    assert "is a file of length" not in stdout
 
 
 class TestLastFailed:
@@ -596,7 +654,7 @@ class TestLastFailed:
         result.stdout.fnmatch_lines(["*3 passed*"])
 
         result, lastfailed = rlf(fail_import=1, fail_run=0)
-        assert sorted(list(lastfailed)) == ["test_maybe.py", "test_maybe2.py"]
+        assert sorted(lastfailed) == ["test_maybe.py", "test_maybe2.py"]
 
         result, lastfailed = rlf(fail_import=0, fail_run=0, args=("test_maybe2.py",))
         assert list(lastfailed) == ["test_maybe.py"]

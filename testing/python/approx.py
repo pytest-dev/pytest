@@ -672,7 +672,7 @@ class TestApprox:
 
     def test_list_decimal(self):
         actual = [Decimal("1.000001"), Decimal("2.000001")]
-        expected = [Decimal("1"), Decimal("2")]
+        expected = [Decimal(1), Decimal(2)]
 
         assert actual == approx(expected)
 
@@ -713,7 +713,7 @@ class TestApprox:
         actual = {"a": Decimal("1.000001"), "b": Decimal("2.000001")}
         # Dictionaries became ordered in python3.6, so switch up the order here
         # to make sure it doesn't matter.
-        expected = {"b": Decimal("2"), "a": Decimal("1")}
+        expected = {"b": Decimal(2), "a": Decimal(1)}
 
         assert actual == approx(expected)
 
@@ -923,7 +923,14 @@ class TestApprox:
         "x, name",
         [
             pytest.param([[1]], "data structures", id="nested-list"),
+            pytest.param([(1,)], "data structures", id="list-of-tuple"),
+            pytest.param([{1}], "data structures", id="list-of-set"),
+            pytest.param([{"key": 1}], "data structures", id="list-of-dict"),
+            pytest.param(({"key": 1},), "data structures", id="tuple-of-dict"),
             pytest.param({"key": {"key": 1}}, "dictionaries", id="nested-dict"),
+            pytest.param({"key": [1]}, "dictionaries", id="dict-of-list"),
+            pytest.param({"key": (1,)}, "dictionaries", id="dict-of-tuple"),
+            pytest.param({"key": {1}}, "dictionaries", id="dict-of-set"),
         ],
     )
     def test_expected_value_type_error(self, x, name):
@@ -934,12 +941,35 @@ class TestApprox:
             approx(x)
 
     @pytest.mark.parametrize(
+        "expected, actual",
+        [
+            pytest.param([{"key": 1.0}], [{"key": 1.0 + 1e-9}], id="list-of-dict"),
+            pytest.param({"key": [1.0]}, {"key": [1.0 + 1e-9]}, id="dict-of-list"),
+            pytest.param([(1.0,)], [(1.0 + 1e-9,)], id="list-of-tuple"),
+            pytest.param(({1.0},), ({1.0 + 1e-9},), id="tuple-of-set"),
+        ],
+    )
+    def test_mixed_nested_containers_raise_instead_of_comparing_unequal(
+        self, expected, actual
+    ):
+        """A nested container of a different type used to slip past the check.
+
+        It was then compared as a leaf, so these all returned ``False``
+        despite being well inside the default tolerance, silently ignoring
+        it rather than reporting that nesting is unsupported (#10210).
+        """
+        with pytest.raises(TypeError, match=r"pytest.approx\(\) does not support"):
+            actual == approx(expected)
+
+    @pytest.mark.parametrize(
         "x",
         [
             pytest.param(None),
             pytest.param("string"),
             pytest.param(["string"], id="nested-str"),
             pytest.param({"key": "string"}, id="dict-with-string"),
+            pytest.param([b"bytes"], id="nested-bytes"),
+            pytest.param({"key": b"bytes"}, id="dict-with-bytes"),
         ],
     )
     def test_nonnumeric_okay_if_equal(self, x):

@@ -1,12 +1,19 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
 import os
 import sys
+from typing import cast
 from unittest import mock
 
+from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import RegisteredMarker
+from _pytest.config import UsageError
+from _pytest.mark import _validate_marker_names
 from _pytest.mark import MarkGenerator
+from _pytest.mark.expression import Expression
 from _pytest.mark.structures import _EmptyParameterSetMark
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
 from _pytest.nodes import Collector
@@ -217,6 +224,114 @@ def test_strict_prohibits_unregistered_markers(pytester: Pytester, option: str) 
     result.stdout.fnmatch_lines(
         ["'unregisteredmark' not found in `markers` configuration option"]
     )
+
+
+class TestValidateMarkerNames:
+    """Tests for _validate_marker_names (issue #2781)."""
+
+    class FakeConfig:
+        def __init__(
+            self,
+            markers: list[str],
+            strict_markers: bool | None = None,
+            strict: bool = False,
+        ) -> None:
+            self._ini: dict[str, list[str] | bool | None] = {
+                "markers": markers,
+                "strict_markers": strict_markers,
+                "strict": strict,
+            }
+
+        def getini(self, name: str) -> list[str] | bool | None:
+            return self._ini[name]
+
+        def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
+            yield from Config._iter_registered_markers(cast(Config, self))
+
+    def _make_config(
+        self,
+        strict_markers: bool | None = None,
+        strict: bool = False,
+    ) -> Config:
+        return cast(
+            Config,
+            self.FakeConfig(
+                markers=["registered: a registered marker"],
+                strict_markers=strict_markers,
+                strict=strict,
+            ),
+        )
+
+    def test_unknown_marker_with_strict_markers(self) -> None:
+        expr = Expression.compile("unknown_marker")
+
+        with pytest.raises(UsageError, match=r"Unknown marker.*unknown_marker"):
+            _validate_marker_names(expr, self._make_config(strict_markers=True))
+
+    def test_unknown_marker_with_strict(self) -> None:
+        expr = Expression.compile("unknown_marker")
+
+        with pytest.raises(UsageError, match=r"Unknown marker.*unknown_marker"):
+            _validate_marker_names(expr, self._make_config(strict=True))
+
+    def test_registered_marker_passes(self) -> None:
+        expr = Expression.compile("registered")
+
+        _validate_marker_names(expr, self._make_config(strict_markers=True))
+
+    def test_no_validation_without_strict(self) -> None:
+        expr = Expression.compile("any_marker")
+
+        _validate_marker_names(expr, self._make_config())
+
+
+@pytest.fixture
+def markexpr_pytester(pytester: Pytester) -> Pytester:
+    pytester.makeini(
+        """
+        [pytest]
+        markers =
+            registered: a registered marker
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.registered
+        def test_registered():
+            pass
+
+        def test_plain():
+            pass
+        """
+    )
+    return pytester
+
+
+@pytest.mark.parametrize("option", ["--strict-markers", "--strict"])
+def test_strict_prohibits_unregistered_markers_in_markexpr(
+    markexpr_pytester: Pytester, option: str
+) -> None:
+    result = markexpr_pytester.runpytest(option, "-m", "registered or unregisteredmark")
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        ["*Unknown marker(s) in '-m' expression: unregisteredmark*"]
+    )
+
+
+def test_strict_allows_registered_markers_in_markexpr(
+    markexpr_pytester: Pytester,
+) -> None:
+    result = markexpr_pytester.runpytest("--strict-markers", "-m", "registered")
+    result.assert_outcomes(passed=1, deselected=1)
+
+
+def test_unregistered_markers_in_markexpr_allowed_without_strict(
+    markexpr_pytester: Pytester,
+) -> None:
+    result = markexpr_pytester.runpytest("-m", "unregisteredmark")
+    result.assert_outcomes(deselected=2)
 
 
 @pytest.mark.parametrize(
@@ -656,6 +771,18 @@ class TestFunctional:
         assert has_own_marker.kwargs == {"location": "function"}
         assert has_inherited_marker.kwargs == {"location": "class"}
         assert has_own.get_closest_marker("missing") is None
+
+    def test_mark_closest_default_mark_decorator(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_without_mark():
+                pass
+        """
+        )
+        items, _rec = pytester.inline_genitems(p)
+        (item,) = items
+        default = pytest.mark.foo(location="default")
+        assert item.get_closest_marker("foo", default) is default.mark
 
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(

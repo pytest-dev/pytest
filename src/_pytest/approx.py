@@ -260,7 +260,7 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         __tracebackhide__ = True
 
         for key, value in expected.items():
-            if isinstance(value, type(expected)):
+            if _is_nested_container(value):
                 msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
                 raise TypeError(msg.format(key, value, pprint.pformat(expected)))
 
@@ -341,7 +341,7 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
-        for k in self.expected.keys():
+        for k in self.expected:
             yield actual[k], self.expected[k]
 
 
@@ -358,7 +358,7 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         __tracebackhide__ = True
 
         for index, x in enumerate(expected):
-            if isinstance(x, type(expected)):
+            if _is_nested_container(x):
                 msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
                 raise TypeError(msg.format(x, index, pprint.pformat(expected)))
 
@@ -976,6 +976,17 @@ def _is_sequence_like(expected: object) -> TypeGuard[Sequence[Any]]:
         hasattr(expected, "__getitem__")
         and isinstance(expected, Sized)
         and not isinstance(expected, str | bytes)
+    )
+
+
+def _is_nested_container(value: object) -> bool:
+    """Whether ``value`` is a container ``approx`` cannot descend into.
+
+    ``str``, ``bytes`` and ``bytearray`` are collections as well, but they
+    compare exactly and are handled as leaves, so they are not nesting.
+    """
+    return isinstance(value, Collection) and not isinstance(
+        value, str | bytes | bytearray
     )
 
 

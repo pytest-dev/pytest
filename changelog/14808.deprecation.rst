@@ -1,0 +1,1 @@
+Passing a non-string value to a ``string``-typed ini option now emits a ``pytest.PytestRemovedIn10Warning``. This affects ``[tool.pytest.ini_options]`` in ``pyproject.toml``, where TOML arrays are kept as lists by ``make_scalar`` instead of being converted to strings. In pytest 10 this will raise a ``TypeError``, matching the behavior of the corresponding TOML config path.

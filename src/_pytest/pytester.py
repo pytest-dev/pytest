@@ -563,6 +563,9 @@ class RunResult:
             ======= 1 failed, 1 passed, 1 warning, 1 error in 0.13s ====
 
         Will return ``{"failed": 1, "passed": 1, "warnings": 1, "errors": 1}``.
+
+        This method parses pytest's standard terminal summary. Plugins that
+        modify or remove that summary can make the outcomes unavailable.
         """
         return self.parse_summary_nouns(self.outlines)
 
@@ -582,7 +585,13 @@ class RunResult:
                 ret = {noun: int(count) for (count, noun) in outcomes}
                 break
         else:
-            raise ValueError("Pytest terminal summary report not found")
+            raise ValueError(
+                "Pytest terminal summary report not found. "
+                "Plugins that modify pytest's terminal output can break outcome "
+                "parsing. Disable the plugin for the test run, for example with "
+                "`-p no:<plugin>`, or disable plugin autoloading with "
+                "`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`."
+            )
 
         to_plural = {
             "warning": "warnings",
@@ -606,6 +615,9 @@ class RunResult:
         numbers (0 means it didn't occur) in the text output from a test run.
 
         ``warnings`` and ``deselected`` are only checked if not None.
+
+        This method requires pytest's standard terminal summary; see
+        :meth:`parseoutcomes`.
         """
         __tracebackhide__ = True
         from _pytest.pytester_assertions import assert_outcomes

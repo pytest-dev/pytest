@@ -160,6 +160,20 @@ class Cache:
         self._ensure_cache_dir_and_supporting_files()
         path.mkdir(exist_ok=True, parents=True)
 
+    @staticmethod
+    def _join_within(base: Path, name: str) -> Path:
+        """Join ``name`` onto ``base``, keeping the result inside ``base``.
+
+        ``joinpath()`` lets an absolute or drive-qualified ``name`` replace
+        ``base`` outright, and keeps ``..`` segments verbatim. Normalizing
+        lexically and re-checking containment rejects both, while still
+        allowing a ``..`` that cancels out within ``base``.
+        """
+        path = Path(os.path.normpath(base.joinpath(name)))
+        if not path.is_relative_to(base):
+            raise ValueError(f"{name!r} is not allowed to escape the cache directory")
+        return path
+
     def mkdir(self, name: str) -> Path:
         """Return a directory path object with the given name.
 
@@ -174,15 +188,14 @@ class Cache:
             Make sure the name contains your plugin or application
             identifiers to prevent clashes with other cache users.
         """
-        path = Path(name)
-        if len(path.parts) > 1:
+        if len(Path(name).parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
-        res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
+        res = self._join_within(self._cachedir / self._CACHE_PREFIX_DIRS, name)
         self._mkdir(res)
         return res
 
     def _getvaluepath(self, key: str) -> Path:
-        return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
+        return self._join_within(self._cachedir / self._CACHE_PREFIX_VALUES, key)
 
     def get(self, key: str, default):
         """Return the cached value for the given key.
@@ -191,7 +204,8 @@ class Cache:
         default is returned.
 
         :param key:
-            Must be a ``/`` separated value. Usually the first
+            Must be a ``/`` separated value that does not resolve outside
+            the cache directory. Usually the first
             name is the name of your plugin or your application.
         :param default:
             The value to return in case of a cache-miss or invalid cache value.
@@ -207,7 +221,8 @@ class Cache:
         """Save value for the given key.
 
         :param key:
-            Must be a ``/`` separated value. Usually the first
+            Must be a ``/`` separated value that does not resolve outside
+            the cache directory. Usually the first
             name is the name of your plugin or your application.
         :param value:
             Must be of any combination of basic python types,
@@ -613,11 +628,20 @@ def cacheshow(config: Config, session: Session) -> int:
     if glob is None:
         glob = "*"
 
+    def globfiles(base: Path) -> Iterable[Path]:
+        """Glob for files under `base`, discarding matches that escape it.
+
+        A glob may contain `..` segments, which `rglob()` happily follows.
+        """
+        for x in base.rglob(glob):
+            if x.is_file() and Path(os.path.normpath(x)).is_relative_to(base):
+                yield x
+
     dummy = object()
     basedir = config.cache._cachedir
     vdir = basedir / Cache._CACHE_PREFIX_VALUES
     tw.sep("-", f"cache values for {glob!r}")
-    for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
+    for valpath in sorted(globfiles(vdir)):
         key = str(valpath.relative_to(vdir))
         val = config.cache.get(key, dummy)
         if val is dummy:
@@ -629,12 +653,8 @@ def cacheshow(config: Config, session: Session) -> int:
 
     ddir = basedir / Cache._CACHE_PREFIX_DIRS
     if ddir.is_dir():
-        contents = sorted(ddir.rglob(glob))
         tw.sep("-", f"cache directories for {glob!r}")
-        for p in contents:
-            # if p.is_dir():
-            #    print("%s/" % p.relative_to(basedir))
-            if p.is_file():
-                key = str(p.relative_to(basedir))
-                tw.line(f"{key} is a file of length {p.stat().st_size}")
+        for p in sorted(globfiles(ddir)):
+            key = str(p.relative_to(basedir))
+            tw.line(f"{key} is a file of length {p.stat().st_size}")
     return 0

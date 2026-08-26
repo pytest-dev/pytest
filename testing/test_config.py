@@ -777,6 +777,69 @@ class TestConfigCmdlineParsing:
         config = pytester.parseconfig("--config-file", "custom.toml")
         assert config.getini("custom") == "1"
 
+        # A custom TOML file also reads [pytest], the table pytest's own
+        # configuration files use (#14705).
+        pytester.makefile(
+            ".toml",
+            custom_pytest_table="""
+                [pytest]
+                custom = "1"
+                value = [
+                ]  # this is here on purpose, as it makes this an invalid '.ini' file
+            """,
+        )
+        config = pytester.parseconfig("-c", "custom_pytest_table.toml")
+        assert config.getini("custom") == "1"
+        config = pytester.parseconfig("--config-file", "custom_pytest_table.toml")
+        assert config.getini("custom") == "1"
+
+    @pytest.mark.parametrize(
+        "name", ["missing.ini", "missing.in", "missing.toml", "missing"]
+    )
+    def test_explicitly_specified_config_file_missing(
+        self, pytester: Pytester, name: str
+    ) -> None:
+        """A nonexistent -c path is a UsageError, whatever its extension (#14716).
+
+        Previously this either silently proceeded with an empty configuration
+        (unrecognized extension) or crashed with a raw FileNotFoundError
+        traceback (recognized extension).
+        """
+        with pytest.raises(UsageError, match=r"Config file .* not found"):
+            pytester.parseconfig("-c", name)
+
+    def test_explicitly_specified_config_file_unsupported_format(
+        self, pytester: Pytester
+    ) -> None:
+        """An existing -c path with an unsupported extension is a UsageError (#14716)."""
+        pytester.makefile(".in", config="[pytest]\naddopts = -v\n")
+        with pytest.raises(UsageError, match="unsupported format"):
+            pytester.parseconfig("-c", "config.in")
+
+    def test_explicitly_specified_config_file_is_a_directory(
+        self, pytester: Pytester
+    ) -> None:
+        """A directory passed to -c is a UsageError rather than a confusing no-op."""
+        pytester.mkdir("somedir")
+        with pytest.raises(UsageError, match="is a directory"):
+            pytester.parseconfig("-c", "somedir")
+
+    @pytest.mark.skipif(
+        sys.platform.startswith("win32"), reason="requires a POSIX null device"
+    )
+    def test_explicitly_specified_config_file_not_a_regular_file(
+        self, pytester: Pytester
+    ) -> None:
+        """``--config-file=/dev/null`` loads no config and does not set rootdir to /dev.
+
+        Deriving the rootdir from a character device made the cache plugin try to
+        write to ``/dev/.pytest_cache`` (#11502).
+        """
+        pytester.makepyfile(test_it="def test(): pass")
+        config = pytester.parseconfig("--config-file", os.devnull, str(pytester.path))
+        assert config.rootpath == pytester.path
+        assert config.inipath == Path(os.devnull)
+
     def test_absolute_win32_path(self, pytester: Pytester) -> None:
         temp_ini_file = pytester.makeini("[pytest]")
         from os.path import normpath
@@ -1088,6 +1151,30 @@ class TestConfigAPI:
             UsageError, match="Expected a float string for option ini_param"
         ):
             _ = config.getini("ini_param")
+
+    def test_addini_string_non_str_deprecated(self, pytester: Pytester) -> None:
+        """Passing a non-string value to a 'string'-typed ini option emits a
+        deprecation warning. The value is still returned as-is for now, but will
+        raise TypeError in pytest 10."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("myname", "", type="string")
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            myname = ["value1", "value2"]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.warns(
+            pytest.PytestRemovedIn10Warning,
+            match="Passing a value that is not a string to a 'string'-typed ini option",
+        ):
+            result = config.getini("myname")
+        assert result == ["value1", "value2"]
 
     UNION_CONFTEST = """
         def pytest_addoption(parser):
@@ -2281,6 +2368,39 @@ class TestRootdir:
         assert rootpath == tmp_path
         assert found_inipath == inipath
 
+    @pytest.mark.skipif(
+        sys.platform.startswith("win32"), reason="requires a POSIX null device"
+    )
+    def test_non_regular_config_file_with_unrelated_args(self, tmp_path: Path) -> None:
+        """A non-regular config file plus rootless args falls back to the invocation dir."""
+        rootpath, *_ = determine_setup(
+            inifile=os.devnull,
+            override_ini=None,
+            args=[tmp_path.anchor],
+            rootdir_cmd_arg=None,
+            invocation_dir=tmp_path,
+        )
+        assert rootpath == tmp_path
+
+    @pytest.mark.skipif(
+        sys.platform.startswith("win32"), reason="requires a POSIX null device"
+    )
+    def test_non_regular_config_file_honours_explicit_rootdir(
+        self, tmp_path: Path
+    ) -> None:
+        """``--rootdir`` still wins when the config file is not a regular file."""
+        explicit = tmp_path / "explicit"
+        explicit.mkdir()
+
+        rootpath, *_ = determine_setup(
+            inifile=os.devnull,
+            override_ini=None,
+            args=[str(tmp_path)],
+            rootdir_cmd_arg=str(explicit),
+            invocation_dir=tmp_path,
+        )
+        assert rootpath == explicit
+
     def test_with_arg_outside_cwd_without_inifile(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
@@ -2371,7 +2491,7 @@ class TestRootdir:
 
 
 class TestOverrideIniArgs:
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    @pytest.mark.parametrize("name", ["setup.cfg", "tox.ini", "pytest.ini"])
     def test_override_ini_names(self, pytester: Pytester, name: str) -> None:
         section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"
         pytester.path.joinpath(name).write_text(
