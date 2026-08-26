@@ -1277,6 +1277,73 @@ class TestEvaluationOrder:
                 return "passed", None
             """)
 
+    def test_chained_compare_skipped_boolop_operand(self) -> None:
+        """A boolop in a skipped link builds its explanation in that link."""
+        assert_evaluation_order("""
+            def check():
+                a = b = 0
+                try:
+                    assert 1 < 0 < (a or b)
+                except AssertionError:
+                    return "raised", None
+                return "passed", None
+            """)
+
+    def test_chained_compare_skipped_operand_reads_no_name(self) -> None:
+        """Nor may it read the names that operand would have read."""
+        assert_evaluation_order("""
+            def check():
+                try:
+                    assert 1 < 0 < (missing or 0)
+                except AssertionError:
+                    return "raised", None
+                return "passed", None
+            """)
+
+    def test_chained_compare_skipped_walrus_stays_unbound(self) -> None:
+        """A skipped walrus assigns nothing -- the explanation may not either."""
+        assert_evaluation_order("""
+            def check():
+                try:
+                    assert 1 < 0 < (w := 1)
+                except AssertionError:
+                    return "raised", "w" in locals()
+                return "passed", "w" in locals()
+            """)
+
+    def test_chained_compare_skipped_walrus_inside_call(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                try:
+                    assert 1 < 0 < identity(w := 1)
+                except AssertionError:
+                    return "raised", "w" in locals()
+                return "passed", "w" in locals()
+            """)
+
+    def test_chained_compare_reports_the_link_that_failed(self) -> None:
+        """The skipped link contributes nothing to the message either."""
+        assert_introspects(
+            """
+            def check():
+                a = b = 0
+                assert 1 < 0 < (a or b)
+            """,
+            must_contain=["assert 1 < 0"],
+            must_not_contain=["None"],
+        )
+
+    def test_chained_compare_reports_a_taken_walrus_link(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                assert 0 < 1 < (w := 5) < 2
+            """,
+            must_contain=["5"],
+        )
+
     def test_method_lookup_precedes_arguments(self) -> None:
         """Guard: the bound method is looked up before the arguments run."""
         assert_evaluation_order("""
