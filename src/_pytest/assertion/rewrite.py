@@ -545,6 +545,25 @@ def _can_rebind(nodes: Iterable[ast.expr]) -> bool:
     )
 
 
+def _rewriter_temporaries(nodes: Iterable[ast.AST]) -> list[str]:
+    """Return the names the rewriter binds inside *nodes*, in creation order.
+
+    Only its own: a walrus target inside a conditional block belongs to the
+    user, and Python leaves it unbound when the block does not run.  Binding it
+    to None to make it readable would be visible after the assertion.
+    """
+    names: dict[str, None] = {}
+    for node in nodes:
+        for sub in ast.walk(node):
+            if (
+                isinstance(sub, ast.Name)
+                and isinstance(sub.ctx, ast.Store)
+                and sub.id.startswith("@py")
+            ):
+                names[sub.id] = None
+    return list(names)
+
+
 @functools.lru_cache(maxsize=1)
 def _get_assertion_exprs(src: bytes) -> dict[int, str]:
     """Return a mapping from {lineno: "assertion test expression"}."""
@@ -951,7 +970,20 @@ class AssertionRewriter(ast.NodeVisitor):
         target_id = name.target.id
         target_name = ast.Name(target_id, ast.Load())
         inlocs = ast.Compare(ast.Constant(target_id), [ast.In()], [locs])
-        dorepr = self.helper("_should_repr_global_name", target_name)
+        # Unlike visit_Name, the target need not be bound when this runs: the
+        # walrus may sit in a branch that short-circuited away, and then the
+        # explanation is formatted for an assignment that never happened.
+        # Reading it to decide how to show it would raise instead -- so ask
+        # whether it exists as a global before passing it to a helper.
+        inglobals = ast.Compare(
+            ast.Constant(target_id),
+            [ast.In()],
+            [ast.Call(self.builtin("globals"), [], [])],
+        )
+        dorepr = ast.BoolOp(
+            ast.And(),
+            [inglobals, self.helper("_should_repr_global_name", target_name)],
+        )
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
         expr = ast.IfExp(test, self.display(target_name), ast.Constant(target_id))
         return name, self.explanation_param(expr)
@@ -1183,20 +1215,32 @@ class AssertionRewriter(ast.NodeVisitor):
         results = [left_res]
         # A chain short-circuits: ``a < b < c`` leaves c unevaluated when a < b
         # is false.  Everything past the first link therefore goes inside an
-        # ``if`` on the link before it, and the temporaries it would have
-        # produced are set to None up front -- the failure path builds a tuple
-        # of all of them, and the ones that never ran must still be readable.
-        # None is also falsey, so _call_reprcompare still stops at the link
-        # that actually failed.
+        # ``if`` on the link before it -- both what evaluates the link and what
+        # explains it, because the explanation reads what the evaluation bound.
+        # The temporaries a skipped link would have produced are set to None up
+        # front, so the failure path can still read them: it builds a tuple of
+        # every link's result, and formats every link's explanation.  None is
+        # also falsey, so _call_reprcompare still stops at the link that
+        # actually failed, and the entries behind it are never rendered.
         body = self.statements
-        deferred_at = deferred_from = None
+        fail_save = self.expl_stmts
+        deferred_at = None
+        deferred_stmt_ifs: list[ast.If] = []
+        deferred_expl_ifs: list[tuple[list[ast.stmt], ast.If]] = []
         for i, op, next_operand in it:
             if i:
                 if deferred_at is None:
-                    deferred_at, deferred_from = len(body), len(self.variables)
+                    deferred_at = len(body)
                 inner: list[ast.stmt] = []
-                self.statements.append(ast.If(load_names[i - 1], inner, []))
+                stmt_if = ast.If(load_names[i - 1], inner, [])
+                deferred_stmt_ifs.append(stmt_if)
+                self.statements.append(stmt_if)
                 self.statements = inner
+                fail_inner: list[ast.stmt] = []
+                deferred_expl_ifs.append(
+                    (self.expl_stmts, ast.If(load_names[i - 1], fail_inner, []))
+                )
+                self.expl_stmts = fail_inner
             next_res, next_expl = self.visit_operand(
                 next_operand, comp.comparators[i + 1 :]
             )
@@ -1213,9 +1257,24 @@ class AssertionRewriter(ast.NodeVisitor):
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
         self.statements = body
+        self.expl_stmts = fail_save
+        # Attach the explanation guards innermost first, dropping the ones that
+        # stayed empty -- most links explain themselves in the format context
+        # alone and contribute no statements, and an ``if`` with an empty body
+        # is not valid syntax.  Attaching a child fills its parent, so the
+        # parent is only known to be empty once the child has been placed.
+        for parent, fail_if in reversed(deferred_expl_ifs):
+            if fail_if.body:
+                parent.append(fail_if)
         if deferred_at is not None:
-            assert deferred_from is not None
-            deferred = [*res_variables[1:], *self.variables[deferred_from:]]
+            deferred = dict.fromkeys(
+                [
+                    *res_variables[1:],
+                    *_rewriter_temporaries(
+                        [*deferred_stmt_ifs, *(f for _, f in deferred_expl_ifs)]
+                    ),
+                ]
+            )
             body.insert(
                 deferred_at,
                 ast.Assign(
