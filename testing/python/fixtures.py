@@ -1950,6 +1950,53 @@ class TestFixtureManagerParseFactories:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_register_sibling_fixtures_avoids_quadratic_comparisons(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+            import _pytest.fixtures
+
+            @pytest.hookimpl(wrapper=True)
+            def pytest_collection():
+                original = _pytest.fixtures.is_visibility_more_specific
+                comparisons = 0
+
+                def counted(candidate, other):
+                    nonlocal comparisons
+                    comparisons += 1
+                    return original(candidate, other)
+
+                _pytest.fixtures.is_visibility_more_specific = counted
+                try:
+                    result = yield
+                finally:
+                    _pytest.fixtures.is_visibility_more_specific = original
+
+                # Sibling class fixtures cannot override one another. Their
+                # registration should not compare every pair (#14942).
+                assert comparisons < 40
+                return result
+            """
+        )
+        classes = "\n".join(
+            f"""class Test{i}:
+    @pytest.fixture
+    def shared(self):
+        return {i}
+
+    def test_shared(self, shared):
+        assert shared == {i}
+"""
+            for i in range(40)
+        )
+        pytester.makepyfile(f"import pytest\n{classes}")
+
+        result = pytester.runpytest()
+
+        result.assert_outcomes(passed=40)
+
     def test_parsefactories_relative_node_ids(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:

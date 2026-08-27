@@ -1,0 +1,2 @@
+Fixed quadratic fixture-registration behavior when many unrelated collection
+nodes define fixtures with the same name.

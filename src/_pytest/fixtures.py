@@ -1792,6 +1792,17 @@ class FixtureManager:
         # TODO: The order of the FixtureDefs list of each arg is significant,
         #       explain.
         self._arg2fixturedefs: Final[dict[str, list[FixtureDef[Any]]]] = {}
+        # Maps a fixture name to nodes which are strict ancestors of at least
+        # one node where a fixture with that name is registered. This lets the
+        # overwhelmingly common case (fixtures on unrelated sibling nodes) be
+        # appended without scanning the entire override chain.
+        self._arg2fixturedefs_ancestor_nodes: Final[dict[str, set[nodes.Node]]] = (
+            defaultdict(set)
+        )
+        # Fixture definitions using the deprecated string-nodeid API cannot
+        # participate in the node index above, so names containing one retain
+        # the complete comparison path.
+        self._arg2fixturedefs_with_legacy_visibility: Final[set[str]] = set()
         # A mapping from a node to a list of autouse fixture names it defines.
         # The Session entry holds global usefixtures from config.
         self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
@@ -2107,12 +2118,27 @@ class FixtureManager:
         # cannot be visible together.
         # The idea is that a fixture that is defined closer to the item should
         # take precedence.
-        for i, existing in enumerate(faclist):
-            if is_visibility_more_specific(existing, fixture_def):
-                faclist.insert(i, fixture_def)
-                break
-        else:
+        ancestor_nodes = self._arg2fixturedefs_ancestor_nodes[name]
+        if (
+            fixture_def.node is not None
+            and name not in self._arg2fixturedefs_with_legacy_visibility
+            and fixture_def.node not in ancestor_nodes
+        ):
             faclist.append(fixture_def)
+        else:
+            for i, existing in enumerate(faclist):
+                if is_visibility_more_specific(existing, fixture_def):
+                    faclist.insert(i, fixture_def)
+                    break
+            else:
+                faclist.append(fixture_def)
+
+        if fixture_def.node is not None:
+            parents = fixture_def.node.iter_parents()
+            next(parents)  # The fixture's own node is not a strict ancestor.
+            ancestor_nodes.update(parents)
+        else:
+            self._arg2fixturedefs_with_legacy_visibility.add(name)
         if autouse:
             if node is not NOTSET:
                 self._node_autousenames.setdefault(node, []).append(name)
