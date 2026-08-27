@@ -1373,6 +1373,18 @@ class TestAssertionRewriteHookDetails:
 
         assert hook.get_code("unknown_module") is None
 
+    def test_get_code_unloaded_module(
+        self, pytestconfig, monkeypatch, tmp_path: Path
+    ) -> None:
+        """The loader can rewrite a resolvable module it has not executed yet."""
+        source = tmp_path / "test_unloaded.py"
+        source.write_text("assert True\n", encoding="utf-8")
+        hook = AssertionRewritingHook(pytestconfig)
+        spec = importlib.util.spec_from_file_location("test_unloaded", source)
+        monkeypatch.setattr(hook, "_find_spec", lambda name: spec)
+
+        assert hook.get_code("test_unloaded") is not None
+
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion import AssertionState
         from _pytest.assertion.rewrite import _write_pyc
