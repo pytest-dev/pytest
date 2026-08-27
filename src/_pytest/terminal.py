@@ -1233,8 +1233,13 @@ class TerminalReporter:
                         self._outrep_summary(rep)
                         self.write_line(line)
                 else:
+                    headline_counts = Counter(
+                        self._getfailureheadline(rep) for rep in reports
+                    )
                     for rep in reports:
                         msg = self._getfailureheadline(rep)
+                        if headline_counts[msg] > 1:
+                            msg = self.config.cwd_relative_nodeid(rep.nodeid) or msg
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
                         self._handle_teardown_sections(rep.nodeid)
@@ -1245,8 +1250,13 @@ class TerminalReporter:
             if not reports:
                 return
             self.write_sep("=", "ERRORS")
-            for rep in self.stats["error"]:
+            headline_counts = Counter(
+                (rep.when, self._getfailureheadline(rep)) for rep in reports
+            )
+            for rep in reports:
                 msg = self._getfailureheadline(rep)
+                if headline_counts[rep.when, msg] > 1:
+                    msg = self.config.cwd_relative_nodeid(rep.nodeid) or msg
                 if rep.when == "collect":
                     msg = "ERROR collecting " + msg
                 else:

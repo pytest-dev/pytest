@@ -1,0 +1,2 @@
+Disambiguated terminal report headings for tests with the same name by including
+their node IDs when needed.
