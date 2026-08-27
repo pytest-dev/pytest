@@ -152,6 +152,23 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
         self._rewritten_names[module.__name__] = fn
 
+        co = self._get_rewritten_code(fn, state)
+        exec(co, module.__dict__)
+
+    def get_code(self, name: str) -> types.CodeType | None:
+        """Return the rewritten code object for *name*, if it can be found.
+
+        This implements the optional ``get_code`` loader API, which is used by
+        :func:`runpy.run_module` among others, so that a test module can re-run
+        itself via ``runpy`` (see :issue:`9007`).
+        """
+        state = self.config.stash[assertstate_key]
+        spec = self._find_spec(name)
+        if spec is None or spec.origin is None:
+            return None
+        return self._get_rewritten_code(Path(spec.origin), state)
+
+    def _get_rewritten_code(self, fn: Path, state: AssertionState) -> types.CodeType:
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
         # asserts, and load the rewritten source. We also cache the rewritten
@@ -184,7 +201,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
                     self._writing_pyc = False
         else:
             state.trace(f"found cached rewritten pyc for {fn}")
-        exec(co, module.__dict__)
+        return co
 
     def _early_rewrite_bailout(self, name: str, state: AssertionState) -> bool:
         """A fast way to get out of rewriting modules.

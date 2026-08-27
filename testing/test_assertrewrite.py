@@ -1318,6 +1318,18 @@ class TestAssertionRewriteHookDetails:
         )
         assert pytester.runpytest().ret == 0
 
+    def test_runpy_run_module(self, pytester: Pytester) -> None:
+        """See #9007: re-running a test module with ``runpy`` should not crash."""
+        pytester.makepyfile(
+            test_runpy="""
+                import runpy
+
+                def test_run_module():
+                    runpy.run_module("test_runpy")
+            """
+        )
+        pytester.runpytest().assert_outcomes(passed=1)
+
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion import AssertionState
         from _pytest.assertion.rewrite import _write_pyc
