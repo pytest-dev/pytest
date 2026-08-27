@@ -1,0 +1,6 @@
+``pygments`` is no longer imported when the ``_pytest._io.TerminalWriter``
+module is loaded. It is now imported lazily, only when source code is actually
+syntax-highlighted (e.g. when rendering a traceback with color output enabled).
+This avoids importing the relatively heavy ``pygments`` package on runs that
+don't need it (notably runs without markup, such as most CI executions),
+slightly reducing pytest's startup time.

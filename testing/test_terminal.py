@@ -2909,6 +2909,29 @@ class TestCodeHighlight:
         )
 
 
+def test_terminalwriter_import_does_not_import_pygments() -> None:
+    """Importing the module must not eagerly import pygments.
+
+    pygments is imported lazily only when source is actually highlighted,
+    so pytest startup (including runs without markup) should not pay the
+    cost of importing it.
+    """
+    import subprocess
+
+    code = (
+        "import sys; "
+        "import _pytest._io.terminalwriter; "
+        "print('pygments' in sys.modules)"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert result.stdout.strip() == "False"
+
+
 def test_raw_skip_reason_skipped() -> None:
     report = SimpleNamespace()
     report.skipped = True
