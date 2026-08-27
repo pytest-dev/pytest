@@ -29,7 +29,7 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 
 
 # This could have been removed pytest 8, but it's harmless and common, so no rush to remove.
-YIELD_FIXTURE = PytestDeprecationWarning(
+YIELD_FIXTURE = PytestRemovedIn10Warning(
     "@pytest.yield_fixture is deprecated.\n"
     "Use @pytest.fixture instead; they are the same."
 )
@@ -94,6 +94,14 @@ PASTEBIN = PytestRemovedIn10Warning(
     "The --pastebin option is deprecated. "
     "The functionality is now available in an external plugin package, pytest-pastebin.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#the-pastebin-option"
+)
+
+INI_STRING_TYPE_NON_STR_VALUE = PytestRemovedIn10Warning(
+    "Passing a value that is not a string to a 'string'-typed ini option is deprecated.\n"
+    "In a future version this will raise a TypeError, matching the behavior of the "
+    "corresponding TOML config path.\n"
+    "If your plugin intentionally accepts non-string values, declare an explicit type "
+    '(e.g. type="args") instead of relying on the implicit string default.'
 )
 
 # You want to make some `__init__` or function "private".

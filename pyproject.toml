@@ -146,7 +146,6 @@ lint.ignore = [
     "BLE001", # Do not catch blind exception
     # flake8-comprehensions ignore
     "C408", # Unnecessary `dict()`/`list()`/`tuple()` call (rewrite as a literal)
-    "C409", # Unnecessary list literal passed to `tuple()` (rewrite as a tuple literal)
     # pydocstyle ignore
     "D100", # Missing docstring in public module
     "D101", # Missing docstring in public class
@@ -169,19 +168,12 @@ lint.ignore = [
     # pytest can do weird low-level things, and we usually know
     # what we're doing when we use type(..) is ...
     "E721", # Do not compare types, use `isinstance()`
-    # flake8-future-annotations ignore
-    "FA102", # Missing `from __future__ import annotations`, but uses PEP 585/604 syntax
     # flynt ignore
     "FLY002", # Consider an f-string instead of string join
     # flake8-implicit-str-concat ignore
     "ISC004", # Unparenthesized implicit string concatenation in collection
     # flake8-logging ignore
-    "LOG009", # Use of undocumented `logging.WARN` constant
     "LOG015", # Call on root logger
-    # pep8-naming ignore
-    "N999", # Invalid module name
-    # pygrep-hooks ignore
-    "PGH005", # Mock method should be called
     # pylint ignore
     "PLC0105", # `TypeVar` name "E" does not reflect its covariance;
     "PLC0414", # Import alias does not rename original package
@@ -207,14 +199,12 @@ lint.ignore = [
     "PT031", # `pytest.warns()` block should contain a single simple statement
     # flake8-use-pathlib ignore
     "PTH124", # `py.path` is in maintenance mode, use `pathlib` instead
-    "PTH210", # Invalid suffix passed to `.with_suffix()`
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF061", # Use context-manager form of `pytest.raises()`
     # flake8-bandit ignore
     "S102", # Use of `exec` detected
     "S110", # `try`-`except`-`pass` detected, consider logging the exception
-    "S112", # `try`-`except`-`continue` detected, consider logging the exception
     # flake8-simplify ignore
     "SIM102", # Use a single `if` statement instead of nested `if` statements
     "SIM103", # Return the condition directly
@@ -222,10 +212,7 @@ lint.ignore = [
     "SIM115", # Use a context manager for opening files
     "SIM117", # Use a single `with` statement with multiple contexts instead of nested `with` statements
     "SIM201", # Use `!=` instead of `not ... == ...`
-    "SIM202", # Use `==` instead of `not ... != ...`
     "SIM211", # Use `not ...` instead of `False if ... else True`
-    "SIM222", # Use the simplified expression instead of `... or True`
-    "SIM223", # Use the simplified expression instead of `... and False`
     # tryceratops ignore
     "TRY002", # Create your own exception
     "TRY004", # Prefer `TypeError` exception for invalid type
