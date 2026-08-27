@@ -163,10 +163,13 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         itself via ``runpy`` (see :issue:`9007`).
         """
         state = self.config.stash[assertstate_key]
-        spec = self._find_spec(name)
-        if spec is None or spec.origin is None:
-            return None
-        return self._get_rewritten_code(Path(spec.origin), state)
+        fn = self._rewritten_names.get(name)
+        if fn is None:
+            spec = self._find_spec(name)
+            if spec is None or spec.origin is None:
+                return None
+            fn = Path(spec.origin)
+        return self._get_rewritten_code(fn, state)
 
     def _get_rewritten_code(self, fn: Path, state: AssertionState) -> types.CodeType:
         # The requested module looks like a test file, so rewrite it. This is

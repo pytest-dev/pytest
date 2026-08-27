@@ -1320,15 +1320,58 @@ class TestAssertionRewriteHookDetails:
 
     def test_runpy_run_module(self, pytester: Pytester) -> None:
         """See #9007: re-running a test module with ``runpy`` should not crash."""
-        pytester.makepyfile(
-            test_runpy="""
+        tests = pytester.mkpydir("tests")
+        tests.joinpath("test_runpy.py").write_text(
+            textwrap.dedent(
+                """
                 import runpy
+                import warnings
 
                 def test_run_module():
-                    runpy.run_module("test_runpy")
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        runpy.run_module("tests.test_runpy")
+                """
+            ),
+            encoding="utf-8",
+        )
+        pytester.runpytest("tests/test_runpy.py").assert_outcomes(passed=1)
+
+    def test_runpy_run_module_nested_session(self, pytester: Pytester) -> None:
+        """An outer rewrite hook remains usable while an inner session is active."""
+        pytester.makepyfile(
+            test_outer="""
+                import pytest
+                import textwrap
+
+                def test_nested_session(tmp_path):
+                    nested_test = tmp_path / "test_nested.py"
+                    nested_test.write_text(
+                        textwrap.dedent('''
+                        import runpy
+                        import sys
+
+                        from _pytest.assertion.rewrite import AssertionRewritingHook
+
+                        def test_inner():
+                            outer_loader = sys.modules["test_outer"].__spec__.loader
+                            assert isinstance(outer_loader, AssertionRewritingHook)
+                            assert outer_loader in sys.meta_path
+                            runpy.run_module("test_outer")
+                        '''),
+                        encoding="utf-8",
+                    )
+                    assert pytest.main([str(nested_test), "-q"]) == pytest.ExitCode.OK
             """
         )
         pytester.runpytest().assert_outcomes(passed=1)
+
+    def test_get_code_unknown_module(self, pytestconfig, monkeypatch) -> None:
+        """The loader reports no code when the requested module cannot be found."""
+        hook = AssertionRewritingHook(pytestconfig)
+        monkeypatch.setattr(hook, "_find_spec", lambda name: None)
+
+        assert hook.get_code("unknown_module") is None
 
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion import AssertionState
