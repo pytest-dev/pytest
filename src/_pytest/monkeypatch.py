@@ -244,6 +244,14 @@ class MonkeyPatch:
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, NOTSET)
+        else:
+            try:
+                target_vars = vars(target)
+            except TypeError:
+                pass
+            else:
+                if name not in target_vars:
+                    oldval = NOTSET
         setattr(target, name, value)
         self._setattr.append((target, name, oldval))
 

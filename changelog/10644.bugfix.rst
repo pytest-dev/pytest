@@ -1,0 +1,1 @@
+Fix :class:`pytest.MonkeyPatch` restoring inherited attributes into an instance's ``__dict__`` after undoing ``setattr`` on an object.

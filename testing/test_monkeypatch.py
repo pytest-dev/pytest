@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import inspect
 import os
 from pathlib import Path
 import re
@@ -49,6 +50,28 @@ def test_setattr() -> None:
 
     with pytest.raises(TypeError):
         monkeypatch.setattr(A, "y")  # type: ignore[call-overload]
+
+
+def test_setattr_inherited_attribute_undo_restores_instance_dict() -> None:
+    class Descriptor:
+        def __get__(self, obj, objtype=None):
+            return 1
+
+    class Parent:
+        x = 1
+        descriptor = Descriptor()
+
+    for name in ("x", "descriptor"):
+        target = Parent()
+        monkeypatch = MonkeyPatch()
+        assert name not in vars(target)
+        assert isinstance(inspect.getattr_static(target, "descriptor"), Descriptor)
+
+        monkeypatch.setattr(target, name, 2)
+        monkeypatch.undo()
+
+        assert name not in vars(target)
+        assert isinstance(inspect.getattr_static(target, "descriptor"), Descriptor)
 
 
 class TestSetattrWithImportPath:
