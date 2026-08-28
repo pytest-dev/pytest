@@ -161,6 +161,16 @@ def is_visibility_more_specific(
     )
 
 
+def _node_depth(node: nodes.Node) -> int:
+    """Return the distance of ``node`` from the root of the collection tree."""
+    depth = 0
+    parent = node.parent
+    while parent is not None:
+        depth += 1
+        parent = parent.parent
+    return depth
+
+
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
     """Get the closest parent node (including self) which matches the given
     scope.
@@ -1156,6 +1166,14 @@ class FixtureDef(Generic[FixtureValue]):
         #
         # Deprecated: replaced by ``node``.
         self.baseid: Final = node.nodeid if node is not NOTSET else (baseid or "")
+        # Precomputed key for visibility matching, see
+        # `FixtureManager._matchfactories`. `id()` of the node for node-based
+        # fixtures (nodes compare by identity, and `self.node` keeps the node --
+        # and hence its id -- alive), the baseid string for legacy ones. The two
+        # kinds can never compare equal, so a single set can hold both.
+        self._match_key: Final[int | str] = (
+            id(node) if node is not NOTSET else self.baseid
+        )
         # Whether the fixture was found from a node or a conftest in the
         # collection tree. Will be false for fixtures defined in non-conftest
         # plugins.
@@ -1792,6 +1810,11 @@ class FixtureManager:
         # TODO: The order of the FixtureDefs list of each arg is significant,
         #       explain.
         self._arg2fixturedefs: Final[dict[str, list[FixtureDef[Any]]]] = {}
+        # Maps a fixture name to the maximum collection-tree depth of the
+        # fixturedefs registered for it so far, or None if any of them has no
+        # node (legacy string baseid) and depths are therefore not conclusive.
+        # Used to skip the visibility scan in _register_fixture().
+        self._arg2maxdepth: Final[dict[str, int | None]] = {}
         # A mapping from a node to a list of autouse fixture names it defines.
         # The Session entry holds global usefixtures from config.
         self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
@@ -2107,12 +2130,29 @@ class FixtureManager:
         # cannot be visible together.
         # The idea is that a fixture that is defined closer to the item should
         # take precedence.
-        for i, existing in enumerate(faclist):
-            if is_visibility_more_specific(existing, fixture_def):
-                faclist.insert(i, fixture_def)
-                break
+        #
+        # Scanning `faclist` is O(len(faclist)) per registration, which becomes
+        # quadratic for a fixture name that is registered on very many nodes
+        # (e.g. a fixture inherited from a base class by thousands of test
+        # classes). An existing fixturedef can only be more specific than the
+        # new one if it is defined strictly deeper in the collection tree, so
+        # remember the deepest registration for this name and skip the scan
+        # when no existing fixturedef can possibly be deeper (#14942).
+        depth = _node_depth(fixture_def.node) if fixture_def.node is not None else None
+        max_depth = self._arg2maxdepth.get(name, 0)
+        if depth is None or max_depth is None or max_depth > depth:
+            for i, existing in enumerate(faclist):
+                if is_visibility_more_specific(existing, fixture_def):
+                    faclist.insert(i, fixture_def)
+                    break
+            else:
+                faclist.append(fixture_def)
         else:
+            # No existing fixturedef can be more specific, skip the scan.
             faclist.append(fixture_def)
+        self._arg2maxdepth[name] = (
+            None if depth is None or max_depth is None else max(max_depth, depth)
+        )
         if autouse:
             if node is not NOTSET:
                 self._node_autousenames.setdefault(node, []).append(name)
@@ -2361,17 +2401,18 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
     ) -> Iterator[FixtureDef[Any]]:
-        # Collect parent nodes and their IDs for matching
-        parent_nodes = set(node.iter_parents())
-        parentnodeids = {n.nodeid for n in parent_nodes}
+        # Match against the parent nodes by identity (`id()`) for node-based
+        # fixturedefs, and against their nodeids for legacy string-baseid ones.
+        # This loop runs once per fixturedef per lookup, so it is kept to a
+        # single set lookup per fixturedef -- in particular it avoids hashing
+        # `Node`s, whose `__hash__` is a Python-level function (#14942).
+        match_keys: set[int | str] = set()
+        for parent in node.iter_parents():
+            match_keys.add(id(parent))
+            match_keys.add(parent.nodeid)
 
         for fixturedef in fixturedefs:
-            if fixturedef.node is not None:
-                # Node-based matching: check if fixture's node is a parent
-                if fixturedef.node in parent_nodes:
-                    yield fixturedef
-            elif fixturedef.baseid in parentnodeids:
-                # Fallback to string-based matching for legacy/plugins
+            if fixturedef._match_key in match_keys:
                 yield fixturedef
 
 

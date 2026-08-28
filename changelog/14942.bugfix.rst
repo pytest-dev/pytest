@@ -1,0 +1,3 @@
+Fixed a large collection slowdown, introduced in pytest 9.1.0, for test suites which define the same fixture name on very many nodes -- for example a fixture inherited from a base class by thousands of test classes.
+
+Ordering the fixture override chain by visibility scanned all previously registered fixturedefs of that name on every registration, making collection quadratic in the number of definitions.
