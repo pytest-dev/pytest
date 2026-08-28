@@ -1156,6 +1156,14 @@ class FixtureDef(Generic[FixtureValue]):
         #
         # Deprecated: replaced by ``node``.
         self.baseid: Final = node.nodeid if node is not NOTSET else (baseid or "")
+        # Precomputed key for visibility matching, see
+        # `FixtureManager._matchfactories`. `id()` of the node for node-based
+        # fixtures (nodes compare by identity, and `self.node` keeps the node --
+        # and hence its id -- alive), the baseid string for legacy ones. The two
+        # kinds can never compare equal, so a single set can hold both.
+        self._match_key: Final[int | str] = (
+            id(node) if node is not NOTSET else self.baseid
+        )
         # Whether the fixture was found from a node or a conftest in the
         # collection tree. Will be false for fixtures defined in non-conftest
         # plugins.
@@ -2361,17 +2369,18 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
     ) -> Iterator[FixtureDef[Any]]:
-        # Collect parent nodes and their IDs for matching
-        parent_nodes = set(node.iter_parents())
-        parentnodeids = {n.nodeid for n in parent_nodes}
+        # Match against the parent nodes by identity (`id()`) for node-based
+        # fixturedefs, and against their nodeids for legacy string-baseid ones.
+        # This loop runs once per fixturedef per lookup, so it is kept to a
+        # single set lookup per fixturedef -- in particular it avoids hashing
+        # `Node`s, whose `__hash__` is a Python-level function (#14942).
+        match_keys: set[int | str] = set()
+        for parent in node.iter_parents():
+            match_keys.add(id(parent))
+            match_keys.add(parent.nodeid)
 
         for fixturedef in fixturedefs:
-            if fixturedef.node is not None:
-                # Node-based matching: check if fixture's node is a parent
-                if fixturedef.node in parent_nodes:
-                    yield fixturedef
-            elif fixturedef.baseid in parentnodeids:
-                # Fallback to string-based matching for legacy/plugins
+            if fixturedef._match_key in match_keys:
                 yield fixturedef
 
 

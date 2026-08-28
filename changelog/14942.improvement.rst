@@ -1,0 +1,1 @@
+Matching a fixture definition against the node requesting it no longer hashes collection tree nodes, which was a measurable cost during collection since it runs once per fixture definition per lookup.
