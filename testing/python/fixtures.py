@@ -2163,6 +2163,8 @@ class TestFixtureManagerParseFactories:
         This is what catches a missing invalidation: dropping the
         `_invalidate()` from any single `_FixtureDefsList` method fails here.
         """
+        import warnings
+
         hypothesis = pytest.importorskip("hypothesis")
         from hypothesis import stateful
         import hypothesis.strategies as st
@@ -2239,6 +2241,21 @@ class TestFixtureManagerParseFactories:
                     _ispytest=True,
                 )
 
+            def _make_legacy(self, name, node_index):
+                """A fixturedef with a string baseid and no node, as plugins
+                which have not moved off the deprecated API still produce."""
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", pytest.PytestRemovedIn10Warning)
+                    return FixtureDef(
+                        config=fm.config,
+                        baseid=tree[node_index].nodeid,
+                        argname=name,
+                        func=lambda: None,
+                        scope="function",
+                        params=None,
+                        _ispytest=True,
+                    )
+
             @stateful.rule(name=NAME, node_index=NODE)
             def register(self, name, node_index):
                 fm._register_fixture(
@@ -2249,6 +2266,12 @@ class TestFixtureManagerParseFactories:
             def append(self, name, node_index):
                 fm._arg2fixturedefs.setdefault(name, []).append(
                     self._make(name, node_index)
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def append_legacy(self, name, node_index):
+                fm._arg2fixturedefs.setdefault(name, []).append(
+                    self._make_legacy(name, node_index)
                 )
 
             @stateful.rule(name=NAME, node_index=NODE)

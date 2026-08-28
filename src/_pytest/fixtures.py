@@ -1134,7 +1134,7 @@ class FixtureDef(Generic[FixtureValue]):
         # Deprecated: replaced by ``node``.
         self.baseid: Final = node.nodeid if node is not NOTSET else (baseid or "")
         # Precomputed key for visibility matching, see
-        # `FixtureManager._matchfactories`. `id()` of the node for node-based
+        # `FixtureManager._index_for`. `id()` of the node for node-based
         # fixtures (nodes compare by identity, and `self.node` keeps the node --
         # and hence its id -- alive), the baseid string for legacy ones. The two
         # kinds can never compare equal, so a single set can hold both.
@@ -2513,23 +2513,6 @@ class FixtureManager:
                 )
             self._arg2fixturedefs_by_key[argname] = index
         return index
-
-    def _matchfactories(
-        self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
-    ) -> Iterator[FixtureDef[Any]]:
-        # Match against the parent nodes by identity (`id()`) for node-based
-        # fixturedefs, and against their nodeids for legacy string-baseid ones.
-        # This loop runs once per fixturedef per lookup, so it is kept to a
-        # single set lookup per fixturedef -- in particular it avoids hashing
-        # `Node`s, whose `__hash__` is a Python-level function (#14942).
-        match_keys: set[int | str] = set()
-        for parent in node.iter_parents():
-            match_keys.add(id(parent))
-            match_keys.add(parent.nodeid)
-
-        for fixturedef in fixturedefs:
-            if fixturedef._match_key in match_keys:
-                yield fixturedef
 
 
 def show_fixtures_per_test(config: Config) -> int | ExitCode:
