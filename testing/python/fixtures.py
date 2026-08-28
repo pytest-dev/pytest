@@ -10,6 +10,7 @@ import textwrap
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
+from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import ParamValueKey
 from _pytest.fixtures import TopRequest
 from _pytest.monkeypatch import MonkeyPatch
@@ -2149,6 +2150,146 @@ class TestFixtureManagerParseFactories:
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
+
+    def test_visibility_index_matches_naive_lookup(self, request) -> None:
+        """`getfixturedefs()` answers from an index bucketed by visibility key.
+
+        Property-test it against the same question answered the naive way --
+        scan the authoritative `_arg2fixturedefs` list, keep the fixturedefs
+        defined on the requesting node or one of its ancestors, order them most
+        general first -- under arbitrary sequences of the mutations plugins
+        perform on `_arg2fixturedefs` (#14942).
+
+        This is what catches a missing invalidation: dropping the
+        `_invalidate()` from any single `_FixtureDefsList` method fails here.
+        """
+        hypothesis = pytest.importorskip("hypothesis")
+        from hypothesis import stateful
+        import hypothesis.strategies as st
+
+        fm = request.session._fixturemanager
+        names = ["_probe_a", "_probe_b"]
+
+        class FakeNode:
+            """Enough of a `Node` for visibility: identity, nodeid, parents."""
+
+            def __init__(self, nodeid: str, parent: FakeNode | None) -> None:
+                self.nodeid = nodeid
+                self.parent = parent
+
+            def iter_parents(self):
+                node: FakeNode | None = self
+                while node is not None:
+                    yield node
+                    node = node.parent
+
+        # A tree with two branches, so that some fixturedefs are registered on
+        # nodes which are not ancestors of the node being queried.
+        tree = [FakeNode("", None)]
+        for parent_index, part in [
+            (0, "d1"),
+            (1, "d2"),
+            (2, "m.py"),
+            (3, "Cls"),
+            (0, "e1"),
+            (5, "n.py"),
+        ]:
+            parent = tree[parent_index]
+            tree.append(FakeNode(f"{parent.nodeid}/{part}".lstrip("/"), parent))
+
+        def naive(argname, node):
+            faclist = fm._arg2fixturedefs.get(argname)
+            if faclist is None:
+                return None
+            parents = list(node.iter_parents())[::-1]  # most general first
+            rank_by_id = {id(p): r for r, p in enumerate(parents)}
+            rank_by_nodeid = {p.nodeid: r for r, p in enumerate(parents)}
+            matches = []
+            for ordinal, fixturedef in enumerate(faclist):
+                if fixturedef.node is not None:
+                    rank = rank_by_id.get(id(fixturedef.node))
+                else:
+                    rank = rank_by_nodeid.get(fixturedef.baseid)
+                if rank is not None:
+                    matches.append((rank, ordinal, fixturedef))
+            matches.sort(key=lambda match: match[:2])
+            return tuple(fixturedef for _, _, fixturedef in matches)
+
+        def drop_probes():
+            for name in names:
+                fm._arg2fixturedefs.pop(name, None)
+
+        NAME = st.sampled_from(names)
+        NODE = st.integers(0, len(tree) - 1)
+
+        class VisibilityIndex(stateful.RuleBasedStateMachine):
+            def __init__(self):
+                super().__init__()
+                drop_probes()
+
+            def _make(self, name, node_index):
+                return FixtureDef(
+                    config=fm.config,
+                    baseid=None,
+                    argname=name,
+                    func=lambda: None,
+                    scope="function",
+                    params=None,
+                    node=tree[node_index],
+                    _ispytest=True,
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def register(self, name, node_index):
+                fm._register_fixture(
+                    name=name, func=lambda: None, node=tree[node_index]
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def append(self, name, node_index):
+                fm._arg2fixturedefs.setdefault(name, []).append(
+                    self._make(name, node_index)
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def insert_front(self, name, node_index):
+                fm._arg2fixturedefs.setdefault(name, []).insert(
+                    0, self._make(name, node_index)
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def assign(self, name, node_index):
+                fm._arg2fixturedefs[name] = [self._make(name, node_index)]
+
+            @stateful.rule(name=NAME, index=st.integers(0, 5))
+            def remove(self, name, index):
+                faclist = fm._arg2fixturedefs.get(name)
+                if faclist:
+                    faclist.remove(faclist[index % len(faclist)])
+
+            @stateful.rule(name=NAME)
+            def delete(self, name):
+                fm._arg2fixturedefs.pop(name, None)
+
+            @stateful.invariant()
+            def index_agrees_with_naive_lookup(self):
+                for name in names:
+                    for node in tree:
+                        assert fm.getfixturedefs(name, node) == naive(name, node), (
+                            name,
+                            node.nodeid,
+                        )
+
+            def teardown(self):
+                drop_probes()
+
+        try:
+            stateful.run_state_machine_as_test(
+                VisibilityIndex,
+                settings=hypothesis.settings(max_examples=100, deadline=None),
+            )
+        finally:
+            drop_probes()
 
     def test_parsefactories_relative_node_ids(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
