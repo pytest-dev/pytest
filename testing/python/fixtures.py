@@ -2129,6 +2129,16 @@ class TestFixtureManagerParseFactories:
                 assert fm._arg2fixturedefs["probe"] is same
                 assert values() == ["l"]
 
+                # Wrapping copies, so one list assigned under two names gives
+                # two independent lists, and the original tracks neither.
+                shared = [make("m")]
+                fm._arg2fixturedefs["probe"] = shared
+                fm._arg2fixturedefs["probe2"] = shared
+                shared.append(make("n"))
+                assert values() == ["m"]
+                assert values("probe2") == ["m"]
+                del fm._arg2fixturedefs["probe2"]
+
                 # `popitem()` pops the most recently inserted key.
                 fm._arg2fixturedefs["probe"] = [make("j")]
                 name, popped = fm._arg2fixturedefs.popitem()

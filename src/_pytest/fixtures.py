@@ -1134,10 +1134,21 @@ class FixtureDef(Generic[FixtureValue]):
         # Deprecated: replaced by ``node``.
         self.baseid: Final = node.nodeid if node is not NOTSET else (baseid or "")
         # Precomputed key for visibility matching, see
-        # `FixtureManager._index_for`. `id()` of the node for node-based
-        # fixtures (nodes compare by identity, and `self.node` keeps the node --
-        # and hence its id -- alive), the baseid string for legacy ones. The two
-        # kinds can never compare equal, so a single set can hold both.
+        # `FixtureManager._index_for`: `id()` of the node for node-based
+        # fixtures, the baseid string for legacy ones. The two kinds can never
+        # compare equal, so a single mapping can hold both.
+        #
+        # `id()` is a workaround, not the natural key. The natural key is the
+        # node itself -- nodes compare by identity -- but `Node.__hash__` is a
+        # Python-level function hashing `nodeid`, so using nodes as dict keys
+        # costs a Python call per fixturedef per lookup, which is what made this
+        # a bottleneck in the first place (#14942). If `Node` ever gets an
+        # identity hash (which is what its identity `__eq__` implies anyway),
+        # this can go back to keying on the node.
+        #
+        # Reusing an id would mean matching the wrong node, so it must not
+        # outlive the object: `self.node` holds the node for as long as this
+        # fixturedef exists, and the fixturedef is what carries the key around.
         self._match_key: Final[int | str] = (
             id(node) if node is not NOTSET else self.baseid
         )
@@ -1826,6 +1837,21 @@ class _Arg2FixtureDefs(dict[str, "_FixtureDefsList"]):
 
     Values are coerced to `_FixtureDefsList` so that in-place mutation by
     plugins is noticed too. See `_FixtureDefsList`.
+
+    That coercion copies: a list assigned under one name is a different object
+    from the one handed in, so assigning the same list under two names gives two
+    independent lists rather than one shared by both, and a list held from
+    before the assignment no longer tracks the stored one::
+
+        fm._arg2fixturedefs["a"] = shared
+        fm._arg2fixturedefs["b"] = shared  # "a" and "b" are now separate
+        shared.append(fixturedef)  # visible under neither
+
+    No known plugin relies on that aliasing, and `_arg2fixturedefs` is internal,
+    so some churn is expected; it is called out because the failure is silent.
+    Assigning a list already stored under the same name is a no-op, so the
+    common ``fm._arg2fixturedefs[name].append(...)`` and re-assignment of a list
+    read back out of the mapping keep working unchanged.
     """
 
     __slots__ = ("_manager",)
