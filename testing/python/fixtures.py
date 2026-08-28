@@ -1950,6 +1950,79 @@ class TestFixtureManagerParseFactories:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_arg2fixturedefs_mutated_by_plugins(self, pytester: Pytester) -> None:
+        """Plugins mutate `FixtureManager._arg2fixturedefs` directly instead of
+        going through `_register_fixture()` -- pytest-bdd, pytest-bdd-ng,
+        pytest-psqlgraph, pytest-codspeed, pytest-keyring, pytest-fixture-forms
+        and pykiso all do. `getfixturedefs()` must reflect those mutations
+        (#14942)."""
+        pytester.makeconftest(
+            """
+            import pytest
+            from _pytest.fixtures import FixtureDef
+
+
+            def make(fm, name, value, node):
+                return FixtureDef(
+                    config=fm.config,
+                    baseid=None,
+                    argname=name,
+                    func=lambda: value,
+                    scope="function",
+                    params=None,
+                    node=node,
+                    _ispytest=True,
+                )
+
+
+            @pytest.hookimpl(wrapper=True)
+            def pytest_collection(session):
+                result = yield
+                fm = session._fixturemanager
+                item = session.items[0]
+
+                def values(name):
+                    return [d.func() for d in fm.getfixturedefs(name, item) or ()]
+
+                # Whole-key assignment (pytest-codspeed, pytest-keyring, pykiso).
+                fm._arg2fixturedefs["a"] = [make(fm, "a", "a1", session)]
+                assert values("a") == ["a1"], values("a")
+                fm._arg2fixturedefs["a"] = [make(fm, "a", "a2", session)]
+                assert values("a") == ["a2"], values("a")
+
+                # setdefault(...).append(...) followed by remove(...), as
+                # pytest-bdd does around each step. Same list object at the same
+                # length before and after, so a cache keyed on length alone
+                # would serve the removed fixturedef.
+                base = make(fm, "b", "b0", session)
+                fm._arg2fixturedefs["b"] = [base]
+                extra = make(fm, "b", "b1", session)
+                fm._arg2fixturedefs.setdefault("b", []).append(extra)
+                assert values("b") == ["b0", "b1"], values("b")
+                fm._arg2fixturedefs["b"].remove(extra)
+                assert values("b") == ["b0"], values("b")
+
+                # insert(0, ...) (pytest-bdd-ng, pytest-psqlgraph).
+                front = make(fm, "b", "b-front", session)
+                fm._arg2fixturedefs.setdefault("b", []).insert(0, front)
+                assert values("b") == ["b-front", "b0"], values("b")
+
+                # del (pytest-bdd, once the scenario is done).
+                del fm._arg2fixturedefs["a"]
+                assert fm.getfixturedefs("a", item) is None
+
+                return result
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test():
+                pass
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_parsefactories_relative_node_ids(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
