@@ -2023,6 +2023,133 @@ class TestFixtureManagerParseFactories:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_arg2fixturedefs_mutation_surface(self, pytester: Pytester) -> None:
+        """Every way of mutating `_arg2fixturedefs` and its lists keeps the
+        visibility index that `getfixturedefs()` answers from correct (#14942).
+
+        `test_arg2fixturedefs_mutated_by_plugins` covers the shapes plugins are
+        known to use; this covers the rest of the `list`/`dict` mutation
+        surface, so that a plugin reaching for one of them is not silently
+        served a stale index.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            from _pytest.fixtures import _Arg2FixtureDefs
+            from _pytest.fixtures import FixtureDef
+
+
+            @pytest.fixture
+            def real():
+                return "real"
+
+
+            def test_surface(request, real):
+                fm = request.session._fixturemanager
+                session = request.session
+
+                def make(value):
+                    return FixtureDef(
+                        config=fm.config,
+                        baseid=None,
+                        argname="probe",
+                        func=lambda: value,
+                        scope="function",
+                        params=None,
+                        node=session,
+                        _ispytest=True,
+                    )
+
+                def values(name="probe"):
+                    defs = fm.getfixturedefs(name, request.node)
+                    return None if defs is None else [d.func() for d in defs]
+
+                # Seed via whole-key assignment, and look up once so that an
+                # index exists to be kept in sync or dropped.
+                fm._arg2fixturedefs["probe"] = [make("a")]
+                assert values() == ["a"]
+                probe = fm._arg2fixturedefs["probe"]
+
+                probe.append(make("b"))
+                assert values() == ["a", "b"]
+
+                probe.insert(0, make("c"))
+                assert values() == ["c", "a", "b"]
+
+                probe.extend([make("d")])
+                assert values() == ["c", "a", "b", "d"]
+
+                probe.remove(probe[0])
+                assert values() == ["a", "b", "d"]
+
+                assert probe.pop().func() == "d"
+                assert values() == ["a", "b"]
+
+                probe[0] = make("e")
+                assert values() == ["e", "b"]
+
+                del probe[0]
+                assert values() == ["b"]
+
+                probe += [make("f")]
+                assert values() == ["b", "f"]
+
+                probe.sort(key=lambda d: d.func(), reverse=True)
+                assert values() == ["f", "b"]
+
+                probe.reverse()
+                assert values() == ["b", "f"]
+
+                probe.clear()
+                assert values() == []
+
+                # Dict-level mutation.
+                fm._arg2fixturedefs.setdefault("probe").append(make("g"))
+                assert values() == ["g"]
+
+                fm._arg2fixturedefs.update({"probe": [make("h")]})
+                assert values() == ["h"]
+
+                assert fm._arg2fixturedefs.pop("probe")
+                assert values() is None
+                assert fm._arg2fixturedefs.pop("probe", None) is None
+
+                fm._arg2fixturedefs["probe"] = [make("i")]
+                assert values() == ["i"]
+                del fm._arg2fixturedefs["probe"]
+                assert values() is None
+
+                # Re-assigning a list already tracked under this name keeps
+                # it as-is rather than wrapping it again.
+                fm._arg2fixturedefs["probe"] = [make("l")]
+                same = fm._arg2fixturedefs["probe"]
+                fm._arg2fixturedefs["probe"] = same
+                assert fm._arg2fixturedefs["probe"] is same
+                assert values() == ["l"]
+
+                # `popitem()` pops the most recently inserted key.
+                fm._arg2fixturedefs["probe"] = [make("j")]
+                name, popped = fm._arg2fixturedefs.popitem()
+                assert name == "probe"
+                assert [d.func() for d in popped] == ["j"]
+                assert values() is None
+
+                # `clear()` is exercised on a throwaway mapping: on the live one
+                # it would drop every fixture in the session. It clears the
+                # whole index cache, which lookups then rebuild.
+                throwaway = _Arg2FixtureDefs(fm)
+                throwaway["probe"] = [make("k")]
+                throwaway.clear()
+                assert not throwaway
+                assert fm._arg2fixturedefs_by_key == {}
+                # The cleared cache is rebuilt on the next lookup.
+                assert values("real") == ["real"]
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_parsefactories_relative_node_ids(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
