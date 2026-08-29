@@ -723,7 +723,7 @@ class AssertionRewriter(ast.NodeVisitor):
         while nodes:
             node = nodes.pop()
             if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
-                self.scope = tuple((*self.scope, node))
+                self.scope = (*self.scope, node)
                 nodes.append(_SCOPE_END_MARKER)
             if node == _SCOPE_END_MARKER:
                 self.scope = self.scope[:-1]
