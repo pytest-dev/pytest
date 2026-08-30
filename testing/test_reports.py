@@ -2,31 +2,61 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
 
+from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
 from _pytest.approx import approx
 from _pytest.config import Config
+from _pytest.ensemble import ConfigSpec
+from _pytest.ensemble import run_tests
 from _pytest.pytester import Pytester
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 import pytest
 
 
+def raise_value_error() -> None:
+    """Raise in a worker process, for test_chained_exceptions_no_reprcrash.
+
+    ``ProcessPoolExecutor`` pickles the callable it is handed by reference,
+    so it has to live at module level rather than inside the test.
+    """
+    raise ValueError("value error")
+
+
+class RaiseCollectError:
+    """Plugin failing collection of the ensemble's module.
+
+    The originals collected a file whose whole source was ``qwe abc``, a
+    syntax error; an ensemble's sources are real python objects, so there is
+    no unparsable source to hand it and the collection error is raised from
+    a hook instead. Both end in a ``CollectError``, which is what makes the
+    report's ``longrepr`` a plain string rather than a structured repr - the
+    serialization path these tests are about.
+    """
+
+    def pytest_generate_tests(self, metafunc: pytest.Metafunc) -> None:
+        raise pytest.Collector.CollectError("qwe abc")
+
+
 class TestReportSerialization:
-    def test_xdist_longrepr_to_str_issue_241(self, pytester: Pytester) -> None:
+    def test_xdist_longrepr_to_str_issue_241(self, tmp_path: Path) -> None:
         """Regarding issue pytest-xdist#241.
 
         This test came originally from test_remote.py in xdist (ca03269).
         """
-        pytester.makepyfile(
-            """
-            def test_a(): assert False
-            def test_b(): pass
-        """
-        )
-        reprec = pytester.inline_run()
-        reports = reprec.getreports("pytest_runtest_logreport")
+
+        def test_a():
+            assert False
+
+        def test_b():
+            pass
+
+        record = run_tests(test_a, test_b, rootpath=tmp_path)
+        reports = record.reports
         assert len(reports) == 6
         test_a_call = reports[1]
         assert test_a_call.when == "call"
@@ -37,18 +67,17 @@ class TestReportSerialization:
         assert test_b_call.outcome == "passed"
         assert test_b_call._to_json()["longrepr"] is None
 
-    def test_xdist_report_longrepr_reprcrash_130(self, pytester: Pytester) -> None:
+    def test_xdist_report_longrepr_reprcrash_130(self, tmp_path: Path) -> None:
         """Regarding issue pytest-xdist#130
 
         This test came originally from test_remote.py in xdist (ca03269).
         """
-        reprec = pytester.inline_runsource(
-            """
-                    def test_fail():
-                        assert False, 'Expected Message'
-                """
-        )
-        reports = reprec.getreports("pytest_runtest_logreport")
+
+        def test_fail():
+            assert False, "Expected Message"
+
+        record = run_tests(test_fail, rootpath=tmp_path)
+        reports = record.reports
         assert len(reports) == 3
         rep = reports[1]
         added_section = ("Failure Metadata", "metadata metadata", "*")
@@ -76,22 +105,27 @@ class TestReportSerialization:
         # Missing section attribute PR171
         assert added_section in a.longrepr.sections
 
-    def test_reprentries_serialization_170(self, pytester: Pytester) -> None:
+    def test_reprentries_serialization_170(self, tmp_path: Path) -> None:
         """Regarding issue pytest-xdist#170
 
         This test came originally from test_remote.py in xdist (ca03269).
         """
         from _pytest._code.code import ReprEntry
 
-        reprec = pytester.inline_runsource(
-            """
-                            def test_repr_entry():
-                                x = 0
-                                assert x
-                        """,
-            "--showlocals",
+        def test_repr_entry():
+            x = 0
+            assert x
+
+        # --showlocals is a terminal option, so the terminal plugin has to be
+        # loaded for it to exist at all; capture_output does that and binds it
+        # to a buffer of its own.
+        record = run_tests(
+            test_repr_entry,
+            rootpath=tmp_path,
+            spec=ConfigSpec(args=("--showlocals",)),
+            capture_output=True,
         )
-        reports = reprec.getreports("pytest_runtest_logreport")
+        reports = record.reports
         assert len(reports) == 3
         rep = reports[1]
         assert isinstance(rep.longrepr, ExceptionRepr)
@@ -101,6 +135,7 @@ class TestReportSerialization:
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
+        assert rep_entries
         for a_entry, rep_entry in zip(a_entries, rep_entries, strict=True):
             assert isinstance(rep_entry, ReprEntry)
             assert rep_entry.reprfileloc is not None
@@ -120,22 +155,25 @@ class TestReportSerialization:
             assert rep_entry.reprlocals.lines == a_entry.reprlocals.lines
             assert rep_entry.style == a_entry.style
 
-    def test_reprentries_serialization_196(self, pytester: Pytester) -> None:
+    def test_reprentries_serialization_196(self, tmp_path: Path) -> None:
         """Regarding issue pytest-xdist#196
 
         This test came originally from test_remote.py in xdist (ca03269).
         """
         from _pytest._code.code import ReprEntryNative
 
-        reprec = pytester.inline_runsource(
-            """
-                            def test_repr_entry_native():
-                                x = 0
-                                assert x
-                        """,
-            "--tb=native",
+        def test_repr_entry_native():
+            x = 0
+            assert x
+
+        # --tb is a terminal option; see test_reprentries_serialization_170.
+        record = run_tests(
+            test_repr_entry_native,
+            rootpath=tmp_path,
+            spec=ConfigSpec(args=("--tb=native",)),
+            capture_output=True,
         )
-        reports = reprec.getreports("pytest_runtest_logreport")
+        reports = record.reports
         assert len(reports) == 3
         rep = reports[1]
         assert isinstance(rep.longrepr, ExceptionRepr)
@@ -145,29 +183,50 @@ class TestReportSerialization:
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
+        assert rep_entries
         for rep_entry, a_entry in zip(rep_entries, a_entries, strict=True):
             assert isinstance(rep_entry, ReprEntryNative)
             assert rep_entry.lines == a_entry.lines
 
-    def test_itemreport_outcomes(self, pytester: Pytester) -> None:
+    def test_itemreport_outcomes(self, tmp_path: Path) -> None:
         # This test came originally from test_remote.py in xdist (ca03269).
-        reprec = pytester.inline_runsource(
-            """
-            import pytest
-            def test_pass(): pass
-            def test_fail(): 0/0
-            @pytest.mark.skipif("True")
-            def test_skip(): pass
-            def test_skip_imperative():
-                pytest.skip("hello")
-            @pytest.mark.xfail("True")
-            def test_xfail(): 0/0
-            def test_xfail_imperative():
-                pytest.xfail("hello")
-        """
+        def test_pass():
+            pass
+
+        def test_fail():
+            0 / 0  # noqa: B018
+
+        @pytest.mark.skipif("True")
+        def test_skip():
+            pass
+
+        def test_skip_imperative():
+            pytest.skip("hello")
+
+        @pytest.mark.xfail("True")
+        def test_xfail():
+            0 / 0  # noqa: B018
+
+        def test_xfail_imperative():
+            pytest.xfail("hello")
+
+        record = run_tests(
+            test_pass,
+            test_fail,
+            test_skip,
+            test_skip_imperative,
+            test_xfail,
+            test_xfail_imperative,
+            rootpath=tmp_path,
         )
-        reports = reprec.getreports("pytest_runtest_logreport")
+        reports = record.reports
         assert len(reports) == 17  # with setup/teardown "passed" reports
+        assert record.outcomes() == {
+            "passed": 1,
+            "failed": 1,
+            "skipped": 2,
+            "xfailed": 2,
+        }
         for rep in reports:
             d = rep._to_json()
             newrep = TestReport._from_json(d)
@@ -183,10 +242,17 @@ class TestReportSerialization:
             if rep.failed:
                 assert newrep.longreprtext == rep.longreprtext
 
-    def test_collectreport_passed(self, pytester: Pytester) -> None:
+    def test_collectreport_passed(self, tmp_path: Path) -> None:
         """This test came originally from test_remote.py in xdist (ca03269)."""
-        reprec = pytester.inline_runsource("def test_func(): pass")
-        reports = reprec.getreports("pytest_collectreport")
+
+        def test_func():
+            pass
+
+        record = run_tests(test_func, rootpath=tmp_path)
+        reports = record.collect_reports
+        # session and module; a real run also collects a Directory in between,
+        # which an ensemble has no equivalent of.
+        assert len(reports) == 2
         for rep in reports:
             d = rep._to_json()
             newrep = CollectReport._from_json(d)
@@ -194,11 +260,20 @@ class TestReportSerialization:
             assert newrep.failed == rep.failed
             assert newrep.skipped == rep.skipped
 
-    def test_collectreport_fail(self, pytester: Pytester) -> None:
+    def test_collectreport_fail(self, tmp_path: Path) -> None:
         """This test came originally from test_remote.py in xdist (ca03269)."""
-        reprec = pytester.inline_runsource("qwe abc")
-        reports = reprec.getreports("pytest_collectreport")
+
+        def test_func():
+            pass
+
+        record = run_tests(
+            test_func,
+            rootpath=tmp_path,
+            spec=ConfigSpec(extra_plugins=(RaiseCollectError(),)),
+        )
+        reports = record.collect_reports
         assert reports
+        assert record.collect_errors
         for rep in reports:
             d = rep._to_json()
             newrep = CollectReport._from_json(d)
@@ -208,11 +283,20 @@ class TestReportSerialization:
             if rep.failed:
                 assert newrep.longrepr == str(rep.longrepr)
 
-    def test_extended_report_deserialization(self, pytester: Pytester) -> None:
+    def test_extended_report_deserialization(self, tmp_path: Path) -> None:
         """This test came originally from test_remote.py in xdist (ca03269)."""
-        reprec = pytester.inline_runsource("qwe abc")
-        reports = reprec.getreports("pytest_collectreport")
+
+        def test_func():
+            pass
+
+        record = run_tests(
+            test_func,
+            rootpath=tmp_path,
+            spec=ConfigSpec(extra_plugins=(RaiseCollectError(),)),
+        )
+        reports = record.collect_reports
         assert reports
+        assert record.collect_errors
         for rep in reports:
             rep.extra = True  # type: ignore[attr-defined]
             d = rep._to_json()
@@ -224,14 +308,11 @@ class TestReportSerialization:
             if rep.failed:
                 assert newrep.longrepr == str(rep.longrepr)
 
-    def test_paths_support(self, pytester: Pytester) -> None:
+    def test_paths_support(self, tmp_path: Path) -> None:
         """Report attributes which are path-like should become strings."""
-        pytester.makepyfile(
-            """
-            def test_a():
-                assert False
-        """
-        )
+
+        def test_a():
+            assert False
 
         class MyPathLike:
             def __init__(self, path: str) -> None:
@@ -240,26 +321,24 @@ class TestReportSerialization:
             def __fspath__(self) -> str:
                 return self.path
 
-        reprec = pytester.inline_run()
-        reports = reprec.getreports("pytest_runtest_logreport")
+        record = run_tests(test_a, rootpath=tmp_path)
+        reports = record.reports
         assert len(reports) == 3
         test_a_call = reports[1]
-        test_a_call.path1 = MyPathLike(str(pytester.path))  # type: ignore[attr-defined]
-        test_a_call.path2 = pytester.path  # type: ignore[attr-defined]
+        test_a_call.path1 = MyPathLike(str(tmp_path))  # type: ignore[attr-defined]
+        test_a_call.path2 = tmp_path  # type: ignore[attr-defined]
         data = test_a_call._to_json()
-        assert data["path1"] == str(pytester.path)
-        assert data["path2"] == str(pytester.path)
+        assert data["path1"] == str(tmp_path)
+        assert data["path2"] == str(tmp_path)
 
-    def test_deserialization_failure(self, pytester: Pytester) -> None:
+    def test_deserialization_failure(self, tmp_path: Path) -> None:
         """Check handling of failure during deserialization of report types."""
-        pytester.makepyfile(
-            """
-            def test_a():
-                assert False
-        """
-        )
-        reprec = pytester.inline_run()
-        reports = reprec.getreports("pytest_runtest_logreport")
+
+        def test_a():
+            assert False
+
+        record = run_tests(test_a, rootpath=tmp_path)
+        reports = record.reports
         assert len(reports) == 3
         test_a_call = reports[1]
         data = test_a_call._to_json()
@@ -273,39 +352,45 @@ class TestReportSerialization:
             TestReport._from_json(data)
 
     @pytest.mark.parametrize("report_class", [TestReport, CollectReport])
-    def test_chained_exceptions(
-        self, pytester: Pytester, tw_mock, report_class
-    ) -> None:
+    def test_chained_exceptions(self, tmp_path: Path, tw_mock, report_class) -> None:
         """Check serialization/deserialization of report objects containing chained exceptions (#5786)"""
-        pytester.makepyfile(
-            f"""
-            def foo():
-                raise ValueError('value error')
-            def test_a():
-                try:
-                    foo()
-                except ValueError as e:
-                    raise RuntimeError('runtime error') from e
-            if {report_class is CollectReport}:
-                test_a()
-        """
-        )
 
-        reprec = pytester.inline_run()
+        def foo():
+            raise ValueError("value error")
+
+        def test_a():
+            try:
+                foo()
+            except ValueError as e:
+                raise RuntimeError("runtime error") from e
+
+        class RaiseWhileCollecting:
+            """The original raised the chained exception at module import
+            time, by calling ``test_a()`` at module level; an ensemble source
+            is a module that has already been imported, so the same call is
+            made from a collection hook instead - which likewise turns the
+            module's CollectReport into a failed one carrying the chain.
+            """
+
+            def pytest_generate_tests(self, metafunc: pytest.Metafunc) -> None:
+                test_a()
+
+        spec = ConfigSpec(rootpath=tmp_path)
+        if report_class is CollectReport:
+            spec = spec.replace(extra_plugins=(RaiseWhileCollecting(),))
+        record = run_tests(test_a, spec=spec)
+
+        report: TestReport | CollectReport
         if report_class is TestReport:
-            reports: Sequence[TestReport] | Sequence[CollectReport] = reprec.getreports(
-                "pytest_runtest_logreport"
-            )
+            reports: Sequence[TestReport] | Sequence[CollectReport] = record.reports
             # we have 3 reports: setup/call/teardown
             assert len(reports) == 3
             # get the call report
             report = reports[1]
         else:
             assert report_class is CollectReport
-            # three collection reports: session, test file, directory
-            reports = reprec.getreports("pytest_collectreport")
-            assert len(reports) == 3
-            report = reports[1]
+            # only the module's collection fails; the session's does not
+            (report,) = record.collect_errors
 
         def check_longrepr(longrepr: ExceptionChainRepr) -> None:
             """Check the attributes of the given longrepr object according to the test file.
@@ -320,8 +405,10 @@ class TestReportSerialization:
             tb1, _fileloc1, desc1 = entry1
             tb2, _fileloc2, desc2 = entry2
 
-            assert "ValueError('value error')" in str(tb1)
-            assert "RuntimeError('runtime error')" in str(tb2)
+            # the sources are this file's own now, so they are quoted the way
+            # this file is formatted
+            assert 'ValueError("value error")' in str(tb1)
+            assert 'RuntimeError("runtime error")' in str(tb2)
 
             assert (
                 desc1
@@ -346,30 +433,23 @@ class TestReportSerialization:
         # elsewhere and we do check the contents of the longrepr object after loading it.
         loaded_report.longrepr.toterminal(tw_mock)
 
-    def test_chained_exceptions_no_reprcrash(self, pytester: Pytester, tw_mock) -> None:
+    def test_chained_exceptions_no_reprcrash(self, tmp_path: Path, tw_mock) -> None:
         """Regression test for tracebacks without a reprcrash (#5971)
 
         This happens notably on exceptions raised by multiprocess.pool: the exception transfer
         from subprocess to main process creates an artificial exception, which ExceptionInfo
         can't obtain the ReprFileLocation from.
         """
-        pytester.makepyfile(
-            """
-            from concurrent.futures import ProcessPoolExecutor
 
-            def func():
-                raise ValueError('value error')
+        def test_a():
+            with ProcessPoolExecutor() as p:
+                # the pool pickles the callable by reference, so it is
+                # ``raise_value_error`` at this module's level rather than a
+                # function defined in here
+                p.submit(raise_value_error).result()
 
-            def test_a():
-                with ProcessPoolExecutor() as p:
-                    p.submit(func).result()
-        """
-        )
-
-        pytester.syspathinsert()
-        reprec = pytester.inline_run()
-
-        reports = reprec.getreports("pytest_runtest_logreport")
+        record = run_tests(test_a, rootpath=tmp_path)
+        reports = record.reports
 
         def check_longrepr(longrepr: object) -> None:
             assert isinstance(longrepr, ExceptionChainRepr)
@@ -403,6 +483,8 @@ class TestReportSerialization:
         assert isinstance(loaded_report.longrepr, ExceptionChainRepr)
         loaded_report.longrepr.toterminal(tw_mock)
 
+    # ensemble: a conftest in a subdirectory, failing to import, observed
+    # through a subprocess run.
     def test_report_prevent_ConftestImportFailure_hiding_exception(
         self, pytester: Pytester
     ) -> None:
@@ -414,20 +496,18 @@ class TestReportSerialization:
         result.stdout.fnmatch_lines(["E   *Error: No module named 'unknown'"])
         result.stdout.no_fnmatch_line("ERROR  - *ConftestImportFailure*")
 
-    def test_report_timestamps_match_duration(self, pytester: Pytester, mock_timing):
-        reprec = pytester.inline_runsource(
-            """
-            import pytest
-            from _pytest import timing
-            @pytest.fixture
-            def fixture_():
-                timing.sleep(5)
-                yield
-                timing.sleep(5)
-            def test_1(fixture_): timing.sleep(10)
-        """
-        )
-        reports = reprec.getreports("pytest_runtest_logreport")
+    def test_report_timestamps_match_duration(self, tmp_path: Path, mock_timing):
+        @pytest.fixture
+        def fixture_():
+            timing.sleep(5)
+            yield
+            timing.sleep(5)
+
+        def test_1(fixture_):
+            timing.sleep(10)
+
+        record = run_tests(fixture_, test_1, rootpath=tmp_path)
+        reports = record.reports
         assert len(reports) == 3
         for report in reports:
             data = report._to_json()
@@ -440,7 +520,7 @@ class TestReportSerialization:
     )
     def test_exception_group_with_only_skips(
         self,
-        pytester: Pytester,
+        tmp_path: Path,
         first_skip_reason: str,
         second_skip_reason: str,
         skip_reason_output: str,
@@ -450,80 +530,108 @@ class TestReportSerialization:
         it is reported as a single skipped test, not as an error.
         This is a regression test for issue #13537.
         """
-        pytester.makepyfile(
-            test_it=f"""
-            import pytest
-            @pytest.fixture
-            def fixA():
-                yield
-                pytest.skip(reason="{first_skip_reason}")
-            @pytest.fixture
-            def fixB():
-                yield
-                pytest.skip(reason="{second_skip_reason}")
-            def test_skip(fixA, fixB):
-                assert True
-            """
+
+        @pytest.fixture
+        def fixA():
+            yield
+            pytest.skip(reason=first_skip_reason)
+
+        @pytest.fixture
+        def fixB():
+            yield
+            pytest.skip(reason=second_skip_reason)
+
+        def test_skip(fixA, fixB):
+            assert True
+
+        record = run_tests(
+            fixA,
+            fixB,
+            test_skip,
+            rootpath=tmp_path,
+            spec=ConfigSpec(args=("-v",)),
+            capture_output=True,
         )
-        result = pytester.runpytest("-v")
-        result.assert_outcomes(passed=1, skipped=1)
-        out = result.stdout.str()
+        record.assert_outcomes(passed=1, skipped=1)
+        # the merged reason is on the report itself, not only in the rendering
+        teardown = record["test_skip"].teardown
+        assert teardown is not None
+        assert teardown.skipped
+        assert teardown.longrepr is not None
+        assert isinstance(teardown.longrepr, tuple)
+        assert skip_reason_output == f"({teardown.longrepr[2]})"
+        out = record.output
         assert skip_reason_output in out
         assert "ERROR at teardown" not in out
 
     @pytest.mark.parametrize(
         "use_item_location, skip_file_location",
-        [(True, "test_it.py"), (False, "runner.py")],
+        # the item lives in this very file, since its source is written here:
+        # the original's "test_it.py" is this file's name now
+        [(True, "test_reports.py"), (False, "runner.py")],
     )
     def test_exception_group_skips_use_item_location(
-        self, pytester: Pytester, use_item_location: bool, skip_file_location: str
+        self, tmp_path: Path, use_item_location: bool, skip_file_location: str
     ):
         """
         Regression for #13537:
         If any skip inside an ExceptionGroup has _use_item_location=True,
         the report location should point to the test item, not the fixture teardown.
         """
-        pytester.makepyfile(
-            test_it=f"""
-            import pytest
-            @pytest.fixture
-            def fix_item1():
-                yield
-                exc = pytest.skip.Exception("A")
-                exc._use_item_location = True
-                raise exc
-            @pytest.fixture
-            def fix_item2():
-                yield
-                exc = pytest.skip.Exception("B")
-                exc._use_item_location = {use_item_location}
-                raise exc
-            def test_both(fix_item1, fix_item2):
-                assert True
-            """
-        )
-        result = pytester.runpytest("-rs")
-        result.assert_outcomes(passed=1, skipped=1)
 
-        out = result.stdout.str()
-        # Both reasons should appear
-        assert "A" and "B" in out
+        @pytest.fixture
+        def fix_item1():
+            yield
+            exc = pytest.skip.Exception("A")
+            exc._use_item_location = True
+            raise exc
+
+        @pytest.fixture
+        def fix_item2():
+            yield
+            exc = pytest.skip.Exception("B")
+            exc._use_item_location = use_item_location
+            raise exc
+
+        def test_both(fix_item1, fix_item2):
+            assert True
+
+        record = run_tests(
+            fix_item1,
+            fix_item2,
+            test_both,
+            rootpath=tmp_path,
+            spec=ConfigSpec(args=("-rs",)),
+            capture_output=True,
+        )
+        record.assert_outcomes(passed=1, skipped=1)
+
+        teardown = record["test_both"].teardown
+        assert teardown is not None
+        assert isinstance(teardown.longrepr, tuple)
+        path, _lineno, reason = teardown.longrepr
+        # Both reasons should be reported (the original only got as far as
+        # asserting this of the rendering, and did so with a bug)
+        assert reason == "A; B"
         # Crucially, the skip should be attributed to the test item, not teardown
+        assert str(path).endswith(skip_file_location)
+        out = record.output
+        assert "A; B" in out
         assert skip_file_location in out
 
 
 class TestHooks:
     """Test that the hooks are working correctly for plugins"""
 
-    def test_test_report(self, pytester: Pytester, pytestconfig: Config) -> None:
-        pytester.makepyfile(
-            """
-            def test_a(): assert False
-            def test_b(): pass
-        """
-        )
-        reprec = pytester.inline_run()
-        reports = reprec.getreports("pytest_runtest_logreport")
+    def test_test_report(self, tmp_path: Path, pytestconfig: Config) -> None:
+        def test_a():
+            assert False
+
+        def test_b():
+            pass
+
+        record = run_tests(test_a, test_b, rootpath=tmp_path)
+        reports = record.reports
         assert len(reports) == 6
         for rep in reports:
             data = pytestconfig.hook.pytest_report_to_serializable(
@@ -537,16 +645,18 @@ class TestHooks:
             assert new_rep.when == rep.when
             assert new_rep.outcome == rep.outcome
 
-    def test_collect_report(self, pytester: Pytester, pytestconfig: Config) -> None:
-        pytester.makepyfile(
-            """
-            def test_a(): assert False
-            def test_b(): pass
-        """
-        )
-        reprec = pytester.inline_run()
-        reports = reprec.getreports("pytest_collectreport")
-        assert len(reports) == 3
+    def test_collect_report(self, tmp_path: Path, pytestconfig: Config) -> None:
+        def test_a():
+            assert False
+
+        def test_b():
+            pass
+
+        record = run_tests(test_a, test_b, rootpath=tmp_path)
+        reports = record.collect_reports
+        # session and module; a real run also collects a Directory in between,
+        # which an ensemble has no equivalent of.
+        assert len(reports) == 2
         for rep in reports:
             data = pytestconfig.hook.pytest_report_to_serializable(
                 config=pytestconfig, report=rep
@@ -563,15 +673,17 @@ class TestHooks:
         "hook_name", ["pytest_runtest_logreport", "pytest_collectreport"]
     )
     def test_invalid_report_types(
-        self, pytester: Pytester, pytestconfig: Config, hook_name: str
+        self, tmp_path: Path, pytestconfig: Config, hook_name: str
     ) -> None:
-        pytester.makepyfile(
-            """
-            def test_a(): pass
-            """
+        def test_a():
+            pass
+
+        record = run_tests(test_a, rootpath=tmp_path)
+        reports: Sequence[TestReport] | Sequence[CollectReport] = (
+            record.reports
+            if hook_name == "pytest_runtest_logreport"
+            else record.collect_reports
         )
-        reprec = pytester.inline_run()
-        reports = reprec.getreports(hook_name)
         assert reports
         rep = reports[0]
         data = pytestconfig.hook.pytest_report_to_serializable(

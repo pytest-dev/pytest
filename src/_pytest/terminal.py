@@ -52,6 +52,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+from _pytest.stash import StashKey
 
 
 if TYPE_CHECKING:
@@ -79,6 +80,11 @@ _REPORTCHARS_DEFAULT = "fE"
 _ConsoleOutputStyle = Literal[
     "classic", "progress", "count", "times", "progress-even-when-capture-no"
 ]
+
+
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
 
 
 class MoreQuietAction(argparse.Action):
@@ -293,10 +299,17 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
+#: Stream the terminal reporter should write to, if it must not be the
+#: process stdout. Set on the config's stash *before* it is configured; a
+#: nested run has to be given its own sink rather than inheriting the
+#: stdout of whatever is running it.
+terminal_file_key = StashKey[TextIO]()
+
+
 def pytest_configure(config: Config) -> None:
     # Eagerly validate the value; it is only read lazily during reporting.
     config.getini("console_output_style")
-    reporter = TerminalReporter(config, sys.stdout)
+    reporter = TerminalReporter(config, config.stash.get(terminal_file_key, sys.stdout))
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
 
@@ -384,6 +397,8 @@ class WarningReport:
 
 @final
 class TerminalReporter:
+    __pytest_no_fixtures__ = True
+
     def __init__(self, config: Config, file: TextIO | None = None) -> None:
         import _pytest.config
 
@@ -419,9 +434,13 @@ class TerminalReporter:
     ) -> Literal["progress", "count", "times", False]:
         """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038) unless explicitly
-        # overridden by progress-even-when-capture-no
+        # overridden by progress-even-when-capture-no.
+        # Writing to a stream of our own counts as captured: the concern is
+        # progress interleaving with test output, and nothing else is writing
+        # there.
         if (
             self.config.getoption("capture", "no") == "no"
+            and self.config.stash.get(terminal_file_key, None) is None
             and self.config.getini("console_output_style")
             != "progress-even-when-capture-no"
         ):

@@ -2287,6 +2287,13 @@ class FixtureManager:
             holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]
             effective_node = node_or_obj
 
+        # An object that says it defines no fixtures is taken at its word.
+        # Scanning one means reading every attribute it has and validating
+        # each, which is wasted work for the many plugins - reporters,
+        # loggers, managers - that hold no fixtures at all.
+        if safe_getattr(holderobj, "__pytest_no_fixtures__", False):
+            return
+
         # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
         holderobj_tp: type | types.ModuleType
         if not safe_isclass(holderobj) and not isinstance(holderobj, types.ModuleType):
