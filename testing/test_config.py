@@ -22,6 +22,7 @@ from _pytest.config import ConftestImportFailure
 from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
+from _pytest.config import PluginImportFailure
 from _pytest.config.argparsing import get_ini_default_for_type
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
@@ -1858,7 +1859,35 @@ def test_setuptools_importerror_issue1479(
         return (Distribution(),)
 
     monkeypatch.setattr(importlib.metadata, "distributions", distributions)
-    with pytest.raises(ImportError):
+    with pytest.raises(PluginImportFailure) as excinfo:
+        pytester.parseconfig()
+    assert "Don't hide me!" in str(excinfo.value.__cause__)
+
+
+def test_setuptools_usage_error_passes_through(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """A UsageError from an entry-point plugin is not reclassified (#993)."""
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+    class DummyEntryPoint:
+        name = "mytestplugin"
+        group = "pytest11"
+
+        def load(self):
+            raise UsageError("bad usage")
+
+    class Distribution:
+        version = "1.0"
+        files = ("foo.txt",)
+        metadata = {"name": "foo"}
+        entry_points = (DummyEntryPoint(),)
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    with pytest.raises(UsageError, match="bad usage"):
         pytester.parseconfig()
 
 
