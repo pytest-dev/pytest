@@ -1005,6 +1005,12 @@ class TestMaxWarnings:
             warnings.warn(UserWarning("warning two"))
     """
 
+    ONE_WARNING_PYFILE = """
+        import warnings
+        def test_warning():
+            warnings.warn(UserWarning("example warning"))
+    """
+
     @pytest.mark.filterwarnings("default::UserWarning")
     def test_max_warnings_not_set(self, pytester: Pytester) -> None:
         """Without --max-warnings, warnings don't affect exit code."""
@@ -1144,6 +1150,96 @@ class TestMaxWarnings:
         result = pytester.runpytest()
         result.assert_outcomes(passed=1, warnings=1)
         assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    @pytest.mark.parametrize(
+        ("writer", "source"),
+        [
+            pytest.param(
+                "toml",
+                """
+                [pytest]
+                max_warnings = 0
+                """,
+                id="pytest-toml-int",
+            ),
+            pytest.param(
+                "toml",
+                """
+                [pytest]
+                max_warnings = "0"
+                """,
+                id="pytest-toml-string",
+            ),
+            pytest.param(
+                "pyproject",
+                """
+                [tool.pytest]
+                max_warnings = 0
+                """,
+                id="pyproject-native-int",
+            ),
+            pytest.param(
+                "pyproject",
+                """
+                [tool.pytest]
+                max_warnings = "0"
+                """,
+                id="pyproject-native-string",
+            ),
+            pytest.param(
+                "ini",
+                """
+                [pytest]
+                max_warnings = 0
+                """,
+                id="pytest-ini",
+            ),
+        ],
+    )
+    def test_max_warnings_config_accepts_int_and_string(
+        self, pytester: Pytester, writer: str, source: str
+    ) -> None:
+        """Native TOML integers and quoted/INI strings are accepted (#14953).
+
+        An explicit zero must be distinguished from the unset default.
+        """
+        if writer == "toml":
+            pytester.maketoml(source)
+        elif writer == "pyproject":
+            pytester.makepyprojecttoml(source)
+        else:
+            assert writer == "ini"
+            pytester.makeini(source)
+        pytester.makepyfile(self.ONE_WARNING_PYFILE)
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+        result.stdout.fnmatch_lines(
+            ["*Tests pass, but maximum allowed warnings exceeded: 1 > 0*"]
+        )
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_override_ini(self, pytester: Pytester) -> None:
+        """-o max_warnings=0 is accepted and treated as an explicit zero (#14953)."""
+        pytester.makepyfile(self.ONE_WARNING_PYFILE)
+        result = pytester.runpytest("-o", "max_warnings=0")
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+        result.stdout.fnmatch_lines(
+            ["*Tests pass, but maximum allowed warnings exceeded: 1 > 0*"]
+        )
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_cli_overrides_ini(self, pytester: Pytester) -> None:
+        """--max-warnings takes precedence over the configuration value."""
+        pytester.makeini(
+            """
+            [pytest]
+            max_warnings = 10
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "0")
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
 
 
 def test_pythonwarnings_not_duplicated(pytester: Pytester) -> None:
