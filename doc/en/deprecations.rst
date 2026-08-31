@@ -276,6 +276,11 @@ test class for each test method, while the fixture runs only once per class on a
 Using ``@classmethod`` ensures attributes are set on the class itself, making them accessible
 to all test methods.
 
+.. deprecated:: 9.2
+
+Similarly, using a scope higher than ``class`` (``module``, ``package`` or ``session``)
+without using ``@classmethod`` (or ``@staticmethod``) is deprecated and will be
+removed in pytest 10.0.
 
 .. _monkeypatch-fixup-namespace-packages:
 
@@ -435,7 +440,7 @@ The ``yield_fixture`` function/decorator
 
 .. deprecated:: 6.2
 
-``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
+``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture` and will be removed in pytest 10.
 
 It has been so for a very long time, so it can be searched/replaced safely.
 

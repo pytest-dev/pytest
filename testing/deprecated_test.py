@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from _pytest import deprecated
 from _pytest.pytester import Pytester
+from _pytest.scope import Scope
 import pytest
 from pytest import PytestDeprecationWarning
+from pytest import PytestRemovedIn10Warning
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
@@ -74,7 +76,7 @@ def test_hookimpl_via_function_attributes_are_deprecated():
 
 
 def test_yield_fixture_is_deprecated() -> None:
-    with pytest.warns(DeprecationWarning, match=r"yield_fixture is deprecated"):
+    with pytest.warns(PytestRemovedIn10Warning, match=r"yield_fixture is deprecated"):
 
         @pytest.yield_fixture  # type: ignore[deprecated]
         def fix():
@@ -95,13 +97,18 @@ def test_private_is_deprecated() -> None:
     PrivateInit(10, _ispytest=True)
 
 
-def test_class_scope_instance_method_is_deprecated(pytester: Pytester) -> None:
+@pytest.mark.parametrize(
+    "scope", [Scope.Class, Scope.Module, Scope.Package, Scope.Session]
+)
+def test_higher_scope_instance_method_is_deprecated(
+    pytester: Pytester, scope: Scope
+) -> None:
     pytester.makepyfile(
-        """
+        f"""
         import pytest
 
         class TestClass:
-            @pytest.fixture(scope="class")
+            @pytest.fixture(scope="{scope.value}")
             def fix(self):
                 self.attr = True
 
@@ -112,26 +119,50 @@ def test_class_scope_instance_method_is_deprecated(pytester: Pytester) -> None:
     result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        [
-            "*PytestRemovedIn10Warning: Class-scoped fixtures defined as instance methods*"
-        ]
+        ["*PytestRemovedIn10Warning: *-scoped fixtures defined as instance methods*"]
     )
 
 
-def test_class_scope_classmethod_fixture_not_deprecated(pytester: Pytester) -> None:
-    """A class-scoped fixture defined as @classmethod does NOT warn."""
+@pytest.mark.parametrize(
+    "scope", [Scope.Class, Scope.Module, Scope.Package, Scope.Session]
+)
+def test_higher_scope_classmethod_fixture_not_deprecated(
+    pytester: Pytester, scope: Scope
+) -> None:
+    """A higher-scoped fixture defined as @classmethod does NOT warn."""
     pytester.makepyfile(
-        """
+        f"""
         import pytest
 
         class TestClass:
-            @pytest.fixture(scope="class")
+            @pytest.fixture(scope="{scope.value}")
             @classmethod
             def fix(cls):
                 cls.attr = True
 
             def test_foo(self, fix):
                 assert type(self).attr is True
+        """
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize("scope", list(Scope))
+def test_staticmethod_fixture_not_deprecated(pytester: Pytester, scope: Scope) -> None:
+    """A fixture at any scope defined as @staticmethod does NOT warn."""
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        class TestClass:
+            @pytest.fixture(scope="{scope.value}")
+            @staticmethod
+            def fix():
+                pass
+
+            def test_foo(self, fix):
+                pass
         """
     )
     result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")

@@ -675,8 +675,8 @@ class TestAssertionRewrite:
         getmsg(f11, must_pass=True)
 
     def test_short_circuit_evaluation(self) -> None:
-        def f1() -> None:
-            assert True or explode  # type: ignore[name-defined,unreachable] # noqa: F821
+        def f1() -> None:  # pragma: no cover
+            assert True or explode  # type: ignore[name-defined,unreachable] # noqa: F821,SIM222
 
         getmsg(f1, must_pass=True)
 
@@ -725,8 +725,8 @@ class TestAssertionRewrite:
         assert getmsg(f2) == "assert not (5 % 4)"
 
     def test_boolop_percent(self) -> None:
-        def f1() -> None:
-            assert 3 % 2 and False
+        def f1() -> None:  # pragma: no cover
+            assert 3 % 2 and False  # noqa: SIM223
 
         assert getmsg(f1) == "assert ((3 % 2) and False)"
 

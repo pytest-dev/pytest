@@ -22,6 +22,7 @@ from _pytest.config import ConftestImportFailure
 from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
+from _pytest.config import PluginImportFailure
 from _pytest.config.argparsing import get_ini_default_for_type
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
@@ -1152,6 +1153,30 @@ class TestConfigAPI:
         ):
             _ = config.getini("ini_param")
 
+    def test_addini_string_non_str_deprecated(self, pytester: Pytester) -> None:
+        """Passing a non-string value to a 'string'-typed ini option emits a
+        deprecation warning. The value is still returned as-is for now, but will
+        raise TypeError in pytest 10."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("myname", "", type="string")
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            myname = ["value1", "value2"]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.warns(
+            pytest.PytestRemovedIn10Warning,
+            match="Passing a value that is not a string to a 'string'-typed ini option",
+        ):
+            result = config.getini("myname")
+        assert result == ["value1", "value2"]
+
     UNION_CONFTEST = """
         def pytest_addoption(parser):
             parser.addini("ini_param", "", type=int | str, default=None)
@@ -1834,7 +1859,35 @@ def test_setuptools_importerror_issue1479(
         return (Distribution(),)
 
     monkeypatch.setattr(importlib.metadata, "distributions", distributions)
-    with pytest.raises(ImportError):
+    with pytest.raises(PluginImportFailure) as excinfo:
+        pytester.parseconfig()
+    assert "Don't hide me!" in str(excinfo.value.__cause__)
+
+
+def test_setuptools_usage_error_passes_through(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """A UsageError from an entry-point plugin is not reclassified (#993)."""
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+    class DummyEntryPoint:
+        name = "mytestplugin"
+        group = "pytest11"
+
+        def load(self):
+            raise UsageError("bad usage")
+
+    class Distribution:
+        version = "1.0"
+        files = ("foo.txt",)
+        metadata = {"name": "foo"}
+        entry_points = (DummyEntryPoint(),)
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    with pytest.raises(UsageError, match="bad usage"):
         pytester.parseconfig()
 
 
