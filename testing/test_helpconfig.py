@@ -83,6 +83,52 @@ def test_help_ini_union_and_literal_types(pytester: Pytester) -> None:
     )
 
 
+def test_help_ini_shows_default(pytester: Pytester) -> None:
+    """A default worth knowing is shown; an implicit one is left out."""
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("with_default", "has one", type=str, default="something")
+            parser.addini("implicit_default", "has none", type=str)
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*has one (default: 'something')*"])
+    result.stdout.fnmatch_lines(["*has none*"])
+    assert "has none (default:" not in result.stdout.str()
+
+
+def test_help_ini_interpolates_default(pytester: Pytester) -> None:
+    """`%(default)s` is substituted, as argparse does for CLI options (#9244)."""
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("greeting", "say %(default)s to people", type=str,
+                          default="hello")
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*say hello to people*"])
+    # Interpolating replaces the appended default rather than adding to it.
+    assert "(default: 'hello')" not in result.stdout.str()
+
+
+def test_help_ini_shows_fallback(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("base", "the base", type=str, default="")
+            parser.addini("derived", "the derived", type=str, default="",
+                          fallback="base")
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*the derived (falls back to 'base')*"])
+
+
 def test_none_help_param_raises_exception(pytester: Pytester) -> None:
     """Test that a None help param raises a TypeError."""
     pytester.makeconftest(
@@ -110,7 +156,8 @@ def test_empty_help_param(pytester: Pytester) -> None:
     lines = [
         "  required_plugins (args):",
         "                        Plugins that must be present for pytest to run*",
-        "  test_ini (bool):*",
+        "  test_ini (bool):*(default: True)",
+        "",
         "Environment variables:",
     ]
     result.stdout.fnmatch_lines(lines, consecutive=True)
