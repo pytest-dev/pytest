@@ -62,13 +62,17 @@ IniType: TypeAlias = _IniTypeTag | _IniLiteral | tuple[_IniTypeTag | _IniLiteral
 class IniSpec(NamedTuple):
     """The registration of an ini option, as stored in `Parser._inidict`.
 
-    A named tuple rather than a dataclass so that the historical
-    ``help, type, default = parser._inidict[name]`` unpacking keeps working.
+    A named tuple rather than a dataclass so that positional access to the
+    first three fields keeps working. Note that unpacking the whole record
+    into exactly three names no longer does, now that `fallback` exists.
     """
 
     help: str
     type: IniType
     default: Any
+    #: Names of other ini options to consult, in order, when this one is not
+    #: configured; the registered `default` applies only if none of them is.
+    fallback: tuple[str, ...] = ()
 
 
 #: Maps each string tag or plain Python type accepted by :meth:`Parser.addini`
@@ -287,6 +291,7 @@ class Parser:
         default: Any = NOTSET,
         *,
         aliases: Sequence[str] = (),
+        fallback: str | Sequence[str] = (),
     ) -> None:
         """Register a configuration file option.
 
@@ -346,6 +351,22 @@ class Parser:
 
             .. versionadded:: 9.0
                 The ``aliases`` parameter.
+        :param fallback:
+            Name (or names, tried in order) of another registered option to
+            consult when this one is not set in any configuration file and was
+            not overridden on the command line. The registered ``default``
+            applies only if no fallback is configured either.
+
+            Unlike an alias, a fallback is a *different* option with its own
+            help and its own value; it just supplies this option's value when
+            this option says nothing. For example ``log_cli_format`` falls back
+            to ``log_format``.
+
+            Each fallback must already be registered and must have the same
+            type as this option, which also makes fallback cycles impossible.
+
+            .. versionadded:: 9.2
+                The ``fallback`` parameter.
 
         The value of configuration keys can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
@@ -368,7 +389,24 @@ class Parser:
                 )
             default = get_ini_default_for_type(ini_type)
 
-        self._inidict[name] = IniSpec(help, ini_type, default)
+        fallbacks = (fallback,) if isinstance(fallback, str) else tuple(fallback)
+        for target in fallbacks:
+            canonical = self._ini_aliases.get(target, target)
+            try:
+                target_spec = self._inidict[canonical]
+            except KeyError:
+                raise ValueError(
+                    f"fallback {target!r} of ini option {name!r} is not "
+                    "registered; register it first"
+                ) from None
+            if target_spec.type != ini_type:
+                raise ValueError(
+                    f"fallback {target!r} of ini option {name!r} has type "
+                    f"{_ini_type_repr(target_spec.type)}, expected "
+                    f"{_ini_type_repr(ini_type)}"
+                )
+
+        self._inidict[name] = IniSpec(help, ini_type, default, fallbacks)
 
         for alias in aliases:
             if alias in self._inidict:
