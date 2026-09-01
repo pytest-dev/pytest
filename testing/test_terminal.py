@@ -3576,3 +3576,33 @@ class TestTerminalProgressPlugin:
         # Session finish - should remove progress.
         plugin.pytest_sessionfinish()
         assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
+
+
+def test_max_warnings_sources_agree(pytester: Pytester) -> None:
+    """The flag, `-o` and the config file are one setting, read one way."""
+    pytester.makepyfile(
+        """
+        import warnings
+        def test_a():
+            warnings.warn(UserWarning("w1"))
+            warnings.warn(UserWarning("w2"))
+    """
+    )
+    expected = ["*maximum allowed warnings exceeded: 2 > 1*"]
+    ini = "[pytest]\nfilterwarnings = always\n"
+    pytester.makeini(ini + "max_warnings = 1\n")
+    pytester.runpytest().stdout.fnmatch_lines(expected)
+    pytester.makeini(ini)
+    pytester.runpytest("--max-warnings=1").stdout.fnmatch_lines(expected)
+    pytester.runpytest("-o", "max_warnings=1").stdout.fnmatch_lines(expected)
+
+
+def test_max_warnings_invalid_value_reported_at_startup(
+    pytester: Pytester,
+) -> None:
+    """A bad value is a usage error, not a late crash during reporting."""
+    pytester.makepyfile("def test_a(): pass")
+    pytester.makeini("[pytest]\nmax_warnings = abc\n")
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(["ERROR: invalid literal for int()*'abc'*"])
