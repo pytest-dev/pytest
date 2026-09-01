@@ -417,6 +417,108 @@ class Parser:
                 raise ValueError(f"{alias!r} is already an alias of {already!r}")
             self._ini_aliases[alias] = name
 
+    def addconfig(
+        self,
+        name: str,
+        help: str,
+        type: _IniTypeArg = None,
+        default: Any = NOTSET,
+        *,
+        aliases: Sequence[str] = (),
+        fallback: str | Sequence[str] = (),
+        cli: str | Sequence[str] = (),
+        cli_value: str | None = None,
+        cli_help: str | None = None,
+        group: str | OptionGroup | None = None,
+        metavar: str | None = None,
+    ) -> None:
+        """Register a configuration option, optionally with a command line
+        option that sets it.
+
+        This declares in one call what :meth:`addini` and :meth:`addoption`
+        otherwise declare twice, in two APIs whose ``type`` arguments mean
+        different things. The type is given once, and
+        :func:`config.getini(name) <pytest.Config.getini>` is the only way the
+        value is read -- the command line option overrides the configuration
+        value rather than living in a separate namespace, so consuming code
+        never has to consider which of the two the user used.
+
+        :param name:
+            Name of the configuration option. Also the ``dest`` of the command
+            line option, so the value is additionally visible as
+            ``config.option.<name>``.
+        :param help:
+            Description, used for both the configuration option and the command
+            line option unless ``cli_help`` overrides the latter.
+        :param type:
+            Type of the value, as for :meth:`addini`.
+        :param default:
+            Default value, as for :meth:`addini`.
+        :param aliases:
+            Additional configuration names for this option, as for
+            :meth:`addini`.
+        :param fallback:
+            Another registered option to take the value from when this one is
+            not configured, as for :meth:`addini`.
+        :param cli:
+            Command line option string, or several of them (for example
+            ``("--junitxml", "--junit-xml")``). If empty, no command line
+            option is registered and this behaves exactly like :meth:`addini`.
+        :param cli_help:
+            Help for the command line option; defaults to ``help``.
+        :param cli_value:
+            Makes the command line option a flag taking no argument, which sets
+            the configuration option to this value. Defaults to ``"true"`` for
+            a ``bool`` option and to taking an argument otherwise.
+        :param group:
+            Option group for ``--help`` output, by name or as an
+            :class:`OptionGroup`. Defaults to the anonymous group.
+        :param metavar:
+            Argument placeholder in ``--help`` output.
+
+        .. versionadded:: 9.2
+        """
+        self.addini(
+            name,
+            help,
+            type,
+            default,
+            aliases=aliases,
+            fallback=fallback,
+        )
+        opts = (cli,) if isinstance(cli, str) else tuple(cli)
+        if not opts:
+            if cli_value is not None or cli_help is not None or metavar is not None:
+                raise ValueError(
+                    f"config option {name!r} has no `cli` option strings, so "
+                    "`cli_value`, `cli_help` and `metavar` have no effect"
+                )
+            return
+
+        if cli_value is None and self._inidict[name].type == "bool":
+            cli_value = "true"
+
+        attrs: dict[str, Any] = {
+            "action": OverrideIniAction,
+            "ini_option": name,
+            "ini_value": cli_value,
+            "dest": name,
+            "help": help if cli_help is None else cli_help,
+            # The value lives in the ini config; argparse must not seed
+            # `config.option.<name>` with a second, competing default.
+            "default": None,
+        }
+        if metavar is not None:
+            attrs["metavar"] = metavar
+
+        if group is None:
+            target = self._anonymous
+        elif isinstance(group, str):
+            target = self.getgroup(group)
+        else:
+            target = group
+        target.addoption(*opts, **attrs)
+
 
 def get_ini_default_for_type(type: _IniTypeTag) -> Any:
     """
