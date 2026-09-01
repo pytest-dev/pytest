@@ -1,0 +1,1 @@
+``Item.location`` and ``TestReport.location`` now return an ``ItemLocation`` NamedTuple instead of a plain tuple, giving named access to ``path``, ``lineindex``, and ``testname``. A similar ``CodeLocation`` NamedTuple is used internally for fixture locations. Both types are tuple subclasses, so existing code that indexes or unpacks them is unaffected.
