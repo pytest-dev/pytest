@@ -14,6 +14,8 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import _ini_type_repr
+from _pytest.config.argparsing import get_ini_default_for_type
+from _pytest.config.argparsing import IniSpec
 from _pytest.config.argparsing import Parser
 from _pytest.terminal import TerminalReporter
 import pytest
@@ -178,6 +180,33 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     return None
 
 
+def _format_ini_help(spec: IniSpec) -> str:
+    """Render the help of a config option, with its default and fallbacks.
+
+    ``%(default)s`` in the help text is substituted, like argparse does for
+    command line options; otherwise the default is appended, but only when it
+    carries information -- the implicit default for a type (``""``, ``[]``,
+    ``False``, ``0``) says nothing a reader cannot infer from the type.
+    """
+    help = spec.help
+    if "%(default)s" in help:
+        help = help.replace("%(default)s", str(spec.default))
+    else:
+        implicit = (
+            get_ini_default_for_type(spec.type)
+            if isinstance(spec.type, str)
+            # Unions and Literals have no implicit default, so any default
+            # they carry was chosen deliberately and is worth showing.
+            else object()
+        )
+        if spec.default != implicit:
+            help = f"{help} (default: {spec.default!r})"
+    if spec.fallback:
+        targets = " or ".join(repr(target) for target in spec.fallback)
+        help = f"{help} (falls back to {targets})"
+    return help
+
+
 def showhelp(config: Config) -> None:
     import textwrap
 
@@ -199,9 +228,9 @@ def showhelp(config: Config) -> None:
     indent = " " * indent_len
     for name in config._parser._inidict:
         ini_spec = config._parser._inidict[name]
-        help = ini_spec.help
-        if help is None:
+        if ini_spec.help is None:
             raise TypeError(f"help argument cannot be None for {name}")
+        help = _format_ini_help(ini_spec)
         spec = f"{name} ({_ini_type_repr(ini_spec.type)}):"
         tw.write(f"  {spec}")
         spec_len = len(spec)
