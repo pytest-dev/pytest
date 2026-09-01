@@ -1,0 +1,1 @@
+Fixed assertion rewriting crash in class bodies with custom metaclasses (e.g. ``Enum``) that reject duplicate namespace keys -- by :user:`mturac`.
