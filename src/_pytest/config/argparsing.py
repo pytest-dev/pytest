@@ -632,11 +632,22 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
 
 
 class OverrideIniAction(argparse.Action):
-    """Custom argparse action that makes a CLI flag equivalent to overriding an
-    option, in addition to behaving like `store_true`.
+    """Argparse action that makes a CLI option equivalent to overriding a
+    configuration option.
 
     This can simplify things since code only needs to inspect the config option
     and not consider the CLI flag.
+
+    Two shapes, chosen by whether ``ini_value`` is given:
+
+    * with ``ini_value``, the option is a flag taking no argument, and sets the
+      config option to that fixed value (e.g. ``--strict-markers``);
+    * without it, the option takes one argument, and sets the config option to
+      it (e.g. ``--log-cli-format=FORMAT``).
+
+    The override is appended to ``override_ini``, the same list ``-o`` writes
+    to, so the two compose in command line order and the value goes through
+    exactly the same coercion as one written in a config file.
     """
 
     def __init__(
@@ -646,10 +657,20 @@ class OverrideIniAction(argparse.Action):
         nargs: int | str | None = None,
         *args,
         ini_option: str,
-        ini_value: str,
+        ini_value: str | None = None,
         **kwargs,
     ) -> None:
-        super().__init__(option_strings, dest, 0, *args, **kwargs)
+        if ini_value is None:
+            if nargs is None:
+                nargs = 1
+            elif nargs != 1:
+                raise ValueError(
+                    "OverrideIniAction takes exactly one argument unless "
+                    "`ini_value` makes it a flag"
+                )
+        else:
+            nargs = 0
+        super().__init__(option_strings, dest, nargs, *args, **kwargs)
         self.ini_option = ini_option
         self.ini_value = ini_value
 
@@ -657,12 +678,22 @@ class OverrideIniAction(argparse.Action):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        *args,
-        **kwargs,
+        values: str | Sequence[Any] | None = None,
+        option_string: str | None = None,
     ) -> None:
-        setattr(namespace, self.dest, True)
+        if self.ini_value is not None:
+            value = self.ini_value
+            # Keep behaving like `store_true` for `config.option.<dest>`.
+            setattr(namespace, self.dest, True)
+        else:
+            if isinstance(values, str):
+                value = values
+            else:
+                assert values is not None
+                value = str(values[0])
+            setattr(namespace, self.dest, value)
         current_overrides = getattr(namespace, "override_ini", None)
         if current_overrides is None:
             current_overrides = []
-        current_overrides.append(f"{self.ini_option}={self.ini_value}")
+        current_overrides.append(f"{self.ini_option}={value}")
         setattr(namespace, "override_ini", current_overrides)
