@@ -1,0 +1,5 @@
+Assertion diffs for mappings now match up keys the way the compared mappings match them themselves.
+
+Key comparison goes through the mappings' key views instead of plain sets of their keys, so a mapping
+with its own notion of key equivalence -- case-insensitive header mappings, for example -- no longer
+reports its common keys as missing on either side.
