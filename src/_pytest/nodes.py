@@ -6,6 +6,7 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import MutableMapping
+from collections.abc import Sequence
 from functools import cached_property
 from functools import lru_cache
 import os
@@ -35,6 +36,8 @@ from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
+from _pytest.parametrize import CallSpec
+from _pytest.parametrize import ParametrizeContext
 from _pytest.pathlib import absolutepath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
@@ -769,3 +772,138 @@ class Item(Node, abc.ABC):
         relfspath = self.session._node_location_to_relpath(path)
         assert type(location[2]) is str
         return (relfspath, location[1], location[2])
+
+
+class ItemDefinition(Collector, abc.ABC):
+    """Base class for collectors standing for a single test *definition*.
+
+    Its children are the (possibly parametrized) items generated from that one
+    definition. Giving the definition a node of its own makes it addressable:
+    it owns the definition's markers, it is what :hook:`pytest_generate_tests`
+    parametrizes, and it is the node ``"definition"`` scoped fixtures are
+    cached on, shared by every invocation of the definition.
+
+    :class:`~_pytest.python.FunctionDefinition` is the implementation for
+    Python test functions. Other collectors can subclass this to let their test
+    definitions be parametrized through the same hook: declare the names that
+    may be parametrized in :attr:`parametrize_argnames`, and turn one callspec
+    into an item in :meth:`make_item`. There is no fixture resolution on that
+    path -- the chosen values arrive on ``item.callspec.params``.
+
+    .. versionadded:: 9.2
+
+    :ref:`non-python tests`.
+    """
+
+    #: The argument names this definition may be parametrized on.
+    #:
+    #: A ``parametrize()`` call naming anything else is rejected, mirroring the
+    #: "uses no argument" error raised for Python test functions.
+    parametrize_argnames: Sequence[str] = ()
+
+    @abc.abstractmethod
+    def make_item(
+        self,
+        parent: Collector,
+        *,
+        name: str,
+        callspec: CallSpec | None,
+        nodeid: str,
+        context: ParametrizeContext,
+    ) -> Item:
+        """Build the item for a single invocation of this definition.
+
+        :param parent:
+            The collector to attach the item to. Usually the definition itself,
+            but not when the definition is kept out of the collection tree (see
+            :confval:`collect_function_definition`).
+        :param name:
+            Name for the item: the definition's name, with the callspec id
+            appended when parametrized.
+        :param callspec:
+            The parametrization of this invocation, or ``None`` when the
+            definition is not parametrized.
+        :param nodeid:
+            The nodeid to give the item. Passed explicitly so that item nodeids
+            stay the same whether or not the definition is part of the tree.
+        :param context:
+            The context the parametrization was collected in.
+        """
+        raise NotImplementedError
+
+    def make_parametrize_context(self) -> ParametrizeContext:
+        """Create the object to hand to :hook:`pytest_generate_tests`."""
+        return ParametrizeContext(
+            self,
+            self.config,
+            argnames=self.parametrize_argnames,
+            _ispytest=True,
+        )
+
+    def parametrize_hook_extras(self) -> Sequence[Callable[..., object]]:
+        """Extra :hook:`pytest_generate_tests` implementations to call.
+
+        Used by the Python collector to pick up ``pytest_generate_tests``
+        functions defined in the test's own module or class.
+        """
+        return ()
+
+    def finalize_parametrization(self, context: ParametrizeContext) -> None:
+        """Called once the hook has run, before any item is built.
+
+        Only called when the definition ended up parametrized.
+        """
+        context._recompute_direct_params_indices()
+
+    def collect(self) -> Iterable[Item | Collector]:
+        return list(self.generate_items(self))
+
+    def generate_items(self, parent: Collector) -> Iterator[Item]:
+        """Run the generate-tests protocol, yielding the items under ``parent``.
+
+        ``parent`` is the definition itself when it is part of the collection
+        tree, and the collector containing it otherwise.
+        """
+        context = self.make_parametrize_context()
+        self.ihook.pytest_generate_tests.call_extra(
+            list(self.parametrize_hook_extras()), dict(metafunc=context)
+        )
+
+        # The items keep a flat nodeid anchored at the collector containing the
+        # definition, whether or not the definition itself is part of the tree,
+        # so that nodeids -- and with them selection, caching and reporting --
+        # do not depend on the shape of the tree.
+        assert self.parent is not None
+        base_nodeid = self.parent.nodeid
+        name = self.name
+
+        if not context._calls:
+            yield self.make_item(
+                parent,
+                name=name,
+                callspec=None,
+                nodeid=f"{base_nodeid}::{name}",
+                context=context,
+            )
+        else:
+            self.finalize_parametrization(context)
+            for callspec in context._calls:
+                subname = f"{name}[{callspec.id}]" if callspec._idlist else name
+                item = self.make_item(
+                    parent,
+                    name=subname,
+                    callspec=callspec,
+                    nodeid=f"{base_nodeid}::{subname}",
+                    context=context,
+                )
+                if getattr(item, "callspec", None) is None:
+                    # Attaching the parametrization is part of the protocol, not
+                    # of each make_item(): the callspec drives reordering and
+                    # high-scoped param caching, and its marks and id have to
+                    # reach the item for markers and -k to work. Skipped when
+                    # make_item() already did it -- Function does, because it
+                    # can also be constructed directly.
+                    item.callspec = callspec  # type: ignore[attr-defined]
+                    item.own_markers.extend(callspec.marks)
+                    item.keywords[callspec.id] = True
+                yield item
