@@ -123,15 +123,6 @@ def pytest_addoption(parser: Parser) -> None:
         action="append",
         help="Set which warnings to report, see -W option of Python itself",
     )
-    group.addoption(
-        "--max-warnings",
-        action="store",
-        type=int,
-        default=None,
-        metavar="num",
-        dest="max_warnings",
-        help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
-    )
     parser.addini(
         "filterwarnings",
         type="linelist",
@@ -139,9 +130,15 @@ def pytest_addoption(parser: Parser) -> None:
         "warnings.filterwarnings. "
         "Processed after -W/--pythonwarnings.",
     )
-    parser.addini(
+    parser.addconfig(
         "max_warnings",
-        help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
+        "Exit with error if all tests pass but the number of warnings exceeds "
+        "this threshold",
+        type=int,
+        default=None,
+        cli="--max-warnings",
+        metavar="num",
+        group="pytest-warnings",
     )
 
     group = parser.getgroup("collect", "collection")
