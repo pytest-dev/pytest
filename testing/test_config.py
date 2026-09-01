@@ -2624,6 +2624,53 @@ class TestOverrideIniArgs:
             ]
         )
 
+    @pytest.mark.parametrize("registered_by", ["plugin", "conftest"])
+    @pytest.mark.parametrize("passed_via", ["cmdline", "addopts"])
+    def test_override_ini_action_from_late_registered_option(
+        self, pytester: Pytester, registered_by: str, passed_via: str
+    ) -> None:
+        """An `OverrideIniAction` flag must take effect no matter which round
+        registered it.
+
+        Options are registered in several rounds (core plugins, then
+        third-party plugins, then conftests), each followed by its own parse.
+        Overrides used to be collected only after the earliest rounds, so a
+        flag declared by a plugin or a conftest set `config.option` but never
+        reached `config.getini`.
+        """
+        source = """
+            from _pytest.config.argparsing import OverrideIniAction
+
+            def pytest_addoption(parser):
+                parser.addini("myflag", "my flag", type="bool", default=False)
+                parser.getgroup("myplug").addoption(
+                    "--myflag",
+                    action=OverrideIniAction,
+                    ini_option="myflag",
+                    ini_value="true",
+                    help="enable myflag",
+                )
+
+            def pytest_configure(config):
+                assert config.getini("myflag") is True
+        """
+        args = []
+        if registered_by == "plugin":
+            pytester.makepyfile(myplug=source)
+            pytester.syspathinsert()
+            args += ["-p", "myplug"]
+        else:
+            pytester.makeconftest(source)
+
+        if passed_via == "cmdline":
+            args.append("--myflag")
+        else:
+            pytester.makeini("[pytest]\naddopts = --myflag\n")
+
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest(*args)
+        result.assert_outcomes(passed=1)
+
     def test_override_ini_usage_error_bad_style(self, pytester: Pytester) -> None:
         pytester.makeini(
             """
