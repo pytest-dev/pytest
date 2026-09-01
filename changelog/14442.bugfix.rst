@@ -1,5 +1,0 @@
-A command line flag using ``OverrideIniAction`` now takes effect when it is
-registered by a third-party plugin or a ``conftest.py``, not only by a builtin
-plugin. Previously such a flag set ``config.option`` but its configuration
-override was silently dropped, so ``config.getini()`` still reported the
-unconfigured value.
