@@ -1896,9 +1896,10 @@ class Config:
         canonical_name = self._parser._ini_aliases.get(name, name)
 
         try:
-            _description, type, default = self._parser._inidict[canonical_name]
+            spec = self._parser._inidict[canonical_name]
         except KeyError as e:
             raise ValueError(f"unknown configuration value: {name!r}") from e
+        type, default = spec.type, spec.default
 
         # Collect all possible values (canonical name + aliases) from _inicfg.
         # Each candidate is (ConfigValue, is_canonical).
