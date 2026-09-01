@@ -1009,6 +1009,11 @@ class FixtureLookupError(LookupError):
                 )
             else:
                 msg = f"fixture '{self.argname}' not found"
+                if self.argname == "self":
+                    msg += (
+                        "\n hint: remove 'self' from the function definition if this "
+                        "is not a method"
+                    )
             msg += "\n available fixtures: {}".format(", ".join(sorted(available)))
             msg += "\n use 'pytest --fixtures [testpath]' for help on them."
 
