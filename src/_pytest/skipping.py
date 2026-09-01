@@ -39,7 +39,7 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "strict_xfail",
         "Default for the strict parameter of xfail "
-        "markers when not given explicitly (default: False) (alias: xfail_strict)",
+        "markers when not given explicitly (alias: xfail_strict)",
         type="bool",
         # None => fallback to `strict`.
         default=None,
