@@ -366,7 +366,8 @@ class Parser:
             type as this option, which also makes fallback cycles impossible.
 
             .. versionadded:: 9.2
-                The ``fallback`` parameter.
+                The ``fallback`` parameter. It is experimental; its behaviour
+                may change in future releases.
 
         The value of configuration keys can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
@@ -477,6 +478,11 @@ class Parser:
             Argument placeholder in ``--help`` output.
 
         .. versionadded:: 9.2
+
+        .. note::
+
+            This method is experimental; its behaviour and signature may change
+            in future releases.
         """
         self.addini(
             name,
