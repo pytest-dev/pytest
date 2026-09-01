@@ -14,6 +14,7 @@ from typing import final
 from typing import get_args
 from typing import get_origin
 from typing import Literal
+from typing import NamedTuple
 from typing import NoReturn
 from typing import TYPE_CHECKING
 from typing import TypeAlias
@@ -55,6 +56,20 @@ class _IniLiteral:
 #: value of any of these" (e.g. ``("int", "string")``, normalized from
 #: ``int | str``).
 IniType: TypeAlias = _IniTypeTag | _IniLiteral | tuple[_IniTypeTag | _IniLiteral, ...]
+
+
+@final
+class IniSpec(NamedTuple):
+    """The registration of an ini option, as stored in `Parser._inidict`.
+
+    A named tuple rather than a dataclass so that the historical
+    ``help, type, default = parser._inidict[name]`` unpacking keeps working.
+    """
+
+    help: str
+    type: IniType
+    default: Any
+
 
 #: Maps each string tag or plain Python type accepted by :meth:`Parser.addini`
 #: for its ``type`` argument to the normalized string tag.
@@ -140,7 +155,7 @@ class Parser:
         file_or_dir_arg = self.optparser.add_argument(FILE_OR_DIR, nargs="*")
         file_or_dir_arg.completer = filescompleter  # type: ignore
 
-        self._inidict: dict[str, tuple[str, IniType, Any]] = {}
+        self._inidict: dict[str, IniSpec] = {}
         # Maps alias -> canonical name.
         self._ini_aliases: dict[str, str] = {}
 
@@ -353,7 +368,7 @@ class Parser:
                 )
             default = get_ini_default_for_type(ini_type)
 
-        self._inidict[name] = (help, ini_type, default)
+        self._inidict[name] = IniSpec(help, ini_type, default)
 
         for alias in aliases:
             if alias in self._inidict:
