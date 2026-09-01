@@ -1816,6 +1816,133 @@ def test_mark_mro_marker_object_reused_by_add_marker(pytester: Pytester) -> None
     result.assert_outcomes(passed=1)
 
 
+def test_mark_iter_markers_does_not_resolve_class_obj(pytester: Pytester) -> None:
+    """Iterating a Class collector's markers must not force ``obj`` resolution.
+
+    Importing the class is a side effect a plugin inspecting markers during
+    collection has no reason to trigger, so without a resolved ``obj`` the
+    stored ``own_markers`` are yielded as-is (#14329).
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        seen = []
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.add_marker(pytest.mark.foo("dynamic"))
+                args = [m.args[0] for m in collector.iter_markers("foo")]
+                seen.append((args, getattr(collector, "_obj", None) is None))
+
+        def pytest_sessionfinish():
+            assert seen == [(["dynamic"], True)], seen
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.foo(0)
+        class TestBase:
+            pass
+
+        @pytest.mark.foo(1)
+        class TestChild(TestBase):
+            def test_it(self):
+                pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize(
+    "rewrite, expected",
+    [
+        pytest.param(
+            "collector.own_markers.insert(0, pytest.mark.foo('inserted').mark)",
+            ["inserted", "child", "base"],
+            id="insert-before-run",
+        ),
+        pytest.param(
+            "collector.add_marker(pytest.mark.foo('prepended'), append=False)",
+            ["prepended", "child", "base"],
+            id="add_marker-prepend",
+        ),
+        pytest.param(
+            "del collector.own_markers[0]",
+            ["child"],
+            id="run-broken",
+        ),
+    ],
+)
+def test_mark_class_own_markers_rewritten_by_plugin(
+    pytester: Pytester, rewrite: str, expected: list[str]
+) -> None:
+    """A plugin shifting the MRO run in ``own_markers`` must not make marker
+    iteration splice a stale run back in, losing or duplicating marks; a run
+    it broke up is iterated as stored (#14329)."""
+    pytester.makeconftest(
+        f"""
+        import pytest
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.obj  # resolve, so the MRO run is recorded
+                {rewrite}
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.mark.foo("base")
+        class TestBase:
+            pass
+
+        @pytest.mark.foo("child")
+        class TestChild(TestBase):
+            def test_it(self, request):
+                args = [m.args[0] for m in request.node.iter_markers("foo")]
+                assert args == {expected!r}
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_mark_class_own_markers_emptied_by_plugin(pytester: Pytester) -> None:
+    """A plugin rewriting ``own_markers`` must not make marker iteration splice
+    a stale MRO run back in (#14329)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.obj  # resolve, so the MRO run is recorded
+                collector.own_markers.clear()
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.foo(0)
+        class TestBase:
+            pass
+
+        @pytest.mark.foo(1)
+        class TestChild(TestBase):
+            def test_it(self, request):
+                assert list(request.node.iter_markers("foo")) == []
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
     """Check that applying marks works as intended on classmethods and staticmethods.
 

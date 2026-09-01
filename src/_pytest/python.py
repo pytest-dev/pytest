@@ -773,10 +773,10 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | N
 class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
 
-    #: Where the MRO-inherited markers sit in ``own_markers`` -- the index the
-    #: run starts at, plus that same run in closest-first order. ``None`` until
-    #: ``obj`` is resolved and the markers are unpacked.
-    _mro_marks: tuple[int, list[Mark]] | None = None
+    #: Where the MRO-inherited markers were last seen in ``own_markers``, the
+    #: run as stored (base-first), and the same run closest-first. ``None``
+    #: until ``obj`` is resolved and the markers are unpacked.
+    _mro_marks: tuple[int, tuple[Mark, ...], tuple[Mark, ...]] | None = None
 
     @classmethod
     def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
@@ -785,20 +785,41 @@ class Class(PyCollector):
 
     @override
     def _extend_own_markers(self, marks: Sequence[Mark]) -> None:
-        """Record where the MRO run lands, so it can be reordered in O(1)."""
+        """Record where the MRO run lands, so it can be reordered by a slice."""
         groups = get_mro_mark_groups(self._obj)
         self._mro_marks = (
             len(self.own_markers),
-            [mark for group in groups for mark in group],
+            tuple(marks),
+            tuple(mark for group in groups for mark in group),
         )
         super()._extend_own_markers(marks)
 
-    @override
-    def add_marker(self, marker: str | MarkDecorator, append: bool = True) -> None:
-        super().add_marker(marker, append=append)
-        if not append and self._mro_marks is not None:
-            start, closest_first = self._mro_marks
-            self._mro_marks = (start + 1, closest_first)
+    def _find_mro_run(self) -> int | None:
+        """Return where the recorded MRO run starts in ``own_markers`` now.
+
+        ``own_markers`` is a public list: ``add_marker(append=False)`` or a
+        plugin's ``insert()``/``remove()`` shift or break the run. The run is
+        matched by identity as a whole, so a ``Mark`` object that also appears
+        outside the run (one passed to ``add_marker`` as well) cannot be
+        mistaken for part of it. Returns ``None`` when the run is gone.
+        """
+        assert self._mro_marks is not None
+        start, stored, _ = self._mro_marks
+        own_markers = self.own_markers
+
+        def run_at(index: int) -> bool:
+            window = own_markers[index : index + len(stored)]
+            return len(window) == len(stored) and all(
+                a is b for a, b in zip(window, stored, strict=True)
+            )
+
+        if run_at(start):
+            return start
+        for index in range(len(own_markers) - len(stored) + 1):
+            if run_at(index):
+                self._mro_marks = (index, *self._mro_marks[1:])
+                return index
+        return None
 
     @override
     def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
@@ -811,25 +832,25 @@ class Class(PyCollector):
         -- so dynamic markers keep their ``append`` position, just like on a
         plain node -- but with that run replaced by its closest-first
         (child before parent) counterpart.
+
+        If the run was broken up, ``own_markers`` is yielded as stored.
         """
         own_markers = self.own_markers
-        if self._mro_marks is None:
+        if self._mro_marks is None or not self._mro_marks[1]:
             # ``obj`` was not resolved yet, so own_markers cannot contain MRO
             # markers - and resolving it here would be a nasty side effect.
             yield from own_markers
             return
 
-        start, closest_first = self._mro_marks
-        stop = start + len(closest_first)
-        if stop > len(own_markers):
-            # own_markers was rewritten behind our back and the recorded run no
-            # longer fits - leave the order alone rather than splice garbage.
+        start = self._find_mro_run()
+        if start is None:
             yield from own_markers
             return
 
+        closest_first = self._mro_marks[2]
         yield from own_markers[:start]
         yield from closest_first
-        yield from own_markers[stop:]
+        yield from own_markers[start + len(closest_first) :]
 
     def newinstance(self):
         return self.obj()
