@@ -48,7 +48,7 @@ jobs:
         persist-credentials: false
 
     - name: Set up tox
-      uses: ./.github/actions/setup-tox
+      uses: $/.github/actions/setup-tox
       with:
         python-version: "3.13"
 
