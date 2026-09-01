@@ -1,0 +1,10 @@
+:confval:`max_warnings` and :confval:`faulthandler_timeout` are now typed.
+
+``max_warnings`` was registered without a type, so despite being documented as
+an integer the configuration file accepted anything and the value was converted
+by hand at the point of use. ``--max-warnings`` and the configuration option are
+now one declaration, and an invalid value is reported as a usage error at
+startup instead of crashing during reporting.
+
+``faulthandler_timeout`` was registered with a ``float`` default but no type,
+which made it a string option holding a float; it is now declared as ``float``.
