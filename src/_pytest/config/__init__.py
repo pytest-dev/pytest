@@ -1633,6 +1633,26 @@ class Config:
         known_keys = self._parser._inidict.keys() | self._parser._ini_aliases.keys()
         return self._inicfg.keys() - known_keys
 
+    def _collect_ini_overrides(self, namespace: argparse.Namespace) -> None:
+        """Merge the ``-o`` overrides seen so far into the ini config.
+
+        Options are registered in several rounds -- core plugins, then
+        third-party plugins, then conftests -- and each round is followed by a
+        new parse which can yield further overrides, in particular from
+        :class:`OverrideIniAction` flags, whose whole purpose is to write into
+        this channel. Collecting after every round keeps a flag registered by
+        a late round from being silently dropped.
+        """
+        overrides = parse_override_ini(getattr(namespace, "override_ini", None))
+        changed = {
+            key: value
+            for key, value in overrides.items()
+            if self._inicfg.get(key) != value
+        }
+        if changed:
+            self._inicfg.update(changed)
+            self._inicache.clear()
+
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
         assert self.args == [], (
@@ -1688,12 +1708,9 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
-        if addopts:
-            # addopts may have added overrides (especially via OverrideIniAction).
-            # The thing can be endlessly circular but we only do one level (#14442).
-            if overrides := parse_override_ini(self.known_args_namespace.override_ini):
-                self._inicfg.update(overrides)
-                self._inicache.clear()
+        # addopts may have added overrides (especially via OverrideIniAction).
+        # The thing can be endlessly circular but we only do one level (#14442).
+        self._collect_ini_overrides(self.known_args_namespace)
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()
@@ -1729,6 +1746,7 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
+        self._collect_ini_overrides(self.known_args_namespace)
 
         self._validate_plugins()
         self._warn_about_skipped_plugins()
@@ -1758,6 +1776,7 @@ class Config:
             self._parser.parse(args, namespace=self.option)
         except PrintHelp:
             return
+        self._collect_ini_overrides(self.option)
 
         self.args, self.args_source = self._decide_args(
             args=getattr(self.option, FILE_OR_DIR),
