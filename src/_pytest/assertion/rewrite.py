@@ -530,14 +530,19 @@ def traverse_node(node: ast.AST) -> Iterator[ast.AST]:
         yield from traverse_node(child)
 
 
-def _walrus_targets(nodes: Iterable[ast.expr]) -> set[str]:
-    """Return the names any walrus operator in *nodes* rebinds."""
-    return {
-        sub.target.id
+def _can_rebind(nodes: Iterable[ast.expr]) -> bool:
+    """Return whether evaluating *nodes* could rebind a name read before them.
+
+    A walrus operator rebinds its target outright.  A call -- including the
+    implicit one behind ``await`` -- can rebind anything it declares ``global``
+    or ``nonlocal``, and there is no way to tell from here which names those
+    are, so assume the worst.
+    """
+    return any(
+        isinstance(sub, ast.NamedExpr | ast.Call | ast.Await)
         for node in nodes
         for sub in ast.walk(node)
-        if isinstance(sub, ast.NamedExpr)
-    }
+    )
 
 
 @functools.lru_cache(maxsize=1)
@@ -964,22 +969,41 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_operand(
         self, operand: ast.expr, later: Sequence[ast.expr]
     ) -> tuple[ast.expr, str]:
-        """Visit an operand, freezing it against walrus operators in *later*.
+        """Visit an operand, freezing it against side effects in *later*.
 
         Operands are rewritten into statements that run in source order, but
-        a plain name is left as a bare load evaluated at the very end, when
-        the enclosing expression is assembled.  A walrus operator in a later
-        operand rebinds that name in between, so both the value used and the
-        value reported would be the post-walrus one -- Python evaluates the
-        earlier operand first.  Copy the value into a temporary instead.
+        two of them stay unhoisted and are evaluated at the very end, when the
+        enclosing expression is assembled -- after everything that follows
+        them:
+
+        * a plain name, whose binding anything in *later* may have changed by
+          then, so the value used and the value reported would be the new one;
+        * a walrus operator itself, which would then assign in the wrong
+          order, and be visible to the operands that were meant to precede it.
+
+        Either way Python evaluates the earlier operand first, so copy it into
+        a temporary here.  A starred argument is unwrapped and rewrapped, its
+        value being subject to the same problem.
+
+        Only a name or a walrus can reach the check below: the visit_* methods
+        hoist what they build into a temporary and generic_visit assigns
+        whatever is left -- a literal included -- so anything else is already
+        ordered by the time it arrives here.
         """
         specifiers = set(self.explanation_specifiers)
         res, expl = self.visit(operand)
-        if isinstance(res, ast.Name) and res.id in _walrus_targets(later):
-            snapshot = self.assign(res)
+        value = res.value if isinstance(res, ast.Starred) else res
+        assert isinstance(value, ast.NamedExpr | ast.Name)
+        needs_freeze = _can_rebind(later)
+        if needs_freeze:
+            snapshot = self.assign(value)
             for key in set(self.explanation_specifiers) - specifiers:
                 self.explanation_specifiers[key] = self.display(snapshot)
-            res = snapshot
+            res = (
+                ast.copy_location(ast.Starred(snapshot, res.ctx), res)
+                if isinstance(res, ast.Starred)
+                else snapshot
+            )
         return res, expl
 
     def visit_BoolOp(self, boolop: ast.BoolOp) -> tuple[ast.Name, str]:
@@ -990,9 +1014,8 @@ class AssertionRewriter(ast.NodeVisitor):
         body = save = self.statements
         fail_save = self.expl_stmts
         levels = len(boolop.values) - 1
-        later_walrus_targets = [
-            _walrus_targets(boolop.values[idx + 1 :])
-            for idx in range(len(boolop.values))
+        later_can_rebind = [
+            _can_rebind(boolop.values[idx + 1 :]) for idx in range(len(boolop.values))
         ]
         self.push_format_context()
         # Process each operand, short-circuiting as needed.
@@ -1009,10 +1032,10 @@ class AssertionRewriter(ast.NodeVisitor):
             # as a condition or explanation reference:
             #  - NamedExpr (non-last): reusing the node re-evaluates the
             #    walrus expression including any side effects.
-            #  - Name whose variable a later walrus overwrites: the
-            #    explanation would show the post-walrus value.
+            #  - Name whose binding a later operand may change: the
+            #    explanation would show the value it ended up with.
             needs_snapshot = (isinstance(v, ast.NamedExpr) and i < levels) or (
-                isinstance(v, ast.Name) and v.id in later_walrus_targets[i]
+                isinstance(v, ast.Name) and later_can_rebind[i]
             )
             if needs_snapshot:
                 snapshot = self.assign(ast.Name(res_var, ast.Load()))
@@ -1059,7 +1082,21 @@ class AssertionRewriter(ast.NodeVisitor):
         # The callee and every argument are evaluated left to right, so each of
         # them has to be frozen against walrus operators in what follows.
         operands = [*call.args, *(keyword.value for keyword in call.keywords)]
-        new_func, func_expl = self.visit_operand(call.func, operands)
+        if isinstance(call.func, ast.Attribute) and isinstance(call.func.ctx, ast.Load):
+            # obj.method(...) reads better flat -- "where 42 = Obj().compute()"
+            # rather than a separate "where compute = Obj().compute" line.  The
+            # bound method still gets a temporary of its own, because Python
+            # looks it up before evaluating the arguments; that is also what
+            # keeps the receiver ordered ahead of them.
+            receiver, receiver_expl = self.visit(call.func.value)
+            new_func: ast.expr = self.assign(
+                ast.copy_location(
+                    ast.Attribute(receiver, call.func.attr, ast.Load()), call.func
+                )
+            )
+            func_expl = f"{receiver_expl}.{call.func.attr}"
+        else:
+            new_func, func_expl = self.visit_operand(call.func, operands)
         arg_expls = []
         new_args = []
         new_kwargs = []
@@ -1088,9 +1125,36 @@ class AssertionRewriter(ast.NodeVisitor):
         new_starred = ast.Starred(res, starred.ctx)
         return new_starred, "*" + expl
 
+    def visit_IfExp(self, ifexp: ast.IfExp) -> tuple[ast.Name, str]:
+        # Introspect the condition but keep the branches as they are: only the
+        # selected one may be evaluated, so neither can be hoisted.  That also
+        # keeps them ordered after the condition, which is where Python puts
+        # them, so no freeze is needed here.
+        cond_res, cond_expl = self.visit(ifexp.test)
+        res = self.assign(
+            ast.copy_location(ast.IfExp(cond_res, ifexp.body, ifexp.orelse), ifexp)
+        )
+        res_expl = self.explanation_param(self.display(res))
+        pat = "%s\n{%s = (... if %s else ...)\n}"
+        expl = pat % (res_expl, res_expl, cond_expl)
+        return res, expl
+
+    def visit_Subscript(self, subscript: ast.Subscript) -> tuple[ast.Name, str]:
+        # For Slice objects (a[1:3]), fall back to generic — decomposing
+        # start/stop/step is rarely useful in assertion messages.
+        if isinstance(subscript.slice, ast.Slice):
+            return self.generic_visit(subscript)
+        value, value_expl = self.visit_operand(subscript.value, [subscript.slice])
+        slice_res, slice_expl = self.visit(subscript.slice)
+        res = self.assign(
+            ast.copy_location(ast.Subscript(value, slice_res, ast.Load()), subscript)
+        )
+        res_expl = self.explanation_param(self.display(res))
+        pat = "%s\n{%s = %s[%s]\n}"
+        expl = pat % (res_expl, res_expl, value_expl, slice_expl)
+        return res, expl
+
     def visit_Attribute(self, attr: ast.Attribute) -> tuple[ast.Name, str]:
-        if not isinstance(attr.ctx, ast.Load):
-            return self.generic_visit(attr)
         value, value_expl = self.visit(attr.value)
         res = self.assign(
             ast.copy_location(ast.Attribute(value, attr.attr, ast.Load()), attr)
@@ -1106,6 +1170,9 @@ class AssertionRewriter(ast.NodeVisitor):
         if isinstance(comp.left, ast.Compare | ast.BoolOp):
             left_expl = f"({left_expl})"
         if isinstance(left_res, ast.NamedExpr):
+            # visit_operand only freezes an operand something later can rebind,
+            # so a walrus with nothing but literals after it arrives raw -- and
+            # the comparison below would evaluate it a second time.
             left_res = self.assign(left_res)
         res_variables = [self.variable() for i in range(len(comp.ops))]
         load_names: list[ast.expr] = [ast.Name(v, ast.Load()) for v in res_variables]
