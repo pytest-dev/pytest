@@ -1,9 +1,1 @@
-``pytest --help`` now shows more about each configuration option:
-
-* ``%(default)s`` in the help text of :func:`parser.addini()
-  <pytest.Parser.addini>` is substituted, as argparse already does for command
-  line options.
-* Otherwise the default is appended automatically, when it carries information
-  -- a type's implicit default (``""``, ``[]``, ``False``, ``0``) says nothing
-  a reader cannot infer from the displayed type, so it is left out.
-* An option registered with ``fallback`` says which option it falls back to.
+``pytest --help`` now shows the default value of each configuration option, and which option it falls back to if it has one. ``%(default)s`` in the help text passed to :func:`parser.addini <pytest.Parser.addini>` is substituted, as argparse already does for command line options.
