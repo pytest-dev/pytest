@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import ast
-from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -57,19 +56,12 @@ if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
 
-class Sentinel:
-    pass
-
-
 assertstate_key = StashKey["AssertionState"]()
 
 # pytest caches rewritten pycs in pycache dirs
 PYTEST_TAG = f"{sys.implementation.cache_tag}-pytest-{version}"
 PYC_EXT = ".py" + ((__debug__ and "c") or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
-
-# Special marker that denotes we have just left a scope definition
-_SCOPE_END_MARKER = Sentinel()
 
 
 class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
@@ -538,6 +530,16 @@ def traverse_node(node: ast.AST) -> Iterator[ast.AST]:
         yield from traverse_node(child)
 
 
+def _walrus_targets(nodes: Iterable[ast.expr]) -> set[str]:
+    """Return the names any walrus operator in *nodes* rebinds."""
+    return {
+        sub.target.id
+        for node in nodes
+        for sub in ast.walk(node)
+        if isinstance(sub, ast.NamedExpr)
+    }
+
+
 @functools.lru_cache(maxsize=1)
 def _get_assertion_exprs(src: bytes) -> dict[int, str]:
     """Return a mapping from {lineno: "assertion test expression"}."""
@@ -642,14 +644,8 @@ class AssertionRewriter(ast.NodeVisitor):
        .push_format_context() and .pop_format_context() which allows
        to build another %-formatted string while already building one.
 
-    :scope: A tuple containing the current scope used for variables_overwrite.
-
-    :variables_overwrite: A dict filled with references to variables
-       that change value within an assert. This happens when a variable is
-       reassigned with the walrus operator
-
-    This state, except the variables_overwrite,  is reset on every new assert
-    statement visited and used by the other visitors.
+    This state is reset on every new assert statement visited and used by
+    the other visitors.
     """
 
     def __init__(
@@ -665,10 +661,6 @@ class AssertionRewriter(ast.NodeVisitor):
         else:
             self.enable_assertion_pass_hook = False
         self.source = source
-        self.scope: tuple[ast.AST, ...] = ()
-        self.variables_overwrite: defaultdict[tuple[ast.AST, ...], dict[str, str]] = (
-            defaultdict(dict)
-        )
 
     def run(self, mod: ast.Module) -> None:
         """Find all assert statements in *mod* and rewrite them."""
@@ -718,16 +710,9 @@ class AssertionRewriter(ast.NodeVisitor):
         mod.body[pos:pos] = imports
 
         # Collect asserts.
-        self.scope = (mod,)
-        nodes: list[ast.AST | Sentinel] = [mod]
+        nodes: list[ast.AST] = [mod]
         while nodes:
             node = nodes.pop()
-            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
-                self.scope = (*self.scope, node)
-                nodes.append(_SCOPE_END_MARKER)
-            if node == _SCOPE_END_MARKER:
-                self.scope = self.scope[:-1]
-                continue
             assert isinstance(node, ast.AST)
             for name, field in ast.iter_fields(node):
                 if isinstance(field, list):
@@ -954,15 +939,16 @@ class AssertionRewriter(ast.NodeVisitor):
         return self.statements
 
     def visit_NamedExpr(self, name: ast.NamedExpr) -> tuple[ast.NamedExpr, str]:
-        # This method handles the 'walrus operator' repr of the target
-        # name if it's a local variable or _should_repr_global_name()
-        # thinks it's acceptable.
+        # Return the NamedExpr as-is so it evaluates in its natural position
+        # (preserving left-to-right evaluation order in function calls, etc.).
+        # For the explanation, reference the target variable.
         locs = ast.Call(self.builtin("locals"), [], [])
         target_id = name.target.id
+        target_name = ast.Name(target_id, ast.Load())
         inlocs = ast.Compare(ast.Constant(target_id), [ast.In()], [locs])
-        dorepr = self.helper("_should_repr_global_name", name)
+        dorepr = self.helper("_should_repr_global_name", target_name)
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
-        expr = ast.IfExp(test, self.display(name), ast.Constant(target_id))
+        expr = ast.IfExp(test, self.display(target_name), ast.Constant(target_id))
         return name, self.explanation_param(expr)
 
     def visit_Name(self, name: ast.Name) -> tuple[ast.Name, str]:
@@ -975,6 +961,27 @@ class AssertionRewriter(ast.NodeVisitor):
         expr = ast.IfExp(test, self.display(name), ast.Constant(name.id))
         return name, self.explanation_param(expr)
 
+    def visit_operand(
+        self, operand: ast.expr, later: Sequence[ast.expr]
+    ) -> tuple[ast.expr, str]:
+        """Visit an operand, freezing it against walrus operators in *later*.
+
+        Operands are rewritten into statements that run in source order, but
+        a plain name is left as a bare load evaluated at the very end, when
+        the enclosing expression is assembled.  A walrus operator in a later
+        operand rebinds that name in between, so both the value used and the
+        value reported would be the post-walrus one -- Python evaluates the
+        earlier operand first.  Copy the value into a temporary instead.
+        """
+        specifiers = set(self.explanation_specifiers)
+        res, expl = self.visit(operand)
+        if isinstance(res, ast.Name) and res.id in _walrus_targets(later):
+            snapshot = self.assign(res)
+            for key in set(self.explanation_specifiers) - specifiers:
+                self.explanation_specifiers[key] = self.display(snapshot)
+            res = snapshot
+        return res, expl
+
     def visit_BoolOp(self, boolop: ast.BoolOp) -> tuple[ast.Name, str]:
         res_var = self.variable()
         expl_list = self.assign(ast.List([], ast.Load()))
@@ -983,32 +990,43 @@ class AssertionRewriter(ast.NodeVisitor):
         body = save = self.statements
         fail_save = self.expl_stmts
         levels = len(boolop.values) - 1
+        later_walrus_targets = [
+            _walrus_targets(boolop.values[idx + 1 :])
+            for idx in range(len(boolop.values))
+        ]
         self.push_format_context()
-        # Process each operand, short-circuiting if needed.
+        # Process each operand, short-circuiting as needed.
         for i, v in enumerate(boolop.values):
             if i:
                 fail_inner: list[ast.stmt] = []
                 # cond is set in a prior loop iteration below
                 self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa: F821
                 self.expl_stmts = fail_inner
-                match v:
-                    # Check if the left operand is an ast.NamedExpr and the value has already been visited
-                    case ast.Compare(
-                        left=ast.NamedExpr(target=ast.Name(id=target_id))
-                    ) if target_id in [
-                        e.id for e in boolop.values[:i] if hasattr(e, "id")
-                    ]:
-                        pytest_temp = self.variable()
-                        self.variables_overwrite[self.scope][target_id] = v.left  # type:ignore[assignment]
-                        # mypy's false positive, we're checking that the 'target' attribute exists.
-                        v.left.target.id = pytest_temp  # type:ignore[attr-defined]
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
+            # Snapshot when the raw ``res`` node would be unsafe to reuse
+            # as a condition or explanation reference:
+            #  - NamedExpr (non-last): reusing the node re-evaluates the
+            #    walrus expression including any side effects.
+            #  - Name whose variable a later walrus overwrites: the
+            #    explanation would show the post-walrus value.
+            needs_snapshot = (isinstance(v, ast.NamedExpr) and i < levels) or (
+                isinstance(v, ast.Name) and v.id in later_walrus_targets[i]
+            )
+            if needs_snapshot:
+                snapshot = self.assign(ast.Name(res_var, ast.Load()))
+                res = snapshot
+                for key in self.stack[-1]:
+                    self.stack[-1][key] = self.display(snapshot)
             expl_format = self.pop_format_context(ast.Constant(expl))
             call = ast.Call(app, [expl_format], [])
             self.expl_stmts.append(ast.Expr(call))
             if i < levels:
+                # Short-circuit: and → continue if truthy; or → if falsy.
+                # ``res`` is a stable reference (Name vars are only
+                # snapshotted when a later walrus would corrupt them;
+                # calls/compares return @py_assert vars from assign()).
                 cond: ast.expr = res
                 if is_or:
                     cond = ast.UnaryOp(ast.Not(), cond)
@@ -1029,7 +1047,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
     def visit_BinOp(self, binop: ast.BinOp) -> tuple[ast.Name, str]:
         symbol = BINOP_MAP[binop.op.__class__]
-        left_expr, left_expl = self.visit(binop.left)
+        left_expr, left_expl = self.visit_operand(binop.left, [binop.right])
         right_expr, right_expl = self.visit(binop.right)
         explanation = f"({left_expl} {symbol} {right_expl})"
         res = self.assign(
@@ -1038,25 +1056,19 @@ class AssertionRewriter(ast.NodeVisitor):
         return res, explanation
 
     def visit_Call(self, call: ast.Call) -> tuple[ast.Name, str]:
-        new_func, func_expl = self.visit(call.func)
+        # The callee and every argument are evaluated left to right, so each of
+        # them has to be frozen against walrus operators in what follows.
+        operands = [*call.args, *(keyword.value for keyword in call.keywords)]
+        new_func, func_expl = self.visit_operand(call.func, operands)
         arg_expls = []
         new_args = []
         new_kwargs = []
-        for arg in call.args:
-            if isinstance(arg, ast.Name) and arg.id in self.variables_overwrite.get(
-                self.scope, {}
-            ):
-                arg = self.variables_overwrite[self.scope][arg.id]  # type:ignore[assignment]
-            res, expl = self.visit(arg)
+        for i, arg in enumerate(call.args):
+            res, expl = self.visit_operand(arg, operands[i + 1 :])
             arg_expls.append(expl)
             new_args.append(res)
-        for keyword in call.keywords:
-            match keyword.value:
-                case ast.Name(id=id) if id in self.variables_overwrite.get(
-                    self.scope, {}
-                ):
-                    keyword.value = self.variables_overwrite[self.scope][id]  # type:ignore[assignment]
-            res, expl = self.visit(keyword.value)
+        for i, keyword in enumerate(call.keywords, start=len(call.args)):
+            res, expl = self.visit_operand(keyword.value, operands[i + 1 :])
             new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
                 arg_expls.append(keyword.arg + "=" + expl)
@@ -1090,17 +1102,11 @@ class AssertionRewriter(ast.NodeVisitor):
 
     def visit_Compare(self, comp: ast.Compare) -> tuple[ast.expr, str]:
         self.push_format_context()
-        # We first check if we have overwritten a variable in the previous assert
-        match comp.left:
-            case ast.Name(id=name_id) if name_id in self.variables_overwrite.get(
-                self.scope, {}
-            ):
-                comp.left = self.variables_overwrite[self.scope][name_id]  # type: ignore[assignment]
-            case ast.NamedExpr(target=ast.Name(id=target_id)):
-                self.variables_overwrite[self.scope][target_id] = comp.left  # type: ignore[assignment]
-        left_res, left_expl = self.visit(comp.left)
+        left_res, left_expl = self.visit_operand(comp.left, comp.comparators)
         if isinstance(comp.left, ast.Compare | ast.BoolOp):
             left_expl = f"({left_expl})"
+        if isinstance(left_res, ast.NamedExpr):
+            left_res = self.assign(left_res)
         res_variables = [self.variable() for i in range(len(comp.ops))]
         load_names: list[ast.expr] = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
@@ -1109,17 +1115,13 @@ class AssertionRewriter(ast.NodeVisitor):
         syms: list[ast.expr] = []
         results = [left_res]
         for i, op, next_operand in it:
-            match (next_operand, left_res):
-                case (
-                    ast.NamedExpr(target=ast.Name(id=target_id)),
-                    ast.Name(id=name_id),
-                ) if target_id == name_id:
-                    next_operand.target.id = self.variable()
-                    self.variables_overwrite[self.scope][name_id] = next_operand  # type: ignore[assignment]
-
-            next_res, next_expl = self.visit(next_operand)
+            next_res, next_expl = self.visit_operand(
+                next_operand, comp.comparators[i + 1 :]
+            )
             if isinstance(next_operand, ast.Compare | ast.BoolOp):
                 next_expl = f"({next_expl})"
+            if isinstance(next_res, ast.NamedExpr):
+                next_res = self.assign(next_res)
             results.append(next_res)
             sym = BINOP_MAP[op.__class__]
             syms.append(ast.Constant(sym))

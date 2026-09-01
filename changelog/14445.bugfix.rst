@@ -1,0 +1,3 @@
+Assertion rewriting no longer evaluates walrus operator (``:=``) expressions more than once, which reported results the test never computed when the expression had side effects.
+
+An operand evaluated before a later walrus is now reported with the value it actually saw, so ``assert value != identity(value := value.lower())`` keeps Python's left-to-right order.
