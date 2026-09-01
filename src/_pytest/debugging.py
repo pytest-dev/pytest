@@ -382,7 +382,8 @@ def _postmortem_exc_or_tb(
     elif isinstance(excinfo.value, ConftestImportFailure):
         # A config.ConftestImportFailure is not useful for post_mortem.
         # Use the underlying exception instead:
-        cause = excinfo.value.cause
+        cause = excinfo.value.__cause__
+        assert cause is not None
         if get_exc:
             return cause
 
