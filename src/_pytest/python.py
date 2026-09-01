@@ -776,7 +776,7 @@ class Class(PyCollector):
     #: Where the MRO-inherited markers sit in ``own_markers`` -- the index the
     #: run starts at, plus that same run in closest-first order. ``None`` until
     #: ``obj`` is resolved and the markers are unpacked.
-    _mro_marks: tuple[int, list[Mark]] | None = None
+    _mro_marks: tuple[int, tuple[Mark, ...]] | None = None
 
     @classmethod
     def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
@@ -789,7 +789,7 @@ class Class(PyCollector):
         groups = get_mro_mark_groups(self._obj)
         self._mro_marks = (
             len(self.own_markers),
-            [mark for group in groups for mark in group],
+            tuple(mark for group in groups for mark in group),
         )
         super()._extend_own_markers(marks)
 
