@@ -309,6 +309,114 @@ If you want to look at the names of existing plugins, use
 the :option:`--trace-config` option.
 
 
+.. _declaring-config-options:
+
+Declaring configuration options
+-------------------------------
+
+A plugin declares its settings from the :hook:`pytest_addoption` hook. There
+are two ways to expose a setting, and one call that does both.
+
+:func:`parser.addoption() <pytest.Parser.addoption>` registers a command line
+option only. Use it for things a user changes between runs -- what to run, how
+much to report, whether to drop into a debugger. Its arguments are argparse's,
+and the value is read with :func:`config.getoption()
+<pytest.Config.getoption>`.
+
+:func:`parser.addini() <pytest.Parser.addini>` registers a configuration file
+option only. Use it for things that belong to the test suite rather than to a
+particular run. The value is typed, and read with :func:`config.getini()
+<pytest.Config.getini>`. A user can still change it for one run with ``-o
+name=value``, so a setting does not need a command line option merely to be
+overridable.
+
+:func:`parser.addconfig() <pytest.Parser.addconfig>` registers both at once,
+when a setting genuinely deserves both:
+
+.. code-block:: python
+
+    from typing import Literal
+
+
+    def pytest_addoption(parser):
+        parser.addconfig(
+            "hello_name",
+            'Name to greet, as in "Hello World!"',
+            type=str,
+            default="World",
+            cli="--hello-name",
+            metavar="NAME",
+            group="helloworld",
+        )
+
+The command line option overrides the configuration value rather than living
+in a separate namespace, so there is only one way to read the setting:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def hello(request):
+        def _hello(name=None):
+            return f"Hello {name or request.config.getini('hello_name')}!"
+
+        return _hello
+
+This matters because the alternative -- registering the two separately and
+deciding at each read site which one wins -- has to be got right at every read
+site, and the type has to be declared twice, in two vocabularies.
+
+Types
+~~~~~
+
+The ``type`` argument accepts ``str``, ``bool``, ``int`` and ``float``, a union
+of those such as ``int | str``, a ``Literal`` of strings for a fixed set of
+choices, and the list-valued tags ``"args"``, ``"linelist"`` and ``"paths"``.
+The type is enforced wherever the value comes from -- a configuration file,
+``-o``, or the command line option -- so declaring it once is what makes an
+invalid value an error rather than a surprise later:
+
+.. code-block:: python
+
+    parser.addconfig(
+        "hello_style",
+        "How enthusiastic to be",
+        type=Literal["plain", "shouting"],
+        default="plain",
+        cli="--hello-style",
+    )
+
+A ``bool`` option becomes a flag taking no argument. Pass ``cli_value`` to make
+a flag out of any other type, so that ``--shout`` sets ``hello_style`` to
+``shouting``.
+
+Falling back to another option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When one setting refines another -- a format for one output stream, defaulting
+to the format used for all of them -- declare that with ``fallback`` instead of
+resolving it by hand:
+
+.. code-block:: python
+
+    parser.addconfig("hello_name", "Name to greet", type=str, default="World")
+    parser.addconfig(
+        "hello_shout_name",
+        "Name to greet when shouting",
+        type=str,
+        default="World",
+        fallback="hello_name",
+    )
+
+``config.getini("hello_shout_name")`` then returns the value of ``hello_name``
+whenever ``hello_shout_name`` itself is not configured. A fallback must be
+registered before the options naming it, and must have the same type.
+
+Declaring the fallback rather than writing it out gets two things right that
+are easy to miss by hand: an explicitly configured empty value is honoured
+instead of falling through, and ``pytest --help`` says which option this one
+falls back to.
+
+
 .. _registering-markers:
 
 Registering custom markers
