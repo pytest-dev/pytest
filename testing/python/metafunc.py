@@ -21,9 +21,10 @@ from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.outcomes import Failed
+from _pytest.parametrize import CallSpec
+from _pytest.parametrize import IdMaker
 from _pytest.pytester import Pytester
 from _pytest.python import Function
-from _pytest.python import IdMaker
 from _pytest.scope import Scope
 import pytest
 
@@ -55,6 +56,17 @@ class _IdMakerConfig:
 
     def getini(self, name: str) -> object:
         return self._ini[name]
+
+
+class TestCallSpec:
+    def test_getparam_returns_the_value(self) -> None:
+        callspec = CallSpec(params={"answer": 42})
+        assert callspec.getparam("answer") == 42
+
+    def test_getparam_raises_value_error_for_unknown_name(self) -> None:
+        callspec = CallSpec(params={"answer": 42})
+        with pytest.raises(ValueError, match=r"^question$"):
+            callspec.getparam("question")
 
 
 class TestMetafunc:
