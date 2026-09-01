@@ -2390,3 +2390,44 @@ def test_assertion_failure_when_terminalreporter_is_disabled(
     )
     reprec = pytester.inline_run("-p", "no:terminalreporter")
     reprec.assertoutcome(passed=1)
+
+
+def test_enum_class_body_assert_not_rewritten(pytester: Pytester) -> None:
+    """Assertion rewriting must not inject temporary variables into class
+    bodies, because class namespaces that reject duplicate keys (e.g. Enum)
+    raise TypeError on the cleanup assignment.  (#9582)"""
+    pytester.makepyfile(
+        """
+        from enum import Enum
+
+        class Color(Enum):
+            RED = 1
+            GREEN = 2
+            BLUE = 3
+            assert RED is not None
+
+        def test_enum_values():
+            assert Color.RED.value == 1
+            assert Color.BLUE.value == 3
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_class_body_assert_methods_still_rewritten(pytester: Pytester) -> None:
+    """Methods inside a class should still get assertion rewriting even
+    though class-body asserts are skipped.  (#9582)"""
+    pytester.makepyfile(
+        """
+        class TestSomething:
+            assert True  # class body -- not rewritten
+
+            def test_detailed_failure(self):
+                x = 1
+                assert x == 2
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(["*assert 1 == 2*"])

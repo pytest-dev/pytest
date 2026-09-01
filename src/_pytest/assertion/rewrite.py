@@ -714,11 +714,21 @@ class AssertionRewriter(ast.NodeVisitor):
         while nodes:
             node = nodes.pop()
             assert isinstance(node, ast.AST)
+            # Skip assertion rewriting inside class bodies: the rewriter
+            # injects temporary variables (@py_assert0, etc.) which are
+            # then cleaned up by assigning None to the same name.  Class
+            # namespaces that reject duplicate keys (e.g. Enum) raise
+            # TypeError on the second assignment.  Methods inside the
+            # class are still rewritten because they are FunctionDef
+            # nodes whose own bodies are visited separately.
+            in_class_body = isinstance(node, ast.ClassDef)
             for name, field in ast.iter_fields(node):
                 if isinstance(field, list):
                     new: list[ast.AST] = []
                     for i, child in enumerate(field):
-                        if isinstance(child, ast.Assert):
+                        if isinstance(child, ast.Assert) and not (
+                            in_class_body and name == "body"
+                        ):
                             # Transform assert.
                             new.extend(self.visit(child))
                         else:
