@@ -280,10 +280,7 @@ def _validate_marker_names(expr: Expression, config: Config) -> None:
 
     Only validates when strict_markers is enabled.
     """
-    strict_markers = config.getini("strict_markers")
-    if strict_markers is None:
-        strict_markers = config.getini("strict")
-    if not strict_markers:
+    if not config.getini("strict_markers"):
         return
 
     registered_markers = {m.name for m in config._iter_registered_markers()}

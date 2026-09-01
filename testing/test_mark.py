@@ -243,7 +243,11 @@ class TestValidateMarkerNames:
             }
 
         def getini(self, name: str) -> list[str] | bool | None:
-            return self._ini[name]
+            value = self._ini[name]
+            if name == "strict_markers" and value is None:
+                # Mirrors the `fallback="strict"` registration of the real one.
+                return self._ini["strict"]
+            return value
 
         def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
             yield from Config._iter_registered_markers(cast(Config, self))

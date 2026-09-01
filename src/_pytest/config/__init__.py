@@ -1621,10 +1621,7 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
-        strict_config = self.getini("strict_config")
-        if strict_config is None:
-            strict_config = self.getini("strict")
-        if strict_config:
+        if self.getini("strict_config"):
             raise UsageError(message)
 
         self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)
