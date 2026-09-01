@@ -314,29 +314,20 @@ the :option:`--trace-config` option.
 Declaring configuration options
 -------------------------------
 
-A plugin declares its settings from the :hook:`pytest_addoption` hook. There
-are two ways to expose a setting, and one call that does both.
+.. versionadded:: 9.2
 
-:func:`parser.addoption() <pytest.Parser.addoption>` registers a command line
-option only. Use it for things a user changes between runs -- what to run, how
-much to report, whether to drop into a debugger. Its arguments are argparse's,
-and the value is read with :func:`config.getoption()
-<pytest.Config.getoption>`.
+.. note::
 
-:func:`parser.addini() <pytest.Parser.addini>` registers a configuration file
-option only. Use it for things that belong to the test suite rather than to a
-particular run. The value is typed, and read with :func:`config.getini()
-<pytest.Config.getini>`. A user can still change it for one run with ``-o
-name=value``, so a setting does not need a command line option merely to be
-overridable.
+    :func:`parser.addconfig() <pytest.Parser.addconfig>` and the ``fallback``
+    argument to :func:`parser.addini() <pytest.Parser.addini>` are
+    experimental. Their behaviour and signatures may change in future
+    releases.
 
-:func:`parser.addconfig() <pytest.Parser.addconfig>` registers both at once,
-when a setting genuinely deserves both:
+A setting that your plugin reads -- a name to greet, a format to print in, a
+limit to enforce -- is declared once, from the :hook:`pytest_addoption` hook,
+with :func:`parser.addconfig() <pytest.Parser.addconfig>`:
 
 .. code-block:: python
-
-    from typing import Literal
-
 
     def pytest_addoption(parser):
         parser.addconfig(
@@ -349,8 +340,9 @@ when a setting genuinely deserves both:
             group="helloworld",
         )
 
-The command line option overrides the configuration value rather than living
-in a separate namespace, so there is only one way to read the setting:
+This gives users both a ``hello_name`` configuration option and a
+``--hello-name`` command line option. There is one way to read it, whichever
+way the user set it:
 
 .. code-block:: python
 
@@ -361,21 +353,22 @@ in a separate namespace, so there is only one way to read the setting:
 
         return _hello
 
-This matters because the alternative -- registering the two separately and
-deciding at each read site which one wins -- has to be got right at every read
-site, and the type has to be declared twice, in two vocabularies.
+The command line option *overrides* the configuration option rather than being
+a separate value, which is what lets there be a single read. Leave ``cli`` out
+and the setting is configuration-only; users can still change it for one run
+with ``-o hello_name=Bob``, so a setting does not need a command line option
+merely to be overridable.
 
 Types
 ~~~~~
 
-The ``type`` argument accepts ``str``, ``bool``, ``int`` and ``float``, a union
-of those such as ``int | str``, a ``Literal`` of strings for a fixed set of
-choices, and the list-valued tags ``"args"``, ``"linelist"`` and ``"paths"``.
-The type is enforced wherever the value comes from -- a configuration file,
-``-o``, or the command line option -- so declaring it once is what makes an
-invalid value an error rather than a surprise later:
+``type`` accepts ``str``, ``bool``, ``int`` and ``float``, a union of those
+such as ``int | str``, a ``Literal`` of strings for a fixed set of choices, and
+the list-valued tags ``"args"``, ``"linelist"`` and ``"paths"``:
 
 .. code-block:: python
+
+    from typing import Literal
 
     parser.addconfig(
         "hello_style",
@@ -385,16 +378,20 @@ invalid value an error rather than a surprise later:
         cli="--hello-style",
     )
 
-A ``bool`` option becomes a flag taking no argument. Pass ``cli_value`` to make
-a flag out of any other type, so that ``--shout`` sets ``hello_style`` to
-``shouting``.
+Declaring the type once is what makes ``-o hello_style=whispering`` a clean
+usage error: it is enforced wherever the value comes from -- a configuration
+file, ``-o``, or the command line option.
 
-Falling back to another option
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A ``bool`` setting becomes a flag taking no argument. Pass ``cli_value`` to
+make a flag out of any other type, so that a ``--shout`` flag can set
+``hello_style`` to ``shouting``.
+
+Falling back to another setting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When one setting refines another -- a format for one output stream, defaulting
-to the format used for all of them -- declare that with ``fallback`` instead of
-resolving it by hand:
+to the format used for all of them -- say so with ``fallback`` rather than
+resolving it at each place you read the value:
 
 .. code-block:: python
 
@@ -407,14 +404,33 @@ resolving it by hand:
         fallback="hello_name",
     )
 
-``config.getini("hello_shout_name")`` then returns the value of ``hello_name``
-whenever ``hello_shout_name`` itself is not configured. A fallback must be
-registered before the options naming it, and must have the same type.
+``config.getini("hello_shout_name")`` then returns ``hello_name`` whenever
+``hello_shout_name`` itself is not configured. A fallback must be registered
+before the settings naming it, and must have the same type; several may be
+given, and the first one that is configured wins.
 
-Declaring the fallback rather than writing it out gets two things right that
-are easy to miss by hand: an explicitly configured empty value is honoured
-instead of falling through, and ``pytest --help`` says which option this one
-falls back to.
+Declaring the fallback also gets two things right that are easy to miss when
+writing the chain by hand: a setting explicitly configured to an empty value is
+honoured rather than falling through, and ``pytest --help`` says what this
+setting falls back to.
+
+The underlying calls
+~~~~~~~~~~~~~~~~~~~~
+
+``addconfig`` is a convenience over two lower-level calls, which remain
+available and are what you want when a setting is not really a setting:
+
+* :func:`parser.addoption() <pytest.Parser.addoption>` registers a command line
+  option only, taking argparse's arguments and read with
+  :func:`config.getoption() <pytest.Config.getoption>`. Use it for things that
+  are not configuration at all -- selecting what to run, entering a debugger,
+  anything meaningless to write down in a file.
+* :func:`parser.addini() <pytest.Parser.addini>` registers a configuration
+  option only, read with :func:`config.getini() <pytest.Config.getini>`. It
+  also accepts ``fallback``.
+
+Note that their ``type`` arguments are unrelated: ``addoption`` takes an
+argparse converter, ``addini`` takes the types described above.
 
 
 .. _registering-markers:
@@ -470,23 +486,22 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
 
 
     def pytest_addoption(parser):
-        group = parser.getgroup("helloworld")
-        group.addoption(
-            "--name",
-            action="store",
-            dest="name",
+        parser.addconfig(
+            "hello_name",
+            'Default "name" for hello().',
+            type=str,
             default="World",
-            help='Default "name" for hello().',
+            cli="--hello-name",
+            metavar="NAME",
+            group="helloworld",
         )
 
 
     @pytest.fixture
     def hello(request):
-        name = request.config.getoption("name")
-
         def _hello(name=None):
             if not name:
-                name = request.config.getoption("name")
+                name = request.config.getini("hello_name")
             return f"Hello {name}!"
 
         return _hello
