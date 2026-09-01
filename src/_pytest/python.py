@@ -606,10 +606,24 @@ class Module(nodes.File, PyCollector):
         def xunit_setup_module_fixture(request) -> Generator[None]:
             module = request.module
             if setup_module is not None:
-                _call_with_optional_argument(setup_module, module)
+                try:
+                    _call_with_optional_argument(setup_module, module)
+                except BaseException:
+                    # unittest.suite._handleModuleFixture also runs module
+                    # cleanups when setUpModule fails (#14958).
+                    import unittest.case
+
+                    unittest.case.doModuleCleanups()
+                    raise
             yield
             if teardown_module is not None:
                 _call_with_optional_argument(teardown_module, module)
+            # Run cleanups registered via unittest.addModuleCleanup after
+            # tearDownModule, matching unittest.suite._handleModuleTearDown
+            # (#14958).
+            import unittest.case
+
+            unittest.case.doModuleCleanups()
 
         fixtures.register_fixture(
             # Use a unique name to speed up lookup.

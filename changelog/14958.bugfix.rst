@@ -1,0 +1,1 @@
+Module cleanups registered with :func:`unittest.addModuleCleanup` are now executed after the module's tests finish, matching the standard library behavior.

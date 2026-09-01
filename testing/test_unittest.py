@@ -1573,6 +1573,180 @@ def test_do_cleanups_on_teardown_failure(pytester: Pytester) -> None:
     assert passed == 1
 
 
+def test_module_cleanups_run_after_module_tests(pytester: Pytester) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a") as f:
+                f.write("cleanup\\n")
+
+        unittest.addModuleCleanup(cleanup)
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                with open(r"{events_file}", "a") as f:
+                    f.write("test-one\\n")
+
+        def test_not_yet():
+            with open(r"{events_file}", "a") as f:
+                f.write("last-test\\n")
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(passed=2)
+    # Module cleanups run only after all tests of the module (#14958).
+    assert events_file.read_text().splitlines() == [
+        "test-one",
+        "last-test",
+        "cleanup",
+    ]
+
+
+def test_module_cleanups_run_after_teardown_module(pytester: Pytester) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a") as f:
+                f.write("cleanup\\n")
+
+        unittest.addModuleCleanup(cleanup)
+
+        def setUpModule():
+            pass
+
+        def tearDownModule():
+            with open(r"{events_file}", "a") as f:
+                f.write("tearDownModule\\n")
+
+        class MyTestCase(unittest.TestCase):
+            @classmethod
+            def setUpClass(cls):
+                def class_cleanup():
+                    with open(r"{events_file}", "a") as f:
+                        f.write("class-cleanup\\n")
+
+                cls.addClassCleanup(class_cleanup)
+
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(passed=1)
+    # Matches unittest.suite._handleModuleTearDown ordering: class cleanups,
+    # then tearDownModule, then module cleanups.
+    assert events_file.read_text().splitlines() == [
+        "class-cleanup",
+        "tearDownModule",
+        "cleanup",
+    ]
+
+
+def test_module_cleanups_run_when_setup_module_fails(pytester: Pytester) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a") as f:
+                f.write("cleanup\\n")
+
+        unittest.addModuleCleanup(cleanup)
+
+        def setUpModule():
+            raise Exception("setupModule boom")
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(errors=1)
+    # unittest.suite._handleModuleFixture runs module cleanups when
+    # setUpModule fails (#14958).
+    assert events_file.read_text().splitlines() == ["cleanup"]
+
+
+def test_module_cleanup_failure_reported(pytester: Pytester) -> None:
+    testpath = pytester.makepyfile(
+        """
+        import unittest
+
+        def boom():
+            raise Exception("cleanup boom")
+
+        unittest.addModuleCleanup(boom)
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest("-s", testpath)
+    result.assert_outcomes(passed=1, errors=1)
+    result.stdout.fnmatch_lines(["*ERROR at teardown*", "*cleanup boom*"])
+
+
+def test_module_cleanups_run_once_for_multiple_test_classes(
+    pytester: Pytester,
+) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a") as f:
+                f.write("cleanup\\n")
+
+        unittest.addModuleCleanup(cleanup)
+
+        class TestOne(unittest.TestCase):
+            def test_a(self):
+                pass
+
+        class TestTwo(unittest.TestCase):
+            def test_b(self):
+                pass
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(passed=2)
+    # Two test classes in the same module -> cleanups run exactly once.
+    assert events_file.read_text().splitlines() == ["cleanup"]
+
+
+def test_module_cleanups_run_when_class_skipped(pytester: Pytester) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a") as f:
+                f.write("cleanup\\n")
+
+        unittest.addModuleCleanup(cleanup)
+
+        @unittest.skip("skip all")
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(skipped=1)
+    assert events_file.read_text().splitlines() == ["cleanup"]
+
+
 class TestClassCleanupErrors:
     """
     Make sure to show exceptions raised during class cleanup function (those registered

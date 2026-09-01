@@ -31,6 +31,7 @@ from _pytest.outcomes import exit
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.python import _get_first_non_fixture_func
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
@@ -72,8 +73,46 @@ def pytest_pycollect_makeitem(
     # Abstract classes can't be instantiated so no point collecting them.
     if inspect.isabstract(obj):
         return None
+    if isinstance(collector, Module):
+        _register_unittest_module_cleanup_fixture(collector)
     # Yes, so let's collect it.
     return UnitTestCase.from_parent(collector, name=name, obj=obj)
+
+
+def _register_unittest_module_cleanup_fixture(collector: Module) -> None:
+    """Register an autouse, module-scoped fixture that runs cleanups
+    registered via ``unittest.addModuleCleanup`` (#14958).
+
+    Modules defining ``setUpModule``/``tearDownModule`` are handled by the
+    xunit module fixture in ``_pytest.python`` (which runs the cleanups after
+    ``tearDownModule``, matching ``unittest.suite._handleModuleTearDown``);
+    this fixture covers all other modules.
+    """
+    if getattr(collector, "_unittest_module_cleanup_registered", False):
+        return
+    module = collector.obj
+    setup_module = _get_first_non_fixture_func(module, ("setUpModule", "setup_module"))
+    teardown_module = _get_first_non_fixture_func(
+        module, ("tearDownModule", "teardown_module")
+    )
+    if setup_module is not None or teardown_module is not None:
+        return
+
+    def unittest_module_cleanup_fixture() -> Generator[None]:
+        yield
+        import unittest.case
+
+        unittest.case.doModuleCleanups()
+
+    fixtures.register_fixture(
+        # Use a unique name to speed up lookup.
+        name=f"_xunit_unittest_module_cleanup_fixture_{module.__name__}",
+        func=unittest_module_cleanup_fixture,
+        node=collector,
+        scope="module",
+        autouse=True,
+    )
+    setattr(collector, "_unittest_module_cleanup_registered", True)
 
 
 class UnitTestCase(Class):
