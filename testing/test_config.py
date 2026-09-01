@@ -2793,6 +2793,60 @@ class TestOverrideIniArgs:
         result = pytester.runpytest(*args)
         result.assert_outcomes(passed=1)
 
+    def test_override_ini_action_with_value(self, pytester: Pytester) -> None:
+        """An `OverrideIniAction` option taking an argument sets the config option."""
+        pytester.makeconftest(
+            """
+            from _pytest.config.argparsing import OverrideIniAction
+
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type="string", default="hi")
+                parser.getgroup("g").addoption(
+                    "--greeting", action=OverrideIniAction,
+                    ini_option="greeting", help="set greeting",
+                )
+        """
+        )
+        config = pytester.parseconfig("--greeting=hello")
+        assert config.getini("greeting") == "hello"
+        # Still reflected on the option namespace.
+        assert config.option.greeting == "hello"
+
+    def test_override_ini_action_with_value_typed(self, pytester: Pytester) -> None:
+        """The value goes through the same coercion as one from a config file."""
+        pytester.makeconftest(
+            """
+            from _pytest.config.argparsing import OverrideIniAction
+
+            def pytest_addoption(parser):
+                parser.addini("count", "count", type="int", default=0)
+                parser.getgroup("g").addoption(
+                    "--count", action=OverrideIniAction,
+                    ini_option="count", help="set count",
+                )
+        """
+        )
+        assert pytester.parseconfig("--count=7").getini("count") == 7
+
+    def test_override_ini_action_composes_with_dash_o(self, pytester: Pytester) -> None:
+        """`-o` and the flag write to the same channel, so command line order wins."""
+        pytester.makeconftest(
+            """
+            from _pytest.config.argparsing import OverrideIniAction
+
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type="string", default="hi")
+                parser.getgroup("g").addoption(
+                    "--greeting", action=OverrideIniAction,
+                    ini_option="greeting", help="set greeting",
+                )
+        """
+        )
+        config = pytester.parseconfig("-o", "greeting=a", "--greeting=b")
+        assert config.getini("greeting") == "b"
+        config = pytester.parseconfig("--greeting=b", "-o", "greeting=a")
+        assert config.getini("greeting") == "a"
+
     def test_override_ini_usage_error_bad_style(self, pytester: Pytester) -> None:
         pytester.makeini(
             """
