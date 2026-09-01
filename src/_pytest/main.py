@@ -252,6 +252,17 @@ def pytest_addoption(parser: Parser) -> None:
         default=True,
     )
     parser.addini(
+        "collect_function_definition",
+        "How the function-definition collector node participates in the "
+        "collection tree.\n"
+        "- hidden (default): keep the flat layout, no node in the tree\n"
+        "- pedantic: insert the node and scope function-level markers to it\n"
+        "- messy: insert the node but transfer markers down to each invocation "
+        "to preserve the legacy marker layout (emits a warning)",
+        type="string",
+        default="hidden",
+    )
+    parser.addini(
         "consider_namespace_packages",
         type="bool",
         default=False,
@@ -1007,6 +1018,7 @@ class Session(nodes.Collector):
                 # Prune this level.
                 any_matched_in_collector = False
                 for node in reversed(subnodes):
+                    remaining = matchparts[1:]
                     # Path part e.g. `/a/b/` in `/a/b/test_file.py::TestIt::test_it`.
                     if isinstance(matchparts[0], Path):
                         is_match = node.path == matchparts[0]
@@ -1021,7 +1033,13 @@ class Session(nodes.Collector):
                     else:
                         if len(matchparts) == 1:
                             # This the last part, one parametrization goes.
-                            if parametrization is not None:
+                            if isinstance(node, nodes.ItemDefinition):
+                                # A definition node carries the bare name, while
+                                # the parametrization is on the items below it.
+                                # Descend and match the same part again there.
+                                is_match = node.name == matchparts[0]
+                                remaining = matchparts
+                            elif parametrization is not None:
                                 # A parametrized arg must match exactly.
                                 is_match = node.name == matchparts[0] + parametrization
                             else:
@@ -1032,7 +1050,7 @@ class Session(nodes.Collector):
                         else:
                             is_match = node.name == matchparts[0]
                     if is_match:
-                        work.append((node, matchparts[1:]))
+                        work.append((node, remaining))
                         any_matched_in_collector = True
 
                 if not any_matched_in_collector:
