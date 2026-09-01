@@ -1,0 +1,7 @@
+Matching a fixture definition against the node requesting it no longer hashes collection tree nodes, which was a measurable cost during collection since it runs once per fixture definition per lookup.
+
+Looking up the fixture definitions visible to a node no longer scans every fixture definition registered under that name, but walks the node's parent chain instead.
+Collection of suites which define the same fixture name on very many nodes -- for example a fixture inherited from a base class by thousands of test classes -- is no longer quadratic in the number of definitions.
+
+Plugins which inject fixtures by mutating the internal ``FixtureManager._arg2fixturedefs`` directly keep working: the lookup index follows those mutations.
+One behavior there did change: a list stored in that mapping is copied rather than aliased, so assigning the same list under two fixture names now gives two independent lists.
