@@ -1414,6 +1414,117 @@ class TestConfigAPI:
         assert len(values) == 2
         assert values == ["456", "123"]
 
+    def test_addconfig_ini_only(self, pytester: Pytester) -> None:
+        """Without `cli`, `addconfig` is just `addini`."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi")
+        """
+        )
+        assert pytester.parseconfig().getini("greeting") == "hi"
+        assert pytester.parseconfig("-o", "greeting=yo").getini("greeting") == "yo"
+
+    def test_addconfig_cli_sets_the_config_option(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting", metavar="WORD")
+        """
+        )
+        config = pytester.parseconfig("--greeting=hello")
+        assert config.getini("greeting") == "hello"
+        assert config.option.greeting == "hello"
+
+    def test_addconfig_cli_and_ini_agree(self, pytester: Pytester) -> None:
+        """The flag and the config file are the same setting, read the same way."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("count", "count", type=int, default=0,
+                                 cli=("--count", "--the-count"))
+        """
+        )
+        pytester.makeini("[pytest]\ncount = 3\n")
+        assert pytester.parseconfig().getini("count") == 3
+        assert pytester.parseconfig("--count=5").getini("count") == 5
+        assert pytester.parseconfig("--the-count=5").getini("count") == 5
+
+    def test_addconfig_bool_is_a_flag(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("loud", "be loud", type=bool, default=False,
+                                 cli="--loud")
+        """
+        )
+        assert pytester.parseconfig().getini("loud") is False
+        assert pytester.parseconfig("--loud").getini("loud") is True
+
+    def test_addconfig_cli_value_makes_a_flag(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("mode", "mode", type=str, default="off",
+                                 cli="--turbo", cli_value="turbo")
+        """
+        )
+        assert pytester.parseconfig().getini("mode") == "off"
+        assert pytester.parseconfig("--turbo").getini("mode") == "turbo"
+
+    def test_addconfig_cli_validated_against_the_type(self, pytester: Pytester) -> None:
+        """A bad value on the command line fails like a bad value in a file."""
+        pytester.makeconftest(
+            """
+            from typing import Literal
+
+            def pytest_addoption(parser):
+                parser.addconfig("mode", "mode", type=Literal["on", "off"],
+                                 default="off", cli="--mode")
+
+            def pytest_configure(config):
+                config.getini("mode")
+        """
+        )
+        assert pytester.parseconfig("--mode=on").getini("mode") == "on"
+        result = pytester.runpytest("--mode=sideways")
+        result.stderr.fnmatch_lines(["*config option 'mode' expects one of*"])
+
+    def test_addconfig_with_fallback(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("fmt", "format", type=str, default="plain",
+                                 cli="--fmt")
+                parser.addconfig("cli_fmt", "live format", type=str,
+                                 default="plain", cli="--cli-fmt", fallback="fmt")
+        """
+        )
+        assert pytester.parseconfig("--fmt=fancy").getini("cli_fmt") == "fancy"
+        assert (
+            pytester.parseconfig("--fmt=fancy", "--cli-fmt=live").getini("cli_fmt")
+            == "live"
+        )
+
+    def test_addconfig_group(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "say a greeting", type=str,
+                                 default="hi", cli="--greeting", group="mygroup")
+        """
+        )
+        result = pytester.runpytest("--help")
+        result.stdout.fnmatch_lines(["mygroup:", "*--greeting*say a greeting*"])
+
+    def test_addconfig_rejects_cli_args_without_cli(self, pytester: Pytester) -> None:
+        parser = pytester.parseconfig()._parser
+        with pytest.raises(ValueError, match="has no `cli` option strings"):
+            parser.addconfig(
+                "greeting", "greeting", type=str, default="hi", cli_value="x"
+            )
+
     def test_addini_fallback(self, pytester: Pytester) -> None:
         """An unset option takes its value from its fallback, if that is set."""
         pytester.makeconftest(
