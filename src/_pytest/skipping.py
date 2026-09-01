@@ -41,8 +41,7 @@ def pytest_addoption(parser: Parser) -> None:
         "Default for the strict parameter of xfail "
         "markers when not given explicitly (alias: xfail_strict)",
         type="bool",
-        # None => fallback to `strict`.
-        default=None,
+        fallback="strict",
         aliases=["xfail_strict"],
     )
 
@@ -218,8 +217,6 @@ def evaluate_xfail_marks(item: Item) -> Xfail | None:
         strict = mark.kwargs.get("strict")
         if strict is None:
             strict = item.config.getini("strict_xfail")
-        if strict is None:
-            strict = item.config.getini("strict")
         raises = mark.kwargs.get("raises", None)
         if "condition" not in mark.kwargs:
             conditions = mark.args
