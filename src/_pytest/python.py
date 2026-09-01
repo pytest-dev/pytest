@@ -82,6 +82,7 @@ from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
+from _pytest.warning_types import PytestUnusedXunitFixtureWarning
 
 
 if TYPE_CHECKING:
@@ -581,9 +582,11 @@ class Module(nodes.File, PyCollector):
         return importtestmodule(self.path, self.config)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        self.session._fixturemanager.parsefactories(self)
+        # Registered after parsefactories so the xunit setup functions are
+        # ordered *after* the autouse fixtures defined in this module (#8412).
         self._register_setup_module_fixture()
         self._register_setup_function_fixture()
-        self.session._fixturemanager.parsefactories(self)
         return super().collect()
 
     def _register_setup_module_fixture(self) -> None:
@@ -594,10 +597,10 @@ class Module(nodes.File, PyCollector):
         other fixtures (#517).
         """
         setup_module = _get_first_non_fixture_func(
-            self.obj, ("setUpModule", "setup_module")
+            self.obj, ("setUpModule", "setup_module"), node=self
         )
         teardown_module = _get_first_non_fixture_func(
-            self.obj, ("tearDownModule", "teardown_module")
+            self.obj, ("tearDownModule", "teardown_module"), node=self
         )
 
         if setup_module is None and teardown_module is None:
@@ -627,9 +630,11 @@ class Module(nodes.File, PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        setup_function = _get_first_non_fixture_func(self.obj, ("setup_function",))
+        setup_function = _get_first_non_fixture_func(
+            self.obj, ("setup_function",), node=self
+        )
         teardown_function = _get_first_non_fixture_func(
-            self.obj, ("teardown_function",)
+            self.obj, ("teardown_function",), node=self
         )
         if setup_function is None and teardown_function is None:
             return
@@ -752,14 +757,33 @@ def _call_with_optional_argument(func, arg) -> None:
         func()
 
 
-def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | None:
+def _get_first_non_fixture_func(
+    obj: object, names: Iterable[str], *, node: nodes.Node | None = None
+) -> object | None:
     """Return the attribute from the given object to be used as a setup/teardown
     xunit-style function, but only if not marked as a fixture to avoid calling it twice.
+
+    A fixture-marked attribute is skipped, since requesting it is then up to the
+    fixture mechanism. If such a fixture is not autouse nothing ever requests it,
+    so it silently never runs -- warn about that on ``node`` (#8412).
     """
     for name in names:
         meth: object | None = getattr(obj, name, None)
-        if meth is not None and fixtures.getfixturemarker(meth) is None:
+        if meth is None:
+            continue
+        marker = fixtures.getfixturemarker(meth)
+        if marker is None:
             return meth
+        if not marker.autouse and node is not None:
+            node.warn(
+                PytestUnusedXunitFixtureWarning(
+                    f"{name!r} is defined as a fixture without autouse=True, so it "
+                    f"is never requested and never runs.\n"
+                    f"pytest only invokes {name!r} as an xunit-style "
+                    f"setup/teardown function when it is a plain function.\n"
+                    f"Pass autouse=True to the fixture, or rename it."
+                )
+            )
     return None
 
 
@@ -796,12 +820,15 @@ class Class(PyCollector):
             )
             return []
 
-        self._register_setup_class_fixture()
-        self._register_setup_method_fixture()
-
         self.session._fixturemanager.parsefactories(
             holder=self.newinstance(), node=self
         )
+
+        # Registered after parsefactories so the xunit setup functions are
+        # ordered *after* the autouse fixtures visible on this class, matching
+        # both unittest's setUp and an equivalent autouse fixture (#8412).
+        self._register_setup_class_fixture()
+        self._register_setup_method_fixture()
 
         return super().collect()
 
@@ -812,8 +839,10 @@ class Class(PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        setup_class = _get_first_non_fixture_func(self.obj, ("setup_class",))
-        teardown_class = _get_first_non_fixture_func(self.obj, ("teardown_class",))
+        setup_class = _get_first_non_fixture_func(self.obj, ("setup_class",), node=self)
+        teardown_class = _get_first_non_fixture_func(
+            self.obj, ("teardown_class",), node=self
+        )
         if setup_class is None and teardown_class is None:
             return
 
@@ -844,9 +873,11 @@ class Class(PyCollector):
         other fixtures (#517).
         """
         setup_name = "setup_method"
-        setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
+        setup_method = _get_first_non_fixture_func(self.obj, (setup_name,), node=self)
         teardown_name = "teardown_method"
-        teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
+        teardown_method = _get_first_non_fixture_func(
+            self.obj, (teardown_name,), node=self
+        )
         if setup_method is None and teardown_method is None:
             return
 
