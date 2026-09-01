@@ -21,6 +21,7 @@ from .pathlib import rm_rf
 from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest._io.pprint import PrettyPrinter
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -614,8 +615,6 @@ def cacheshow(config: Config, session: Session) -> int:
     :param session: pytest session object.
     :returns: Exit code (0 for success).
     """
-    from pprint import pformat
-
     assert config.cache is not None
 
     tw = TerminalWriter()
@@ -638,6 +637,7 @@ def cacheshow(config: Config, session: Session) -> int:
                 yield x
 
     dummy = object()
+    pp = PrettyPrinter()
     basedir = config.cache._cachedir
     vdir = basedir / Cache._CACHE_PREFIX_VALUES
     tw.sep("-", f"cache values for {glob!r}")
@@ -648,7 +648,7 @@ def cacheshow(config: Config, session: Session) -> int:
             tw.line(f"{key} contains unreadable content, will be ignored")
         else:
             tw.line(f"{key} contains:")
-            for line in pformat(val).splitlines():
+            for line in pp.pformat_lines(val):
                 tw.line("  " + line)
 
     ddir = basedir / Cache._CACHE_PREFIX_DIRS
