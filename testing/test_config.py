@@ -1414,6 +1414,128 @@ class TestConfigAPI:
         assert len(values) == 2
         assert values == ["456", "123"]
 
+    def test_addini_fallback(self, pytester: Pytester) -> None:
+        """An unset option takes its value from its fallback, if that is set."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="string", default="base-default")
+                parser.addini("derived", "derived", type="string",
+                              default="derived-default", fallback="base")
+        """
+        )
+        pytester.makeini("[pytest]\nbase = from-file\n")
+        config = pytester.parseconfig()
+        assert config.getini("base") == "from-file"
+        assert config.getini("derived") == "from-file"
+
+    def test_addini_fallback_not_used_when_set(self, pytester: Pytester) -> None:
+        """A configured value wins over the fallback, even when it is falsy."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="string", default="base-default")
+                parser.addini("derived", "derived", type="string",
+                              default="derived-default", fallback="base")
+        """
+        )
+        pytester.makeini("[pytest]\nbase = from-file\nderived =\n")
+        config = pytester.parseconfig()
+        assert config.getini("derived") == ""
+
+    def test_addini_fallback_default_when_neither_set(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="string", default="base-default")
+                parser.addini("derived", "derived", type="string",
+                              default="derived-default", fallback="base")
+        """
+        )
+        config = pytester.parseconfig()
+        assert config.getini("derived") == "derived-default"
+
+    def test_addini_fallback_from_override(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="string", default="base-default")
+                parser.addini("derived", "derived", type="string",
+                              default="derived-default", fallback="base")
+        """
+        )
+        config = pytester.parseconfig("-o", "base=from-override")
+        assert config.getini("derived") == "from-override"
+
+    def test_addini_fallback_chain(self, pytester: Pytester) -> None:
+        """Fallbacks are transitive: an unset middle link does not stop the walk."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("a", "a", type="string", default="a-default")
+                parser.addini("b", "b", type="string", default="b-default",
+                              fallback="a")
+                parser.addini("c", "c", type="string", default="c-default",
+                              fallback="b")
+        """
+        )
+        pytester.makeini("[pytest]\na = from-a\n")
+        config = pytester.parseconfig()
+        assert config.getini("c") == "from-a"
+
+    def test_addini_fallback_multiple_first_configured_wins(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("first", "first", type="string", default="")
+                parser.addini("second", "second", type="string", default="")
+                parser.addini("derived", "derived", type="string", default="d",
+                              fallback=["first", "second"])
+        """
+        )
+        pytester.makeini("[pytest]\nsecond = from-second\n")
+        assert pytester.parseconfig().getini("derived") == "from-second"
+
+        pytester.makeini("[pytest]\nfirst = from-first\nsecond = from-second\n")
+        assert pytester.parseconfig().getini("derived") == "from-first"
+
+    def test_addini_fallback_list_value_is_not_shared(self, pytester: Pytester) -> None:
+        """`addinivalue_line` on a fallen-back option must not mutate the target."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="linelist", default=[])
+                parser.addini("derived", "derived", type="linelist", default=[],
+                              fallback="base")
+        """
+        )
+        pytester.makeini("[pytest]\nbase = one\n")
+        config = pytester.parseconfig()
+        assert config.getini("derived") == ["one"]
+        config.addinivalue_line("derived", "two")
+        assert config.getini("derived") == ["one", "two"]
+        assert config.getini("base") == ["one"]
+
+    def test_addini_fallback_unregistered(self, pytester: Pytester) -> None:
+        parser = pytester.parseconfig()._parser
+        with pytest.raises(
+            ValueError,
+            match="fallback 'nope' of ini option 'derived' is not registered",
+        ):
+            parser.addini("derived", "derived", type="string", fallback="nope")
+
+    def test_addini_fallback_type_mismatch(self, pytester: Pytester) -> None:
+        parser = pytester.parseconfig()._parser
+        parser.addini("base", "base", type="bool", default=False)
+        with pytest.raises(
+            ValueError,
+            match="fallback 'base' of ini option 'derived' has type bool, "
+            "expected string",
+        ):
+            parser.addini("derived", "derived", type="string", fallback="base")
+
     def test_addini_default_values(self, pytester: Pytester) -> None:
         """Tests the default values for configuration based on
         config type

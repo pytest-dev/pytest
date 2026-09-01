@@ -1891,6 +1891,35 @@ class Config:
         )
         raise ValueError(msg)  # pragma: no cover
 
+    def _ini_candidates(self, canonical_name: str) -> list[tuple[ConfigValue, bool]]:
+        """Collect the configured values for an option from `_inicfg`.
+
+        Looks under the canonical name and under every alias of it; each
+        candidate is ``(ConfigValue, is_canonical)``.
+        """
+        candidates = []
+        if canonical_name in self._inicfg:
+            candidates.append((self._inicfg[canonical_name], True))
+        for alias, target in self._parser._ini_aliases.items():
+            if target == canonical_name and alias in self._inicfg:
+                candidates.append((self._inicfg[alias], False))
+        return candidates
+
+    def _ini_is_configured(self, name: str) -> bool:
+        """Whether an option has a value from a config file or an override.
+
+        True if the option itself is set, or -- transitively -- if any option
+        it falls back to is. Terminates because `addini` only accepts an
+        already-registered fallback, which rules out cycles.
+        """
+        canonical_name = self._parser._ini_aliases.get(name, name)
+        if self._ini_candidates(canonical_name):
+            return True
+        spec = self._parser._inidict.get(canonical_name)
+        return spec is not None and any(
+            self._ini_is_configured(target) for target in spec.fallback
+        )
+
     def _getini(self, name: str):
         # If this is an alias, resolve to canonical name.
         canonical_name = self._parser._ini_aliases.get(name, name)
@@ -1901,16 +1930,18 @@ class Config:
             raise ValueError(f"unknown configuration value: {name!r}") from e
         type, default = spec.type, spec.default
 
-        # Collect all possible values (canonical name + aliases) from _inicfg.
-        # Each candidate is (ConfigValue, is_canonical).
-        candidates = []
-        if canonical_name in self._inicfg:
-            candidates.append((self._inicfg[canonical_name], True))
-        for alias, target in self._parser._ini_aliases.items():
-            if target == canonical_name and alias in self._inicfg:
-                candidates.append((self._inicfg[alias], False))
+        candidates = self._ini_candidates(canonical_name)
 
         if not candidates:
+            # Not configured: defer to the first fallback that is, and only
+            # use the registered default if none of them is either.
+            for target in spec.fallback:
+                if self._ini_is_configured(target):
+                    value = self.getini(target)
+                    # Don't hand out the fallback's own cached container:
+                    # `addinivalue_line` mutates what `getini` returns, which
+                    # would otherwise write through into the fallback option.
+                    return list(value) if isinstance(value, list) else value
             return default
 
         # Pick the best candidate based on precedence:
