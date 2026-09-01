@@ -1,0 +1,18 @@
+:func:`parser.addini() <pytest.Parser.addini>` accepts a new ``fallback``
+argument, naming another registered option (or several, tried in order) to
+take the value from when this option is not set in any configuration file and
+was not overridden on the command line:
+
+.. code-block:: python
+
+    parser.addini("log_format", "Log format", type=str, default=DEFAULT)
+    parser.addini("log_cli_format", "Live log format", type=str, fallback="log_format")
+
+The registered ``default`` applies only when no fallback is configured either.
+Unlike an alias, a fallback is a separate option with its own help and its own
+value. Each fallback must already be registered and must have the same type,
+which also makes fallback cycles impossible.
+
+This replaces the various hand-written "first configured value wins" chains
+plugins had to write, which typically tested truthiness and so could not tell
+an explicitly configured empty value from an unset one.
