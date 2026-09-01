@@ -420,6 +420,34 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
+def _as_mark_sequence(pytestmark: Any) -> Sequence[Mark | MarkDecorator]:
+    """Normalize a raw ``pytestmark`` attribute value into a sequence.
+
+    A single mark may be assigned directly (``pytestmark = pytest.mark.foo``);
+    anything else is expected to be a sequence of marks. ``str``/``bytes`` are
+    not treated as sequences here, so that an accidental
+    ``pytestmark = "foo"`` reports the string itself as the offending value
+    rather than its first character.
+    """
+    if isinstance(pytestmark, Sequence) and not isinstance(pytestmark, (str, bytes)):
+        return pytestmark
+    return [pytestmark]
+
+
+def get_mro_mark_groups(cls: type) -> list[list[Mark]]:
+    """Obtain the marks applied directly to each class of ``cls``'s MRO.
+
+    The groups are returned closest-first (``cls`` itself, then its bases in
+    MRO order); within a group the marks keep their decorator stacking order.
+    """
+    return [
+        list(
+            normalize_mark_list(_as_mark_sequence(klass.__dict__.get("pytestmark", [])))
+        )
+        for klass in cls.__mro__
+    ]
+
+
 def get_unpacked_marks(
     obj: object | type,
     *,
@@ -428,22 +456,16 @@ def get_unpacked_marks(
     """Obtain the unpacked marks that are stored on an object.
 
     If obj is a class and consider_mro is true, return marks applied to
-    this class and all of its super-classes in MRO order. If consider_mro
-    is false, only return marks applied directly to this class.
+    this class and all of its super-classes in reversed MRO order (farthest
+    base class first). If consider_mro is false, only return marks applied
+    directly to this class.
     """
     if isinstance(obj, type):
-        if not consider_mro:
-            mark_lists = [obj.__dict__.get("pytestmark", [])]
-        else:
-            mark_lists = [
-                x.__dict__.get("pytestmark", []) for x in reversed(obj.__mro__)
+        if consider_mro:
+            return [
+                mark for group in reversed(get_mro_mark_groups(obj)) for mark in group
             ]
-        mark_list = []
-        for item in mark_lists:
-            if isinstance(item, list):
-                mark_list.extend(item)
-            else:
-                mark_list.append(item)
+        mark_list = _as_mark_sequence(obj.__dict__.get("pytestmark", []))
     else:
         mark_attribute = getattr(obj, "pytestmark", [])
         if mark_attribute is None:
@@ -457,10 +479,8 @@ def get_unpacked_marks(
                 stacklevel=2,
             )
             mark_list = []
-        elif isinstance(mark_attribute, list):
-            mark_list = mark_attribute
         else:
-            mark_list = [mark_attribute]
+            mark_list = _as_mark_sequence(mark_attribute)
     return list(normalize_mark_list(mark_list))
 
 
