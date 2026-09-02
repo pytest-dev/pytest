@@ -53,6 +53,7 @@ from .findpaths import ConfigDict
 from .findpaths import ConfigValue
 from .findpaths import determine_setup
 from .findpaths import parse_override_ini
+from .settings import Settings
 from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
@@ -66,6 +67,7 @@ from _pytest.config.argparsing import _ini_type_repr
 from _pytest.config.argparsing import _IniLiteral
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import FILE_OR_DIR
+from _pytest.config.argparsing import IniType
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
@@ -1219,8 +1221,8 @@ class Config:
 
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
-        self._inicache: dict[str, Any] = {}
-        self._inicfg: ConfigDict = {}
+        # Resolved values of the settings declared in `self._parser._settings`.
+        self._settings = Settings(self._parser._settings, self)
         self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
@@ -1626,9 +1628,18 @@ class Config:
 
         self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)
 
+    @property
+    def _inicfg(self) -> ConfigDict:
+        """The raw configured values, before type coercion."""
+        return self._settings._file
+
+    @_inicfg.setter
+    def _inicfg(self, value: ConfigDict) -> None:
+        self._settings._file = value
+        self._settings._cache.clear()
+
     def _get_unknown_ini_keys(self) -> set[str]:
-        known_keys = self._parser._inidict.keys() | self._parser._ini_aliases.keys()
-        return self._inicfg.keys() - known_keys
+        return self._settings.unknown_names()
 
     def _collect_ini_overrides(self, namespace: argparse.Namespace) -> None:
         """Merge the ``-o`` overrides seen so far into the ini config.
@@ -1648,7 +1659,7 @@ class Config:
         }
         if changed:
             self._inicfg.update(changed)
-            self._inicache.clear()
+            self._settings._cache.clear()
 
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
@@ -1860,13 +1871,10 @@ class Config:
         If the value read from the configuration file does not match the
         registered ``type``, a :class:`~pytest.UsageError` is raised.
         """
-        canonical_name = self._parser._ini_aliases.get(name, name)
         try:
-            return self._inicache[canonical_name]
+            return self._settings[name]
         except KeyError:
-            pass
-        self._inicache[canonical_name] = val = self._getini(canonical_name)
-        return val
+            raise ValueError(f"unknown configuration value: {name!r}") from None
 
     def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
         """Iterate over all markers registered in the configuration."""
@@ -1888,82 +1896,27 @@ class Config:
         )
         raise ValueError(msg)  # pragma: no cover
 
-    def _ini_candidates(self, canonical_name: str) -> list[tuple[ConfigValue, bool]]:
-        """Collect the configured values for an option from `_inicfg`.
+    def _coerce_setting(
+        self,
+        name: str,
+        type: IniType,
+        configured: ConfigValue,
+        default: Any,
+    ) -> Any:
+        """Convert a configured value to the type its setting was declared with.
 
-        Looks under the canonical name and under every alias of it; each
-        candidate is ``(ConfigValue, is_canonical)``.
+        An invalid value is a user error, raised as UsageError so that it is
+        reported as a short message rather than an internal error traceback.
         """
-        candidates = []
-        if canonical_name in self._inicfg:
-            candidates.append((self._inicfg[canonical_name], True))
-        for alias, target in self._parser._ini_aliases.items():
-            if target == canonical_name and alias in self._inicfg:
-                candidates.append((self._inicfg[alias], False))
-        return candidates
-
-    def _ini_is_configured(self, name: str) -> bool:
-        """Whether an option has a value from a config file or an override.
-
-        True if the option itself is set, or -- transitively -- if any option
-        it falls back to is. Terminates because `addini` only accepts an
-        already-registered fallback, which rules out cycles.
-        """
-        canonical_name = self._parser._ini_aliases.get(name, name)
-        if self._ini_candidates(canonical_name):
-            return True
-        spec = self._parser._inidict.get(canonical_name)
-        return spec is not None and any(
-            self._ini_is_configured(target) for target in spec.fallback
-        )
-
-    def _getini(self, name: str):
-        # If this is an alias, resolve to canonical name.
-        canonical_name = self._parser._ini_aliases.get(name, name)
-
-        try:
-            spec = self._parser._inidict[canonical_name]
-        except KeyError as e:
-            raise ValueError(f"unknown configuration value: {name!r}") from e
-        # A setting a config file can set always has a type.
-        assert spec.type is not None
-        type, default = spec.type, spec.default
-
-        candidates = self._ini_candidates(canonical_name)
-
-        if not candidates:
-            # Not configured: defer to the first fallback that is, and only
-            # use the registered default if none of them is either.
-            for target in spec.fallback:
-                if self._ini_is_configured(target):
-                    value = self.getini(target)
-                    # Don't hand out the fallback's own cached container:
-                    # `addinivalue_line` mutates what `getini` returns, which
-                    # would otherwise write through into the fallback option.
-                    return list(value) if isinstance(value, list) else value
-            return default
-
-        # Pick the best candidate based on precedence:
-        # 1. CLI override takes precedence over file, then
-        # 2. Canonical name takes precedence over alias.
-        selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
-        value = selected.value
-        mode = selected.mode
-
-        # An invalid value is a user error, raised as UsageError so that it is
-        # reported as a short message rather than an internal error traceback.
+        value, mode = configured.value, configured.mode
         try:
             if not isinstance(type, tuple):
-                return self._getini_value(
-                    mode, name, canonical_name, type, value, default
-                )
+                return self._getini_value(mode, name, name, type, value, default)
 
             # Union: try each member; the first one that accepts the value wins.
             for member in type:
                 try:
-                    return self._getini_value(
-                        mode, name, canonical_name, member, value, default
-                    )
+                    return self._getini_value(mode, name, name, member, value, default)
                 except (TypeError, ValueError):
                     pass
             raise TypeError(
@@ -2264,7 +2217,7 @@ class Config:
             return global_level
 
         ini_name = Config._verbosity_ini_name(verbosity_type)
-        if ini_name not in self._parser._inidict:
+        if ini_name not in self._settings:
             return global_level
 
         level = self.getini(ini_name)
