@@ -188,6 +188,9 @@ def _format_ini_help(spec: Setting) -> str:
     command line options; otherwise the default is appended, but only when it
     carries information -- the implicit default for a type (``""``, ``[]``,
     ``False``, ``0``) says nothing a reader cannot infer from the type.
+
+    A setting that also has a command line option says so, since the two set
+    the same value and a reader looking at one wants to know about the other.
     """
     help = spec.help
     assert help is not None
@@ -206,6 +209,8 @@ def _format_ini_help(spec: Setting) -> str:
     if spec.fallback:
         targets = " or ".join(repr(target) for target in spec.fallback)
         help = f"{help} (falls back to {targets})"
+    if opts := [name for option in spec.cli for name in option.names()]:
+        help = f"{help} (also: {', '.join(opts)})"
     return help
 
 
@@ -228,8 +233,8 @@ def showhelp(config: Config) -> None:
     columns = tw.fullwidth  # costly call
     indent_len = 24  # based on argparse's max_help_position=24
     indent = " " * indent_len
-    for name in config._parser._inidict:
-        ini_spec = config._parser._inidict[name]
+    for name in config.settings:
+        ini_spec = config.settings.spec(name)
         if ini_spec.help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         help = _format_ini_help(ini_spec)
