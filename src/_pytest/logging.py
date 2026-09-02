@@ -34,6 +34,7 @@ from _pytest.config import create_terminal_writer
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.config.settings import Source
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
@@ -796,9 +797,11 @@ class LoggingPlugin:
 
     def _log_cli_enabled(self) -> bool:
         """Return whether live logging is enabled."""
-        enabled = self._config.getoption(
-            "--log-cli-level"
-        ) is not None or self._config.getini("log_cli")
+        # A level given on the command line turns live logging on; the same
+        # level in a configuration file does not.
+        enabled = self._config._settings.source_of(
+            "log_cli_level"
+        ) is Source.CLI or self._config.getini("log_cli")
         if not enabled:
             return False
 
