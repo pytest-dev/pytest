@@ -147,6 +147,49 @@ class PytestFDWarning(PytestWarning):
     __module__ = "pytest"
 
 
+def warn_explicit_at(
+    message: PytestWarning,
+    *,
+    filename: str,
+    lineno: int,
+    module: str | None = None,
+    mod_globals: dict[str, Any] | None = None,
+) -> None:
+    """Issue :param:`message` as if it came from the given source location.
+
+    This helps to log warnings against code that was read earlier than the
+    problem with it was noticed -- a hook wrapper marked in a legacy
+    mechanism, or a setting declared in a plugin's ``pytest_addoption``.
+    """
+    registry = (
+        {} if mod_globals is None else mod_globals.setdefault("__warningregistry__", {})
+    )
+    try:
+        if module is None:
+            # `module=None` is not the same as leaving it out: passed
+            # explicitly it suppresses the warning, where leaving it out
+            # derives the module from the filename, which is what we want.
+            warnings.warn_explicit(
+                message,
+                type(message),
+                filename=filename,
+                registry=registry,
+                lineno=lineno,
+            )
+        else:
+            warnings.warn_explicit(
+                message,
+                type(message),
+                filename=filename,
+                module=module,
+                registry=registry,
+                lineno=lineno,
+            )
+    except Warning as w:
+        # If warnings are errors (e.g. -Werror), location information gets lost, so we add it to the message.
+        raise type(w)(f"{w}\n at {filename}:{lineno}") from None
+
+
 def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
     """
     Issue the warning :param:`message` for the definition of the given :param:`method`
@@ -154,19 +197,10 @@ def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
     this helps to log warnings for functions defined prior to finding an issue with them
     (like hook wrappers being marked in a legacy mechanism)
     """
-    lineno = method.__code__.co_firstlineno
-    filename = inspect.getfile(method)
-    module = method.__module__
-    mod_globals = method.__globals__
-    try:
-        warnings.warn_explicit(
-            message,
-            type(message),
-            filename=filename,
-            module=module,
-            registry=mod_globals.setdefault("__warningregistry__", {}),
-            lineno=lineno,
-        )
-    except Warning as w:
-        # If warnings are errors (e.g. -Werror), location information gets lost, so we add it to the message.
-        raise type(w)(f"{w}\n at {filename}:{lineno}") from None
+    warn_explicit_at(
+        message,
+        filename=inspect.getfile(method),
+        lineno=method.__code__.co_firstlineno,
+        module=method.__module__,
+        mod_globals=method.__globals__,
+    )

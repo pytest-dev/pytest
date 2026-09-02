@@ -86,6 +86,8 @@ from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
+from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import warn_explicit_at
 from _pytest.warning_types import warn_explicit_for
 
 
@@ -1335,6 +1337,7 @@ class Config:
     def _do_configure(self) -> None:
         assert not self._configured
         self._configured = True
+        self._issue_declaration_diagnostics()
         if self.pluginmanager.hasplugin("warnings"):
             with contextlib.ExitStack() as stack:
                 # this disables recording because the terminalreporter has
@@ -1344,6 +1347,22 @@ class Config:
                 stack.enter_context(self._catch_configured_warnings(record=False))
                 self.add_cleanup(stack.pop_all().close)
         self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
+
+    def _issue_declaration_diagnostics(self) -> None:
+        """Report problems found while settings were being declared.
+
+        Held until now because declaration happens before there is anything
+        to report against, and reported against the plugin's own source line
+        rather than pytest's.
+        """
+        diagnostics = self._parser._settings._diagnostics
+        for setting, message in diagnostics:
+            self.issue_config_time_warning(
+                PytestConfigWarning(message),
+                stacklevel=2,
+                source=setting.declared_at,
+            )
+        diagnostics.clear()
 
     def _ensure_unconfigure(self) -> None:
         try:
@@ -1827,7 +1846,13 @@ class Config:
         # per-`Config` namespace class, so it does not show up in `vars()`.
         type(self.option)._warn_access = True
 
-    def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
+    def issue_config_time_warning(
+        self,
+        warning: Warning,
+        stacklevel: int,
+        *,
+        source: tuple[str, int] | None = None,
+    ) -> None:
         """Issue and handle a warning during the "configure" stage.
 
         During ``pytest_configure`` we can't capture warnings using the ``catch_warnings_for_item``
@@ -1838,6 +1863,9 @@ class Config:
 
         :param warning: The warning instance.
         :param stacklevel: stacklevel forwarded to warnings.warn.
+        :param source:
+            ``(filename, lineno)`` to blame instead of the caller, for a
+            problem noticed later than the code that caused it.
         """
         if self.pluginmanager.is_blocked("warnings"):
             return
@@ -1848,11 +1876,22 @@ class Config:
         with warnings.catch_warnings(record=True) as records:
             warnings.simplefilter("always", type(warning))
             apply_warning_filters(config_filters, cmdline_filters)
-            warnings.warn(warning, stacklevel=stacklevel)
+            if source is None:
+                warnings.warn(warning, stacklevel=stacklevel)
+            else:
+                assert isinstance(warning, PytestWarning)
+                warn_explicit_at(warning, filename=source[0], lineno=source[1])
 
         if records:
-            frame = sys._getframe(stacklevel - 1)
-            location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
+            if source is None:
+                frame = sys._getframe(stacklevel - 1)
+                location = (
+                    frame.f_code.co_filename,
+                    frame.f_lineno,
+                    frame.f_code.co_name,
+                )
+            else:
+                location = (source[0], source[1], "")
             self.hook.pytest_warning_recorded.call_historic(
                 kwargs=dict(
                     warning_message=records[0],
@@ -1906,7 +1945,9 @@ class Config:
         try:
             return self.settings[name]
         except KeyError:
-            raise ValueError(f"unknown configuration value: {name!r}") from None
+            raise ValueError(
+                f"unknown configuration value: {name!r}{self._other_door(name)}"
+            ) from None
 
     def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
         """Iterate over all markers registered in the configuration."""
@@ -2185,7 +2226,27 @@ class Config:
                 import pytest
 
                 pytest.skip(f"no {name!r} option found")
-            raise ValueError(f"no option named {name!r}") from e
+            raise ValueError(f"no option named {name!r}{self._other_door(name)}") from e
+
+    def _other_door(self, name: str) -> str:
+        """Point at the other accessor, when the name is known to it.
+
+        A setting and a command line option are separate namespaces, and
+        neither accessor answers for the other's names; saying which one does
+        turns a dead end into a redirection.
+        """
+        if name in self.settings:
+            return (
+                f"; {name!r} is a configuration setting, read it with "
+                f"config.getini({name!r})"
+            )
+        setting = self._parser._settings.by_dest(self._parser._opt2dest.get(name, name))
+        if setting is not None:
+            return (
+                f"; {setting.dest!r} is a command line option, read it with "
+                f"config.getoption({setting.dest!r})"
+            )
+        return ""
 
     def getvalue(self, name: str, path=None):
         """Deprecated, use getoption() instead."""
