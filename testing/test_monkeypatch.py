@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import sys
 import textwrap
+from types import MappingProxyType
 import warnings
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -194,6 +195,57 @@ def test_delitem() -> None:
     assert d["x"] == 1500
     monkeypatch.undo()
     assert d == {"hello": "world", "x": 1}
+
+
+def test_failed_delattr(monkeypatch: MonkeyPatch) -> None:
+    """If delattr() raises, no stale undo entry should be recorded (#14909)."""
+
+    class A:
+        __slots__ = ()
+        x = 1
+
+    a = A()
+    with pytest.raises(AttributeError):
+        monkeypatch.delattr(a, "x")
+    assert a.x == 1
+    # undo() must not raise — no entry should be on the undo stack.
+    monkeypatch.undo()
+
+
+def test_failed_setitem(monkeypatch: MonkeyPatch) -> None:
+    """If setitem() raises, no stale undo entry should be recorded (#14909)."""
+    mapping = MappingProxyType({"x": 1})
+    with pytest.raises(TypeError):
+        monkeypatch.setitem(mapping, "x", 2)
+    assert mapping["x"] == 1
+    # undo() must not raise — no entry should be on the undo stack.
+    monkeypatch.undo()
+
+
+def test_failed_delitem(monkeypatch: MonkeyPatch) -> None:
+    """If delitem() raises, no stale undo entry should be recorded (#14909)."""
+    mapping = MappingProxyType({"x": 1})
+    with pytest.raises(TypeError):
+        monkeypatch.delitem(mapping, "x")
+    assert mapping["x"] == 1
+    # undo() must not raise — no entry should be on the undo stack.
+    monkeypatch.undo()
+
+
+def test_setitem_delitem_oldval_captured_before_mutation(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """For setitem/delitem the old value must be captured *before* the
+    mutation so undo() restores the correct value (#14909). This case
+    exercises both the capture-before line and the append-after line in
+    the success path (no exception), so codecov patch coverage for the
+    new lines stays 100% even when the surrounding pytest suite changes.
+    """
+    inner: dict[str, int] = {"x": 1, "y": 2}
+    monkeypatch.setitem(inner, "x", 99)
+    monkeypatch.delitem(inner, "y")
+    monkeypatch.undo()
+    assert inner == {"x": 1, "y": 2}
 
 
 def test_setenv() -> None:
