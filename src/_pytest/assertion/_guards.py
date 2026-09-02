@@ -1,26 +1,8 @@
 from __future__ import annotations
 
 import collections.abc
-from collections.abc import Mapping
-from collections.abc import Set as AbstractSet
 import dataclasses
 from typing import TypeGuard
-
-
-def issequence(x: object) -> TypeGuard[collections.abc.Sequence[object]]:
-    return isinstance(x, collections.abc.Sequence) and not isinstance(x, str)
-
-
-def istext(x: object) -> TypeGuard[str]:
-    return isinstance(x, str)
-
-
-def ismapping(x: object) -> TypeGuard[Mapping[object, object]]:
-    return isinstance(x, Mapping)
-
-
-def isset(x: object) -> TypeGuard[AbstractSet[object]]:
-    return isinstance(x, AbstractSet)
 
 
 def isnamedtuple(obj: object) -> bool:
@@ -37,7 +19,7 @@ def isattrs(obj: object) -> bool:
 def isiterable(obj: object) -> TypeGuard[collections.abc.Iterable[object]]:
     try:
         iter(obj)  # type: ignore[call-overload]
-        return not istext(obj)
+        return True
     except Exception:
         return False
 
