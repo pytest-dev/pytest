@@ -2010,6 +2010,63 @@ class TestConfigAPI:
         assert report == ["cleanup_first", "raise_1", "raise_2", "cleanup_last"]
 
 
+class TestDeclarationDiagnostics:
+    """Problems found while settings are being declared."""
+
+    def test_conflicting_redeclaration_warns(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            other_plugin="""
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type=int, default=0)
+            """
+        )
+        pytester.makeconftest(
+            """
+            pytest_plugins = ["other_plugin"]
+
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type=str, default="hi")
+            """
+        )
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest("-W", "default")
+        # Blamed on the later declaration, and naming the earlier one.
+        result.stdout.fnmatch_lines(
+            ["*other_plugin.py:2:*greeting*registered twice*conftest.py:4*"]
+        )
+        assert result.ret == ExitCode.OK
+
+    def test_identical_redeclaration_is_quiet(self, pytester: Pytester) -> None:
+        """A plugin loaded twice is not a conflict."""
+        pytester.makepyfile(
+            other_plugin="""
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type=str, default="hi")
+            """
+        )
+        pytester.makeconftest(
+            """
+            pytest_plugins = ["other_plugin"]
+
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type=str, default="hi")
+            """
+        )
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest("-W", "error")
+        assert result.ret == ExitCode.OK
+
+    def test_getini_points_at_getoption(self, pytester: Pytester) -> None:
+        config = pytester.parseconfig()
+        with pytest.raises(ValueError, match=r"config\.getoption\('verbose'\)"):
+            config.getini("verbose")
+
+    def test_getoption_points_at_getini(self, pytester: Pytester) -> None:
+        config = pytester.parseconfig()
+        with pytest.raises(ValueError, match=r"config\.getini\('minversion'\)"):
+            config.getoption("minversion")
+
+
 class TestSettings:
     """The public `config.settings` mapping."""
 
