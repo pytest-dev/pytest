@@ -977,6 +977,19 @@ Config
 .. autoclass:: pytest.Config()
     :members:
 
+Settings
+~~~~~~~~
+
+.. autoclass:: pytest.Settings()
+    :members:
+    :special-members: __getitem__, __iter__, __contains__
+
+.. autoclass:: pytest.Setting()
+    :members:
+
+.. autoclass:: pytest.Source()
+    :members:
+
 Dir
 ~~~
 
@@ -1312,6 +1325,9 @@ Custom warnings generated in some situations such as improper usage or deprecate
   :show-inheritance:
 
 .. autoclass:: pytest.PytestRemovedIn10Warning
+  :show-inheritance:
+
+.. autoclass:: pytest.PytestRemovedIn11Warning
   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnknownMarkWarning

@@ -14,7 +14,10 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import _ini_type_repr
+from _pytest.config.argparsing import get_ini_default_for_type
+from _pytest.config.argparsing import OverrideIniOptionAction
 from _pytest.config.argparsing import Parser
+from _pytest.config.settings import Setting
 from _pytest.terminal import TerminalReporter
 import pytest
 
@@ -114,7 +117,7 @@ def pytest_addoption(parser: Parser) -> None:
         "-o",
         "--override-ini",
         dest="override_ini",
-        action="append",
+        action=OverrideIniOptionAction,
         help='Override configuration option with "option=value" style, '
         "e.g. `-o strict_xfail=True -o cache_dir=cache`.",
     )
@@ -178,6 +181,39 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     return None
 
 
+def _format_ini_help(spec: Setting) -> str:
+    """Render the help of a config option, with its default and fallbacks.
+
+    ``%(default)s`` in the help text is substituted, like argparse does for
+    command line options; otherwise the default is appended, but only when it
+    carries information -- the implicit default for a type (``""``, ``[]``,
+    ``False``, ``0``) says nothing a reader cannot infer from the type.
+
+    A setting that also has a command line option says so, since the two set
+    the same value and a reader looking at one wants to know about the other.
+    """
+    help = spec.help
+    assert help is not None
+    if "%(default)s" in help:
+        help = help.replace("%(default)s", str(spec.default))
+    else:
+        implicit = (
+            get_ini_default_for_type(spec.type)
+            if isinstance(spec.type, str)
+            # Unions and Literals have no implicit default, so any default
+            # they carry was chosen deliberately and is worth showing.
+            else object()
+        )
+        if spec.default != implicit:
+            help = f"{help} (default: {spec.default!r})"
+    if spec.fallback:
+        targets = " or ".join(repr(target) for target in spec.fallback)
+        help = f"{help} (falls back to {targets})"
+    if opts := [name for option in spec.cli for name in option.names()]:
+        help = f"{help} (also: {', '.join(opts)})"
+    return help
+
+
 def showhelp(config: Config) -> None:
     import textwrap
 
@@ -197,11 +233,13 @@ def showhelp(config: Config) -> None:
     columns = tw.fullwidth  # costly call
     indent_len = 24  # based on argparse's max_help_position=24
     indent = " " * indent_len
-    for name in config._parser._inidict:
-        help, type, _default = config._parser._inidict[name]
-        if help is None:
+    for name in config.settings:
+        ini_spec = config.settings.spec(name)
+        if ini_spec.help is None:
             raise TypeError(f"help argument cannot be None for {name}")
-        spec = f"{name} ({_ini_type_repr(type)}):"
+        help = _format_ini_help(ini_spec)
+        assert ini_spec.type is not None
+        spec = f"{name} ({_ini_type_repr(ini_spec.type)}):"
         tw.write(f"  {spec}")
         spec_len = len(spec)
         if spec_len > (indent_len - 3):

@@ -1,0 +1,8 @@
+:func:`parser.addini <pytest.Parser.addini>` now accepts a ``fallback`` argument, naming another registered configuration option to take the value from when this one is not set:
+
+.. code-block:: python
+
+    parser.addini("log_format", "Log format", type=str, default=DEFAULT)
+    parser.addini("log_cli_format", "Live log format", type=str, fallback="log_format")
+
+A fallback must already be registered and must have the same type. Several may be given, and the first one that is configured wins.

@@ -1,0 +1,1 @@
+``pytest --help`` now shows the default value of each configuration option, and which option it falls back to if it has one. ``%(default)s`` in the help text passed to :func:`parser.addini <pytest.Parser.addini>` is substituted, as argparse already does for command line options.

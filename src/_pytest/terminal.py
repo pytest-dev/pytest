@@ -294,8 +294,10 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
-    # Eagerly validate the value; it is only read lazily during reporting.
+    # Eagerly validate these; they are only read lazily during reporting, by
+    # which point a UsageError no longer reaches the user.
     config.getini("console_output_style")
+    config.getini("max_warnings")
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
@@ -986,7 +988,7 @@ class TerminalReporter:
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
         # Check --max-warnings threshold after all warnings have been collected.
-        max_warnings = self._get_max_warnings()
+        max_warnings = self.config.getini("max_warnings")
         if max_warnings is not None and session.exitstatus == ExitCode.OK:
             warning_count = len(self.stats.get("warnings", []))
             if warning_count > max_warnings:
@@ -1086,16 +1088,6 @@ class TerminalReporter:
                 return str(rep.longrepr)[:50]
             except AttributeError:
                 return ""
-
-    def _get_max_warnings(self) -> int | None:
-        """Return the max_warnings threshold, from CLI or INI, or None if unset."""
-        value = self.config.option.max_warnings
-        if value is not None:
-            return int(value)
-        ini_value = self.config.getini("max_warnings")
-        if ini_value:
-            return int(ini_value)
-        return None
 
     #
     # Summaries for sessionfinish.

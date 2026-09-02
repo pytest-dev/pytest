@@ -616,10 +616,7 @@ class MarkGenerator:
                     __tracebackhide__ = True
                     fail(f"Unknown '{name}' mark, did you mean 'parametrize'?")
 
-                strict_markers = self._config.getini("strict_markers")
-                if strict_markers is None:
-                    strict_markers = self._config.getini("strict")
-                if strict_markers:
+                if self._config.getini("strict_markers"):
                     fail(
                         f"{name!r} not found in `markers` configuration option",
                         pytrace=False,

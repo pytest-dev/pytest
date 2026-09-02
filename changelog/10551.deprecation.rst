@@ -1,0 +1,3 @@
+Reading or writing a configuration setting as ``config.option.<name>`` is deprecated; read it with :func:`config.getini <pytest.Config.getini>` or :class:`config.settings <pytest.Settings>`. This affects only settings declared with :func:`parser.addconfig <pytest.Parser.addconfig>` or with a command line option that overrides a configuration option -- plain :func:`parser.addoption <pytest.Parser.addoption>` options are unaffected.
+
+Reading one used to be a trap: the attribute was ``None`` whenever the command line option was absent, even for a setting the configuration file set. It now holds the resolved value.

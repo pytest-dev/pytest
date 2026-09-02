@@ -52,7 +52,12 @@ from .exceptions import UsageError as UsageError
 from .findpaths import ConfigDict
 from .findpaths import ConfigValue
 from .findpaths import determine_setup
-from .findpaths import parse_override_ini
+from .settings import CliEntry
+from .settings import install_option_property
+from .settings import make_option_namespace
+from .settings import OptionNamespace
+from .settings import Settings
+from .settings import Source
 from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
@@ -65,7 +70,9 @@ from _pytest.compat import NOTSET
 from _pytest.config.argparsing import _ini_type_repr
 from _pytest.config.argparsing import _IniLiteral
 from _pytest.config.argparsing import Argument
+from _pytest.config.argparsing import CLI_SETTINGS
 from _pytest.config.argparsing import FILE_OR_DIR
+from _pytest.config.argparsing import IniType
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
@@ -79,6 +86,8 @@ from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
+from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import warn_explicit_at
 from _pytest.warning_types import warn_explicit_for
 
 
@@ -1085,10 +1094,14 @@ class _DeprecatedInicfgProxy(MutableMapping[str, Any]):
         return self._config._inicfg[key].value
 
     def __setitem__(self, key: str, value: Any) -> None:
-        self._config._inicfg[key] = ConfigValue(value, origin="override", mode="toml")
+        self._config.settings.add_entry(
+            CliEntry(key, value, Source.OVERRIDE, mode="toml")
+        )
 
     def __delitem__(self, key: str) -> None:
-        del self._config._inicfg[key]
+        if key not in self._config._inicfg:
+            raise KeyError(key)
+        self._config.settings.discard(key)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._config._inicfg)
@@ -1184,7 +1197,7 @@ class Config:
                 args=(), plugins=None, dir=pathlib.Path.cwd()
             )
 
-        self.option = argparse.Namespace()
+        self.option: OptionNamespace = make_option_namespace()
         """Access to command line option as attributes.
 
         :type: argparse.Namespace
@@ -1219,8 +1232,12 @@ class Config:
 
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
-        self._inicache: dict[str, Any] = {}
-        self._inicfg: ConfigDict = {}
+        self.settings = Settings(self._parser._settings, self)
+        """The configuration settings, resolved from the configuration files
+        and the command line.
+
+        :type: Settings
+        """
         self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
@@ -1292,6 +1309,8 @@ class Config:
 
             # To be enabled in pytest 10.0.0.
             # warnings.filterwarnings("error", category=pytest.PytestRemovedIn10Warning)
+            # To be enabled in pytest 11.0.0.
+            # warnings.filterwarnings("error", category=pytest.PytestRemovedIn11Warning)
 
             apply_warning_filters(config_filters, cmdline_filters)
             yield log
@@ -1318,6 +1337,7 @@ class Config:
     def _do_configure(self) -> None:
         assert not self._configured
         self._configured = True
+        self._issue_declaration_diagnostics()
         if self.pluginmanager.hasplugin("warnings"):
             with contextlib.ExitStack() as stack:
                 # this disables recording because the terminalreporter has
@@ -1327,6 +1347,22 @@ class Config:
                 stack.enter_context(self._catch_configured_warnings(record=False))
                 self.add_cleanup(stack.pop_all().close)
         self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
+
+    def _issue_declaration_diagnostics(self) -> None:
+        """Report problems found while settings were being declared.
+
+        Held until now because declaration happens before there is anything
+        to report against, and reported against the plugin's own source line
+        rather than pytest's.
+        """
+        diagnostics = self._parser._settings._diagnostics
+        for setting, message in diagnostics:
+            self.issue_config_time_warning(
+                PytestConfigWarning(message),
+                stacklevel=2,
+                source=setting.declared_at,
+            )
+        diagnostics.clear()
 
     def _ensure_unconfigure(self) -> None:
         try:
@@ -1416,6 +1452,10 @@ class Config:
         return config
 
     def _processopt(self, opt: Argument) -> None:
+        setting = self._parser._settings.by_dest(opt.dest)
+        if setting is not None and setting.settable_from_file:
+            # The store resolves this one; `config.option` only mirrors it.
+            install_option_property(self.option, opt.dest)
         if not hasattr(self.option, opt.dest):
             setattr(self.option, opt.dest, opt.default)
 
@@ -1621,17 +1661,49 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
-        strict_config = self.getini("strict_config")
-        if strict_config is None:
-            strict_config = self.getini("strict")
-        if strict_config:
+        if self.getini("strict_config"):
             raise UsageError(message)
 
         self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)
 
+    @property
+    def _inicfg(self) -> ConfigDict:
+        """The raw configured values, before type coercion."""
+        return self.settings.configured
+
+    @_inicfg.setter
+    def _inicfg(self, value: ConfigDict) -> None:
+        self.settings._file = value
+        self.settings._cache.clear()
+
     def _get_unknown_ini_keys(self) -> set[str]:
-        known_keys = self._parser._inidict.keys() | self._parser._ini_aliases.keys()
-        return self._inicfg.keys() - known_keys
+        return self.settings.unknown_names()
+
+    def _collect_cli_settings(self, namespace: argparse.Namespace) -> None:
+        """Take the setting values a parse round found on the command line.
+
+        Options are registered in several rounds -- core plugins, then
+        third-party plugins, then conftests -- and each round is followed by a
+        new parse which can yield further values, in particular from
+        :class:`OverrideIniAction` flags, whose whole purpose is to write into
+        this channel. Collecting after every round keeps a flag registered by
+        a late round from being silently dropped.
+        """
+        self.settings.set_cli(getattr(namespace, CLI_SETTINGS, ()))
+        self._sync_option_namespace()
+
+    def _sync_option_namespace(self) -> None:
+        """Mirror the resolved settings onto ``config.option``.
+
+        A setting declared with a command line option is readable as
+        ``config.option.<dest>`` for historical reasons; make that the value
+        the store resolves, whichever source supplied it, rather than only
+        what argparse saw on the command line.
+        """
+        for setting in self._parser._settings._settings.values():
+            if setting.dest is None or not setting.settable_from_file:
+                continue
+            self.option.__dict__[setting.dest] = self.settings[setting.name]
 
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
@@ -1664,7 +1736,9 @@ class Config:
         self._rootpath = rootpath
         self._inipath = inipath
         self._ignored_config_files = ignored_config_files
-        self._inicfg = inicfg
+        self._inicfg = {
+            key: value for key, value in inicfg.items() if value.origin == "file"
+        }
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)
 
@@ -1688,12 +1762,9 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
-        if addopts:
-            # addopts may have added overrides (especially via OverrideIniAction).
-            # The thing can be endlessly circular but we only do one level (#14442).
-            if overrides := parse_override_ini(self.known_args_namespace.override_ini):
-                self._inicfg.update(overrides)
-                self._inicache.clear()
+        # addopts may have added overrides (especially via OverrideIniAction).
+        # The thing can be endlessly circular but we only do one level (#14442).
+        self._collect_cli_settings(self.known_args_namespace)
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()
@@ -1729,6 +1800,7 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
+        self._collect_cli_settings(self.known_args_namespace)
 
         self._validate_plugins()
         self._warn_about_skipped_plugins()
@@ -1758,6 +1830,7 @@ class Config:
             self._parser.parse(args, namespace=self.option)
         except PrintHelp:
             return
+        self._collect_cli_settings(self.option)
 
         self.args, self.args_source = self._decide_args(
             args=getattr(self.option, FILE_OR_DIR),
@@ -1768,7 +1841,18 @@ class Config:
             warn=True,
         )
 
-    def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
+        # Parsing sets these attributes itself, over and over; only what
+        # happens afterwards is worth warning about. The flag lives on the
+        # per-`Config` namespace class, so it does not show up in `vars()`.
+        type(self.option)._warn_access = True
+
+    def issue_config_time_warning(
+        self,
+        warning: Warning,
+        stacklevel: int,
+        *,
+        source: tuple[str, int] | None = None,
+    ) -> None:
         """Issue and handle a warning during the "configure" stage.
 
         During ``pytest_configure`` we can't capture warnings using the ``catch_warnings_for_item``
@@ -1779,6 +1863,9 @@ class Config:
 
         :param warning: The warning instance.
         :param stacklevel: stacklevel forwarded to warnings.warn.
+        :param source:
+            ``(filename, lineno)`` to blame instead of the caller, for a
+            problem noticed later than the code that caused it.
         """
         if self.pluginmanager.is_blocked("warnings"):
             return
@@ -1789,11 +1876,22 @@ class Config:
         with warnings.catch_warnings(record=True) as records:
             warnings.simplefilter("always", type(warning))
             apply_warning_filters(config_filters, cmdline_filters)
-            warnings.warn(warning, stacklevel=stacklevel)
+            if source is None:
+                warnings.warn(warning, stacklevel=stacklevel)
+            else:
+                assert isinstance(warning, PytestWarning)
+                warn_explicit_at(warning, filename=source[0], lineno=source[1])
 
         if records:
-            frame = sys._getframe(stacklevel - 1)
-            location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
+            if source is None:
+                frame = sys._getframe(stacklevel - 1)
+                location = (
+                    frame.f_code.co_filename,
+                    frame.f_lineno,
+                    frame.f_code.co_name,
+                )
+            else:
+                location = (source[0], source[1], "")
             self.hook.pytest_warning_recorded.call_historic(
                 kwargs=dict(
                     warning_message=records[0],
@@ -1844,13 +1942,12 @@ class Config:
         If the value read from the configuration file does not match the
         registered ``type``, a :class:`~pytest.UsageError` is raised.
         """
-        canonical_name = self._parser._ini_aliases.get(name, name)
         try:
-            return self._inicache[canonical_name]
+            return self.settings[name]
         except KeyError:
-            pass
-        self._inicache[canonical_name] = val = self._getini(canonical_name)
-        return val
+            raise ValueError(
+                f"unknown configuration value: {name!r}{self._other_door(name)}"
+            ) from None
 
     def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
         """Iterate over all markers registered in the configuration."""
@@ -1872,48 +1969,27 @@ class Config:
         )
         raise ValueError(msg)  # pragma: no cover
 
-    def _getini(self, name: str):
-        # If this is an alias, resolve to canonical name.
-        canonical_name = self._parser._ini_aliases.get(name, name)
+    def _coerce_setting(
+        self,
+        name: str,
+        type: IniType,
+        configured: ConfigValue,
+        default: Any,
+    ) -> Any:
+        """Convert a configured value to the type its setting was declared with.
 
-        try:
-            _description, type, default = self._parser._inidict[canonical_name]
-        except KeyError as e:
-            raise ValueError(f"unknown configuration value: {name!r}") from e
-
-        # Collect all possible values (canonical name + aliases) from _inicfg.
-        # Each candidate is (ConfigValue, is_canonical).
-        candidates = []
-        if canonical_name in self._inicfg:
-            candidates.append((self._inicfg[canonical_name], True))
-        for alias, target in self._parser._ini_aliases.items():
-            if target == canonical_name and alias in self._inicfg:
-                candidates.append((self._inicfg[alias], False))
-
-        if not candidates:
-            return default
-
-        # Pick the best candidate based on precedence:
-        # 1. CLI override takes precedence over file, then
-        # 2. Canonical name takes precedence over alias.
-        selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
-        value = selected.value
-        mode = selected.mode
-
-        # An invalid value is a user error, raised as UsageError so that it is
-        # reported as a short message rather than an internal error traceback.
+        An invalid value is a user error, raised as UsageError so that it is
+        reported as a short message rather than an internal error traceback.
+        """
+        value, mode = configured.value, configured.mode
         try:
             if not isinstance(type, tuple):
-                return self._getini_value(
-                    mode, name, canonical_name, type, value, default
-                )
+                return self._getini_value(mode, name, name, type, value, default)
 
             # Union: try each member; the first one that accepts the value wins.
             for member in type:
                 try:
-                    return self._getini_value(
-                        mode, name, canonical_name, member, value, default
-                    )
+                    return self._getini_value(mode, name, name, member, value, default)
                 except (TypeError, ValueError):
                     pass
             raise TypeError(
@@ -2150,7 +2226,27 @@ class Config:
                 import pytest
 
                 pytest.skip(f"no {name!r} option found")
-            raise ValueError(f"no option named {name!r}") from e
+            raise ValueError(f"no option named {name!r}{self._other_door(name)}") from e
+
+    def _other_door(self, name: str) -> str:
+        """Point at the other accessor, when the name is known to it.
+
+        A setting and a command line option are separate namespaces, and
+        neither accessor answers for the other's names; saying which one does
+        turns a dead end into a redirection.
+        """
+        if name in self.settings:
+            return (
+                f"; {name!r} is a configuration setting, read it with "
+                f"config.getini({name!r})"
+            )
+        setting = self._parser._settings.by_dest(self._parser._opt2dest.get(name, name))
+        if setting is not None:
+            return (
+                f"; {setting.dest!r} is a command line option, read it with "
+                f"config.getoption({setting.dest!r})"
+            )
+        return ""
 
     def getvalue(self, name: str, path=None):
         """Deprecated, use getoption() instead."""
@@ -2214,7 +2310,7 @@ class Config:
             return global_level
 
         ini_name = Config._verbosity_ini_name(verbosity_type)
-        if ini_name not in self._parser._inidict:
+        if ini_name not in self.settings:
             return global_level
 
         level = self.getini(ini_name)

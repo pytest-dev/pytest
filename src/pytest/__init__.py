@@ -22,6 +22,9 @@ from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import OptionGroup
 from _pytest.config.argparsing import Parser
+from _pytest.config.settings import Setting
+from _pytest.config.settings import Settings
+from _pytest.config.settings import Source
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.doctest import DoctestItem
 from _pytest.fixtures import fixture
@@ -87,6 +90,7 @@ from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
 from _pytest.warning_types import PytestFDWarning
 from _pytest.warning_types import PytestRemovedIn10Warning
+from _pytest.warning_types import PytestRemovedIn11Warning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
@@ -139,6 +143,7 @@ __all__ = [
     "PytestFDWarning",
     "PytestPluginManager",
     "PytestRemovedIn10Warning",
+    "PytestRemovedIn11Warning",
     "PytestReturnNotNoneWarning",
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
@@ -151,6 +156,9 @@ __all__ = [
     "RunResult",
     "ScopeName",
     "Session",
+    "Setting",
+    "Settings",
+    "Source",
     "Stash",
     "StashKey",
     "SubtestReport",

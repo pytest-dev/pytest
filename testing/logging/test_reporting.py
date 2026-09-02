@@ -1579,3 +1579,71 @@ def test_log_file_cli_fallback_options(pytester: Pytester) -> None:
         assert "info text going to logger" not in contents
         assert "warning text going to logger" not in contents
         assert "error text going to logger" in contents
+
+
+def test_log_cli_format_falls_back_to_log_format(pytester: Pytester) -> None:
+    pytester.makeini(
+        """
+        [pytest]
+        log_cli = true
+        log_format = CUSTOM %(message)s
+    """
+    )
+    pytester.makepyfile(
+        """
+        import logging
+        def test_a():
+            logging.getLogger("x").warning("hello")
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["*CUSTOM hello*"])
+
+
+def test_log_cli_format_empty_does_not_fall_back(pytester: Pytester) -> None:
+    """An explicitly configured empty value is a configured value.
+
+    The old truthiness-based lookup fell through to `log_format` here.
+    """
+    pytester.makeini(
+        """
+        [pytest]
+        log_cli = true
+        log_format = CUSTOM %(message)s
+        log_cli_format =
+    """
+    )
+    pytester.makepyfile(
+        """
+        import logging
+        def test_a():
+            logging.getLogger("x").warning("hello")
+    """
+    )
+    result = pytester.runpytest()
+    assert "CUSTOM" not in result.stdout.str()
+
+
+def test_log_file_mode_is_validated(pytester: Pytester) -> None:
+    """The config option is validated like the command line option always was."""
+    pytester.makepyfile("def test_a(): pass")
+    result = pytester.runpytest("-o", "log_file_mode=q")
+    result.stderr.fnmatch_lines(
+        ["*config option 'log_file_mode' expects one of 'w' | 'a', got 'q'*"]
+    )
+
+
+def test_log_cli_format_flag_and_override_agree(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+        def test_a():
+            logging.getLogger("x").warning("hello")
+    """
+    )
+    for args in (
+        ("--log-cli", "--log-cli-format=SAME %(message)s"),
+        ("--log-cli", "-o", "log_cli_format=SAME %(message)s"),
+    ):
+        result = pytester.runpytest(*args)
+        result.stdout.fnmatch_lines(["*SAME hello*"])
