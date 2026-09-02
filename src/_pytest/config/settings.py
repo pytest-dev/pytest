@@ -12,10 +12,12 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import enum
 from typing import Any
 from typing import final
+from typing import Literal
 from typing import TYPE_CHECKING
 
 from _pytest.config.findpaths import ConfigDict
@@ -248,6 +250,30 @@ class _ConfigSettingsView(Mapping[str, Setting]):
 
 
 @final
+@dataclasses.dataclass(frozen=True)
+class CliEntry:
+    """One setting value supplied on the command line.
+
+    Kept in command line order, so that an ``-o`` argument and a command line
+    option declared for the same setting compose the way the user wrote them.
+    Also the channel a programmatic override uses, which is what the
+    deprecated ``config.inicfg`` writes through.
+    """
+
+    #: The name as written; may be an alias, or not registered at all.
+    name: str
+    value: object
+    source: Source
+    #: The data model the value follows, as for `ConfigValue.mode`.
+    mode: Literal["ini", "toml"] = "ini"
+    #: The option string that supplied it, for error messages.
+    option_string: str | None = None
+
+    def as_config_value(self) -> ConfigValue:
+        return ConfigValue(self.value, origin="override", mode=self.mode)
+
+
+@final
 class Settings:
     """The resolved values of the settings declared in a `SettingsRegistry`.
 
@@ -260,9 +286,10 @@ class Settings:
     def __init__(self, registry: SettingsRegistry, config: Config) -> None:
         self._registry = registry
         self._config = config
-        #: Values read from configuration files, plus the `-o` overrides
-        #: collected so far.
+        #: Values read from configuration files.
         self._file: ConfigDict = {}
+        #: Values supplied on the command line, in command line order.
+        self._cli: list[CliEntry] = []
         #: Resolved values, by canonical name.
         self._cache: dict[str, Any] = {}
 
@@ -292,7 +319,46 @@ class Settings:
             for name, setting in self._registry._settings.items()
             if setting.settable_from_file
         } | self._registry._aliases.keys()
-        return self._file.keys() - known
+        return self.configured.keys() - known
+
+    @property
+    def configured(self) -> ConfigDict:
+        """Every configured value, command line beating configuration file."""
+        merged = dict(self._file)
+        for entry in self._cli:
+            merged[entry.name] = entry.as_config_value()
+        return merged
+
+    def set_cli(self, entries: Sequence[CliEntry]) -> None:
+        """Replace the command line layer.
+
+        Options are registered in several rounds -- core plugins, then
+        third-party plugins, then conftests -- and each round re-parses the
+        whole command line, so a later round can only ever see more. Replacing
+        keeps a flag registered by a late round from being dropped, without
+        collecting an entry twice.
+        """
+        if list(entries) != self._cli:
+            self._cli = list(entries)
+            self._cache.clear()
+
+    def add_entry(self, entry: CliEntry) -> None:
+        """Append one value to the command line layer, overriding the rest."""
+        self._cli.append(entry)
+        self._cache.clear()
+
+    def discard(self, name: str) -> None:
+        """Drop every configured value for a name, from every layer."""
+        self._file.pop(name, None)
+        self._cli = [entry for entry in self._cli if entry.name != name]
+        self._cache.clear()
+
+    def _cli_entry(self, canonical_name: str) -> CliEntry | None:
+        """The last command line value for a setting, if any."""
+        for entry in reversed(self._cli):
+            if self._registry.canonical(entry.name) == canonical_name:
+                return entry
+        return None
 
     def _candidates(self, canonical_name: str) -> list[tuple[ConfigValue, bool]]:
         """Collect the configured values for a setting.
@@ -316,6 +382,8 @@ class Settings:
         an already-registered fallback, which rules out cycles.
         """
         canonical_name = self._registry.canonical(name)
+        if self._cli_entry(canonical_name) is not None:
+            return True
         if self._candidates(canonical_name):
             return True
         setting = self._registry.get(canonical_name)
@@ -324,6 +392,15 @@ class Settings:
         )
 
     def _resolve(self, canonical_name: str, setting: Setting) -> Any:
+        # The command line beats every configuration file, and among command
+        # line values the last one written wins.
+        entry = self._cli_entry(canonical_name)
+        if entry is not None:
+            assert setting.type is not None
+            return self._config._coerce_setting(
+                canonical_name, setting.type, entry.as_config_value(), setting.default
+            )
+
         candidates = self._candidates(canonical_name)
 
         if not candidates:
@@ -338,10 +415,8 @@ class Settings:
                     return list(value) if isinstance(value, list) else value
             return setting.default
 
-        # Pick the best candidate based on precedence:
-        # 1. CLI override takes precedence over file, then
-        # 2. Canonical name takes precedence over alias.
-        selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
+        # The canonical name takes precedence over an alias of it.
+        selected = max(candidates, key=lambda x: x[1])[0]
         # A setting a config file can set always has a type.
         assert setting.type is not None
         return self._config._coerce_setting(
