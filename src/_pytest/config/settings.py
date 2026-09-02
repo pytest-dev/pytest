@@ -10,15 +10,18 @@ registry holds the *declarations*; the values resolved from them live on
 
 from __future__ import annotations
 
+import argparse
 from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import Sequence
 import dataclasses
 import enum
 from typing import Any
+from typing import ClassVar
 from typing import final
 from typing import Literal
 from typing import TYPE_CHECKING
+import warnings
 
 from _pytest.config.findpaths import ConfigDict
 from _pytest.config.findpaths import ConfigValue
@@ -360,6 +363,21 @@ class Settings:
                 return entry
         return None
 
+    def source_of(self, name: str) -> Source:
+        """Where the value of a setting came from."""
+        canonical_name = self._registry.canonical(name)
+        setting = self._registry.get(canonical_name)
+        if setting is None or not setting.settable_from_file:
+            raise KeyError(canonical_name)
+        entry = self._cli_entry(canonical_name)
+        if entry is not None:
+            return entry.source
+        if self._candidates(canonical_name):
+            return Source.FILE
+        if any(self.is_configured(target) for target in setting.fallback):
+            return Source.FALLBACK
+        return Source.DEFAULT
+
     def _candidates(self, canonical_name: str) -> list[tuple[ConfigValue, bool]]:
         """Collect the configured values for a setting.
 
@@ -422,3 +440,68 @@ class Settings:
         return self._config._coerce_setting(
             canonical_name, setting.type, selected, setting.default
         )
+
+
+class OptionNamespace(argparse.Namespace):
+    """The namespace behind ``config.option``.
+
+    Values live in the instance ``__dict__``, as for a plain
+    :class:`argparse.Namespace`, so ``vars()``, ``__dict__.update`` and
+    ``copy.copy`` are unchanged.
+    """
+
+    #: Whether accessing a store-backed setting warns. Off while parsing,
+    #: which sets these attributes itself, over and over.
+    _warn_access: ClassVar[bool] = False
+
+
+def make_option_namespace() -> OptionNamespace:
+    """Build a namespace for one `Config`.
+
+    A fresh subclass per `Config`, so that `install_option_property` can add a
+    property for one setting without touching any other namespace.
+    """
+    cls: type[OptionNamespace] = type("Namespace", (OptionNamespace,), {})
+    return cls()
+
+
+def install_option_property(namespace: OptionNamespace, dest: str) -> None:
+    """Make ``namespace.<dest>`` warn, without slowing down every other read.
+
+    The value of a setting comes from the store, and ``config.option`` shows
+    the resolved value as a convenience. Reading it there is deprecated, and
+    writing it there does not change what the store resolves -- but only for
+    the settings that have a store behind them, which is why this is a
+    property on those names rather than a ``__getattr__`` paid for by every
+    attribute of every namespace.
+    """
+    cls = type(namespace)
+    if dest in cls.__dict__:
+        return
+
+    def get(self: OptionNamespace, dest: str = dest) -> Any:
+        try:
+            value = self.__dict__[dest]
+        except KeyError:
+            raise AttributeError(dest) from None
+        if self._warn_access:
+            _warn_option_access(dest, reading=True)
+        return value
+
+    def set(self: OptionNamespace, value: Any, dest: str = dest) -> None:
+        if self._warn_access:
+            _warn_option_access(dest, reading=False)
+        self.__dict__[dest] = value
+
+    def delete(self: OptionNamespace, dest: str = dest) -> None:
+        del self.__dict__[dest]
+
+    setattr(cls, dest, property(get, set, delete))
+
+
+def _warn_option_access(dest: str, *, reading: bool) -> None:
+    from _pytest.deprecated import OPTION_READ_FOR_SETTING
+    from _pytest.deprecated import OPTION_WRITE_FOR_SETTING
+
+    template = OPTION_READ_FOR_SETTING if reading else OPTION_WRITE_FOR_SETTING
+    warnings.warn(template.format(name=dest), stacklevel=4)
