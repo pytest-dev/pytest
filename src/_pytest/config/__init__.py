@@ -53,6 +53,9 @@ from .findpaths import ConfigDict
 from .findpaths import ConfigValue
 from .findpaths import determine_setup
 from .settings import CliEntry
+from .settings import install_option_property
+from .settings import make_option_namespace
+from .settings import OptionNamespace
 from .settings import Settings
 from .settings import Source
 from _pytest import __version__
@@ -1192,7 +1195,7 @@ class Config:
                 args=(), plugins=None, dir=pathlib.Path.cwd()
             )
 
-        self.option = argparse.Namespace()
+        self.option: OptionNamespace = make_option_namespace()
         """Access to command line option as attributes.
 
         :type: argparse.Namespace
@@ -1300,6 +1303,8 @@ class Config:
 
             # To be enabled in pytest 10.0.0.
             # warnings.filterwarnings("error", category=pytest.PytestRemovedIn10Warning)
+            # To be enabled in pytest 11.0.0.
+            # warnings.filterwarnings("error", category=pytest.PytestRemovedIn11Warning)
 
             apply_warning_filters(config_filters, cmdline_filters)
             yield log
@@ -1424,6 +1429,10 @@ class Config:
         return config
 
     def _processopt(self, opt: Argument) -> None:
+        setting = self._parser._settings.by_dest(opt.dest)
+        if setting is not None and setting.settable_from_file:
+            # The store resolves this one; `config.option` only mirrors it.
+            install_option_property(self.option, opt.dest)
         if not hasattr(self.option, opt.dest):
             setattr(self.option, opt.dest, opt.default)
 
@@ -1658,6 +1667,20 @@ class Config:
         a late round from being silently dropped.
         """
         self._settings.set_cli(getattr(namespace, CLI_SETTINGS, ()))
+        self._sync_option_namespace()
+
+    def _sync_option_namespace(self) -> None:
+        """Mirror the resolved settings onto ``config.option``.
+
+        A setting declared with a command line option is readable as
+        ``config.option.<dest>`` for historical reasons; make that the value
+        the store resolves, whichever source supplied it, rather than only
+        what argparse saw on the command line.
+        """
+        for setting in self._parser._settings._settings.values():
+            if setting.dest is None or not setting.settable_from_file:
+                continue
+            self.option.__dict__[setting.dest] = self._settings[setting.name]
 
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
@@ -1794,6 +1817,11 @@ class Config:
             rootpath=self.rootpath,
             warn=True,
         )
+
+        # Parsing sets these attributes itself, over and over; only what
+        # happens afterwards is worth warning about. The flag lives on the
+        # per-`Config` namespace class, so it does not show up in `vars()`.
+        type(self.option)._warn_access = True
 
     def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
         """Issue and handle a warning during the "configure" stage.

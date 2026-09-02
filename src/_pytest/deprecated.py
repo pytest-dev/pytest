@@ -15,6 +15,7 @@ from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn10Warning
+from _pytest.warning_types import PytestRemovedIn11Warning
 from _pytest.warning_types import UnformattedWarning
 
 
@@ -153,3 +154,19 @@ CALLSPEC2_RENAMED = PytestRemovedIn10Warning(
 def check_ispytest(ispytest: bool) -> None:
     if not ispytest:
         warn(PRIVATE, stacklevel=3)
+
+
+OPTION_READ_FOR_SETTING = UnformattedWarning(
+    PytestRemovedIn11Warning,
+    "Reading config.option.{name} is deprecated.\n"
+    "It is a configuration setting; read it with config.getini({name!r}).\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#config-option-for-settings",
+)
+
+OPTION_WRITE_FOR_SETTING = UnformattedWarning(
+    PytestRemovedIn11Warning,
+    "Writing config.option.{name} is deprecated and no longer changes the "
+    "setting.\n"
+    "It is resolved from the configuration files and the command line.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#config-option-for-settings",
+)
