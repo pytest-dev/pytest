@@ -15,8 +15,8 @@ from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import _ini_type_repr
 from _pytest.config.argparsing import get_ini_default_for_type
-from _pytest.config.argparsing import IniSpec
 from _pytest.config.argparsing import Parser
+from _pytest.config.settings import Setting
 from _pytest.terminal import TerminalReporter
 import pytest
 
@@ -180,7 +180,7 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     return None
 
 
-def _format_ini_help(spec: IniSpec) -> str:
+def _format_ini_help(spec: Setting) -> str:
     """Render the help of a config option, with its default and fallbacks.
 
     ``%(default)s`` in the help text is substituted, like argparse does for
@@ -189,6 +189,7 @@ def _format_ini_help(spec: IniSpec) -> str:
     ``False``, ``0``) says nothing a reader cannot infer from the type.
     """
     help = spec.help
+    assert help is not None
     if "%(default)s" in help:
         help = help.replace("%(default)s", str(spec.default))
     else:
@@ -231,6 +232,7 @@ def showhelp(config: Config) -> None:
         if ini_spec.help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         help = _format_ini_help(ini_spec)
+        assert ini_spec.type is not None
         spec = f"{name} ({_ini_type_repr(ini_spec.type)}):"
         tw.write(f"  {spec}")
         spec_len = len(spec)
