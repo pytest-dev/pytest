@@ -653,6 +653,61 @@ class TestCollectonly:
 
 
 class TestFixtureReporting:
+    def test_duplicate_setup_error_headlines_are_disambiguated(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixture():
+                raise RuntimeError("fixture failed")
+            """
+        )
+        pytester.makepyfile(
+            test_1="""
+                def test(fixture):
+                    pass
+            """,
+            test_2="""
+                def test(fixture):
+                    pass
+            """,
+        )
+
+        result = pytester.runpytest("-q")
+
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR at setup of test_1.py::test*",
+                "*ERROR at setup of test_2.py::test*",
+            ]
+        )
+
+    def test_duplicate_failure_headlines_are_disambiguated(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_1="""
+                def test():
+                    assert False
+            """,
+            test_2="""
+                def test():
+                    assert False
+            """,
+        )
+
+        result = pytester.runpytest("-q")
+
+        result.stdout.fnmatch_lines(
+            [
+                "*_ test_1.py::test _*",
+                "*_ test_2.py::test _*",
+            ]
+        )
+
     def test_setup_fixture_error(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
