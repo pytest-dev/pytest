@@ -30,6 +30,7 @@ from _pytest.config.findpaths import ConfigValue
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import locate_config
+from _pytest.config.settings import Source
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
@@ -1524,6 +1525,29 @@ class TestConfigAPI:
             parser.addconfig(
                 "greeting", "greeting", type=str, default="hi", cli_value="x"
             )
+
+    def test_settings_registry_name_collisions(self, pytester: Pytester) -> None:
+        """Every command line option is registered under a name of its own.
+
+        A setting name and an argparse dest can collide -- pytest's own
+        `markers` linelist and `--markers` flag do -- and the option then
+        needs an explicit `_setting_name`. Without one it would be reachable
+        only by its dest, so pin the list of options in that state: a new
+        collision should be a deliberate rename, not a silent disappearance.
+        """
+        registry = pytester.parseconfig()._parser._settings
+        renamed = {
+            dest: setting.name
+            for dest, setting in registry._by_dest.items()
+            if setting.name != dest and Source.ARGPARSE in setting.settable_by
+        }
+        assert renamed == {"markers": "show_markers"}
+        unnamed = [
+            dest
+            for dest, setting in registry._by_dest.items()
+            if registry.get(setting.name) is not setting
+        ]
+        assert unnamed == []
 
     def test_addini_fallback(self, pytester: Pytester) -> None:
         """An unset option takes its value from its fallback, if that is set."""
