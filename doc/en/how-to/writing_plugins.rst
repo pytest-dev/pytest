@@ -414,6 +414,25 @@ writing the chain by hand: a setting explicitly configured to an empty value is
 honoured rather than falling through, and ``pytest --help`` says what this
 setting falls back to.
 
+Reading a setting
+~~~~~~~~~~~~~~~~~
+
+:func:`config.getini() <pytest.Config.getini>` reads a setting whichever way
+the user set it. :class:`config.settings <pytest.Settings>` is the same values
+as a mapping, and can also say where one came from:
+
+.. code-block:: python
+
+    config.settings["hello_name"]  # same as config.getini("hello_name")
+    config.settings.source_of("hello_name")  # Source.FILE, Source.CLI, ...
+    config.settings.spec("hello_name").default  # how it was declared
+
+Note that a setting is *not* read as ``config.option.<name>``. That still
+works, and shows the resolved value, but it is deprecated: writing it there
+does not change the setting. ``config.option`` remains the way to read the
+command line options that are not settings, which are also listed as
+``config.settings.options``.
+
 The underlying calls
 ~~~~~~~~~~~~~~~~~~~~
 

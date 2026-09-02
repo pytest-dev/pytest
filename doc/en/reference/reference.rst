@@ -977,6 +977,19 @@ Config
 .. autoclass:: pytest.Config()
     :members:
 
+Settings
+~~~~~~~~
+
+.. autoclass:: pytest.Settings()
+    :members:
+    :special-members: __getitem__, __iter__, __contains__
+
+.. autoclass:: pytest.Setting()
+    :members:
+
+.. autoclass:: pytest.Source()
+    :members:
+
 Dir
 ~~~
 

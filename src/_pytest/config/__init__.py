@@ -1092,14 +1092,14 @@ class _DeprecatedInicfgProxy(MutableMapping[str, Any]):
         return self._config._inicfg[key].value
 
     def __setitem__(self, key: str, value: Any) -> None:
-        self._config._settings.add_entry(
+        self._config.settings.add_entry(
             CliEntry(key, value, Source.OVERRIDE, mode="toml")
         )
 
     def __delitem__(self, key: str) -> None:
         if key not in self._config._inicfg:
             raise KeyError(key)
-        self._config._settings.discard(key)
+        self._config.settings.discard(key)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._config._inicfg)
@@ -1230,8 +1230,12 @@ class Config:
 
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
-        # Resolved values of the settings declared in `self._parser._settings`.
-        self._settings = Settings(self._parser._settings, self)
+        self.settings = Settings(self._parser._settings, self)
+        """The configuration settings, resolved from the configuration files
+        and the command line.
+
+        :type: Settings
+        """
         self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
@@ -1646,15 +1650,15 @@ class Config:
     @property
     def _inicfg(self) -> ConfigDict:
         """The raw configured values, before type coercion."""
-        return self._settings.configured
+        return self.settings.configured
 
     @_inicfg.setter
     def _inicfg(self, value: ConfigDict) -> None:
-        self._settings._file = value
-        self._settings._cache.clear()
+        self.settings._file = value
+        self.settings._cache.clear()
 
     def _get_unknown_ini_keys(self) -> set[str]:
-        return self._settings.unknown_names()
+        return self.settings.unknown_names()
 
     def _collect_cli_settings(self, namespace: argparse.Namespace) -> None:
         """Take the setting values a parse round found on the command line.
@@ -1666,7 +1670,7 @@ class Config:
         this channel. Collecting after every round keeps a flag registered by
         a late round from being silently dropped.
         """
-        self._settings.set_cli(getattr(namespace, CLI_SETTINGS, ()))
+        self.settings.set_cli(getattr(namespace, CLI_SETTINGS, ()))
         self._sync_option_namespace()
 
     def _sync_option_namespace(self) -> None:
@@ -1680,7 +1684,7 @@ class Config:
         for setting in self._parser._settings._settings.values():
             if setting.dest is None or not setting.settable_from_file:
                 continue
-            self.option.__dict__[setting.dest] = self._settings[setting.name]
+            self.option.__dict__[setting.dest] = self.settings[setting.name]
 
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
@@ -1900,7 +1904,7 @@ class Config:
         registered ``type``, a :class:`~pytest.UsageError` is raised.
         """
         try:
-            return self._settings[name]
+            return self.settings[name]
         except KeyError:
             raise ValueError(f"unknown configuration value: {name!r}") from None
 
@@ -2245,7 +2249,7 @@ class Config:
             return global_level
 
         ini_name = Config._verbosity_ini_name(verbosity_type)
-        if ini_name not in self._settings:
+        if ini_name not in self.settings:
             return global_level
 
         level = self.getini(ini_name)

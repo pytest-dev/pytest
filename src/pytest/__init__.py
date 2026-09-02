@@ -22,6 +22,9 @@ from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import OptionGroup
 from _pytest.config.argparsing import Parser
+from _pytest.config.settings import Setting
+from _pytest.config.settings import Settings
+from _pytest.config.settings import Source
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.doctest import DoctestItem
 from _pytest.fixtures import fixture
@@ -153,6 +156,9 @@ __all__ = [
     "RunResult",
     "ScopeName",
     "Session",
+    "Setting",
+    "Settings",
+    "Source",
     "Stash",
     "StashKey",
     "SubtestReport",
