@@ -18,8 +18,12 @@ from typing import Any
 from typing import final
 from typing import TYPE_CHECKING
 
+from _pytest.config.findpaths import ConfigDict
+from _pytest.config.findpaths import ConfigValue
+
 
 if TYPE_CHECKING:
+    from _pytest.config import Config
     from _pytest.config.argparsing import Argument
     from _pytest.config.argparsing import IniType
 
@@ -240,4 +244,106 @@ class _ConfigSettingsView(Mapping[str, Setting]):
             1
             for setting in self._registry._settings.values()
             if setting.settable_from_file
+        )
+
+
+@final
+class Settings:
+    """The resolved values of the settings declared in a `SettingsRegistry`.
+
+    The registry holds the declarations; this holds the layers a value can
+    come from -- configuration files, and the ``-o`` overrides and command
+    line options collected while parsing -- and resolves them, once, on first
+    read.
+    """
+
+    def __init__(self, registry: SettingsRegistry, config: Config) -> None:
+        self._registry = registry
+        self._config = config
+        #: Values read from configuration files, plus the `-o` overrides
+        #: collected so far.
+        self._file: ConfigDict = {}
+        #: Resolved values, by canonical name.
+        self._cache: dict[str, Any] = {}
+
+    def __getitem__(self, name: str) -> Any:
+        canonical_name = self._registry.canonical(name)
+        try:
+            return self._cache[canonical_name]
+        except KeyError:
+            pass
+        setting = self._registry.get(canonical_name)
+        if setting is None or not setting.settable_from_file:
+            raise KeyError(canonical_name)
+        value = self._resolve(canonical_name, setting)
+        self._cache[canonical_name] = value
+        return value
+
+    def __contains__(self, name: object) -> bool:
+        if not isinstance(name, str):
+            return False
+        setting = self._registry.get(name)
+        return setting is not None and setting.settable_from_file
+
+    def unknown_names(self) -> set[str]:
+        """Configured names that were never declared."""
+        known = {
+            name
+            for name, setting in self._registry._settings.items()
+            if setting.settable_from_file
+        } | self._registry._aliases.keys()
+        return self._file.keys() - known
+
+    def _candidates(self, canonical_name: str) -> list[tuple[ConfigValue, bool]]:
+        """Collect the configured values for a setting.
+
+        Looks under the canonical name and under every alias of it; each
+        candidate is ``(ConfigValue, is_canonical)``.
+        """
+        candidates = []
+        if canonical_name in self._file:
+            candidates.append((self._file[canonical_name], True))
+        for alias, target in self._registry._aliases.items():
+            if target == canonical_name and alias in self._file:
+                candidates.append((self._file[alias], False))
+        return candidates
+
+    def is_configured(self, name: str) -> bool:
+        """Whether a setting has a value from a config file or an override.
+
+        True if the setting itself is set, or -- transitively -- if any
+        setting it falls back to is. Terminates because `addini` only accepts
+        an already-registered fallback, which rules out cycles.
+        """
+        canonical_name = self._registry.canonical(name)
+        if self._candidates(canonical_name):
+            return True
+        setting = self._registry.get(canonical_name)
+        return setting is not None and any(
+            self.is_configured(target) for target in setting.fallback
+        )
+
+    def _resolve(self, canonical_name: str, setting: Setting) -> Any:
+        candidates = self._candidates(canonical_name)
+
+        if not candidates:
+            # Not configured: defer to the first fallback that is, and only
+            # use the registered default if none of them is either.
+            for target in setting.fallback:
+                if self.is_configured(target):
+                    value = self[target]
+                    # Don't hand out the fallback's own cached container:
+                    # `addinivalue_line` mutates what `getini` returns, which
+                    # would otherwise write through into the fallback setting.
+                    return list(value) if isinstance(value, list) else value
+            return setting.default
+
+        # Pick the best candidate based on precedence:
+        # 1. CLI override takes precedence over file, then
+        # 2. Canonical name takes precedence over alias.
+        selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
+        # A setting a config file can set always has a type.
+        assert setting.type is not None
+        return self._config._coerce_setting(
+            canonical_name, setting.type, selected, setting.default
         )
