@@ -241,9 +241,19 @@ class MonkeyPatch:
         if raising and oldval is NOTSET:
             raise AttributeError(f"{target!r} has no attribute {name!r}")
 
-        # avoid class descriptors like staticmethod/classmethod
+        # Store the value from the target's own namespace so that undo()
+        # restores the exact prior state.  For classes this avoids
+        # unwrapping descriptors (staticmethod/classmethod).  For instances
+        # it prevents an inherited attribute from being written into the
+        # instance __dict__ during undo, which would shadow the class-level
+        # attribute (including descriptors) after cleanup.  (#10644)
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, NOTSET)
+        else:
+            try:
+                oldval = vars(target).get(name, NOTSET)
+            except TypeError:
+                pass
         setattr(target, name, value)
         self._setattr.append((target, name, oldval))
 
@@ -279,9 +289,15 @@ class MonkeyPatch:
                 raise AttributeError(name)
         else:
             oldval = getattr(target, name, NOTSET)
-            # Avoid class descriptors like staticmethod/classmethod.
+            # Use the target's own namespace for the same reasons as
+            # setattr — see the comment there.  (#10644)
             if inspect.isclass(target):
                 oldval = target.__dict__.get(name, NOTSET)
+            else:
+                try:
+                    oldval = vars(target).get(name, NOTSET)
+                except TypeError:
+                    pass
             self._setattr.append((target, name, oldval))
             delattr(target, name)
 

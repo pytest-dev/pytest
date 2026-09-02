@@ -1,0 +1,1 @@
+Fixed :func:`monkeypatch.setattr` leaving inherited attributes in the target's own ``__dict__`` after undo, which shadowed class-level descriptors -- by :user:`mturac`.

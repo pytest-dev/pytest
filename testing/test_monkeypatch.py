@@ -499,3 +499,58 @@ def test_syspath_prepend_with_namespace_packages(
 
     modules_tmpdir.joinpath("main_app.py").write_text("app = True", encoding="utf-8")
     from main_app import app  # noqa: F401
+
+
+class TestSetAttrInheritedAttribute:
+    """Regression tests for #10644: setattr on inherited attributes should
+    not leave items in vars(target) after undo."""
+
+    def test_inherited_attr_not_left_in_instance_dict(self, mp: MonkeyPatch):
+        class Base:
+            x = "base"
+
+        class Child(Base):
+            pass
+
+        obj = Child()
+        assert "x" not in vars(obj)
+        mp.setattr(obj, "x", "patched")
+        assert obj.x == "patched"
+        assert "x" in vars(obj)
+        mp.undo()
+        assert obj.x == "base"
+        assert "x" not in vars(obj)
+
+    def test_own_attr_restored_after_undo(self, mp: MonkeyPatch):
+        class Base:
+            x = "base"
+
+        class Child(Base):
+            x = "child"
+
+        obj = Child()
+        obj.x = "instance"
+        mp.setattr(obj, "x", "patched")
+        mp.undo()
+        assert obj.x == "instance"
+        assert vars(obj)["x"] == "instance"
+
+    def test_inherited_descriptor_not_shadowed(self, mp: MonkeyPatch):
+        """A class-level descriptor patched on a subclass should not
+        leave a bound result in the subclass __dict__ after undo."""
+
+        class Base:
+            @property
+            def val(self):
+                return "dynamic"
+
+        class Child(Base):
+            pass
+
+        assert "val" not in Child.__dict__
+        mp.setattr(Child, "val", "static")
+        assert Child().val == "static"
+        mp.undo()
+        assert isinstance(Base.__dict__["val"], property)
+        assert "val" not in Child.__dict__
+        assert Child().val == "dynamic"
