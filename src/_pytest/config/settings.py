@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 import dataclasses
 import enum
+import sys
 import types
 from typing import Any
 from typing import ClassVar
@@ -82,6 +83,22 @@ class Setting:
     group: str | None = None
     #: The command line options feeding this setting.
     cli: tuple[Argument, ...] = ()
+    #: Where this setting was declared, as ``(filename, lineno)``. Kept for
+    #: warnings, so that they point at the plugin rather than at pytest.
+    declared_at: tuple[str, int] | None = None
+
+    def conflicts_with(self, other: Setting) -> bool:
+        """Whether re-registering `other` would change what this setting is.
+
+        A plugin loaded twice, or `pytester` re-running a `conftest.py`,
+        registers the same setting again; that is not a conflict.
+        """
+        return (
+            self.type != other.type
+            or self.default != other.default
+            or self.fallback != other.fallback
+            or self.aliases != other.aliases
+        )
 
     @property
     def settable_from_file(self) -> bool:
@@ -100,6 +117,13 @@ class SettingsRegistry:
 
     def __init__(self) -> None:
         self._settings: dict[str, Setting] = {}
+        #: Diagnostics found while declaring, to be issued once there is a
+        #: configuration to issue them against. `pytest_addoption` is called
+        #: historically, from `Config.__init__` and again for every plugin
+        #: registered later, so warning where the problem is found would warn
+        #: before the warning filters exist -- and, for a plugin, from inside
+        #: the import-warning capture that swallows it.
+        self._diagnostics: list[tuple[Setting, str]] = []
         #: Maps alias -> canonical name.
         self._aliases: dict[str, str] = {}
         #: Maps argparse dest -> setting, for every setting that has one.
@@ -149,7 +173,31 @@ class SettingsRegistry:
             fallback=fallback,
             aliases=aliases,
             settable_by=frozenset({Source.FILE, Source.OVERRIDE}),
+            declared_at=_declaration_site(),
         )
+        previous = self._settings.get(name)
+        if (
+            previous is not None
+            # A command line option of the same name is a separate thing that
+            # merely shares a name -- the pattern every plugin used before
+            # `addconfig` existed -- not a conflicting re-declaration.
+            and previous.settable_from_file
+            and previous.conflicts_with(setting)
+        ):
+            where = (
+                f" (already registered at {previous.declared_at[0]}:"
+                f"{previous.declared_at[1]})"
+                if previous.declared_at is not None
+                else ""
+            )
+            self._diagnostics.append(
+                (
+                    setting,
+                    f"Configuration option {name!r} is registered twice, with "
+                    f"different definitions{where}; the later one wins. This "
+                    "is usually a conflict between two plugins.",
+                )
+            )
         self._settings[name] = setting
         for alias in aliases:
             self._aliases[alias] = name
@@ -594,3 +642,20 @@ def _warn_option_access(dest: str, *, reading: bool) -> None:
 
     template = OPTION_READ_FOR_SETTING if reading else OPTION_WRITE_FOR_SETTING
     warnings.warn(template.format(name=dest), stacklevel=4)
+
+
+def _declaration_site() -> tuple[str, int] | None:
+    """Where the plugin called `addini`, for a warning to point at.
+
+    The strings are taken now and the frame dropped: a frame kept alive here
+    would keep a whole call stack alive with it.
+    """
+    # Skip this module and `argparsing`, so the site is the caller of
+    # `addini` or `addconfig` rather than either of them.
+    internal = {__name__, f"{__package__}.argparsing"}
+    frame: types.FrameType | None = sys._getframe()
+    while frame is not None and frame.f_globals.get("__name__") in internal:
+        frame = frame.f_back
+    if frame is None:  # pragma: no cover
+        return None
+    return frame.f_code.co_filename, frame.f_lineno
