@@ -143,6 +143,28 @@ def test_help_ini_shows_command_line_option(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*the greeting*(also: --greeting, --greet)*"])
 
 
+def test_help_ini_order_follows_declaration(pytester: Pytester) -> None:
+    """A setting is listed where it was declared.
+
+    Even when a command line option of the same name -- the pattern plugins
+    used before `addconfig` existed -- was declared before it.
+    """
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.getgroup("g").addoption("--second", action="store_true")
+            parser.addini("first", "the first")
+            parser.addini("second", "the second")
+            parser.addini("third", "the third")
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        ["*first (string):*", "*second (string):*", "*third (string):*"]
+    )
+
+
 def test_none_help_param_raises_exception(pytester: Pytester) -> None:
     """Test that a None help param raises a TypeError."""
     pytester.makeconftest(
