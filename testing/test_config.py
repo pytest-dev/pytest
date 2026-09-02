@@ -13,6 +13,7 @@ import textwrap
 from typing import Any
 from typing import cast
 from typing import Literal
+import warnings
 
 import _pytest._code
 from _pytest.assertion.rewrite import AssertionRewritingHook
@@ -39,6 +40,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestDeprecationWarning
+from _pytest.warning_types import PytestRemovedIn11Warning
 import pytest
 
 
@@ -1440,7 +1442,10 @@ class TestConfigAPI:
         )
         config = pytester.parseconfig("--greeting=hello")
         assert config.getini("greeting") == "hello"
-        assert config.option.greeting == "hello"
+        with pytest.warns(
+            PytestRemovedIn11Warning, match=r"Reading config\.option\.greeting"
+        ):
+            assert config.option.greeting == "hello"
 
     def test_addconfig_cli_and_ini_agree(self, pytester: Pytester) -> None:
         """The flag and the config file are the same setting, read the same way."""
@@ -1529,6 +1534,53 @@ class TestConfigAPI:
             parser.addconfig(
                 "greeting", "greeting", type=str, default="hi", cli_value="x"
             )
+
+    def test_option_namespace_shows_the_resolved_value(
+        self, pytester: Pytester
+    ) -> None:
+        """`config.option.<name>` follows the config file, not just the flag.
+
+        It used to be `None` whenever the flag was absent, even for a setting
+        the configuration file set.
+        """
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting")
+        """
+        )
+        pytester.makeini("[pytest]\ngreeting = hello\n")
+        config = pytester.parseconfig()
+        with pytest.warns(PytestRemovedIn11Warning):
+            assert config.option.greeting == "hello"
+
+    def test_option_namespace_write_warns_and_does_not_set(
+        self, pytester: Pytester
+    ) -> None:
+        """Writing the mirror does not change what the store resolves."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting")
+        """
+        )
+        config = pytester.parseconfig()
+        with pytest.warns(
+            PytestRemovedIn11Warning, match=r"Writing config\.option\.greeting"
+        ):
+            config.option.greeting = "bye"
+        assert config.getini("greeting") == "hi"
+
+    def test_option_namespace_only_warns_for_settings(self, pytester: Pytester) -> None:
+        """A plain `addoption` option is not a setting and keeps quiet."""
+        config = pytester.parseconfig()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            assert config.option.verbose == 0
+            config.option.verbose = 1
+        assert config.option.verbose == 1
 
     def test_settings_registry_name_collisions(self, pytester: Pytester) -> None:
         """Every command line option is registered under a name of its own.
@@ -3028,8 +3080,11 @@ class TestOverrideIniArgs:
         )
         config = pytester.parseconfig("--greeting=hello")
         assert config.getini("greeting") == "hello"
-        # Still reflected on the option namespace.
-        assert config.option.greeting == "hello"
+        # Still reflected on the option namespace, deprecated as that is.
+        with pytest.warns(
+            PytestRemovedIn11Warning, match=r"Reading config\.option\.greeting"
+        ):
+            assert config.option.greeting == "hello"
 
     def test_override_ini_action_with_value_typed(self, pytester: Pytester) -> None:
         """The value goes through the same coercion as one from a config file."""
@@ -4033,9 +4088,10 @@ class TestNativeTomlOptionTypes:
     )
     def test_invalid_value(self, pytester: Pytester, name: str, value: str) -> None:
         pytester.maketoml(f"[pytest]\n{name} = {value}\n")
-        config = pytester.parseconfig()
+        # Settings mirrored onto config.option are resolved, and so rejected,
+        # while parsing; the others only on getini().
         with pytest.raises(UsageError, match=name):
-            config.getini(name)
+            pytester.parseconfig().getini(name)
 
     def test_get_verbosity(self, pytester: Pytester) -> None:
         pytester.maketoml("[pytest]\nverbosity_assertions = 2\n")

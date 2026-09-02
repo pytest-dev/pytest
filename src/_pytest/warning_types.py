@@ -56,6 +56,12 @@ class PytestRemovedIn10Warning(PytestDeprecationWarning):
     __module__ = "pytest"
 
 
+class PytestRemovedIn11Warning(PytestDeprecationWarning):
+    """Warning class for features that will be removed in pytest 11."""
+
+    __module__ = "pytest"
+
+
 @final
 class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     """Warning category used to denote experiments in pytest.
