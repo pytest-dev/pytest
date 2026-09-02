@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 import dataclasses
 import enum
+import types
 from typing import Any
 from typing import ClassVar
 from typing import final
@@ -277,13 +278,62 @@ class CliEntry:
 
 
 @final
-class Settings:
+class OptionsView(Mapping[str, Any]):
+    """The command line options that are not configuration settings.
+
+    Keyed by argparse ``dest``. These are the options declared with
+    :meth:`Parser.addoption <pytest.Parser.addoption>` alone -- selecting what
+    to run, entering a debugger, anything meaningless to write in a
+    configuration file -- whose value argparse produces and pytest does not
+    coerce. A setting is read from :class:`Settings` instead.
+    """
+
+    def __init__(self, registry: SettingsRegistry, config: Config) -> None:
+        self._registry = registry
+        self._config = config
+
+    def _dests(self) -> Iterator[str]:
+        return (
+            dest
+            for dest, setting in self._registry._by_dest.items()
+            if Source.ARGPARSE in setting.settable_by
+        )
+
+    def __getitem__(self, dest: str) -> Any:
+        setting = self._registry._by_dest.get(dest)
+        if setting is None or Source.ARGPARSE not in setting.settable_by:
+            raise KeyError(dest)
+        try:
+            return self._config.option.__dict__[dest]
+        except KeyError:
+            raise KeyError(dest) from None
+
+    def __iter__(self) -> Iterator[str]:
+        return self._dests()
+
+    def __len__(self) -> int:
+        return sum(1 for _ in self._dests())
+
+    def spec(self, dest: str) -> Setting:
+        """The declaration of one option."""
+        setting = self._registry._by_dest.get(dest)
+        if setting is None or Source.ARGPARSE not in setting.settable_by:
+            raise KeyError(dest)
+        return setting
+
+
+@final
+class Settings(Mapping[str, Any]):
     """The resolved values of the settings declared in a `SettingsRegistry`.
 
     The registry holds the declarations; this holds the layers a value can
     come from -- configuration files, and the ``-o`` overrides and command
     line options collected while parsing -- and resolves them, once, on first
     read.
+
+    Iterating yields the canonical names of the settings a configuration file
+    can set, in declaration order. Aliases are accepted by ``[]`` and ``in``
+    but are not yielded, so that a listing does not name a setting twice.
     """
 
     def __init__(self, registry: SettingsRegistry, config: Config) -> None:
@@ -295,6 +345,8 @@ class Settings:
         self._cli: list[CliEntry] = []
         #: Resolved values, by canonical name.
         self._cache: dict[str, Any] = {}
+        #: The command line options that are not configuration settings.
+        self.options = OptionsView(registry, config)
 
     def __getitem__(self, name: str) -> Any:
         canonical_name = self._registry.canonical(name)
@@ -314,6 +366,43 @@ class Settings:
             return False
         setting = self._registry.get(name)
         return setting is not None and setting.settable_from_file
+
+    def __iter__(self) -> Iterator[str]:
+        return (
+            name
+            for name, setting in self._registry._settings.items()
+            if setting.settable_from_file
+        )
+
+    def __len__(self) -> int:
+        return sum(1 for _ in self)
+
+    @property
+    def aliases(self) -> Mapping[str, str]:
+        """Maps each alias to the setting name it stands for."""
+        return types.MappingProxyType(self._registry._aliases)
+
+    def spec(self, name: str) -> Setting:
+        """The declaration of one setting."""
+        canonical_name = self._registry.canonical(name)
+        setting = self._registry.get(canonical_name)
+        if setting is None or not setting.settable_from_file:
+            raise KeyError(canonical_name)
+        return setting
+
+    def resolved_from(self, name: str) -> str:
+        """The name of the setting that supplied the value of this one.
+
+        Its own name, unless it is not configured and a fallback of it is.
+        """
+        canonical_name = self._registry.canonical(name)
+        setting = self.spec(canonical_name)
+        if self.source_of(canonical_name) is not Source.FALLBACK:
+            return canonical_name
+        for target in setting.fallback:
+            if self.is_configured(target):
+                return self.resolved_from(target)
+        return canonical_name  # pragma: no cover
 
     def unknown_names(self) -> set[str]:
         """Configured names that were never declared."""

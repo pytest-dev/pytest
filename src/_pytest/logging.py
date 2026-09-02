@@ -799,7 +799,7 @@ class LoggingPlugin:
         """Return whether live logging is enabled."""
         # A level given on the command line turns live logging on; the same
         # level in a configuration file does not.
-        enabled = self._config._settings.source_of(
+        enabled = self._config.settings.source_of(
             "log_cli_level"
         ) is Source.CLI or self._config.getini("log_cli")
         if not enabled:

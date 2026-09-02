@@ -2010,6 +2010,83 @@ class TestConfigAPI:
         assert report == ["cleanup_first", "raise_1", "raise_2", "cleanup_last"]
 
 
+class TestSettings:
+    """The public `config.settings` mapping."""
+
+    @pytest.fixture
+    def config(self, pytester: Pytester) -> Config:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting", aliases=["salute"])
+                parser.addconfig("shout_greeting", "shouted greeting", type=str,
+                                 default="HI", fallback="greeting")
+        """
+        )
+        pytester.makeini("[pytest]\nsalute = hello\n")
+        return pytester.parseconfig()
+
+    def test_mapping(self, config: Config) -> None:
+        assert config.settings["greeting"] == "hello"
+        assert config.settings.get("greeting") == "hello"
+        assert config.settings.get("nope", "fallback") == "fallback"
+        assert "greeting" in config.settings
+        assert "nope" not in config.settings
+        with pytest.raises(KeyError):
+            config.settings["nope"]
+
+    def test_aliases_resolve_but_are_not_listed(self, config: Config) -> None:
+        assert config.settings["salute"] == "hello"
+        assert "salute" in config.settings
+        assert "salute" not in list(config.settings)
+        assert config.settings.aliases["salute"] == "greeting"
+
+    def test_agrees_with_getini(self, config: Config) -> None:
+        for name in config.settings:
+            assert config.settings[name] == config.getini(name)
+
+    def test_source_of(self, config: Config) -> None:
+        assert config.settings.source_of("greeting") is Source.FILE
+        assert config.settings.source_of("shout_greeting") is Source.FALLBACK
+        assert config.settings.source_of("minversion") is Source.DEFAULT
+
+    def test_source_of_command_line(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting")
+        """
+        )
+        config = pytester.parseconfig("--greeting=hey")
+        assert config.settings.source_of("greeting") is Source.CLI
+        config = pytester.parseconfig("-o", "greeting=hey")
+        assert config.settings.source_of("greeting") is Source.OVERRIDE
+
+    def test_resolved_from(self, config: Config) -> None:
+        assert config.settings.resolved_from("shout_greeting") == "greeting"
+        assert config.settings.resolved_from("greeting") == "greeting"
+
+    def test_spec(self, config: Config) -> None:
+        spec = config.settings.spec("greeting")
+        assert spec.name == "greeting"
+        assert spec.type == "string"
+        assert spec.default == "hi"
+        assert spec.aliases == ("salute",)
+        assert spec.dest == "greeting"
+
+    def test_options_view(self, config: Config) -> None:
+        """Command line only options live in their own namespace."""
+        assert config.settings.options["markers"] is False
+        assert "markers" in config.settings.options
+        # The linelist of the same name is a setting, not an option.
+        assert config.settings["markers"] == []
+        assert "greeting" not in config.settings.options
+        with pytest.raises(KeyError):
+            config.settings.options["greeting"]
+
+
 class TestConfigFromdictargs:
     def test_basic_behavior(self, _sys_snapshot) -> None:
         option_dict = {"verbose": 444, "foo": "bar", "capture": "no"}
