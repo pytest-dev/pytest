@@ -129,6 +129,20 @@ def test_help_ini_shows_fallback(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*the derived (falls back to 'base')*"])
 
 
+def test_help_ini_shows_command_line_option(pytester: Pytester) -> None:
+    """A setting names the command line options that also set it."""
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addconfig("greeting", "the greeting", type=str, default="hi",
+                             cli=["--greeting", "--greet"])
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*the greeting*(also: --greeting, --greet)*"])
+
+
 def test_none_help_param_raises_exception(pytester: Pytester) -> None:
     """Test that a None help param raises a TypeError."""
     pytester.makeconftest(
