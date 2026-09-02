@@ -198,6 +198,11 @@ class SettingsRegistry:
                     "is usually a conflict between two plugins.",
                 )
             )
+        if previous is not None and not previous.settable_from_file:
+            # A command line option claimed this name first. Drop its slot, so
+            # that the setting takes its position from its own declaration --
+            # `--help` lists settings in declaration order.
+            del self._settings[name]
         self._settings[name] = setting
         for alias in aliases:
             self._aliases[alias] = name
