@@ -52,8 +52,9 @@ from .exceptions import UsageError as UsageError
 from .findpaths import ConfigDict
 from .findpaths import ConfigValue
 from .findpaths import determine_setup
-from .findpaths import parse_override_ini
+from .settings import CliEntry
 from .settings import Settings
+from .settings import Source
 from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
@@ -66,6 +67,7 @@ from _pytest.compat import NOTSET
 from _pytest.config.argparsing import _ini_type_repr
 from _pytest.config.argparsing import _IniLiteral
 from _pytest.config.argparsing import Argument
+from _pytest.config.argparsing import CLI_SETTINGS
 from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import IniType
 from _pytest.config.argparsing import Parser
@@ -1087,10 +1089,14 @@ class _DeprecatedInicfgProxy(MutableMapping[str, Any]):
         return self._config._inicfg[key].value
 
     def __setitem__(self, key: str, value: Any) -> None:
-        self._config._inicfg[key] = ConfigValue(value, origin="override", mode="toml")
+        self._config._settings.add_entry(
+            CliEntry(key, value, Source.OVERRIDE, mode="toml")
+        )
 
     def __delitem__(self, key: str) -> None:
-        del self._config._inicfg[key]
+        if key not in self._config._inicfg:
+            raise KeyError(key)
+        self._config._settings.discard(key)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._config._inicfg)
@@ -1631,7 +1637,7 @@ class Config:
     @property
     def _inicfg(self) -> ConfigDict:
         """The raw configured values, before type coercion."""
-        return self._settings._file
+        return self._settings.configured
 
     @_inicfg.setter
     def _inicfg(self, value: ConfigDict) -> None:
@@ -1641,25 +1647,17 @@ class Config:
     def _get_unknown_ini_keys(self) -> set[str]:
         return self._settings.unknown_names()
 
-    def _collect_ini_overrides(self, namespace: argparse.Namespace) -> None:
-        """Merge the ``-o`` overrides seen so far into the ini config.
+    def _collect_cli_settings(self, namespace: argparse.Namespace) -> None:
+        """Take the setting values a parse round found on the command line.
 
         Options are registered in several rounds -- core plugins, then
         third-party plugins, then conftests -- and each round is followed by a
-        new parse which can yield further overrides, in particular from
+        new parse which can yield further values, in particular from
         :class:`OverrideIniAction` flags, whose whole purpose is to write into
         this channel. Collecting after every round keeps a flag registered by
         a late round from being silently dropped.
         """
-        overrides = parse_override_ini(getattr(namespace, "override_ini", None))
-        changed = {
-            key: value
-            for key, value in overrides.items()
-            if self._inicfg.get(key) != value
-        }
-        if changed:
-            self._inicfg.update(changed)
-            self._settings._cache.clear()
+        self._settings.set_cli(getattr(namespace, CLI_SETTINGS, ()))
 
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
@@ -1692,7 +1690,9 @@ class Config:
         self._rootpath = rootpath
         self._inipath = inipath
         self._ignored_config_files = ignored_config_files
-        self._inicfg = inicfg
+        self._inicfg = {
+            key: value for key, value in inicfg.items() if value.origin == "file"
+        }
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)
 
@@ -1718,7 +1718,7 @@ class Config:
         )
         # addopts may have added overrides (especially via OverrideIniAction).
         # The thing can be endlessly circular but we only do one level (#14442).
-        self._collect_ini_overrides(self.known_args_namespace)
+        self._collect_cli_settings(self.known_args_namespace)
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()
@@ -1754,7 +1754,7 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
-        self._collect_ini_overrides(self.known_args_namespace)
+        self._collect_cli_settings(self.known_args_namespace)
 
         self._validate_plugins()
         self._warn_about_skipped_plugins()
@@ -1784,7 +1784,7 @@ class Config:
             self._parser.parse(args, namespace=self.option)
         except PrintHelp:
             return
-        self._collect_ini_overrides(self.option)
+        self._collect_cli_settings(self.option)
 
         self.args, self.args_source = self._decide_args(
             args=getattr(self.option, FILE_OR_DIR),

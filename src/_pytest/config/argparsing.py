@@ -22,8 +22,10 @@ from typing import Union
 
 from .exceptions import UsageError
 from .settings import _ConfigSettingsView
+from .settings import CliEntry
 from .settings import Setting
 from .settings import SettingsRegistry
+from .settings import Source
 import _pytest._io
 from _pytest.compat import NOTSET
 from _pytest.deprecated import check_ispytest
@@ -34,6 +36,9 @@ if TYPE_CHECKING:
 
 
 FILE_OR_DIR = "file_or_dir"
+
+#: Namespace attribute carrying the ordered command line setting values.
+CLI_SETTINGS = "_pytest_cli_settings"
 
 #: The string tags accepted by :meth:`Parser.addini` for its ``type`` argument.
 _IniTypeTag: TypeAlias = Literal[
@@ -747,6 +752,47 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         return lines
 
 
+def _append_cli_entry(namespace: argparse.Namespace, entry: CliEntry) -> None:
+    """Record a setting value on the namespace, in command line order.
+
+    Copy-on-write: the first parse rounds parse into a throwaway
+    ``copy.copy(config.option)``, and appending in place would let their
+    entries leak into the namespace the copy was taken from.
+    """
+    entries = [*getattr(namespace, CLI_SETTINGS, ())]
+    entries.append(entry)
+    setattr(namespace, CLI_SETTINGS, entries)
+
+
+class OverrideIniOptionAction(argparse.Action):
+    """The action behind ``-o``/``--override-ini``.
+
+    Records the override as a setting value, and keeps appending the raw
+    ``option=value`` string to ``override_ini``, which rootdir discovery reads
+    before there is a config to record anything on.
+    """
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None = None,
+        option_string: str | None = None,
+    ) -> None:
+        assert isinstance(values, str)
+        current = getattr(namespace, self.dest, None) or []
+        setattr(namespace, self.dest, [*current, values])
+        try:
+            name, value = values.split("=", 1)
+        except ValueError:
+            # Reported by `parse_override_ini`, which owns the message.
+            return
+        _append_cli_entry(
+            namespace,
+            CliEntry(name, value, Source.OVERRIDE, option_string=option_string),
+        )
+
+
 class OverrideIniAction(argparse.Action):
     """Argparse action that makes a CLI option equivalent to overriding a
     configuration option.
@@ -761,9 +807,9 @@ class OverrideIniAction(argparse.Action):
     * without it, the option takes one argument, and sets the config option to
       it (e.g. ``--log-cli-format=FORMAT``).
 
-    The override is appended to ``override_ini``, the same list ``-o`` writes
-    to, so the two compose in command line order and the value goes through
-    exactly the same coercion as one written in a config file.
+    The override joins the same ordered channel ``-o`` writes to, so the two
+    compose in command line order and the value goes through exactly the same
+    coercion as one written in a config file.
     """
 
     def __init__(
@@ -797,6 +843,7 @@ class OverrideIniAction(argparse.Action):
         values: str | Sequence[Any] | None = None,
         option_string: str | None = None,
     ) -> None:
+        value: str
         if self.ini_value is not None:
             value = self.ini_value
             # Keep behaving like `store_true` for `config.option.<dest>`.
@@ -808,8 +855,7 @@ class OverrideIniAction(argparse.Action):
                 assert values is not None
                 value = str(values[0])
             setattr(namespace, self.dest, value)
-        current_overrides = getattr(namespace, "override_ini", None)
-        if current_overrides is None:
-            current_overrides = []
-        current_overrides.append(f"{self.ini_option}={value}")
-        setattr(namespace, "override_ini", current_overrides)
+        _append_cli_entry(
+            namespace,
+            CliEntry(self.ini_option, value, Source.CLI, option_string=option_string),
+        )
