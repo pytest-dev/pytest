@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from collections.abc import Mapping
 from collections.abc import Sequence
 import dataclasses
 import os
@@ -14,13 +15,15 @@ from typing import final
 from typing import get_args
 from typing import get_origin
 from typing import Literal
-from typing import NamedTuple
 from typing import NoReturn
 from typing import TYPE_CHECKING
 from typing import TypeAlias
 from typing import Union
 
 from .exceptions import UsageError
+from .settings import _ConfigSettingsView
+from .settings import Setting
+from .settings import SettingsRegistry
 import _pytest._io
 from _pytest.compat import NOTSET
 from _pytest.deprecated import check_ispytest
@@ -56,23 +59,6 @@ class _IniLiteral:
 #: value of any of these" (e.g. ``("int", "string")``, normalized from
 #: ``int | str``).
 IniType: TypeAlias = _IniTypeTag | _IniLiteral | tuple[_IniTypeTag | _IniLiteral, ...]
-
-
-@final
-class IniSpec(NamedTuple):
-    """The registration of an ini option, as stored in `Parser._inidict`.
-
-    A named tuple rather than a dataclass so that positional access to the
-    first three fields keeps working. Note that unpacking the whole record
-    into exactly three names no longer does, now that `fallback` exists.
-    """
-
-    help: str
-    type: IniType
-    default: Any
-    #: Names of other ini options to consult, in order, when this one is not
-    #: configured; the registered `default` applies only if none of them is.
-    fallback: tuple[str, ...] = ()
 
 
 #: Maps each string tag or plain Python type accepted by :meth:`Parser.addini`
@@ -159,9 +145,14 @@ class Parser:
         file_or_dir_arg = self.optparser.add_argument(FILE_OR_DIR, nargs="*")
         file_or_dir_arg.completer = filescompleter  # type: ignore
 
-        self._inidict: dict[str, IniSpec] = {}
-        # Maps alias -> canonical name.
-        self._ini_aliases: dict[str, str] = {}
+        self._settings = SettingsRegistry()
+        # The settings a configuration file can set, by canonical name.
+        self._inidict: Mapping[str, Setting] = _ConfigSettingsView(self._settings)
+
+    @property
+    def _ini_aliases(self) -> dict[str, str]:
+        """Maps alias -> canonical name."""
+        return self._settings._aliases
 
     @property
     def prog(self) -> str:
@@ -400,14 +391,14 @@ class Parser:
                     f"fallback {target!r} of ini option {name!r} is not "
                     "registered; register it first"
                 ) from None
+            # A setting a config file can set always has a type.
+            assert target_spec.type is not None
             if target_spec.type != ini_type:
                 raise ValueError(
                     f"fallback {target!r} of ini option {name!r} has type "
                     f"{_ini_type_repr(target_spec.type)}, expected "
                     f"{_ini_type_repr(ini_type)}"
                 )
-
-        self._inidict[name] = IniSpec(help, ini_type, default, fallbacks)
 
         for alias in aliases:
             if alias in self._inidict:
@@ -416,7 +407,10 @@ class Parser:
                 )
             if (already := self._ini_aliases.get(alias)) is not None:
                 raise ValueError(f"{alias!r} is already an alias of {already!r}")
-            self._ini_aliases[alias] = name
+
+        self._settings.add_config(
+            name, help, ini_type, default, tuple(aliases), fallbacks
+        )
 
     def addconfig(
         self,
@@ -643,12 +637,26 @@ class OptionGroup:
                 if len(opt) >= 2 and opt[0] == "-" and opt[1].islower():
                     raise ValueError("lowercase short options are reserved")
 
+        # A private attribute, consumed here rather than by argparse: the name
+        # to register this option under when its `dest` is already taken by a
+        # configuration setting.
+        setting_name = attrs.pop("_setting_name", None)
+
         action = self._arggroup.add_argument(*opts, **attrs)
         option = Argument(action)
         self.options.append(option)
         if self.parser:
             for name in option.names():
                 self.parser._opt2dest[name] = option.dest
+            # An `OverrideIniAction` names the setting it sets, whether it was
+            # registered by `addconfig` or by hand.
+            binds = getattr(action, "ini_option", None)
+            self.parser._settings.add_option(
+                option,
+                None if self.name == "_anonymous" else self.name,
+                binds=binds,
+                setting_name=setting_name,
+            )
             self.parser.processoption(option)
 
 

@@ -1925,6 +1925,8 @@ class Config:
             spec = self._parser._inidict[canonical_name]
         except KeyError as e:
             raise ValueError(f"unknown configuration value: {name!r}") from e
+        # A setting a config file can set always has a type.
+        assert spec.type is not None
         type, default = spec.type, spec.default
 
         candidates = self._ini_candidates(canonical_name)

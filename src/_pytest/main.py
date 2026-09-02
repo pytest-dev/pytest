@@ -73,27 +73,6 @@ def pytest_addoption(parser: Parser) -> None:
         default=0,
         help="Exit after first num failures or errors",
     )
-    group.addoption(
-        "--strict-config",
-        action=OverrideIniAction,
-        ini_option="strict_config",
-        ini_value="true",
-        help="Enables the strict_config option",
-    )
-    group.addoption(
-        "--strict-markers",
-        action=OverrideIniAction,
-        ini_option="strict_markers",
-        ini_value="true",
-        help="Enables the strict_markers option",
-    )
-    group.addoption(
-        "--strict",
-        action=OverrideIniAction,
-        ini_option="strict",
-        ini_value="true",
-        help="Enables the strict option",
-    )
     parser.addini(
         "strict",
         "Enables all strictness options, currently: "
@@ -114,6 +93,27 @@ def pytest_addoption(parser: Parser) -> None:
         "file raise errors",
         type="bool",
         fallback="strict",
+    )
+    group.addoption(
+        "--strict-config",
+        action=OverrideIniAction,
+        ini_option="strict_config",
+        ini_value="true",
+        help="Enables the strict_config option",
+    )
+    group.addoption(
+        "--strict-markers",
+        action=OverrideIniAction,
+        ini_option="strict_markers",
+        ini_value="true",
+        help="Enables the strict_markers option",
+    )
+    group.addoption(
+        "--strict",
+        action=OverrideIniAction,
+        ini_option="strict",
+        ini_value="true",
+        help="Enables the strict option",
     )
 
     group = parser.getgroup("pytest-warnings")
