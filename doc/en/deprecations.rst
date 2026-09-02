@@ -15,6 +15,37 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _config-option-for-settings:
+
+``config.option`` for a configuration setting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+A setting declared with :func:`parser.addconfig <pytest.Parser.addconfig>`, or
+with a command line option that overrides a configuration option, is resolved
+from the configuration files and the command line together. Reading it as
+``config.option.<name>`` is deprecated, and writing it there no longer changes
+the setting:
+
+.. code-block:: python
+
+    # Deprecated:
+    level = config.option.log_level
+    config.option.log_level = "DEBUG"
+
+    # Use instead:
+    level = config.getini("log_level")
+
+Reading it there used to be a trap: the attribute was ``None`` whenever the
+command line option was absent, even for a setting the configuration file set.
+It now holds the resolved value.
+
+Plain :func:`parser.addoption <pytest.Parser.addoption>` options are not
+configuration settings and are unaffected; ``config.option`` remains the way
+to read and write them.
+
+
 .. _callspec2-renamed:
 
 ``_pytest.python.CallSpec2`` renamed to ``CallSpec``
