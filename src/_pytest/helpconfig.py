@@ -15,6 +15,7 @@ from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import _ini_type_repr
 from _pytest.config.argparsing import get_ini_default_for_type
+from _pytest.config.argparsing import OverrideIniOptionAction
 from _pytest.config.argparsing import Parser
 from _pytest.config.settings import Setting
 from _pytest.terminal import TerminalReporter
@@ -116,7 +117,7 @@ def pytest_addoption(parser: Parser) -> None:
         "-o",
         "--override-ini",
         dest="override_ini",
-        action="append",
+        action=OverrideIniOptionAction,
         help='Override configuration option with "option=value" style, '
         "e.g. `-o strict_xfail=True -o cache_dir=cache`.",
     )

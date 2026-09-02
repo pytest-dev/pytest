@@ -2963,6 +2963,44 @@ class TestOverrideIniArgs:
         )
         assert pytester.parseconfig("--count=7").getini("count") == 7
 
+    def test_override_ini_action_value_with_equals_sign(
+        self, pytester: Pytester
+    ) -> None:
+        """A command line value is not round-tripped through `option=value`."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig(
+                    "greeting", "greeting", type=str, default="hi",
+                    cli="--greeting",
+                )
+
+            def pytest_report_header(config):
+                return "greeting=" + config.getini("greeting")
+            """
+        )
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest("--greeting=a=b=c")
+        result.stdout.fnmatch_lines(["greeting=a=b=c"])
+
+    def test_dash_o_beats_earlier_action(self, pytester: Pytester) -> None:
+        """Between the two channels the last one on the command line wins."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig(
+                    "greeting", "greeting", type=str, default="hi",
+                    cli="--greeting",
+                )
+
+            def pytest_report_header(config):
+                return "greeting=" + config.getini("greeting")
+            """
+        )
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest("--greeting=second", "-o", "greeting=first")
+        result.stdout.fnmatch_lines(["greeting=first"])
+
     def test_override_ini_action_composes_with_dash_o(self, pytester: Pytester) -> None:
         """`-o` and the flag write to the same channel, so command line order wins."""
         pytester.makeconftest(
