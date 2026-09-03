@@ -3,6 +3,7 @@ from __future__ import annotations
 from itertools import islice
 import pprint
 import reprlib
+import sys
 
 
 def _try_repr_or_str(obj: object) -> str:
@@ -112,6 +113,9 @@ def safeformat(obj: object) -> str:
     with a short exception info.
     """
     try:
+        # Python 3.15+ supports expand=True for better nested reprs
+        if sys.version_info >= (3, 15):
+            return pprint.pformat(obj, expand=True)
         return pprint.pformat(obj)
     except Exception as exc:
         return _format_repr_exception(exc, obj)
