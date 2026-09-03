@@ -52,6 +52,8 @@ def _compare_eq_sequence(
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
     len_left = len(left)
     len_right = len(right)
+    found_diff = False
+    i = -1
     for i in range(min(len_left, len_right)):
         if left[i] != right[i]:
             if comparing_bytes:
@@ -73,6 +75,7 @@ def _compare_eq_sequence(
                 f"At index {i} diff:"
                 f" {highlighter(repr(left_value))} != {highlighter(repr(right_value))}"
             )
+            found_diff = True
             break
 
     if comparing_bytes:
@@ -84,11 +87,20 @@ def _compare_eq_sequence(
     if len_diff:
         if len_diff > 0:
             dir_with_more = "Left"
-            extra = saferepr(left[len_right])
+            # If the longer side has exactly one extra item and the tails after
+            # the first differing index align (offset by one), that item is the
+            # insertion.
+            if found_diff and len_diff == 1 and left[i + 1 :] == right[i:]:
+                extra = saferepr(left[i])
+            else:
+                extra = saferepr(left[len_right])
         else:
             len_diff = 0 - len_diff
             dir_with_more = "Right"
-            extra = saferepr(right[len_left])
+            if found_diff and len_diff == 1 and right[i + 1 :] == left[i:]:
+                extra = saferepr(right[i])
+            else:
+                extra = saferepr(right[len_left])
 
         if len_diff == 1:
             yield f"{dir_with_more} contains one more item: {highlighter(extra)}"
