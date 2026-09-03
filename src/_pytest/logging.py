@@ -421,6 +421,8 @@ class LogCaptureFixture:
     def __init__(self, item: nodes.Node, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
         self._item = item
+        self._handler = item.stash[caplog_handler_key]
+        self._records = item.stash[caplog_records_key]
         self._initial_handler_level: int | None = None
         # Dict of log name -> log level.
         self._initial_logger_levels: dict[str | None, int] = {}
@@ -445,7 +447,7 @@ class LogCaptureFixture:
     @property
     def handler(self) -> LogCaptureHandler:
         """Get the logging handler used by the fixture."""
-        return self._item.stash[caplog_handler_key]
+        return self._handler
 
     def get_records(
         self, when: Literal["setup", "call", "teardown"]
@@ -460,7 +462,7 @@ class LogCaptureFixture:
 
         .. versionadded:: 3.4
         """
-        return self._item.stash[caplog_records_key].get(when, [])
+        return self._records.get(when, [])
 
     @property
     def text(self) -> str:
