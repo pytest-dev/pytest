@@ -1,0 +1,3 @@
+Warning filters registered by collected modules and ``conftest.py`` files
+(for example via :func:`warnings.filterwarnings`) are now honored during
+the test run instead of being discarded when collection finishes.
