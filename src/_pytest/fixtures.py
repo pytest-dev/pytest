@@ -1933,7 +1933,9 @@ class FixtureManager:
             basenames = self._node_autousenames.get(parentnode)
             if basenames:
                 yield from basenames
-            # Legacy fallback: check string-based nodeid autouse names.
+            # For Directory nodes, also check by nodeid in case a fresh
+            # Directory was created and the autouse fixtures were registered
+            # to a Directory with the same nodeid (#14964).
             nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
             if nodeid_basenames:
                 yield from nodeid_basenames
@@ -2116,6 +2118,10 @@ class FixtureManager:
         if autouse:
             if node is not NOTSET:
                 self._node_autousenames.setdefault(node, []).append(name)
+                # Also store by nodeid for Directory nodes to handle fresh
+                # node instances when re-collecting (#14964).
+                if isinstance(node, nodes.Directory):
+                    self._nodeid_autousenames.setdefault(node.nodeid, []).append(name)
             elif nodeid is not NOTSET and nodeid is not None:
                 # Legacy: plugin passed nodeid string without node reference.
                 self._nodeid_autousenames.setdefault(nodeid, []).append(name)
@@ -2369,6 +2375,14 @@ class FixtureManager:
             if fixturedef.node is not None:
                 # Node-based matching: check if fixture's node is a parent
                 if fixturedef.node in parent_nodes:
+                    yield fixturedef
+                elif any(
+                    isinstance(p, nodes.Directory) and fixturedef.baseid == p.nodeid
+                    for p in parent_nodes
+                ):
+                    # For Directory nodes, also check by nodeid in case a fresh
+                    # Directory was created and the fixture's node is not in the
+                    # parent chain but the baseid matches (#14964).
                     yield fixturedef
             elif fixturedef.baseid in parentnodeids:
                 # Fallback to string-based matching for legacy/plugins
