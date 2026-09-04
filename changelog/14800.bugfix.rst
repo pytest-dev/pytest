@@ -1,0 +1,2 @@
+Fixes an internal assertion when a parametrized fixture setup fails in a
+``pytest_fixture_setup`` hook, allowing subsequent parameters to run normally.

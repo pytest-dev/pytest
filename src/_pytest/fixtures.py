@@ -1205,9 +1205,9 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
-        if self.cached_result is None:
-            # Already finished. It is assumed that finalizers cannot be added in
-            # this state.
+        if self.cached_result is None and not self._finalizers:
+            # Already finished. If finalizers are present, fixture setup failed
+            # before the result could be cached, so they still need to run.
             return
 
         exceptions: list[BaseException] = []

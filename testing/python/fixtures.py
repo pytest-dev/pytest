@@ -4536,6 +4536,42 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
     )
 
 
+def test_fixture_setup_hook_exception_does_not_leave_stale_finalizers(
+    pytester: Pytester,
+) -> None:
+    """A fixture setup hook failure must not poison later parametrized cases (#14800)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_fixture_setup(fixturedef, request):
+            param = getattr(request, "param", None)
+            if isinstance(param, str) and param.startswith("fixture:"):
+                request.param = request.getfixturevalue(param[len("fixture:"):])
+        """
+    )
+    pytester.makepyfile(
+        test_fixtures="""
+        import pytest
+
+        @pytest.fixture
+        def skipping_base():
+            pytest.skip("backend unavailable")
+
+        @pytest.fixture
+        def derived(skipping_base):
+            return "derived"
+
+        @pytest.mark.parametrize("value", ["fixture:derived", "plain-1", "plain-2"])
+        def test_value(value):
+            assert isinstance(value, str)
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=2, skipped=1)
+
+
 class TestParamValueKey:
     """Unit tests for the equivalence key used by `reorder_items` (#8914)."""
 
