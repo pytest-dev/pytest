@@ -350,6 +350,14 @@ class TestTraceback_f_g_h:
         assert reprcrash.message == "SyntaxError: bad syntax"
         assert str(reprcrash) == "file.py:1:5: SyntaxError: bad syntax"
 
+    def test_getreprcrash_syntax_error_none_msg(self):
+        with pytest.raises(SyntaxError) as excinfo:
+            raise SyntaxError(None, ("file.py", 1, 5, "def foo(:", 1, 6))
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.message == "SyntaxError: <no detail available>"
+        assert str(reprcrash) == "file.py:1:5: SyntaxError: <no detail available>"
+
     def test_getreprcrash_syntax_error_without_offset(self):
         def f():
             raise SyntaxError("no location")
@@ -1207,7 +1215,7 @@ raise ValueError()
         """
         )
         result = pytester.runpytest("--tb=long")
-        result.stdout.fnmatch_lines(["file.py:1:5: SyntaxError"])
+        result.stdout.fnmatch_lines(["*.py:2: SyntaxError"])
 
     def test_syntax_error_default_tb_short(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1219,7 +1227,7 @@ raise ValueError()
         """
         )
         result = pytester.runpytest("--tb=short")
-        result.stdout.fnmatch_lines(["file.py:1:5: in entry"])
+        result.stdout.fnmatch_lines(["*.py:2: in entry"])
         result.stdout.fnmatch_lines(["*SyntaxError: bad syntax*"])
 
     def test_syntax_error_tb_line(self, pytester: Pytester) -> None:
