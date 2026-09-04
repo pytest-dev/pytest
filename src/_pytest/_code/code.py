@@ -710,7 +710,7 @@ class ExceptionInfo(Generic[E]):
             return ReprFileLocation(
                 filename,
                 lineno,
-                f"{self.typename}: {self.value.msg}",
+                f"{self.typename}: {self.value.msg or '<no detail available>'}",
                 column=offset,
             )
         # Find last non-hidden traceback entry that led to the exception of the
@@ -1130,16 +1130,7 @@ class ExceptionInfoFormatter:
                 message = (excinfo and excinfo.typename) or ""
             entry_path = entry.path
             path = self._makepath(entry_path)
-            lineno = entry.lineno + 1
-            # A SyntaxError carries its own location, which is more useful
-            # than the traceback entry where it was raised (#2388).
-            loc = _syntax_error_location(excinfo.value) if excinfo else None
-            if loc is not None:
-                filename, lineno, column = loc
-                path = self._makepath(filename or path)
-            else:
-                column = None
-            reprfileloc = ReprFileLocation(path, lineno, message, column=column)
+            reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
             localsrepr = self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
         elif style == "value":
@@ -1548,7 +1539,7 @@ class ReprFileLocation(TerminalRepr):
         if i != -1:
             msg = msg[:i]
         tw.write(self.path, bold=True, red=True)
-        column = f":{self.column}" if self.column is not None else ""
+        column = f":{self.column}" if self.column else ""
         tw.line(f":{self.lineno}{column}: {msg}")
 
 
