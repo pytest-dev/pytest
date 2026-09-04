@@ -1,0 +1,3 @@
+``monkeypatch.setattr()`` no longer leaves a new entry in the instance ``__dict__`` when it patches an attribute that the instance inherits from its class.
+
+Previously ``undo()`` assigned the inherited value onto the instance, which shadowed the class attribute -- permanently freezing the result for descriptors that resolve dynamically.
