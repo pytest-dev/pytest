@@ -1521,6 +1521,38 @@ def test_error_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
     )
 
 
+def test_sync_tests_with_async_autouse_fixture_do_not_poison_later_tests(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            async def async_fixture():
+                yield
+
+            def test_first():
+                pass
+
+            def test_second():
+                pass
+
+            def test_third():
+                pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=3)
+    result.stdout.fnmatch_lines(
+        [
+            "*'test_first' requested an async fixture 'async_fixture' with autouse=True, *",
+            "*'test_second' requested an async fixture 'async_fixture' with autouse=True, *",
+            "*'test_third' requested an async fixture 'async_fixture' with autouse=True, *",
+        ]
+    )
+
+
 def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
     pytester.makepyfile(
         **{
