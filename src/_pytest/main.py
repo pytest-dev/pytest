@@ -893,6 +893,23 @@ class Session(nodes.Collector):
             return rep, True
         else:
             rep = collect_one_node(node)
+            if rep.passed and node in self._collection_cache:
+                # Re-collection (handle_dupes=False) creates fresh child nodes.
+                # Reuse previously-seen Directory children so that fixture
+                # registration (keyed by node identity) remains valid. (#14635)
+                prev_result = self._collection_cache[node].result
+                prev_dirs = {
+                    child.path: child
+                    for child in prev_result
+                    if isinstance(child, nodes.Directory)
+                }
+                if prev_dirs:
+                    rep.result = [
+                        prev_dirs.get(child.path, child)
+                        if isinstance(child, nodes.Directory)
+                        else child
+                        for child in rep.result
+                    ]
             self._collection_cache[node] = rep
             return rep, False
 

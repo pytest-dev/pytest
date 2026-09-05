@@ -1,0 +1,1 @@
+Fixed conftest fixtures being silently missing for tests collected after a file argument from an ancestor directory (regression from #14004 in pytest 9.1.0+).
