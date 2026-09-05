@@ -141,9 +141,13 @@ def pytest_addoption(parser: Parser) -> None:
         "warnings.filterwarnings. "
         "Processed after -W/--pythonwarnings.",
     )
+    # ``str | int`` (not plain ``int``) so INI files and ``-o`` keep returning
+    # strings, while native TOML integers are still accepted.
     parser.addini(
         "max_warnings",
         help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
+        type=str | int,
+        default="",
     )
 
     group = parser.getgroup("collect", "collection")

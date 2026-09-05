@@ -1145,6 +1145,28 @@ class TestMaxWarnings:
         result.assert_outcomes(passed=1, warnings=1)
         assert result.ret == ExitCode.OK
 
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_toml_native_int_zero(self, pytester: Pytester) -> None:
+        """Unquoted native TOML integer 0 is accepted and enforced (#14953)."""
+        pytester.maketoml(
+            """
+            [pytest]
+            max_warnings = 0
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_warning():
+                warnings.warn(UserWarning("example warning"))
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+        result.stdout.fnmatch_lines(
+            ["*Tests pass, but maximum allowed warnings exceeded: 1 > 0*"]
+        )
+
 
 def test_pythonwarnings_not_duplicated(pytester: Pytester) -> None:
     """Regression test for #13484: -W values should not be duplicated in
