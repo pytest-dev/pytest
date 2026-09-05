@@ -135,6 +135,22 @@ def test_delattr() -> None:
     assert A.x == 1
 
 
+def test_delattr_does_not_record_failed_mutation() -> None:
+    class BrokenDelete:
+        value = 1
+
+        def __delattr__(self, name: str) -> None:
+            raise RuntimeError("delete failed")
+
+    monkeypatch = MonkeyPatch()
+    obj = BrokenDelete()
+
+    with pytest.raises(RuntimeError, match="delete failed"):
+        monkeypatch.delattr(obj, "value")
+
+    monkeypatch.undo()
+
+
 def test_setitem() -> None:
     d = {"x": 1}
     monkeypatch = MonkeyPatch()
@@ -160,6 +176,23 @@ def test_setitem_deleted_meanwhile() -> None:
     del d["x"]
     monkeypatch.undo()
     assert not d
+
+
+def test_setitem_does_not_record_failed_mutation() -> None:
+    class BrokenDict(dict[str, object]):
+        def __setitem__(self, key: str, value: object) -> None:
+            raise RuntimeError("set failed")
+
+        def __delitem__(self, key: str) -> None:
+            raise RuntimeError("delete failed")
+
+    monkeypatch = MonkeyPatch()
+    d = BrokenDict()
+
+    with pytest.raises(RuntimeError, match="set failed"):
+        monkeypatch.setitem(d, "x", 1)
+
+    monkeypatch.undo()
 
 
 @pytest.mark.parametrize("before", [True, False])
@@ -194,6 +227,23 @@ def test_delitem() -> None:
     assert d["x"] == 1500
     monkeypatch.undo()
     assert d == {"hello": "world", "x": 1}
+
+
+def test_delitem_does_not_record_failed_mutation() -> None:
+    class BrokenDict(dict[str, object]):
+        def __setitem__(self, key: str, value: object) -> None:
+            raise RuntimeError("set failed")
+
+        def __delitem__(self, key: str) -> None:
+            raise RuntimeError("delete failed")
+
+    monkeypatch = MonkeyPatch()
+    d = BrokenDict({"x": 1})
+
+    with pytest.raises(RuntimeError, match="delete failed"):
+        monkeypatch.delitem(d, "x")
+
+    monkeypatch.undo()
 
 
 def test_setenv() -> None:

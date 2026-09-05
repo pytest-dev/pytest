@@ -1,0 +1,1 @@
+Fixes MonkeyPatch so failed mutations are not recorded for undo.
