@@ -1794,6 +1794,12 @@ class FixtureManager:
         self._arg2node2fixturedefs: Final[
             dict[str, dict[nodes.Node, list[FixtureDef[Any]]]]
         ] = {}
+        # Legacy fallback, for plugins still using the deprecated nodeid-based
+        # API without a node reference.
+        # Part of FIXTURE_NODEID_DEPRECATED deprecation.
+        self._arg2nodeid2fixturedefs: Final[
+            dict[str, dict[str, list[FixtureDef[Any]]]]
+        ] = {}
         # A mapping from a node to a list of autouse fixture names it defines.
         # The Session entry holds global usefixtures from config.
         self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
@@ -1801,6 +1807,7 @@ class FixtureManager:
         }
         # Legacy fallback: nodeid string -> autouse names, for plugins still
         # using the deprecated nodeid-based API without a node reference.
+        # Part of FIXTURE_NODEID_DEPRECATED deprecation.
         self._nodeid_autousenames: Final[dict[str, list[str]]] = {}
         # Pending conftest modules waiting to be parsed when their Directory is collected.
         # Maps directory path -> conftest plugin module.
@@ -2097,8 +2104,16 @@ class FixtureManager:
             node=node,
         )
 
-        node2fixturedefs = self._arg2node2fixturedefs.setdefault(name, {})
-        node2fixturedefs.setdefault(node, []).insert(0, fixture_def)
+        if node is not NOTSET:
+            node2fixturedefs = self._arg2node2fixturedefs.setdefault(name, {})
+            node2fixturedefs.setdefault(node, []).insert(0, fixture_def)
+        elif nodeid is not NOTSET and nodeid is not None:
+            nodeid2fixturedefs = self._arg2nodeid2fixturedefs.setdefault(name, {})
+            nodeid2fixturedefs.setdefault(nodeid, []).insert(0, fixture_def)
+        else:
+            # Global plugin autouse fixtures go under Session.
+            node2fixturedefs = self._arg2node2fixturedefs.setdefault(name, {})
+            node2fixturedefs.setdefault(self.session, []).insert(0, fixture_def)
         if autouse:
             if node is not NOTSET:
                 self._node_autousenames.setdefault(node, []).append(name)
@@ -2332,6 +2347,9 @@ class FixtureManager:
         for node2fixturedefs in self._arg2node2fixturedefs.values():
             for fixturedefs in node2fixturedefs.values():
                 yield from fixturedefs
+        for nodeid2fixturedefs in self._arg2nodeid2fixturedefs.values():
+            for fixturedefs in nodeid2fixturedefs.values():
+                yield from fixturedefs
 
     def _get_all_fixture_defs_for_node(
         self, node: nodes.Node
@@ -2343,6 +2361,9 @@ class FixtureManager:
         for node2fixturedefs in self._arg2node2fixturedefs.values():
             for parent in node.iter_parents():
                 yield from node2fixturedefs.get(parent, ())
+        for nodeid2fixturedefs in self._arg2nodeid2fixturedefs.values():
+            for parent in node.iter_parents():
+                yield from nodeid2fixturedefs.get(parent.nodeid, ())
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node
@@ -2362,14 +2383,17 @@ class FixtureManager:
         :param argname: Name of the fixture to search for.
         :param node: The requesting Node.
         """
-        try:
-            node2fixturedefs = self._arg2node2fixturedefs[argname]
-        except KeyError:
+        node2fixturedefs = self._arg2node2fixturedefs.get(argname, {})
+        nodeid2fixturedefs = self._arg2nodeid2fixturedefs.get(argname, {})
+        if not node2fixturedefs and not nodeid2fixturedefs:
             return None
         fixturedefs = [
             fixturedef
             for parent in node.iter_parents()
-            for fixturedef in node2fixturedefs.get(parent, ())
+            for fixturedef in [
+                *node2fixturedefs.get(parent, ()),
+                *nodeid2fixturedefs.get(parent.nodeid, ()),
+            ]
         ]
         fixturedefs.reverse()
         return fixturedefs
