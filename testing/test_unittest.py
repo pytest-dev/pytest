@@ -1754,7 +1754,7 @@ LOG = Path({log_path!r})
 
 def setUpModule():
     def cleanup():
-        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "cleanup\\n")
+        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "cleanup\\n", encoding="utf-8")
     unittest.addModuleCleanup(cleanup)
 
 class MyTestCase(unittest.TestCase):
@@ -1838,7 +1838,7 @@ LOG = Path({log_path!r})
 
 def setUpModule():
     def cleanup(n):
-        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + f"{{n}}\\n")
+        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + f"{{n}}\\n", encoding="utf-8")
     unittest.addModuleCleanup(cleanup, 1)
     unittest.addModuleCleanup(cleanup, 2)
 
@@ -1892,7 +1892,7 @@ LOG = Path({log_path!r})
 
 def setUpModule():
     def cleanup():
-        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "a-drain\\n")
+        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "a-drain\\n", encoding="utf-8")
     unittest.addModuleCleanup(cleanup)
 
 class TestA(unittest.TestCase):
@@ -1912,7 +1912,7 @@ from pathlib import Path
 LOG = Path({log_path!r})
 
 def cleanup():
-    LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "b-import\\n")
+    LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "b-import\\n", encoding="utf-8")
 
 unittest.addModuleCleanup(cleanup)
 
