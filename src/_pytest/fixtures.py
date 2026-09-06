@@ -2298,45 +2298,90 @@ class FixtureManager:
             # Read the raw __dict__ entry first so staticmethod/classmethod
             # wrappers are not hidden by descriptor binding.
             raw_obj = self._lookup_in_type_dict(holderobj_tp, name)
-            if raw_obj is not None:
-                self._check_for_wrapped_fixture(name, raw_obj)
 
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getattr() ignores such exceptions.
             obj_ub = safe_getattr(holderobj_tp, name, None)
             if type(obj_ub) is FixtureFunctionDefinition:
-                # On Python 3.9-3.12, classmethod chains through descriptors, so
-                # getattr may return a FixtureFunctionDefinition even when the
-                # raw __dict__ entry is classmethod(fixture). Do not register
-                # that case; users must put @pytest.fixture above @classmethod.
-                if type(raw_obj) is classmethod:
+                fixture_def: FixtureFunctionDefinition | None = obj_ub
+                compat_wrapper = None
+            else:
+                # Temporary backward compatibility (#13479): external
+                # decorators (for example freezegun, responses or moto)
+                # applied on top of @pytest.fixture wrap the
+                # FixtureFunctionDefinition in a plain function, hiding it
+                # from discovery. Recover the definition through the
+                # __wrapped__ chain so the fixture keeps being discovered.
+                # Only plain functions in the class/module __dict__ are
+                # supported: anything else (for example a staticmethod or
+                # classmethod wrapper) keeps warning and is not discovered,
+                # matching the behavior without the compat path.
+                fixture_def = self._find_wrapped_fixture_def(obj_ub)
+                if (
+                    fixture_def is None
+                    or type(raw_obj) is not types.FunctionType
+                    or not isinstance(
+                        fixture_def._get_wrapped_function(), types.FunctionType
+                    )
+                ):
+                    if raw_obj is not None:
+                        self._check_for_wrapped_fixture(name, raw_obj)
                     continue
+                compat_wrapper = obj_ub
 
-                marker = obj_ub._fixture_function_marker
-                if marker.name:
-                    fixture_name = marker.name
-                else:
-                    fixture_name = name
+            assert fixture_def is not None
 
+            if raw_obj is not None and compat_wrapper is None:
+                self._check_for_wrapped_fixture(name, raw_obj)
+
+            # On Python 3.9-3.12, classmethod chains through descriptors, so
+            # getattr may return a FixtureFunctionDefinition even when the
+            # raw __dict__ entry is classmethod(fixture). Do not register
+            # that case; users must put @pytest.fixture above @classmethod.
+            # (Only reachable for bare definitions: compat wrappers are
+            # plain functions, never classmethod descriptors.)
+            if type(raw_obj) is classmethod:
+                continue
+
+            marker = fixture_def._fixture_function_marker
+            if marker.name:
+                fixture_name = marker.name
+            else:
+                fixture_name = name
+
+            if compat_wrapper is not None:
+                # Register the inner function, not the outer wrapper:
+                # the wrapper closes over the FixtureFunctionDefinition
+                # itself, so calling it would hit the "called directly"
+                # guard. The external decorator's runtime effect is
+                # skipped until upstream libraries handle the new
+                # definition type; discovery (and the fixture value)
+                # keep working as before.
+                func = fixture_def._get_wrapped_function()
+                if holderobj_tp is not holderobj:
+                    # The holder is an instance (for example a test
+                    # class instance): bind like the descriptor
+                    # protocol would for a bare definition.
+                    func = func.__get__(holderobj)
+            else:
                 # OK we know it is a fixture -- now safe to look up on the _instance_.
                 try:
                     obj = getattr(holderobj, name)
                 # if the fixture is named in the decorator we cannot find it in the module
                 except AttributeError:
                     obj = obj_ub
-
                 func = obj._get_wrapped_function()
 
-                self._register_fixture(
-                    name=fixture_name,
-                    func=func,
-                    scope=marker.scope,
-                    params=marker.params,
-                    ids=marker.ids,
-                    autouse=marker.autouse,
-                    node=effective_node,
-                    nodeid=effective_nodeid,
-                )
+            self._register_fixture(
+                name=fixture_name,
+                func=func,
+                scope=marker.scope,
+                params=marker.params,
+                ids=marker.ids,
+                autouse=marker.autouse,
+                node=effective_node,
+                nodeid=effective_nodeid,
+            )
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node

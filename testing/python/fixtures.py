@@ -5997,28 +5997,111 @@ def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
-def test_custom_decorated_fixture_warning(pytester: Pytester) -> None:
-    """Fixtures wrapped by custom decorators using functools.wraps warn."""
+def test_custom_decorated_fixture_backcompat(pytester: Pytester) -> None:
+    """Fixtures wrapped by external decorators keep being discovered (#13479).
+
+    Libraries such as freezegun, responses or moto apply a functools.wraps
+    decorator on top of @pytest.fixture, hiding the
+    FixtureFunctionDefinition from discovery. As a temporary backward
+    compatibility measure the definition is recovered through the
+    __wrapped__ chain and the fixture is discovered again.
+    """
     pytester.makepyfile(
         """
         import pytest
         import functools
 
-        def custom_deco(func):
+        def external_deco(func):
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
             return wrapper
 
+        def decorate_class(cls):
+            # Mimics freezegun's class decorator: wrap every callable
+            # defined in the class, including fixture definitions.
+            for attr_name in list(vars(cls)):
+                if attr_name.startswith("__"):
+                    continue
+                attr = vars(cls)[attr_name]
+                if callable(attr):
+                    setattr(cls, attr_name, external_deco(attr))
+            return cls
+
+        @external_deco
+        @pytest.fixture
+        def my_fixture():
+            return "fixture_value"
+
+        def test_module_level(my_fixture):
+            assert my_fixture == "fixture_value"
+
         class TestClass:
-            @custom_deco
+            @external_deco
             @pytest.fixture
             def my_fixture(self):
                 return "fixture_value"
 
-            def test_fixture_usage(self, my_fixture):
+            def test_class_level(self, my_fixture):
                 assert my_fixture == "fixture_value"
+
+        @decorate_class
+        class TestDecoratedClass:
+            @pytest.fixture
+            def my_fixture(self):
+                return "fixture_value"
+
+            def test_decorated_class_level(self, my_fixture):
+                assert my_fixture == "fixture_value"
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.stdout.no_fnmatch_line("*cannot discover fixture*")
+    result.assert_outcomes(passed=3)
+
+
+@pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
+@pytest.mark.filterwarnings(
+    "default:fixture * is wrapped by @staticmethod*:pytest.PytestWarning"
+)
+def test_decorated_classmethod_or_staticmethod_fixture_still_warns(
+    pytester: Pytester,
+) -> None:
+    """The #13479 compat path stays limited to plain functions.
+
+    A @classmethod or @staticmethod below an external decorator keeps
+    warning and is not discovered, as it did without the compat path.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+        import functools
+
+        def external_deco(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        class TestClassmethod:
+            @classmethod
+            @external_deco
+            @pytest.fixture
+            def fixt(cls):
+                return "cls"
+
+            def test_classmethod(self, fixt):
+                assert fixt == "cls"
+
+        class TestStaticmethod:
+            @staticmethod
+            @external_deco
+            @pytest.fixture
+            def fixt():
+                return "static"
+
+            def test_staticmethod(self, fixt):
+                assert fixt == "static"
         """
     )
     result = pytester.runpytest_inprocess(
@@ -6027,14 +6110,17 @@ def test_custom_decorated_fixture_warning(pytester: Pytester) -> None:
 
     result.stdout.fnmatch_lines(
         [
-            "*test_custom_decorated_fixture_warning.py:*: "
-            "PytestWarning: cannot discover fixture 'my_fixture' "
-            "due to being wrapped in decorators*"
+            "*PytestWarning: cannot discover fixture 'fixt' because it is "
+            "wrapped by @classmethod; place @pytest.fixture above @classmethod*"
         ]
     )
-
-    result.stdout.fnmatch_lines(["*fixture 'my_fixture' not found*"])
-    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestWarning: fixture 'fixt' is wrapped by @staticmethod above "
+            "@pytest.fixture; place @pytest.fixture above @staticmethod*"
+        ]
+    )
+    result.assert_outcomes(errors=2)
 
 
 @pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")

@@ -1,0 +1,3 @@
+Fixed a regression where fixtures wrapped by external decorators applied on top of ``@pytest.fixture`` (for example freezegun, responses or moto) were no longer discovered.
+
+As a temporary backward compatibility measure, the fixture definition is recovered through the ``__wrapped__`` chain; upstream libraries are expected to handle the new definition type directly.
