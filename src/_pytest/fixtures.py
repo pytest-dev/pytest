@@ -1786,10 +1786,14 @@ class FixtureManager:
         self.session = session
         self.config: Config = session.config
         # Maps a fixture name (argname) to all of the FixtureDefs in the test
-        # suite/plugins defined with this name. Populated by parsefactories().
-        # TODO: The order of the FixtureDefs list of each arg is significant,
-        #       explain.
-        self._arg2fixturedefs: Final[dict[str, list[FixtureDef[Any]]]] = {}
+        # suite/plugins defined with this name.
+        # For each name, there is a mapping from a Node to the fixtures with the
+        # name registered under that Node. The node determines the FixtureDef's
+        # visibility (equal to the fixturedef.node).
+        # Populated by parsefactories().
+        self._arg2node2fixturedefs: Final[
+            dict[str, dict[nodes.Node, list[FixtureDef[Any]]]]
+        ] = {}
         # A mapping from a node to a list of autouse fixture names it defines.
         # The Session entry holds global usefixtures from config.
         self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
@@ -2093,24 +2097,8 @@ class FixtureManager:
             node=node,
         )
 
-        faclist = self._arg2fixturedefs.setdefault(name, [])
-        # Insert the fixturedef into the list while maintaining a partial order
-        # based on visibility: a fixturedef whose visibility is more specific
-        # sorts after a more general one, so that it takes precedence in the
-        # override chain (the last fixturedef in the list is used first, see
-        # getfixturedefs).
-        # fixturedefs with the same visibility keep registration order, i.e. the
-        # last registered wins.
-        # The order between non-comparable fixturedefs doesn't matter since they
-        # cannot be visible together.
-        # The idea is that a fixture that is defined closer to the item should
-        # take precedence.
-        for i, existing in enumerate(faclist):
-            if is_visibility_more_specific(existing, fixture_def):
-                faclist.insert(i, fixture_def)
-                break
-        else:
-            faclist.append(fixture_def)
+        node2fixturedefs = self._arg2node2fixturedefs.setdefault(name, {})
+        node2fixturedefs.setdefault(node, []).insert(0, fixture_def)
         if autouse:
             if node is not NOTSET:
                 self._node_autousenames.setdefault(node, []).append(name)
@@ -2341,8 +2329,9 @@ class FixtureManager:
 
         The order is not guaranteed.
         """
-        for fixturedefs in self._arg2fixturedefs.values():
-            yield from fixturedefs
+        for node2fixturedefs in self._arg2node2fixturedefs.values():
+            for fixturedefs in node2fixturedefs.values():
+                yield from fixturedefs
 
     def _get_all_fixture_defs_for_node(
         self, node: nodes.Node
@@ -2351,8 +2340,9 @@ class FixtureManager:
 
         The order is not guaranteed.
         """
-        for fixturedefs in self._arg2fixturedefs.values():
-            yield from self._matchfactories(fixturedefs, node)
+        for node2fixturedefs in self._arg2node2fixturedefs.values():
+            for parent in node.iter_parents():
+                yield from node2fixturedefs.get(parent, ())
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node
@@ -2373,26 +2363,16 @@ class FixtureManager:
         :param node: The requesting Node.
         """
         try:
-            fixturedefs = self._arg2fixturedefs[argname]
+            node2fixturedefs = self._arg2node2fixturedefs[argname]
         except KeyError:
             return None
-        return tuple(self._matchfactories(fixturedefs, node))
-
-    def _matchfactories(
-        self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
-    ) -> Iterator[FixtureDef[Any]]:
-        # Collect parent nodes and their IDs for matching
-        parent_nodes = set(node.iter_parents())
-        parentnodeids = {n.nodeid for n in parent_nodes}
-
-        for fixturedef in fixturedefs:
-            if fixturedef.node is not None:
-                # Node-based matching: check if fixture's node is a parent
-                if fixturedef.node in parent_nodes:
-                    yield fixturedef
-            elif fixturedef.baseid in parentnodeids:
-                # Fallback to string-based matching for legacy/plugins
-                yield fixturedef
+        fixturedefs = [
+            fixturedef
+            for parent in node.iter_parents()
+            for fixturedef in node2fixturedefs.get(parent, ())
+        ]
+        fixturedefs.reverse()
+        return fixturedefs
 
 
 def show_fixtures_per_test(config: Config) -> int | ExitCode:
