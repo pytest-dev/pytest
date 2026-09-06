@@ -50,29 +50,34 @@ if TYPE_CHECKING:
     import twisted.trial.unittest
 
 
-def module_cleanup_mark() -> int:
-    """Return the current length of unittest's process-global module cleanups.
+def _unittest_module_cleanups() -> list:
+    """Return unittest's process-global module cleanup list (#14958).
 
-    Used to attribute cleanups registered during a module visit (see #14958).
-    Relies on ``unittest.case._module_cleanups``; see
+    Relies on the private ``unittest.case._module_cleanups`` attribute; see
     ``test_unittest_module_cleanups_private_api_contract``.
     """
     import unittest.case
 
-    return len(unittest.case._module_cleanups)
+    return getattr(unittest.case, "_module_cleanups")
+
+
+def module_cleanup_mark() -> int:
+    """Return the current length of unittest's process-global module cleanups.
+
+    Used to attribute cleanups registered during a module visit (see #14958).
+    """
+    return len(_unittest_module_cleanups())
 
 
 def drain_module_cleanups_to(mark: int) -> None:
     """Run module cleanups down to ``mark`` (LIFO), leaving older entries intact.
 
     Unlike :func:`unittest.case.doModuleCleanups`, this does not drain the entire
-    process-global list — required because pytest may interleave and re-enter
+    process-global list. That matters because pytest may interleave and re-enter
     modules (#14958). Multiple cleanup failures are raised as an
     :class:`ExceptionGroup`, matching class-cleanup handling.
     """
-    import unittest.case
-
-    cleanups = unittest.case._module_cleanups
+    cleanups = _unittest_module_cleanups()
     exceptions: list[Exception] = []
     while len(cleanups) > mark:
         function, args, kwargs = cleanups.pop()
