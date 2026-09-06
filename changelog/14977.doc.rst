@@ -1,1 +1,0 @@
-Fixed three dead external reference links in the documentation: the JUnit XSD citation in the JUnit XML how-to, and the Dropbox blog post and Test and Code podcast references in the flaky tests explanation.
