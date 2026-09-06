@@ -1742,6 +1742,7 @@ def test_abstract_testcase_is_not_collected(pytester: Pytester) -> None:
     assert result.ret == ExitCode.OK
     result.assert_outcomes(passed=1)
 
+
 def test_module_cleanups_on_success(pytester: Pytester) -> None:
     log_path = str(pytester.path / "cleanup.log")
     testpath = pytester.makepyfile(
