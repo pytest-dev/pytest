@@ -315,9 +315,9 @@ def running_on_ci() -> bool:
     return any(os.environ.get(var) for var in env_vars)
 
 
-if sys.version_info >= (3, 13):
+if sys.version_info >= (3, 13):  # pragma: no cover
     from warnings import deprecated as deprecated
-else:
+else:  # pragma: no cover
     if TYPE_CHECKING:
         from typing_extensions import deprecated as deprecated
     else:
