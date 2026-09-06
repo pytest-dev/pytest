@@ -26,6 +26,8 @@ Almost all ``unittest`` features are supported:
 * :meth:`unittest.TestCase.setUp`/:meth:`unittest.TestCase.tearDown`
 * :meth:`unittest.TestCase.setUpClass`/:meth:`unittest.TestCase.tearDownClass`
 * :func:`unittest.setUpModule`/:func:`unittest.tearDownModule`
+* :func:`unittest.addModuleCleanup`/:func:`unittest.doModuleCleanups`
+  (since version ``9.2``, with the deviations noted below)
 * :meth:`unittest.TestCase.subTest` (since version ``9.0``)
 
 .. _`load_tests protocol`: https://docs.python.org/3/library/unittest.html#load-tests-protocol
@@ -33,6 +35,27 @@ Almost all ``unittest`` features are supported:
 Up to this point pytest does not have support for the following features:
 
 * `load_tests protocol`_;
+
+Module-level cleanups
+---------------------
+
+Module cleanups registered via :func:`unittest.addModuleCleanup` (and
+:func:`unittest.enterModuleContext`, which is built on top of it) run after
+``tearDownModule`` -- or when ``setUpModule`` fails -- matching the stdlib
+ordering.
+
+Deviations from :mod:`unittest`:
+
+* Cleanups registered at module import time run at the end of the session,
+  not at the end of the first module to finish: pytest imports all modules
+  during collection, before any test runs, so per-module attribution is not
+  possible for them.
+* Cleanups run once per module *visit*: if pytest runs a module, runs other
+  modules, and comes back to it, each visit drains the cleanups registered
+  during that visit.
+* Errors raised by cleanup functions are aggregated and reported as an
+  :class:`ExceptionGroup`; stdlib's ``doModuleCleanups`` swallows all but the
+  first.
 
 Benefits out of the box
 -----------------------

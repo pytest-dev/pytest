@@ -1,0 +1,3 @@
+Module-level cleanups registered via :func:`unittest.addModuleCleanup` -- including
+:func:`unittest.enterModuleContext` -- now run after ``tearDownModule`` (or when
+``setUpModule`` fails), instead of being silently dropped.

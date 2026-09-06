@@ -31,6 +31,7 @@ from _pytest.outcomes import exit
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.python import _drain_module_cleanups
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
@@ -48,6 +49,8 @@ if TYPE_CHECKING:
     import unittest
 
     import twisted.trial.unittest
+
+    from _pytest.main import Session
 
 
 _SysExcInfoType = (
@@ -520,6 +523,17 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
         excinfo = call.excinfo
         call2 = CallInfo[None].from_call(lambda: skip(str(excinfo.value)), call.when)
         call.excinfo = call2.excinfo
+
+
+@hookimpl(tryfirst=True)
+def pytest_sessionfinish(session: Session) -> None:
+    """Drain leftover unittest module cleanups at session end (#14958).
+
+    Cleanups registered at import time sit below every per-module mark (see
+    ``_drain_module_cleanups`` in ``_pytest.python``) and are deliberately not
+    drained at module teardown -- they run here instead.
+    """
+    _drain_module_cleanups(0)
 
 
 def _is_skipped(obj) -> bool:

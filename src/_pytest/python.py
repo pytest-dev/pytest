@@ -22,6 +22,7 @@ import itertools
 import os
 from pathlib import Path
 import re
+import sys
 import textwrap
 import types
 from typing import Any
@@ -31,6 +32,7 @@ from typing import get_args
 from typing import Literal
 from typing import NoReturn
 from typing import TYPE_CHECKING
+import unittest
 import warnings
 
 import _pytest
@@ -83,6 +85,9 @@ from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 
+
+if sys.version_info[:2] < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -600,16 +605,33 @@ class Module(nodes.File, PyCollector):
             self.obj, ("tearDownModule", "teardown_module")
         )
 
-        if setup_module is None and teardown_module is None:
+        if (
+            setup_module is None
+            and teardown_module is None
+            and not unittest.case._module_cleanups
+        ):
             return
 
         def xunit_setup_module_fixture(request) -> Generator[None]:
             module = request.module
-            if setup_module is not None:
-                _call_with_optional_argument(setup_module, module)
+            # Mark the current stack height of the process-global
+            # unittest.case._module_cleanups list: entries registered by the
+            # module import (or by other modules) sit below the mark and are
+            # left alone -- a session-end drain catches those (see
+            # _pytest.unittest.pytest_sessionfinish).
+            mark = len(unittest.case._module_cleanups)
+            try:
+                if setup_module is not None:
+                    _call_with_optional_argument(setup_module, module)
+            except Exception:
+                _drain_module_cleanups(mark)
+                raise
             yield
-            if teardown_module is not None:
-                _call_with_optional_argument(teardown_module, module)
+            try:
+                if teardown_module is not None:
+                    _call_with_optional_argument(teardown_module, module)
+            finally:
+                _drain_module_cleanups(mark)
 
         fixtures.register_fixture(
             # Use a unique name to speed up lookup.
@@ -761,6 +783,29 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | N
         if meth is not None and fixtures.getfixturemarker(meth) is None:
             return meth
     return None
+
+
+def _drain_module_cleanups(mark: int) -> None:
+    """Run unittest module cleanups registered since *mark* (LIFO order).
+
+    Entries at or below *mark* are left alone: ``unittest.case._module_cleanups``
+    is process-global and pytest can collect/re-enter modules in arbitrary
+    order, so only the entries a module registered during its own
+    setup/setUpModule run may be drained at its teardown (#14958).
+
+    Unlike stdlib's ``doModuleCleanups`` -- which swallows every error except
+    the first -- cleanup errors are aggregated and raised as an
+    ``ExceptionGroup``, mirroring the class-cleanup path (#8033).
+    """
+    exceptions: list[Exception] = []
+    while len(unittest.case._module_cleanups) > mark:
+        function, args, kwargs = unittest.case._module_cleanups.pop()
+        try:
+            function(*args, **kwargs)
+        except Exception as exc:
+            exceptions.append(exc)
+    if exceptions:
+        raise ExceptionGroup("Unittest module cleanup errors", exceptions)
 
 
 class Class(PyCollector):

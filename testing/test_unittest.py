@@ -1741,3 +1741,307 @@ def test_abstract_testcase_is_not_collected(pytester: Pytester) -> None:
     result = pytester.runpytest()
     assert result.ret == ExitCode.OK
     result.assert_outcomes(passed=1)
+
+def test_module_cleanups_on_success(pytester: Pytester) -> None:
+    log_path = str(pytester.path / "cleanup.log")
+    testpath = pytester.makepyfile(
+        f"""
+import unittest
+from pathlib import Path
+
+LOG = Path({log_path!r})
+
+def setUpModule():
+    def cleanup():
+        LOG.write_text((LOG.read_text() if LOG.exists() else "") + "cleanup\\n")
+    unittest.addModuleCleanup(cleanup)
+
+class MyTestCase(unittest.TestCase):
+    def test_one(self):
+        pass
+
+def test_cleanup_not_yet_run():
+    assert not LOG.exists()
+"""
+    )
+    reprec = pytester.inline_run(testpath)
+    passed, _skipped, failed = reprec.countoutcomes()
+    assert failed == 0
+    assert passed == 2
+    assert (pytester.path / "cleanup.log").read_text() == "cleanup\n"
+
+
+def test_module_cleanups_on_setupmodule_failure(pytester: Pytester) -> None:
+    log_path = str(pytester.path / "cleanup.log")
+    testpath = pytester.makepyfile(
+        f"""
+import unittest
+from pathlib import Path
+
+LOG = Path({log_path!r})
+
+def setUpModule():
+    def cleanup():
+        LOG.write_text("ran")
+    unittest.addModuleCleanup(cleanup)
+    assert False
+
+class MyTestCase(unittest.TestCase):
+    def test(self):
+        pass
+"""
+    )
+    reprec = pytester.inline_run(testpath)
+    passed, _skipped, failed = reprec.countoutcomes()
+    assert failed == 1
+    assert passed == 0
+    assert (pytester.path / "cleanup.log").read_text() == "ran"
+
+
+def test_module_cleanups_on_teardownmodule_failure(pytester: Pytester) -> None:
+    log_path = str(pytester.path / "cleanup.log")
+    testpath = pytester.makepyfile(
+        f"""
+import unittest
+from pathlib import Path
+
+LOG = Path({log_path!r})
+
+def setUpModule():
+    def cleanup():
+        LOG.write_text("ran")
+    unittest.addModuleCleanup(cleanup)
+
+def tearDownModule():
+    assert False
+
+class MyTestCase(unittest.TestCase):
+    def test(self):
+        pass
+"""
+    )
+    reprec = pytester.inline_run(testpath)
+    _passed, _skipped, failed = reprec.countoutcomes()
+    assert failed == 1
+    assert (pytester.path / "cleanup.log").read_text() == "ran"
+
+
+def test_module_cleanups_run_in_lifo_order(pytester: Pytester) -> None:
+    log_path = str(pytester.path / "cleanup.log")
+    testpath = pytester.makepyfile(
+        f"""
+import unittest
+from pathlib import Path
+
+LOG = Path({log_path!r})
+
+def setUpModule():
+    def cleanup(n):
+        LOG.write_text((LOG.read_text() if LOG.exists() else "") + f"{{n}}\\n")
+    unittest.addModuleCleanup(cleanup, 1)
+    unittest.addModuleCleanup(cleanup, 2)
+
+class MyTestCase(unittest.TestCase):
+    def test(self):
+        pass
+"""
+    )
+    reprec = pytester.inline_run(testpath)
+    _passed, _skipped, failed = reprec.countoutcomes()
+    assert failed == 0
+    assert (pytester.path / "cleanup.log").read_text() == "2\n1\n"
+
+
+def test_module_cleanups_import_time_at_session_end(pytester: Pytester) -> None:
+    log_path = str(pytester.path / "cleanup.log")
+    testpath = pytester.makepyfile(
+        f"""
+import unittest
+from pathlib import Path
+
+LOG = Path({log_path!r})
+
+def cleanup():
+    LOG.write_text("import-time")
+
+unittest.addModuleCleanup(cleanup)
+
+class MyTestCase(unittest.TestCase):
+    def test(self):
+        assert not LOG.exists()
+"""
+    )
+    reprec = pytester.inline_run(testpath)
+    passed, _skipped, failed = reprec.countoutcomes()
+    assert failed == 0
+    assert passed == 1
+    assert (pytester.path / "cleanup.log").read_text() == "import-time"
+
+
+def test_module_cleanups_not_stolen_across_modules(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    log_path = str(pytester.path / "cleanup.log")
+    pytester.makepyfile(
+        test_a=f"""
+import unittest
+from pathlib import Path
+
+LOG = Path({log_path!r})
+
+def setUpModule():
+    def cleanup():
+        LOG.write_text((LOG.read_text() if LOG.exists() else "") + "a-drain\\n")
+    unittest.addModuleCleanup(cleanup)
+
+class TestA(unittest.TestCase):
+    def test1(self):
+        pass
+
+    def test2(self):
+        pass
+"""
+    )
+    log_path = str(pytester.path / "cleanup.log")
+    pytester.makepyfile(
+        test_b=f"""
+import unittest
+from pathlib import Path
+
+LOG = Path({log_path!r})
+
+def cleanup():
+    LOG.write_text((LOG.read_text() if LOG.exists() else "") + "b-import\\n")
+
+unittest.addModuleCleanup(cleanup)
+
+class TestB(unittest.TestCase):
+    def test1(self):
+        pass
+"""
+    )
+    monkeypatch.chdir(pytester.path)
+    reprec = pytester.inline_run(
+        "test_a.py::TestA::test1",
+        "test_b.py::TestB::test1",
+        "test_a.py::TestA::test2",
+    )
+    passed, _skipped, failed = reprec.countoutcomes()
+    assert failed == 0
+    assert passed == 3
+    # a's cleanup drained at the end of each of a's two visits (cleanups run
+    # once per module visit); b's import-time cleanup must survive both
+    # module visits and drain at session end.
+    assert (pytester.path / "cleanup.log").read_text() == "a-drain\na-drain\nb-import\n"
+
+
+class TestModuleCleanupErrors:
+    """Exceptions raised during module cleanup functions (registered via
+    addModuleCleanup()) are reported (#14958)."""
+
+    def test_module_cleanups_failure_in_setup(self, pytester: Pytester) -> None:
+        testpath = pytester.makepyfile(
+            """
+import unittest
+
+def setUpModule():
+    def cleanup(n):
+        raise Exception(f"fail {n}")
+    unittest.addModuleCleanup(cleanup, 2)
+    unittest.addModuleCleanup(cleanup, 1)
+    raise Exception("fail 0")
+
+class MyTestCase(unittest.TestCase):
+    def test(self):
+        pass
+"""
+        )
+        result = pytester.runpytest("-s", testpath)
+        result.assert_outcomes(errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*Unittest module cleanup errors *2 sub-exceptions*",
+                "*Exception: fail 1",
+                "*Exception: fail 2",
+            ]
+        )
+
+    def test_module_cleanups_failure_in_teardown(self, pytester: Pytester) -> None:
+        testpath = pytester.makepyfile(
+            """
+import unittest
+
+def setUpModule():
+    def cleanup(n):
+        raise Exception(f"fail {n}")
+    unittest.addModuleCleanup(cleanup, 2)
+    unittest.addModuleCleanup(cleanup, 1)
+
+class MyTestCase(unittest.TestCase):
+    def test(self):
+        pass
+"""
+        )
+        result = pytester.runpytest("-s", testpath)
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*Unittest module cleanup errors *2 sub-exceptions*",
+                "*Exception: fail 1",
+                "*Exception: fail 2",
+            ]
+        )
+
+
+def test_module_cleanups_stdlib_contract() -> None:
+    import unittest.case
+
+    saved = list(unittest.case._module_cleanups)
+    try:
+        unittest.case._module_cleanups.clear()
+        calls: list[int] = []
+
+        def cleanup() -> None:
+            calls.append(1)
+
+        unittest.addModuleCleanup(cleanup)
+        assert unittest.case._module_cleanups
+        unittest.case.doModuleCleanups()
+        assert calls == [1]
+        assert not unittest.case._module_cleanups
+    finally:
+        unittest.case._module_cleanups[:] = saved
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11), reason="enterModuleContext added in Python 3.11"
+)
+def test_module_cleanups_enter_module_context(pytester: Pytester) -> None:
+    log_path = str(pytester.path / "cleanup.log")
+    testpath = pytester.makepyfile(
+        f"""
+import unittest
+from contextlib import contextmanager
+from pathlib import Path
+
+LOG = Path({log_path!r})
+
+@contextmanager
+def cm():
+    LOG.write_text("enter")
+    yield
+    LOG.write_text("exit")
+
+unittest.enterModuleContext(cm())
+
+class MyTestCase(unittest.TestCase):
+    def test(self):
+        assert LOG.read_text() == "enter"
+"""
+    )
+    reprec = pytester.inline_run(testpath)
+    _passed, _skipped, failed = reprec.countoutcomes()
+    assert failed == 0
+    # enter() ran at import (asserted inside the test); exit() runs at
+    # session end (import-time registrations drain at session end).
+    assert (pytester.path / "cleanup.log").read_text() == "exit"
