@@ -1933,7 +1933,9 @@ class TestB(unittest.TestCase):
     # a's cleanup drained at the end of each of a's two visits (cleanups run
     # once per module visit); b's import-time cleanup must survive both
     # module visits and drain at session end.
-    assert (pytester.path / "cleanup.log").read_text(encoding="utf-8") == "a-drain\na-drain\nb-import\n"
+    assert (pytester.path / "cleanup.log").read_text(
+        encoding="utf-8"
+    ) == "a-drain\na-drain\nb-import\n"
 
 
 class TestModuleCleanupErrors:
