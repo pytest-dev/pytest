@@ -1754,7 +1754,7 @@ LOG = Path({log_path!r})
 
 def setUpModule():
     def cleanup():
-        LOG.write_text((LOG.read_text() if LOG.exists() else "") + "cleanup\\n")
+        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "cleanup\\n")
     unittest.addModuleCleanup(cleanup)
 
 class MyTestCase(unittest.TestCase):
@@ -1769,7 +1769,7 @@ def test_cleanup_not_yet_run():
     passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 0
     assert passed == 2
-    assert (pytester.path / "cleanup.log").read_text() == "cleanup\n"
+    assert (pytester.path / "cleanup.log").read_text(encoding="utf-8") == "cleanup\n"
 
 
 def test_module_cleanups_on_setupmodule_failure(pytester: Pytester) -> None:
@@ -1783,7 +1783,7 @@ LOG = Path({log_path!r})
 
 def setUpModule():
     def cleanup():
-        LOG.write_text("ran")
+        LOG.write_text("ran", encoding="utf-8")
     unittest.addModuleCleanup(cleanup)
     assert False
 
@@ -1796,7 +1796,7 @@ class MyTestCase(unittest.TestCase):
     passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 1
     assert passed == 0
-    assert (pytester.path / "cleanup.log").read_text() == "ran"
+    assert (pytester.path / "cleanup.log").read_text(encoding="utf-8") == "ran"
 
 
 def test_module_cleanups_on_teardownmodule_failure(pytester: Pytester) -> None:
@@ -1810,7 +1810,7 @@ LOG = Path({log_path!r})
 
 def setUpModule():
     def cleanup():
-        LOG.write_text("ran")
+        LOG.write_text("ran", encoding="utf-8")
     unittest.addModuleCleanup(cleanup)
 
 def tearDownModule():
@@ -1824,7 +1824,7 @@ class MyTestCase(unittest.TestCase):
     reprec = pytester.inline_run(testpath)
     _passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 1
-    assert (pytester.path / "cleanup.log").read_text() == "ran"
+    assert (pytester.path / "cleanup.log").read_text(encoding="utf-8") == "ran"
 
 
 def test_module_cleanups_run_in_lifo_order(pytester: Pytester) -> None:
@@ -1838,7 +1838,7 @@ LOG = Path({log_path!r})
 
 def setUpModule():
     def cleanup(n):
-        LOG.write_text((LOG.read_text() if LOG.exists() else "") + f"{{n}}\\n")
+        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + f"{{n}}\\n")
     unittest.addModuleCleanup(cleanup, 1)
     unittest.addModuleCleanup(cleanup, 2)
 
@@ -1850,7 +1850,7 @@ class MyTestCase(unittest.TestCase):
     reprec = pytester.inline_run(testpath)
     _passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 0
-    assert (pytester.path / "cleanup.log").read_text() == "2\n1\n"
+    assert (pytester.path / "cleanup.log").read_text(encoding="utf-8") == "2\n1\n"
 
 
 def test_module_cleanups_import_time_at_session_end(pytester: Pytester) -> None:
@@ -1863,7 +1863,7 @@ from pathlib import Path
 LOG = Path({log_path!r})
 
 def cleanup():
-    LOG.write_text("import-time")
+    LOG.write_text("import-time", encoding="utf-8")
 
 unittest.addModuleCleanup(cleanup)
 
@@ -1876,7 +1876,7 @@ class MyTestCase(unittest.TestCase):
     passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 0
     assert passed == 1
-    assert (pytester.path / "cleanup.log").read_text() == "import-time"
+    assert (pytester.path / "cleanup.log").read_text(encoding="utf-8") == "import-time"
 
 
 def test_module_cleanups_not_stolen_across_modules(
@@ -1892,7 +1892,7 @@ LOG = Path({log_path!r})
 
 def setUpModule():
     def cleanup():
-        LOG.write_text((LOG.read_text() if LOG.exists() else "") + "a-drain\\n")
+        LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "a-drain\\n")
     unittest.addModuleCleanup(cleanup)
 
 class TestA(unittest.TestCase):
@@ -1912,7 +1912,7 @@ from pathlib import Path
 LOG = Path({log_path!r})
 
 def cleanup():
-    LOG.write_text((LOG.read_text() if LOG.exists() else "") + "b-import\\n")
+    LOG.write_text((LOG.read_text(encoding="utf-8") if LOG.exists() else "") + "b-import\\n")
 
 unittest.addModuleCleanup(cleanup)
 
@@ -1933,7 +1933,7 @@ class TestB(unittest.TestCase):
     # a's cleanup drained at the end of each of a's two visits (cleanups run
     # once per module visit); b's import-time cleanup must survive both
     # module visits and drain at session end.
-    assert (pytester.path / "cleanup.log").read_text() == "a-drain\na-drain\nb-import\n"
+    assert (pytester.path / "cleanup.log").read_text(encoding="utf-8") == "a-drain\na-drain\nb-import\n"
 
 
 class TestModuleCleanupErrors:
@@ -2029,15 +2029,15 @@ LOG = Path({log_path!r})
 
 @contextmanager
 def cm():
-    LOG.write_text("enter")
+    LOG.write_text("enter", encoding="utf-8")
     yield
-    LOG.write_text("exit")
+    LOG.write_text("exit", encoding="utf-8")
 
 unittest.enterModuleContext(cm())
 
 class MyTestCase(unittest.TestCase):
     def test(self):
-        assert LOG.read_text() == "enter"
+        assert LOG.read_text(encoding="utf-8") == "enter"
 """
     )
     reprec = pytester.inline_run(testpath)
@@ -2045,4 +2045,4 @@ class MyTestCase(unittest.TestCase):
     assert failed == 0
     # enter() ran at import (asserted inside the test); exit() runs at
     # session end (import-time registrations drain at session end).
-    assert (pytester.path / "cleanup.log").read_text() == "exit"
+    assert (pytester.path / "cleanup.log").read_text(encoding="utf-8") == "exit"
