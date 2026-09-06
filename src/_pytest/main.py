@@ -144,6 +144,8 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "max_warnings",
         help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
+        type=int | str,
+        default=None,
     )
 
     group = parser.getgroup("collect", "collection")

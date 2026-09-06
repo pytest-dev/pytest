@@ -1092,10 +1092,10 @@ class TerminalReporter:
         value = self.config.option.max_warnings
         if value is not None:
             return int(value)
-        ini_value = self.config.getini("max_warnings")
-        if ini_value:
+        ini_value: int | str | None = self.config.getini("max_warnings")
+        if isinstance(ini_value, str):
             return int(ini_value)
-        return None
+        return ini_value
 
     #
     # Summaries for sessionfinish.
