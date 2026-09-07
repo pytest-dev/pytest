@@ -303,8 +303,8 @@ exception not mentioned in ``raises``.
 ``run`` parameter
 ~~~~~~~~~~~~~~~~~
 
-If a test should be marked as xfail and reported as such but should not be
-even executed, use the ``run`` parameter as ``False``:
+If a test should be marked as xfail and reported as such but should not even
+be executed, use the ``run`` parameter as ``False``:
 
 .. code-block:: python
 

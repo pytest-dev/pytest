@@ -45,6 +45,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.nodeid import NodeId
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.pathlib import absolutepath
@@ -407,7 +408,7 @@ class TerminalReporter:
         # isatty should be a method but was wrongly implemented as a boolean.
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
-        self._progress_nodeids_reported: set[str] = set()
+        self._progress_nodeids_reported: set[NodeId] = set()
         self._timing_report_ids_reported: set[int] = set()
         self._current_logreport: TestReport | None = None
         self._show_progress_info = self._determine_show_progress_info()
@@ -487,7 +488,7 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
-        fspath = self.config.rootpath / nodeid.split("::", maxsplit=1)[0]
+        fspath = self.config.rootpath / NodeId.parse(nodeid).path
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
@@ -626,7 +627,7 @@ class TerminalReporter:
         # Ensure that the path is printed before the
         # 1st test of a module starts running.
         if self.showlongtestinfo:
-            line = self._locationline(nodeid, fspath, lineno, domain)
+            line = self._locationline(NodeId.parse(nodeid), fspath, lineno, domain)
             self.write_ensure_prefix(line, "")
             self.flush()
         elif self.showfspath:
@@ -662,7 +663,7 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
-        self._progress_nodeids_reported.add(rep.nodeid)
+        self._progress_nodeids_reported.add(rep.id)
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
@@ -674,7 +675,7 @@ class TerminalReporter:
             if self._show_progress_info and not self._is_last_item:
                 self._write_progress_information_if_past_edge()
         else:
-            line = self._locationline(rep.nodeid, *rep.location)
+            line = self._locationline(rep.id, *rep.location)
             running_xdist = hasattr(rep, "node")
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
@@ -949,7 +950,7 @@ class TerminalReporter:
         test_cases_verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
         if test_cases_verbosity < 0:
             if test_cases_verbosity < -1:
-                counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
+                counts = Counter(item.id.path for item in items)
                 for name, count in sorted(counts.items()):
                     self._tw.line(f"{name}: {count}")
             else:
@@ -1061,10 +1062,10 @@ class TerminalReporter:
                 )
 
     def _locationline(
-        self, nodeid: str, fspath: str, lineno: int | None, domain: str
+        self, nodeid: NodeId, fspath: str, lineno: int | None, domain: str
     ) -> str:
-        def mkrel(nodeid: str) -> str:
-            line = self.config.cwd_relative_nodeid(nodeid)
+        def mkrel() -> str:
+            line = str(self.config.cwd_relative_nodeid(nodeid))
             if domain and line.endswith(domain):
                 line = line[: -len(domain)]
                 values = domain.split("[")
@@ -1074,10 +1075,8 @@ class TerminalReporter:
 
         # fspath comes from testid which has a "/"-normalized path.
         if fspath:
-            res = mkrel(nodeid)
-            if self.verbosity >= 2 and (
-                nodeid.split("::", maxsplit=1)[0] != nodes.norm_sep(fspath)
-            ):
+            res = mkrel()
+            if self.verbosity >= 2 and (nodeid.path != nodes.norm_sep(fspath)):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
             res = "[location]"
@@ -1103,10 +1102,10 @@ class TerminalReporter:
         value = self.config.option.max_warnings
         if value is not None:
             return int(value)
-        ini_value = self.config.getini("max_warnings")
-        if ini_value:
+        ini_value: int | str | None = self.config.getini("max_warnings")
+        if isinstance(ini_value, str):
             return int(ini_value)
-        return None
+        return ini_value
 
     #
     # Summaries for sessionfinish.
@@ -1134,12 +1133,7 @@ class TerminalReporter:
                 reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
             def collapsed_location_report(reports: list[WarningReport]) -> str:
-                locations = []
-                for w in reports:
-                    location = w.get_location(self.config)
-                    if location:
-                        locations.append(location)
-
+                locations = [x for w in reports if (x := w.get_location(self.config))]
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
@@ -1188,18 +1182,18 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, green=True, bold=True)
                         self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.nodeid)
+                    self._handle_teardown_sections(rep.id)
 
-    def _get_teardown_reports(self, nodeid: str) -> list[TestReport]:
+    def _get_teardown_reports(self, node_id: NodeId) -> list[TestReport]:
         reports = self.getreports("")
         return [
             report
             for report in reports
-            if report.when == "teardown" and report.nodeid == nodeid
+            if report.when == "teardown" and report.id == node_id
         ]
 
-    def _handle_teardown_sections(self, nodeid: str) -> None:
-        for report in self._get_teardown_reports(nodeid):
+    def _handle_teardown_sections(self, node_id: NodeId) -> None:
+        for report in self._get_teardown_reports(node_id):
             self.print_teardown_sections(report)
 
     def print_teardown_sections(self, rep: TestReport) -> None:
@@ -1248,7 +1242,7 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
-                        self._handle_teardown_sections(rep.nodeid)
+                        self._handle_teardown_sections(rep.id)
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":
@@ -1536,14 +1530,13 @@ class TerminalReporter:
         return parts, main_color
 
 
-def _get_node_id_with_markup(tw: TerminalWriter, config: Config, rep: BaseReport):
-    nodeid = config.cwd_relative_nodeid(rep.nodeid)
-    path, *parts = nodeid.split("::")
-    if parts:
-        parts_markup = tw.markup("::".join(parts), bold=True)
-        return path + "::" + parts_markup
-    else:
-        return path
+def _get_node_id_with_markup(
+    tw: TerminalWriter, config: Config, rep: BaseReport
+) -> str:
+    nodeid = config.cwd_relative_nodeid(rep.id)
+    if nodeid.rest is not None:
+        return f"{nodeid.path}::{tw.markup(nodeid.rest, bold=True)}"
+    return nodeid.path
 
 
 def _format_trimmed(format: str, msg: str, available_width: int) -> str | None:
