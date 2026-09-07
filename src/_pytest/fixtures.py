@@ -473,9 +473,9 @@ class FuncFixtureInfo:
     # Note: can't include dynamic dependencies (`request.getfixturevalue` calls).
     names_closure: list[str]
     # A map from a fixture name in the transitive closure to the FixtureDefs
-    # matching the name which are applicable to this function.
+    # matching the name which are visible to this item.
     # There may be multiple overriding fixtures with the same name. The
-    # sequence is ordered from furthest to closes to the function.
+    # sequence is ordered from furthest to closes to the item.
     name2fixturedefs: dict[str, Sequence[FixtureDef[Any]]]
 
     def prune_dependency_tree(self) -> None:
@@ -726,7 +726,7 @@ class FixtureRequest(abc.ABC):
         # No fixtures defined with this name.
         if fixturedefs is None:
             raise FixtureLookupError(argname, self)
-        # The are no fixtures with this name applicable for the function.
+        # The are no fixtures with this name visible for the item.
         if not fixturedefs:
             raise FixtureLookupError(argname, self)
 
@@ -1928,7 +1928,7 @@ class FixtureManager:
         self._pending_conftests.clear()
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
-        """Return the names of autouse fixtures applicable to node."""
+        """Return the names of autouse fixtures visible to node."""
         for parentnode in node.listchain():
             basenames = self._node_autousenames.get(parentnode)
             if basenames:
@@ -1939,7 +1939,7 @@ class FixtureManager:
                 yield from nodeid_basenames
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
-        """Return the names of usefixtures fixtures applicable to node."""
+        """Return the names of usefixtures fixtures visible to node."""
         for marker_node, mark in node.iter_markers_with_node(name="usefixtures"):
             if not mark.args:
                 marker_node.warn(
@@ -2099,8 +2099,8 @@ class FixtureManager:
         # Insert the fixturedef into the list while maintaining a partial order
         # based on visibility: a fixturedef whose visibility is more specific
         # sorts after a more general one, so that it takes precedence in the
-        # override chain (the last applicable fixturedef in the list is used
-        # first, see getfixturedefs).
+        # override chain (the last fixturedef in the list is used first, see
+        # getfixturedefs).
         # fixturedefs with the same visibility keep registration order, i.e. the
         # last registered wins.
         # The order between non-comparable fixturedefs doesn't matter since they
@@ -2341,12 +2341,12 @@ class FixtureManager:
     def getfixturedefs(
         self, argname: str, node: nodes.Node
     ) -> Sequence[FixtureDef[Any]] | None:
-        """Get FixtureDefs for a fixture name which are applicable
+        """Get FixtureDefs for a fixture name which are visible
         to a given node.
 
         Returns None if there are no fixtures at all defined with the given
         name. (This is different from the case in which there are fixtures
-        with the given name, but none applicable to the node. In this case,
+        with the given name, but none visible to the node. In this case,
         an empty result is returned).
 
         :param argname: Name of the fixture to search for.
