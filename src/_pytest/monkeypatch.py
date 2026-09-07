@@ -251,9 +251,15 @@ class MonkeyPatch:
                     "import string"
                 )
 
-        oldval = getattr(target, name, NOTSET)
-        if raising and oldval is NOTSET:
-            raise AttributeError(f"{target!r} has no attribute {name!r}")
+        if raising:
+            oldval = getattr(target, name, NOTSET)
+            if oldval is NOTSET:
+                raise AttributeError(f"{target!r} has no attribute {name!r}")
+        else:
+            # When raising is disabled, probe the attribute statically so that
+            # descriptors are not bound (no ``__get__`` side effects) just to
+            # check for existence.
+            oldval = inspect.getattr_static(target, name, NOTSET)
 
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
@@ -298,16 +304,22 @@ class MonkeyPatch:
                 )
             name, target = derive_importpath(target, raising)
 
-        if not hasattr(target, name):
-            if raising:
+        if raising:
+            if not hasattr(target, name):
                 raise AttributeError(name)
-        else:
             oldval = getattr(target, name, NOTSET)
-            # Avoid class descriptors like staticmethod/classmethod.
-            if inspect.isclass(target):
-                oldval = target.__dict__.get(name, NOTSET)
-            delattr(target, name)
-            self._setattr.append((target, name, oldval))
+        else:
+            # When raising is disabled, probe the attribute statically so that
+            # descriptors are not bound (no ``__get__`` side effects) just to
+            # check for existence.
+            oldval = inspect.getattr_static(target, name, NOTSET)
+            if oldval is NOTSET:
+                return
+        # Avoid class descriptors like staticmethod/classmethod.
+        if inspect.isclass(target):
+            oldval = target.__dict__.get(name, NOTSET)
+        delattr(target, name)
+        self._setattr.append((target, name, oldval))
 
     def setitem(self, dic: Mapping[K, V], name: K, value: V) -> None:
         """Set dictionary entry ``name`` to value."""
