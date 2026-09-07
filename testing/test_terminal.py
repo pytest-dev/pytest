@@ -315,6 +315,47 @@ class TestTerminal:
             )
         result.stdout.fnmatch_lines(["*KeyboardInterrupt*"])
 
+    @pytest.mark.parametrize("tbstyle", ["native", "short", "long"])
+    def test_keyboard_interrupt_tbstyle(
+        self, pytester: Pytester, fulltrace, tbstyle
+    ) -> None:
+        """KeyboardInterrupt traceback should respect ``--tb`` like normal failures (#5225).
+
+        With ``--fulltrace`` the full traceback is shown; the formatting style
+        (native/short/long) should follow ``--tb`` instead of always being "long".
+        """
+        if not fulltrace:
+            # Without --fulltrace only the crash line is shown, so the tbstyle
+            # is not observable. Only the fulltrace case exercises the style.
+            pytest.skip("tbstyle only observable with --fulltrace")
+        pytester.makepyfile(
+            """
+            def test_interrupt_me():
+                raise KeyboardInterrupt   # simulating the user
+        """
+        )
+        result = pytester.runpytest(
+            "--fulltrace", f"--tb={tbstyle}", no_reraise_ctrlc=True
+        )
+        if tbstyle == "native":
+            # Native style uses Python's own traceback formatting, which shows
+            # the "raise KeyboardInterrupt" source line followed by the
+            # "KeyboardInterrupt" exception, with no "E " prefix marker.
+            result.stdout.fnmatch_lines(
+                [
+                    "*_keyboard_interrupt_tbstyle.py:2: in test_interrupt_me*",
+                    "*raise KeyboardInterrupt*",
+                ]
+            )
+            # The non-native "E       KeyboardInterrupt" marker must NOT appear
+            # when the native style is honored.
+            result.stdout.no_fnmatch_line("E       KeyboardInterrupt*")
+        else:
+            # short/long styles keep the "E" prefix marker.
+            result.stdout.fnmatch_lines(
+                ["E       KeyboardInterrupt*", "*KeyboardInterrupt*"]
+            )
+
     def test_keyboard_in_sessionstart(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
