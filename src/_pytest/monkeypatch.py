@@ -110,6 +110,20 @@ def derive_importpath(import_path: str, raising: bool) -> tuple[str, object]:
     return attr, target
 
 
+def _is_data_descriptor(cls: type, name: str) -> bool:
+    """Return True if looking up ``name`` on ``cls`` finds a data descriptor.
+
+    Data descriptors take precedence over the instance ``__dict__``, so
+    ``setattr()`` on an instance is routed through the descriptor instead of
+    writing an entry into the instance ``__dict__``.
+    """
+    for klass in cls.__mro__:
+        if name in klass.__dict__:
+            descr_type = type(klass.__dict__[name])
+            return hasattr(descr_type, "__set__") or hasattr(descr_type, "__delete__")
+    return False
+
+
 @final
 class MonkeyPatch:
     """Helper to conveniently monkeypatch attributes/items/environment
@@ -244,6 +258,16 @@ class MonkeyPatch:
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, NOTSET)
+        elif not _is_data_descriptor(type(target), name):
+            # With no data descriptor in the way, the `setattr()` below writes
+            # into the instance `__dict__`, so `undo()` has to restore that
+            # `__dict__` entry. Assigning an inherited `oldval` back onto the
+            # instance would instead leave behind a new entry shadowing the
+            # class attribute, which permanently freezes descriptors that
+            # resolve dynamically (#10644).
+            target_dict = getattr(target, "__dict__", None)
+            if isinstance(target_dict, Mapping):
+                oldval = target_dict.get(name, NOTSET)
         setattr(target, name, value)
         self._setattr.append((target, name, oldval))
 
