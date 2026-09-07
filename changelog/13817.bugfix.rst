@@ -1,0 +1,2 @@
+``parser.addoption()`` now raises a clear ``ValueError`` when given a name that is not an option
+(for example ``addoption("shuffle")`` instead of ``addoption("--shuffle")``).

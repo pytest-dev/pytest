@@ -128,6 +128,30 @@ class TestParser:
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
 
+    def test_addoption_rejects_non_option_name(self, parser: parseopt.Parser) -> None:
+        """addoption() must not treat a missing ``--`` as a positional argument."""
+        with pytest.raises(
+            ValueError,
+            match=r"invalid option name 'shuffle'.*Did you mean '--shuffle'\?",
+        ):
+            parser.addoption("shuffle")
+        assert parser._anonymous.options == []
+
+        group = parser.getgroup("hello")
+        with pytest.raises(ValueError, match="invalid option name 'foo-bar'"):
+            group.addoption("foo-bar")
+        assert group.options == []
+
+        with pytest.raises(ValueError, match="invalid option name ''"):
+            parser.addoption("")
+
+        parser.addoption("--shuffle", action="store_true")
+        parser.addoption("-S", action="store_true")
+        assert [list(opt.names()) for opt in parser._anonymous.options] == [
+            ["--shuffle"],
+            ["-S"],
+        ]
+
     def test_group_addoption_rejects_implicit_dest_conflict(
         self, parser: parseopt.Parser
     ) -> None:
@@ -372,6 +396,19 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("COMP_POINT", str(len("pytest " + arg)))
     result = pytester.run("bash", str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
+
+
+def test_addoption_invalid_flag_from_conftest(pytester: Pytester) -> None:
+    """Invalid flags in pytest_addoption should fail clearly (issue #13817)."""
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addoption("shuffle")
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret != 0
+    result.stderr.fnmatch_lines(["*invalid option name 'shuffle'*"])
 
 
 def test_argument_repr_uninitialized() -> None:
