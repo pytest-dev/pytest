@@ -44,7 +44,7 @@ jobs:
           restore-keys: plugins-http-cache-
 
       - name: Set up tox
-        uses: ./.github/actions/setup-tox
+        uses: $/.github/actions/setup-tox
         with:
           python-version: "3.13"
 

@@ -85,7 +85,6 @@ class ColoredLevelFormatter(DatetimeFormatter):
         logging.CRITICAL: {"red"},
         logging.ERROR: {"red", "bold"},
         logging.WARNING: {"yellow"},
-        logging.WARN: {"yellow"},
         logging.INFO: {"green"},
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),

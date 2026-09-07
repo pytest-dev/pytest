@@ -289,7 +289,7 @@ jobs:
         allow-prereleases: true
 
     - name: Set up tox
-      uses: ./.github/actions/setup-tox
+      uses: $/.github/actions/setup-tox
       with:
         python-version: ${{ matrix.python }}
 

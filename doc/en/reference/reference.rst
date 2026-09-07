@@ -1705,9 +1705,11 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: max_warnings
-   :type: ``int``
+   :type: ``int | str``
 
    .. versionadded:: 9.1
+   .. versionchanged:: 9.2
+        Added support for specifying the value as an integer in TOML configuration.
 
    Maximum number of warnings allowed before the test run is considered a failure.
    When all tests pass, but the total number of warnings exceeds this value, pytest exits with
@@ -3671,7 +3673,7 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
-      max_warnings (string):
+      max_warnings (int | string):
                             Exit with error if all tests pass but the number of
                             warnings exceeds this threshold
       norecursedirs (args): Directory patterns to avoid for recursion
