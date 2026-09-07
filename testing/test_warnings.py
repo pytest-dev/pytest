@@ -1163,6 +1163,172 @@ class TestMaxWarnings:
         assert result.ret == ExitCode.OK
 
 
+class TestWarningsCollapseThreshold:
+    """Tests for the --warnings-collapse-threshold feature."""
+
+    # A shared helper function is the warning source (stacklevel=1),
+    # so all tests produce the same formatted message and group together.
+    PYFILE = """
+        import warnings
+
+        def warn():
+            warnings.warn("shared warning", UserWarning)
+
+        def test_one():   warn()
+        def test_two():   warn()
+        def test_three(): warn()
+        def test_four():  warn()
+        def test_five():  warn()
+        def test_six():   warn()
+        def test_seven(): warn()
+        def test_eight(): warn()
+        def test_nine():  warn()
+        def test_ten():   warn()
+        def test_eleven(): warn()
+    """
+
+    @pytest.mark.filterwarnings("always::UserWarning")
+    def test_default_collapses_at_10(self, pytester: Pytester) -> None:
+        """By default, 10+ locations collapse to filename-only output."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["test_default_collapses_at_10.py: 11 warnings"])
+        result.stdout.no_fnmatch_line("*::test_one*")
+
+    @pytest.mark.filterwarnings("always::UserWarning")
+    def test_below_default_threshold_shows_full_locations(
+        self, pytester: Pytester
+    ) -> None:
+        """Fewer than 10 locations are shown in full (default threshold)."""
+        pytester.makepyfile(
+            """
+            import warnings
+
+            def warn():
+                warnings.warn("shared warning", UserWarning)
+
+            def test_one():  warn()
+            def test_two():  warn()
+            def test_three(): warn()
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*test_below_default_threshold_shows_full_locations.py::test_one*",
+                "*test_below_default_threshold_shows_full_locations.py::test_two*",
+                "*test_below_default_threshold_shows_full_locations.py::test_three*",
+            ]
+        )
+
+    @pytest.mark.filterwarnings("always::UserWarning")
+    def test_threshold_none_never_collapses(self, pytester: Pytester) -> None:
+        """--warnings-collapse-threshold=none disables collapsing entirely."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--warnings-collapse-threshold=none")
+        result.stdout.fnmatch_lines(
+            [
+                "*::test_one*",
+                "*::test_eleven*",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*: 11 warnings*")
+
+    @pytest.mark.filterwarnings("always::UserWarning")
+    def test_custom_threshold_collapses(self, pytester: Pytester) -> None:
+        """A custom threshold collapses when location count meets or exceeds it."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--warnings-collapse-threshold=5")
+        result.stdout.fnmatch_lines(["test_custom_threshold_collapses.py: 11 warnings"])
+        result.stdout.no_fnmatch_line("*::test_one*")
+
+    @pytest.mark.filterwarnings("always::UserWarning")
+    def test_custom_threshold_below_count_shows_full(
+        self, pytester: Pytester
+    ) -> None:
+        """Locations below a raised threshold are shown in full."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--warnings-collapse-threshold=20")
+        result.stdout.fnmatch_lines(
+            [
+                "*::test_one*",
+                "*::test_eleven*",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*: 11 warnings*")
+
+    @pytest.mark.filterwarnings("always::UserWarning")
+    def test_ini_option(self, pytester: Pytester) -> None:
+        """warnings_collapse_threshold can be set via INI configuration."""
+        pytester.makeini(
+            """
+            [pytest]
+            warnings_collapse_threshold = 5
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["test_ini_option.py: 11 warnings"])
+        result.stdout.no_fnmatch_line("*::test_one*")
+
+    @pytest.mark.filterwarnings("always::UserWarning")
+    @pytest.mark.parametrize("value", ["5", '"5"'])
+    def test_toml_option(self, pytester: Pytester, value: str) -> None:
+        """warnings_collapse_threshold can be set via TOML configuration."""
+        pytester.maketoml(
+            f"""
+            [pytest]
+            warnings_collapse_threshold = {value}
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["test_toml_option.py: 11 warnings"])
+        result.stdout.no_fnmatch_line("*::test_one*")
+
+    @pytest.mark.filterwarnings("always::UserWarning")
+    def test_cli_overrides_ini(self, pytester: Pytester) -> None:
+        """CLI --warnings-collapse-threshold overrides INI warnings_collapse_threshold."""
+        pytester.makeini(
+            """
+            [pytest]
+            warnings_collapse_threshold = 5
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--warnings-collapse-threshold=20")
+        result.stdout.fnmatch_lines(["*::test_one*", "*::test_eleven*"])
+        result.stdout.no_fnmatch_line("*: 11 warnings*")
+
+    @pytest.mark.parametrize("value", ["0", "-1"])
+    def test_invalid_value_raises_error(self, pytester: Pytester, value: str) -> None:
+        """Zero or negative threshold raises UsageError."""
+        pytester.makepyfile("def test_it(): pass")
+        result = pytester.runpytest(f"--warnings-collapse-threshold={value}")
+        result.stderr.fnmatch_lines(
+            ["*warnings_collapse_threshold must be a positive integer or 'none'*"]
+        )
+        assert result.ret != ExitCode.OK
+
+    @pytest.mark.parametrize("value", ["0", "-1"])
+    def test_invalid_ini_value_raises_error(
+        self, pytester: Pytester, value: str
+    ) -> None:
+        """Zero or negative threshold in INI raises UsageError."""
+        pytester.makeini(
+            f"""
+            [pytest]
+            warnings_collapse_threshold = {value}
+            """
+        )
+        pytester.makepyfile("def test_it(): pass")
+        result = pytester.runpytest()
+        result.stderr.fnmatch_lines(
+            ["*warnings_collapse_threshold must be a positive integer or 'none'*"]
+        )
+        assert result.ret != ExitCode.OK
+
+
 def test_pythonwarnings_not_duplicated(pytester: Pytester) -> None:
     """Regression test for #13484: -W values should not be duplicated in
     known_args_namespace due to the arg parser being called multiple times."""
