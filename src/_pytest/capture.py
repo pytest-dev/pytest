@@ -11,6 +11,7 @@ from collections.abc import Iterator
 import contextlib
 import io
 from io import UnsupportedOperation
+import logging
 import os
 import sys
 from tempfile import TemporaryFile
@@ -41,6 +42,7 @@ from _pytest.nodes import Collector
 from _pytest.nodes import File
 from _pytest.nodes import Item
 from _pytest.reports import CollectReport
+from _pytest.warning_types import PytestWarning
 
 
 _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
@@ -152,11 +154,59 @@ def _windowsconsoleio_workaround(stream: TextIO) -> None:
     sys.stderr = _reopen_stdio(sys.stderr, "wb")
 
 
+def _has_stale_logging_stream_handler(
+    old_stdout: TextIO,
+    old_stderr: TextIO,
+) -> bool:
+    loggers = [logging.getLogger()]
+    loggers.extend(
+        logger
+        for logger in logging.Logger.manager.loggerDict.values()
+        if isinstance(logger, logging.Logger)
+    )
+
+    for logger in loggers:
+        for handler in logger.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                if handler.stream is old_stdout or handler.stream is old_stderr:
+                    return True
+
+    return False
+
+
+def _warn_if_stale_logging_streams(
+    config: Config,
+    old_stdout: TextIO,
+    old_stderr: TextIO,
+) -> None:
+    if (
+        sys.stdout is not old_stdout or sys.stderr is not old_stderr
+    ) and _has_stale_logging_stream_handler(old_stdout, old_stderr):
+        config.issue_config_time_warning(
+            PytestWarning(
+                "A logging handler is holding a reference to a standard stream "
+                "that pytest replaced while setting up fd capture on Windows. "
+                "Logging through this handler may fail with an invalid handle error."
+            ),
+            stacklevel=2,
+        )
+
+
 @hookimpl(wrapper=True)
 def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+
         _windowsconsoleio_workaround(sys.stdout)
+
+        _warn_if_stale_logging_streams(
+            early_config,
+            old_stdout,
+            old_stderr,
+        )
+
     _colorama_workaround()
     _readline_workaround()
     pluginmanager = early_config.pluginmanager
