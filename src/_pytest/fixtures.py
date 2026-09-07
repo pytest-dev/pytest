@@ -999,10 +999,8 @@ class FixtureLookupError(LookupError):
             available = set()
             parent = self.request._pyfuncitem.parent
             assert parent is not None
-            for name, fixturedefs in fm._arg2fixturedefs.items():
-                faclist = list(fm._matchfactories(fixturedefs, parent))
-                if faclist:
-                    available.add(name)
+            for fixturedef in fm._get_all_fixture_defs_for_node(parent):
+                available.add(fixturedef.argname)
             if self.argname in available:
                 msg = (
                     f" recursive dependency involving fixture '{self.argname}' detected"
@@ -2338,6 +2336,24 @@ class FixtureManager:
                     nodeid=effective_nodeid,
                 )
 
+    def _get_all_fixture_defs(self) -> Iterable[FixtureDef[Any]]:
+        """Get all FixtureDefs.
+
+        The order is not guaranteed.
+        """
+        for fixturedefs in self._arg2fixturedefs.values():
+            yield from fixturedefs
+
+    def _get_all_fixture_defs_for_node(
+        self, node: nodes.Node
+    ) -> Iterable[FixtureDef[Any]]:
+        """Get all FixtureDefs visible to a node.
+
+        The order is not guaranteed.
+        """
+        for fixturedefs in self._arg2fixturedefs.values():
+            yield from self._matchfactories(fixturedefs, node)
+
     def getfixturedefs(
         self, argname: str, node: nodes.Node
     ) -> Sequence[FixtureDef[Any]] | None:
@@ -2491,30 +2507,24 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     verbose = config.get_verbosity()
 
     fm = session._fixturemanager
-
     available = []
     seen: set[tuple[str, str]] = set()
-
-    for argname, fixturedefs in fm._arg2fixturedefs.items():
-        assert fixturedefs is not None
-        if not fixturedefs:
+    for fixturedef in fm._get_all_fixture_defs():
+        loc = getlocation(fixturedef.func, invocation_dir)
+        if (fixturedef.argname, loc) in seen:
             continue
-        for fixturedef in fixturedefs:
-            loc = getlocation(fixturedef.func, invocation_dir)
-            if (fixturedef.argname, loc) in seen:
-                continue
-            seen.add((fixturedef.argname, loc))
-            available.append(
-                (
-                    len(fixturedef.baseid),
-                    fixturedef.func.__module__,
-                    _pretty_fixture_path(invocation_dir, fixturedef.func),
-                    fixturedef.argname,
-                    fixturedef,
-                )
+        seen.add((fixturedef.argname, loc))
+        available.append(
+            (
+                len(fixturedef.baseid),
+                fixturedef.func.__module__,
+                _pretty_fixture_path(invocation_dir, fixturedef.func),
+                fixturedef.argname,
+                fixturedef,
             )
-
+        )
     available.sort()
+
     currentmodule = None
     for baseid, module, prettypath, argname, fixturedef in available:
         if currentmodule != module:
