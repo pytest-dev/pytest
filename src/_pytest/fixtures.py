@@ -2349,6 +2349,10 @@ class FixtureManager:
         with the given name, but none visible to the node. In this case,
         an empty result is returned).
 
+        The returned FixtureDefs are ordered from least specific (registered
+        higher in the collection tree) to most specific. For FixtureDefs
+        registered at the same Node, registered later => more specific.
+
         :param argname: Name of the fixture to search for.
         :param node: The requesting Node.
         """
