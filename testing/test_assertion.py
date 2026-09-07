@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import MutableSequence
+from collections.abc import Sequence
 import dataclasses
 import sys
 import textwrap
@@ -1132,6 +1133,35 @@ class TestAssert_reprcompare:
         lines = callequal(left, right, verbose=1)
         assert lines is not None
         assert expected in lines
+
+    def test_sequence_extra_item_exotic_eq_falls_back(self) -> None:
+        """Exotic elementwise __eq__ must not break rendering (fallback)."""
+
+        class Exotic(Sequence[int]):
+            def __init__(self, iterable):
+                self.elements = list(iterable)
+
+            def __getitem__(self, item):
+                result = self.elements[item]
+                return Exotic(result) if isinstance(item, slice) else result
+
+            def __len__(self):
+                return len(self.elements)
+
+            def __eq__(self, other):
+                if isinstance(other, Exotic):
+                    result = [
+                        a == b
+                        for a, b in zip(self.elements, other.elements, strict=False)
+                    ]
+                    if len(result) != 1:
+                        raise ValueError("ambiguous, like numpy")
+                    return result[0]
+                return NotImplemented
+
+        lines = callequal(Exotic([1, 2, 3, 4]), Exotic([1, 9, 2, 3, 4]), verbose=1)
+        assert lines is not None
+        assert "Right contains one more item: 4" in lines
 
     def test_set(self) -> None:
         expl = callequal({0, 1}, {0, 2})
