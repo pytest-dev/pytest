@@ -415,7 +415,9 @@ class TerminalReporter:
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
-        self._warnings_collapse_threshold: int | None = self._get_warnings_collapse_threshold()
+        self._warnings_collapse_threshold: int | None = (
+            self._get_warnings_collapse_threshold()
+        )
 
     def _determine_show_progress_info(
         self,

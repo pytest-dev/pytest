@@ -1243,9 +1243,7 @@ class TestWarningsCollapseThreshold:
         result.stdout.no_fnmatch_line("*::test_one*")
 
     @pytest.mark.filterwarnings("always::UserWarning")
-    def test_custom_threshold_below_count_shows_full(
-        self, pytester: Pytester
-    ) -> None:
+    def test_custom_threshold_below_count_shows_full(self, pytester: Pytester) -> None:
         """Locations below a raised threshold are shown in full."""
         pytester.makepyfile(self.PYFILE)
         result = pytester.runpytest("--warnings-collapse-threshold=20")
