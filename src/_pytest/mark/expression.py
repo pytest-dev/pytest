@@ -158,6 +158,21 @@ class Scanner:
         )
 
 
+def is_safe_identifier_part(input: str) -> bool:
+    """Return whether input can safely be embedded in an identifier."""
+    wrapped = f"x[{input}]"
+    try:
+        scanner = Scanner(wrapped)
+        token = scanner.accept(TokenType.IDENT)
+        return (
+            token is not None
+            and token.value == wrapped
+            and scanner.accept(TokenType.EOF) is not None
+        )
+    except SyntaxError:
+        return False
+
+
 # True, False and None are legal match expression identifiers,
 # but illegal as Python identifiers. To fix this, this prefix
 # is added to identifiers in the conversion to Python AST.

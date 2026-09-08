@@ -443,6 +443,8 @@ filterwarnings = [
     # https://github.com/pytest-dev/pytest/issues/2366
     # https://github.com/pytest-dev/pytest/pull/13057
     'default::pytest.PytestFDWarning',
+    # pytest's own tests use custom parametrization IDs which are not selectable with -k.
+    'ignore:.*parametrization ID .*contains characters that prevent selecting the generated test case directly with .-k.:pytest.PytestWarning',
     # https://github.com/pexpect/pexpect/issues/827
     # CPython emits this from os.forkpty() with stacklevel=1, so it is attributed
     # to stdlib pty (caller of os.forkpty via pty.fork), not ptyprocess. Match on
