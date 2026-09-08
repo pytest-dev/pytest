@@ -2367,7 +2367,12 @@ def parse_warning_filter(
     try:
         action: warnings._ActionKind = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
-        raise UsageError(error_template.format(error=str(e))) from None
+        hint = (
+            " (choose from: default, error, ignore, always, module, once)."
+            " Note that '-W' takes a value, so '-Wait' is parsed as '-W ait'."
+            " See https://docs.python.org/3/library/warnings.html#describing-warning-filters"
+        )
+        raise UsageError(error_template.format(error=f"{e}{hint}")) from None
     try:
         category: type[Warning] = _resolve_warning_category(category_)
     except ImportError:

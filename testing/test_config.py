@@ -3112,6 +3112,13 @@ def test_parse_warning_filter_failure(arg: str) -> None:
         parse_warning_filter(arg, escape=True)
 
 
+@pytest.mark.parametrize("arg", ["ait", "FOO"])
+def test_parse_warning_filter_invalid_action_hint(arg: str) -> None:
+    """Invalid -W actions show valid choices plus the -Wait pitfall."""
+    with pytest.raises(pytest.UsageError, match=r"invalid action.*choose from.*-Wait"):
+        parse_warning_filter(arg, escape=True)
+
+
 class TestDebugOptions:
     def test_without_debug_does_not_write_log(self, pytester: Pytester) -> None:
         result = pytester.runpytest()
