@@ -1162,6 +1162,8 @@ class TestAssert_reprcompare:
         lines = callequal(Exotic([1, 2, 3, 4]), Exotic([1, 9, 2, 3, 4]), verbose=1)
         assert lines is not None
         assert "Right contains one more item: 4" in lines
+        assert (Exotic([2]) == Exotic([2])) is True
+        assert Exotic([2]).__eq__([2]) is NotImplemented
 
     def test_set(self) -> None:
         expl = callequal({0, 1}, {0, 2})
