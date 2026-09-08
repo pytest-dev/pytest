@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 import dataclasses
-import pprint
 
+from _pytest._io.pprint import PrettyPrinter
 from _pytest.assertion._compare_mapping import _compare_eq_mapping
 from _pytest.assertion._compare_sequence import _compare_eq_iterable
 from _pytest.assertion._compare_sequence import _compare_eq_sequence
@@ -105,6 +105,7 @@ def _compare_eq_cls(
         assert False
 
     indent = "  "
+    pp = PrettyPrinter()
     same = []
     diff = []
     for field in fields_to_check:
@@ -119,10 +120,10 @@ def _compare_eq_cls(
         yield f"Omitting {len(same)} identical items, use -vv to show"
     elif same:
         yield "Matching attributes:"
-        yield from highlighter(pprint.pformat(same)).splitlines()
+        yield from (highlighter(line) for line in pp.pformat_lines(same))
     if diff:
         yield "Differing attributes:"
-        yield from highlighter(pprint.pformat(diff)).splitlines()
+        yield from (highlighter(line) for line in pp.pformat_lines(diff))
         for field in diff:
             field_left = getattr(left, field)
             field_right = getattr(right, field)

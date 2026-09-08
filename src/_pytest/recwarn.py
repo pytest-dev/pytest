@@ -6,7 +6,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterator
-from pprint import pformat
 import re
 from types import TracebackType
 from typing import Any
@@ -24,6 +23,7 @@ if TYPE_CHECKING:
 
 import warnings
 
+from _pytest._io.pprint import PrettyPrinter
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.outcomes import Exit
@@ -317,7 +317,7 @@ class WarningsChecker(WarningsRecorder):
             return
 
         def found_str() -> str:
-            return pformat([record.message for record in self], indent=2)
+            return PrettyPrinter(indent=2).pformat([record.message for record in self])
 
         try:
             if not any(issubclass(w.category, self.expected_warning) for w in self):

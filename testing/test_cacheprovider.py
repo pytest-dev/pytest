@@ -273,6 +273,7 @@ def test_cache_show(pytester: Pytester) -> None:
         def pytest_configure(config):
             config.cache.set("my/name", [1,2,3])
             config.cache.set("my/hello", "world")
+            config.cache.set("my/nested", {"level": {"values": [1, 2]}})
             config.cache.set("other/some", {1:2})
             dp = config.cache.mkdir("mydb")
             dp.joinpath("hello").touch()
@@ -289,9 +290,24 @@ def test_cache_show(pytester: Pytester) -> None:
             "*- cache values for '[*]' -*",
             "cache/nodeids contains:",
             "my/name contains:",
-            "  [1, 2, 3]",
+            "  [",
+            "      1,",
+            "      2,",
+            "      3,",
+            "  ]",
+            "my/nested contains:",
+            "  {",
+            "      'level': {",
+            "          'values': [",
+            "              1,",
+            "              2,",
+            "          ],",
+            "      },",
+            "  }",
             "other/some contains:",
-            "  {*'1': 2}",
+            "  {",
+            "      '1': 2,",
+            "  }",
             "*- cache directories for '[*]' -*",
             "*mydb/hello*length 0*",
             "*mydb/world*length 0*",
