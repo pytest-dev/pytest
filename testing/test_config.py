@@ -3114,9 +3114,15 @@ def test_parse_warning_filter_failure(arg: str) -> None:
 
 @pytest.mark.parametrize("arg", ["ait", "FOO"])
 def test_parse_warning_filter_invalid_action_hint(arg: str) -> None:
-    """Invalid -W actions show valid choices plus the -Wait pitfall."""
-    with pytest.raises(pytest.UsageError, match=r"invalid action.*choose from.*-Wait"):
+    """Invalid -W actions show valid choices; the -Wait pitfall hint is scoped to that case."""
+    with pytest.raises(
+        pytest.UsageError, match=r"invalid action.*choose from"
+    ) as exc_info:
         parse_warning_filter(arg, escape=True)
+    if arg == "ait":
+        assert "-Wait" in str(exc_info.value)
+    else:
+        assert "-Wait" not in str(exc_info.value)
 
 
 class TestDebugOptions:

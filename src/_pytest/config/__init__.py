@@ -2369,9 +2369,13 @@ def parse_warning_filter(
     except warnings._OptionError as e:
         hint = (
             " (choose from: default, error, ignore, always, module, once)."
-            " Note that '-W' takes a value, so '-Wait' is parsed as '-W ait'."
             " See https://docs.python.org/3/library/warnings.html#describing-warning-filters"
         )
+        if action_ == "ait":
+            hint = (
+                " Note that '-W' takes a value, so '-Wait' is parsed as '-W ait'."
+                + hint
+            )
         raise UsageError(error_template.format(error=f"{e}{hint}")) from None
     try:
         category: type[Warning] = _resolve_warning_category(category_)
