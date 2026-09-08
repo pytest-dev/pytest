@@ -1,0 +1,1 @@
+:meth:`pytester.run <pytest.Pytester.run>` no longer raises ``UnicodeDecodeError`` when a command writes output which is not valid UTF-8, such as a Python subprocess on a host whose locale encoding is not UTF-8; the undecodable bytes are now escaped instead.
