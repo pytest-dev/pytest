@@ -1,0 +1,1 @@
+Fixed assertion-rewrite cache invalidation for moved test files: a rewritten ``.pyc`` whose ``co_filename`` no longer matches the current source path is now treated as stale and rewritten. Previously, renaming or moving a test module/directory could leak the old path into ``inspect.currentframe().f_code.co_filename`` and related traceback/reporting paths.
