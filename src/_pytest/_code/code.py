@@ -500,7 +500,7 @@ def _syntax_error_location(exc: BaseException) -> tuple[str, int, int] | None:
     """Return (filename, lineno, offset) for a SyntaxError with location info, else None."""
     if (
         isinstance(exc, SyntaxError)
-        and exc.offset is not None
+        and exc.offset
         and exc.lineno is not None
         and exc.filename
     ):
@@ -1539,7 +1539,7 @@ class ReprFileLocation(TerminalRepr):
         if i != -1:
             msg = msg[:i]
         tw.write(self.path, bold=True, red=True)
-        column = f":{self.column}" if self.column else ""
+        column = f":{self.column}" if self.column is not None else ""
         tw.line(f":{self.lineno}{column}: {msg}")
 
 

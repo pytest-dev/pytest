@@ -352,7 +352,8 @@ class TestTraceback_f_g_h:
 
     def test_getreprcrash_syntax_error_none_msg(self):
         with pytest.raises(SyntaxError) as excinfo:
-            raise SyntaxError(None, ("file.py", 1, 5, "def foo(:", 1, 6))
+            details = ("file.py", 1, 5, "def foo(:", 1, 6)
+            raise SyntaxError(None, details)  # type: ignore[call-overload]
         reprcrash = excinfo._getreprcrash()
         assert reprcrash is not None
         assert reprcrash.message == "SyntaxError: <no detail available>"
@@ -410,6 +411,20 @@ class TestTraceback_f_g_h:
         co = _pytest._code.Code.from_function(f)
         assert reprcrash.path == str(co.path)
         assert reprcrash.lineno == co.firstlineno + 1 + 1
+
+    def test_getreprcrash_syntax_error_zero_offset(self):
+        def f():
+            raise SyntaxError("bad syntax", ("file.py", 1, 0, "def foo(:", 1, 0))
+
+        with pytest.raises(SyntaxError) as excinfo:
+            f()
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.column is None
+        co = _pytest._code.Code.from_function(f)
+        assert reprcrash.path == str(co.path)
+        assert reprcrash.lineno == co.firstlineno + 1 + 1
+        assert ":0:" not in str(reprcrash)
 
 
 def test_excinfo_exconly():
@@ -854,7 +869,7 @@ raise ValueError()
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
         assert reprfuncargs.args[0] == ("m", repr("m" * 500))
-        assert "..." not in reprfuncargs.args[0][1]
+        assert "..." not in cast(str, reprfuncargs.args[0][1])
 
     def test_repr_tracebackentry_lines(self, importasmod) -> None:
         mod = importasmod(
