@@ -379,6 +379,13 @@ def _read_pyc(
         if not isinstance(co, types.CodeType):
             trace(f"_read_pyc({source}): not a code object")
             return None
+        # A cached pyc can be moved together with the source file (for example
+        # by renaming a package or test directory). In that case the marshaled
+        # code object's ``co_filename`` still points to the old source path.
+        # Treat that as stale so the caller rewrites and recreates the cache.
+        if co.co_filename != str(source):
+            trace(f"_read_pyc({source}): stale filename {co.co_filename!r}")
+            return None
         return co
 
 
