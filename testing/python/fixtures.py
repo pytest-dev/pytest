@@ -2529,6 +2529,49 @@ class TestAutouseManagement:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_usefixtures_before_autouse_dependencies(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            order = []
+
+            @pytest.fixture
+            def precondition():
+                order.append("precondition")
+
+            @pytest.fixture
+            def subject_deps(precondition):
+                order.append("subject_deps")
+
+            @pytest.fixture(autouse=True)
+            def subject(subject_deps):
+                order.append("subject")
+
+            @pytest.fixture
+            def guard():
+                order.append("guard")
+
+            def pytest_generate_tests(metafunc):
+                names = metafunc.fixturenames
+                if "subject" in names:
+                    names.remove("subject")
+                    names.append("subject")
+
+            @pytest.mark.usefixtures("guard")
+            class TestOrdering:
+                def test_guard_is_set_up_first(self):
+                    assert order == [
+                        "guard",
+                        "precondition",
+                        "subject_deps",
+                        "subject",
+                    ]
+        """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
     @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00", "p01"])
     @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10", "p11"])
     def test_ordering_dependencies_torndown_first(
@@ -4673,8 +4716,8 @@ class TestScopeOrdering:
                 # Actual fixture execution differs from static order: dependent
                 # fixtures must be created first ("my_tmp_path").
                 assert fixture_order == [
-                    "my_tmp_path_factory",
                     "s1",
+                    "my_tmp_path_factory",
                     "p1",
                     "m1",
                     "my_tmp_path",
@@ -4689,13 +4732,13 @@ class TestScopeOrdering:
         # Static order of fixtures based on their scope and position in the
         # parameter list.
         assert request.fixturenames == [
-            "my_tmp_path_factory",
             "s1",
+            "my_tmp_path_factory",
             "p1",
             "m1",
             "f1",
-            "my_tmp_path",
             "f2",
+            "my_tmp_path",
         ]
         result = pytester.runpytest("-vv")
         result.assert_outcomes(passed=1)
@@ -5871,7 +5914,7 @@ def test_fixture_closure_handles_circular_dependencies(pytester: Pytester) -> No
     )
     items, _hookrec = pytester.inline_genitems()
     assert isinstance(items[0], Function)
-    assert items[0].fixturenames == ["fix_a", "fix_b", "fix_x", "fix_y", "fix_z"]
+    assert items[0].fixturenames == ["fix_a", "fix_x", "fix_b", "fix_y", "fix_z"]
 
 
 def test_fixture_closure_handles_diamond_dependencies(pytester: Pytester) -> None:

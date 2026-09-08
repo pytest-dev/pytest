@@ -20,4 +20,4 @@ def b(a):
 
 
 def test(b, request):
-    assert request.fixturenames == ["b", "a", "request", "dynamic"]
+    assert request.fixturenames == ["b", "request", "a", "dynamic"]

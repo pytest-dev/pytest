@@ -1985,14 +1985,18 @@ class FixtureManager:
             else:
                 return fixturedefs[-1]._scope
 
-        fixturenames_closure = sorted(
-            traverse_fixture_closure(
+        # Keep the initial fixtures at the front of the closure. Their order
+        # is observable by hooks such as pytest_generate_tests.
+        fixturenames_closure = list(initialnames)
+        fixturenames_closure.extend(
+            argname
+            for argname in traverse_fixture_closure(
                 initialnames,
                 getfixturedefs=getfixturedefs,
-            ),
-            key=sort_by_scope,
-            reverse=True,
+            )
+            if argname not in initialnames
         )
+        fixturenames_closure.sort(key=sort_by_scope, reverse=True)
 
         return fixturenames_closure, arg2fixturedefs
 

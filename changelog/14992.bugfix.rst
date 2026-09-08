@@ -1,0 +1,1 @@
+Fixed fixture setup order so fixtures requested by ``usefixtures`` remain ahead of dependencies of earlier autouse fixtures.
