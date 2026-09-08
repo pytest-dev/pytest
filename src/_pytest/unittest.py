@@ -50,7 +50,7 @@ if TYPE_CHECKING:
     import twisted.trial.unittest
 
 
-def _unittest_module_cleanups() -> list:
+def _unittest_module_cleanups() -> list[Any]:
     """Return unittest's process-global module cleanup list (#14958).
 
     Relies on the private ``unittest.case._module_cleanups`` attribute; see
@@ -58,7 +58,9 @@ def _unittest_module_cleanups() -> list:
     """
     import unittest.case
 
-    return getattr(unittest.case, "_module_cleanups")
+    cleanups = getattr(unittest.case, "_module_cleanups")
+    assert isinstance(cleanups, list)
+    return cleanups
 
 
 def module_cleanup_mark() -> int:
@@ -112,7 +114,7 @@ def drain_remaining_module_cleanups() -> None:
 @hookimpl(trylast=True)
 def pytest_sessionfinish() -> None:
     # Runs after the last item's teardown (module mark-and-drain already done).
-    # Session.addfinalizer cannot be used from sessionstart — the session is not
+    # Session.addfinalizer cannot be used from sessionstart: the session is not
     # on the SetupState stack yet (#14958).
     drain_remaining_module_cleanups()
 
