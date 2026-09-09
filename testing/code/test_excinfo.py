@@ -352,8 +352,9 @@ class TestTraceback_f_g_h:
 
     def test_getreprcrash_syntax_error_none_msg(self):
         with pytest.raises(SyntaxError) as excinfo:
-            details = ("file.py", 1, 5, "def foo(:", 1, 6)
-            raise SyntaxError(None, details)  # type: ignore[call-overload]
+            err = SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+            err.msg = cast(Any, None)
+            raise err
         reprcrash = excinfo._getreprcrash()
         assert reprcrash is not None
         assert reprcrash.message == "SyntaxError: <no detail available>"
@@ -869,7 +870,7 @@ raise ValueError()
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
         assert reprfuncargs.args[0] == ("m", repr("m" * 500))
-        assert "..." not in cast(str, reprfuncargs.args[0][1])
+        assert "..." not in str(reprfuncargs.args[0][1])
 
     def test_repr_tracebackentry_lines(self, importasmod) -> None:
         mod = importasmod(
