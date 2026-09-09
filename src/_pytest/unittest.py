@@ -136,8 +136,17 @@ class UnitTestCase(Class):
     def _register_unittest_setup_class_fixture(self, cls: type) -> None:
         """Register an auto-use fixture to invoke setUpClass and
         tearDownClass (#517)."""
-        setup = getattr(cls, "setUpClass", None)
-        teardown = getattr(cls, "tearDownClass", None)
+        # Use the same fixture-aware lookup as for the pytest-style names, so a
+        # fixture-marked setUpClass warns instead of failing with "Fixture
+        # called directly" (#8412).
+        setup = cast(
+            "Callable[..., object] | None",
+            _get_first_non_fixture_func(cls, ("setUpClass",), node=self),
+        )
+        teardown = cast(
+            "Callable[..., object] | None",
+            _get_first_non_fixture_func(cls, ("tearDownClass",), node=self),
+        )
         cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
         def process_teardown_exceptions() -> None:
