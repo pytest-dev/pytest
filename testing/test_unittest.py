@@ -433,6 +433,33 @@ def test_setup_method_as_non_autouse_fixture_warns(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1, warnings=1)
 
 
+def test_setupclass_as_non_autouse_fixture_warns(pytester: Pytester) -> None:
+    """A fixture-marked setUpClass warns like setup_method, instead of failing
+    with "Fixture called directly" (#8412)."""
+    pytester.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        class TestIt(unittest.TestCase):
+            @pytest.fixture
+            def setUpClass(cls):
+                raise AssertionError("never called")
+
+            def test_it(self):
+                pass
+        """
+    )
+    result = pytester.runpytest("-W", "always::pytest.PytestUnusedXunitFixtureWarning")
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestUnusedXunitFixtureWarning: 'setUpClass' is defined as a "
+            "fixture without autouse=True*"
+        ]
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+
+
 def test_setup_class(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """
