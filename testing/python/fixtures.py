@@ -687,6 +687,23 @@ class TestFillFixtures:
         )
         result.stdout.no_fnmatch_line("*INTERNAL*")
 
+    def test_funcarg_lookup_error_self_hint(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_something(self):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR at setup of test_something*",
+                "E       fixture 'self' not found",
+                ">       hint: remove 'self' from the function definition if this is not a method",
+            ]
+        )
+        result.assert_outcomes(errors=1)
+
     def test_fixture_excinfo_leak(self, pytester: Pytester) -> None:
         # on python2 sys.excinfo would leak into fixture executions
         pytester.makepyfile(
