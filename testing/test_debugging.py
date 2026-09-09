@@ -1381,10 +1381,15 @@ def test_pdbcls_via_local_module(pytester: Pytester) -> None:
 
 @pytest.mark.xfail(
     sys.version_info >= (3, 14),
-    reason="C-D now quits the test session, rather than failing the test. See https://github.com/python/cpython/issues/124703",
+    reason=(
+        "Python 3.14+ pdb calls os._exit(0) on quit instead of raising "
+        "BdbQuit, so pytest never sees the exception and cannot set "
+        "shouldstop. The fix in call_and_report handles BdbQuit raised "
+        "directly, but os._exit cannot be intercepted."
+    ),
 )
 def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
-    """It is not guaranteed that DontReadFromInput's read is called."""
+    """BdbQuit from Ctrl+D / EOFError should fail the current test and stop the session."""
     p1 = pytester.makepyfile(
         """
         def input_without_read(*args, **kwargs):
@@ -1394,12 +1399,15 @@ def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
             import builtins
             monkeypatch.setattr(builtins, "input", input_without_read)
             __import__('pdb').set_trace()
+
+        def test_after_bdbquit():
+            # This test should not run because BdbQuit stops the session.
+            pass
         """
     )
     result = pytester.runpytest(str(p1))
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["E *BdbQuit", "*= 1 failed in*"])
-    assert result.ret == 1
+    result.stdout.fnmatch_lines(["E *BdbQuit", "*Interrupted: Debugger quit*"])
+    assert result.ret == 2
 
 
 def test_pdb_wrapper_class_is_reused(pytester: Pytester) -> None:
