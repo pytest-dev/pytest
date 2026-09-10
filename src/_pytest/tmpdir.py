@@ -342,9 +342,6 @@ def pytest_runtest_makereport(
     empty: dict[str, bool] = {}
     item.stash.setdefault(tmppath_result_key, empty)[rep.when] = rep.passed
 
-    if item.config._tmp_path_factory._retention_policy != "failed":
-        return rep
-
     tmp_path = item.stash.get(tmppath_path_key, None)
     if tmp_path is None:
         return rep
