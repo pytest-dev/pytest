@@ -254,6 +254,60 @@ class TestConfigTmpPath:
             base_dir = list(child.iterdir())
             assert base_dir == []
 
+    def test_policy_failed_keeps_dir_when_setup_or_teardown_fails(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            def write_evidence(tmp_path, phase):
+                evidence = tmp_path / "debug-evidence.txt"
+                evidence.write_text(f"keep me: {phase}", encoding="utf-8")
+
+            @pytest.fixture
+            def broken_during_setup(tmp_path):
+                write_evidence(tmp_path, "setup")
+                raise RuntimeError("setup failed")
+
+            def test_setup_error(broken_during_setup):
+                pass
+
+            def test_call_failure(tmp_path):
+                write_evidence(tmp_path, "call")
+                assert False
+
+            @pytest.fixture
+            def broken_during_teardown(tmp_path):
+                write_evidence(tmp_path, "teardown")
+                yield
+                raise RuntimeError("teardown failed")
+
+            def test_teardown_error(broken_during_teardown):
+                pass
+            """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "failed"
+            """
+        )
+
+        reprec = pytester.inline_run(p)
+        reprec.assertoutcome(passed=1, failed=3)
+
+        root = pytester._test_tmproot
+        evidence = {
+            path.read_text(encoding="utf-8")
+            for path in root.rglob("debug-evidence.txt")
+        }
+        assert evidence == {
+            "keep me: setup",
+            "keep me: call",
+            "keep me: teardown",
+        }
+
     # issue #10502
     def test_policy_all_keeps_dir_when_skipped_from_fixture(
         self, pytester: Pytester
