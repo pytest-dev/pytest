@@ -7,7 +7,7 @@ from _pytest.pytester import Pytester
 
 
 def test_stepwise_continues_after_pytest_exit(pytester: Pytester) -> None:
-    """pdb quit raises pytest.exit; --stepwise should start from that test next run."""
+    """Pdb quit raises pytest.exit; --stepwise should start from that test next run."""
     pytester.makeini(
         """
         [pytest]

@@ -21,9 +21,9 @@ if TYPE_CHECKING:
 
 from collections.abc import Generator
 
+from _pytest.outcomes import Exit
 import pytest
 
-from _pytest.outcomes import Exit
 
 STEPWISE_CACHE_DIR = "cache/stepwise"
 
