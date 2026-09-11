@@ -2809,7 +2809,7 @@ def test_collecterror_syntaxerror_does_not_repeat_location(pytester: Pytester) -
             "*Interrupted: 1 error during collection*",
         ]
     )
-    result.stdout.no_fnmatch_line('  File *, line 1')
+    result.stdout.no_fnmatch_line("  File *, line 1")
 
 
 def test_no_summary_collecterror(pytester: Pytester) -> None:
