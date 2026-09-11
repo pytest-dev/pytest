@@ -539,6 +539,18 @@ class TerminalReporter:
         self._tw.write(wrapped, flush=flush, **markup)
 
     def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
+        """Write content to the terminal.
+
+        This is the supported way for a plugin to write to the terminal: it
+        reaches the terminal even while output capture is active, and does so
+        without suspending capture (:issue:`8973`).
+
+        :param content: The text to write.
+        :param flush: Whether to flush the stream afterwards.
+        :param markup:
+            Markup to apply to the text, for example ``red=True`` or
+            ``bold=True``. An unknown markup name raises :class:`ValueError`.
+        """
         self._tw.write(content, flush=flush, **markup)
 
     def write_raw(self, content: str, *, flush: bool = False) -> None:
