@@ -18,6 +18,13 @@ from _pytest.reports import TestReport
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+
+from collections.abc import Generator
+
+import pytest
+
+from _pytest.outcomes import Exit
+
 STEPWISE_CACHE_DIR = "cache/stepwise"
 
 
@@ -172,6 +179,19 @@ class StepwisePlugin:
             deselected = items[:failed_index]
             del items[:failed_index]
             config.hook.pytest_deselected(items=deselected)
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_runtest_protocol(
+        self, item: nodes.Item, nextitem: nodes.Item | None
+    ) -> Generator[None, object, object]:
+        # The Exit exception (raised e.g. by pytest.exit() when quitting a
+        # ``pdb`` session) does not produce a report, so record the interrupted
+        # test here such that the next --stepwise run resumes from it (#10562).
+        try:
+            return (yield)
+        except Exit:
+            self.cached_info.last_failed = item.id
+            raise
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         if report.failed:

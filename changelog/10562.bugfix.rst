@@ -1,0 +1,1 @@
+``--stepwise`` now records the test that was running when the session was interrupted by ``pytest.exit()`` -- for example, when quitting a ``pdb`` debugging session -- as the last failed test, so the next run resumes from it.
