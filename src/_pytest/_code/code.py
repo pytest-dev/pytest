@@ -1031,6 +1031,15 @@ class ExceptionInfoFormatter:
         indentstr = " " * indent
         # Get the real exception information out.
         exlines = excinfo.exconly(tryshort=True).split("\n")
+        if isinstance(excinfo.value, SyntaxError) and len(exlines) >= 3:
+            filename = excinfo.value.filename
+            lineno = excinfo.value.lineno
+            if filename is not None and lineno is not None:
+                file_line = f'  File "{filename}", line {lineno}'
+                if exlines[0] == file_line:
+                    # Keep the source and caret lines; they provide context
+                    # that is not included in the crash location summary.
+                    exlines = exlines[1:]
         failindent = self.fail_marker + indentstr[1:]
         for line in exlines:
             lines.append(failindent + line)

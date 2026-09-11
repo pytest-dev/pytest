@@ -1,0 +1,1 @@
+Avoid repeating the file and line information for syntax errors during collection.

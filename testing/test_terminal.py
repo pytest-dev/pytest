@@ -2798,6 +2798,20 @@ def test_collecterror(pytester: Pytester) -> None:
     )
 
 
+def test_collecterror_syntaxerror_does_not_repeat_location(pytester: Pytester) -> None:
+    p1 = pytester.makepyfile("def broken(:")
+    result = pytester.runpytest("-ra", str(p1))
+    result.stdout.fnmatch_lines_random(
+        [
+            "*collected 0 items / 1 error",
+            "* ERRORS *",
+            "*SyntaxError: invalid syntax*",
+            "*Interrupted: 1 error during collection*",
+        ]
+    )
+    result.stdout.no_fnmatch_line('  File *, line 1')
+
+
 def test_no_summary_collecterror(pytester: Pytester) -> None:
     p1 = pytester.makepyfile("raise SyntaxError()")
     result = pytester.runpytest("-ra", "--no-summary", str(p1))
