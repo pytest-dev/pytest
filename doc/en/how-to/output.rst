@@ -38,6 +38,10 @@ with Ctrl+C to find out where the tests are *hanging*. By default no output
 will be shown (because KeyboardInterrupt is caught by pytest). By using this
 option you make sure a trace is shown.
 
+The :option:`--tb-hide-internal` option can be used together with
+:option:`--full-trace` to hide pytest/pluggy internal frames from the traceback,
+showing the full user-written traceback without pytest's internal call stack.
+
 
 Verbosity
 --------------------------------------------------
