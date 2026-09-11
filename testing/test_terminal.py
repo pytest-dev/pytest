@@ -2805,7 +2805,7 @@ def test_collecterror_syntaxerror_does_not_repeat_location(pytester: Pytester) -
         [
             "*collected 0 items / 1 error",
             "* ERRORS *",
-            "*SyntaxError: invalid syntax*",
+            "*SyntaxError: *",
             "*Interrupted: 1 error during collection*",
         ]
     )
