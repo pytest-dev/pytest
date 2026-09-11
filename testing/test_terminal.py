@@ -315,6 +315,39 @@ class TestTerminal:
             )
         result.stdout.fnmatch_lines(["*KeyboardInterrupt*"])
 
+    @pytest.mark.parametrize(
+        ("extra_args", "expect_internal"),
+        [
+            (("--fulltrace",), True),
+            (("--fulltrace", "--tb-hide-internal"), False),
+        ],
+    )
+    def test_fulltrace_hide_internal(
+        self,
+        pytester: Pytester,
+        extra_args: tuple[str, ...],
+        expect_internal: bool,
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def helper():
+                assert False
+
+            def test_fail():
+                helper()
+        """
+        )
+        result = pytester.runpytest(*extra_args)
+        assert result.ret == 1
+        if expect_internal:
+            result.stdout.fnmatch_lines(["*/pluggy/*.py*"])
+            result.stdout.fnmatch_lines(["*/_pytest/runner.py*"])
+        else:
+            result.stdout.no_fnmatch_line("*/pluggy/*.py*")
+            result.stdout.no_fnmatch_line("*/_pytest/runner.py*")
+        # Ensure the user frames are still shown.
+        result.stdout.fnmatch_lines([">       helper()", ">       assert False"])
+
     def test_keyboard_in_sessionstart(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
