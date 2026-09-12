@@ -595,6 +595,14 @@ def test_linematcher_complete() -> None:
         "output has unasserted lines: ['x']",
     ]
 
+    lm = LineMatcher(["1", "1"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.fnmatch_lines(["1"], complete=True)
+    assert str(excinfo.value).splitlines() == [
+        "exact match: '1'",
+        "output has unasserted lines: ['1']",
+    ]
+
 
 @pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
 def test_linematcher_no_matching(function: str) -> None:
