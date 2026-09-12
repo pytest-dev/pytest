@@ -399,10 +399,12 @@ class TerminalReporter:
         self._known_types: list[str] | None = None
         self.startpath = config.invocation_params.dir
         if file is None:
-            # The terminal channel writes past output capture (#8973); it falls
-            # back to sys.stdout when there is none. Resolved here rather than
-            # in pytest_configure so that plugins subclassing TerminalReporter
-            # and registering their own (pytest-sugar) get it too.
+            # The terminal channel writes past output capture (#8973); it
+            # falls back to sys.stdout when there is none. Resolved from the
+            # default rather than in pytest_configure so that every caller
+            # that leaves `file` unset gets it -- including plugins that
+            # construct a reporter of their own (pytest-sugar does, despite
+            # the @final above).
             file = get_terminal_stdout(config)
         self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
