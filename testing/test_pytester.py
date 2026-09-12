@@ -549,6 +549,53 @@ def test_linematcher_consecutive() -> None:
     ]
 
 
+def test_linematcher_complete() -> None:
+    lm = LineMatcher(["1", "2", "3"])
+    lm.fnmatch_lines(["1", "2", "3"], complete=True)
+    lm.re_match_lines(["1", "2", "3"], complete=True)
+
+    lm = LineMatcher(["unexpected", "1", "2", "3"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.fnmatch_lines(["1", "2", "3"], complete=True)
+    assert str(excinfo.value).splitlines() == [
+        "nomatch: '1'",
+        "    and: 'unexpected'",
+        "exact match: '1'",
+        "exact match: '2'",
+        "exact match: '3'",
+        "output has unasserted lines: ['unexpected']",
+    ]
+
+    lm = LineMatcher(["1", "2", "3", "trailing"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.re_match_lines(["1", "2", "3"], complete=True)
+    assert str(excinfo.value).splitlines() == [
+        "exact match: '1'",
+        "exact match: '2'",
+        "exact match: '3'",
+        "output has unasserted lines: ['trailing']",
+    ]
+
+    lm = LineMatcher(["0", "1", "2", "3"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.fnmatch_lines(["1", "2", "3"], consecutive=True, complete=True)
+    assert str(excinfo.value).splitlines() == [
+        "nomatch: '1'",
+        "    and: '0'",
+        "exact match: '1'",
+        "exact match: '2'",
+        "exact match: '3'",
+        "output has unasserted lines: ['0']",
+    ]
+
+    lm = LineMatcher(["x"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.fnmatch_lines([], complete=True)
+    assert str(excinfo.value).splitlines() == [
+        "output has unasserted lines: ['x']",
+    ]
+
+
 @pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
 def test_linematcher_no_matching(function: str) -> None:
     if function == "no_fnmatch_line":
