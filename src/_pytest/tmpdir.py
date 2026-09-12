@@ -38,6 +38,7 @@ from _pytest.stash import StashKey
 
 tmppath_result_key = StashKey[dict[str, bool]]()
 tmppath_path_key = StashKey[Path]()
+tmppath_setup_skipped_key = StashKey[bool]()
 RetentionType = Literal["all", "failed", "none"]
 
 
@@ -348,14 +349,20 @@ def pytest_runtest_makereport(
 
     if rep.when == "setup":
         # A skipped fixture setup is not a failed test, so preserve the
-        # behavior from #10502 and remove its temporary directory.
+        # behavior from #10502 and mark its temporary directory for cleanup.
         if rep.skipped:
-            rmtree(tmp_path, ignore_errors=True)
+            item.stash[tmppath_setup_skipped_key] = True
     elif rep.when == "teardown":
         result_dict = item.stash[tmppath_result_key]
+        setup_skipped = item.stash.get(tmppath_setup_skipped_key, False)
         if (
-            result_dict.get("setup", True)
-            and result_dict.get("call", True)
+            (
+                setup_skipped
+                or (
+                    result_dict.get("setup", True)
+                    and result_dict.get("call", True)
+                )
+            )
             and rep.passed
         ):
             # We do a "best effort" to remove files, but it might not be
@@ -363,5 +370,7 @@ def pytest_runtest_makereport(
             rmtree(tmp_path, ignore_errors=True)
         del item.stash[tmppath_path_key]
         del item.stash[tmppath_result_key]
+        if setup_skipped:
+            del item.stash[tmppath_setup_skipped_key]
 
     return rep

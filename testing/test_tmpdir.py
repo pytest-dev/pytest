@@ -254,6 +254,42 @@ class TestConfigTmpPath:
             base_dir = list(child.iterdir())
             assert base_dir == []
 
+    def test_policy_failed_defers_cleanup_until_dependent_teardown(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def resource(tmp_path):
+                evidence = tmp_path / "evidence.txt"
+                evidence.write_text("still here", encoding="utf-8")
+                yield tmp_path
+                assert evidence.read_text(encoding="utf-8") == "still here"
+
+            @pytest.fixture
+            def unavailable(resource):
+                pytest.skip("optional service unavailable")
+
+            def test_optional_service(unavailable):
+                pass
+            """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "failed"
+            """
+        )
+
+        reprec = pytester.inline_run(p)
+        reprec.assertoutcome(skipped=1)
+
+        root = pytester._test_tmproot
+        for child in root.iterdir():
+            assert list(child.iterdir()) == []
+
     def test_policy_failed_keeps_dir_when_setup_or_teardown_fails(
         self, pytester: Pytester
     ) -> None:
