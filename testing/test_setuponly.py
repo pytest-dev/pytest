@@ -259,6 +259,25 @@ def test_capturing(pytester: Pytester) -> None:
     )
 
 
+def test_suppress_capturing(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest, sys
+        @pytest.fixture()
+        def one():
+            sys.stdout.write('this should not be captured')
+        @pytest.fixture()
+        def two(one):
+            assert 0
+        def test_capturing(two):
+            pass
+    """
+    )
+
+    result = pytester.runpytest("--setup-only", "-s", p)
+    result.stdout.no_fnmatch_line("this should not be captured")
+
+
 def test_show_fixtures_and_execute_test(pytester: Pytester) -> None:
     """Verify that setups are shown and tests are executed."""
     p = pytester.makepyfile(

@@ -25,9 +25,9 @@ def pytest_fixture_setup(
 ) -> object | None:
     # Will return a dummy fixture if the setuponly option is provided.
     if request.config.option.setupplan:
-        my_cache_key = fixturedef.cache_key(request)
-        fixturedef.cached_result = (None, my_cache_key, None)
-        return fixturedef.cached_result
+        fixture_cache = request.session._setupstate.fixture_cache
+        fixture_cache.set_value(fixturedef, request._active_param, None)
+        return fixture_cache.get(fixturedef)
     return None
 
 
