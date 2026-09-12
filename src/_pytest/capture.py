@@ -170,9 +170,15 @@ class TerminalStdout(io.TextIOWrapper):
 
     def __init__(self, fd: int, *, original_stdout: TextIO) -> None:
         super().__init__(
-            # Buffered rather than raw: a raw stream may write fewer bytes
-            # than asked for, and TextIOWrapper does not retry those.
-            io.BufferedWriter(io.FileIO(fd, mode="w", closefd=True)),
+            # ``open`` rather than ``io.FileIO``: only ``open`` picks
+            # ``_WindowsConsoleIO`` for a console descriptor, which writes
+            # through ``WriteConsoleW`` instead of handing UTF-8 bytes to a
+            # console whose code page is usually not UTF-8. This mirrors
+            # ``_reopen_stdio`` above, which duplicates stdout the same way
+            # and for the same reason. Buffered rather than raw: a raw stream
+            # may write fewer bytes than asked for, and ``TextIOWrapper`` does
+            # not retry those.
+            open(fd, "wb", closefd=True),
             encoding=getattr(original_stdout, "encoding", None) or "utf-8",
             errors=getattr(original_stdout, "errors", None) or "replace",
             write_through=True,
