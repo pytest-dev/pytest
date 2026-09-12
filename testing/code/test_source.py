@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import ast
 import inspect
 import linecache
 from pathlib import Path
@@ -344,6 +345,37 @@ def test_findsource(monkeypatch) -> None:
     assert src[lineno] == "    def x():"
 
 
+def test_findsource_filename_relative_to_syspath_entry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """findsource() falls back to searching sys.path for code objects whose
+    co_filename is relative to a directory other than the cwd, like the
+    standard traceback module does (#1139).
+
+    This happens e.g. with compiled Cython modules, whose code objects
+    carry paths relative to the project root, when pytest is run from a
+    subdirectory.
+    """
+    from _pytest._code.source import findsource
+
+    filename = "findsource_syspath_demo.py"
+    lines = ["def f():\n", "    return 1\n"]
+    (tmp_path / filename).write_text("".join(lines), encoding="utf-8")
+    co = compile("".join(lines), filename, "exec")
+    d: dict[str, Any] = {}
+    eval(co, d)
+
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    monkeypatch.chdir(empty)
+    monkeypatch.syspath_prepend(str(tmp_path))
+
+    src, lineno = findsource(d["f"].__code__)
+    assert src is not None
+    assert lineno == 0
+    assert src[lineno] == "def f():"
+
+
 def test_getfslineno() -> None:
     def f(x) -> None:
         raise NotImplementedError()
@@ -675,3 +707,20 @@ def test_patched_compile() -> None:
 
     with patch("builtins.compile", new=patched_compile2):
         Source(patched_compile2).getstatement(1)
+
+
+def test_statement_linenos_are_memoized_per_node() -> None:
+    """The statement index of a module is reused across traceback entries (#10745)."""
+    from _pytest._code.source import _statement_linenos
+    from _pytest._code.source import get_statement_startend2
+
+    node = ast.parse("x = 1\nif x:\n    y = 2\n")
+    values = _statement_linenos(node)
+    assert values == [0, 1, 2]
+    # A second call reuses the very same list instead of walking the tree again.
+    assert _statement_linenos(node) is values
+    assert get_statement_startend2(1, node) == (1, 2)
+
+    other = ast.parse("z = 3\n")
+    assert _statement_linenos(other) == [0]
+    assert _statement_linenos(node) is values

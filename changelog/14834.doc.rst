@@ -1,0 +1,1 @@
+Added :pypi:`pytest-skip-slow` to the annotated list of third-party plugins.

@@ -45,6 +45,10 @@ Here is a little annotated list for some popular plugins:
 * :pypi:`pytest-timeout`:
   to timeout tests based on function marks or global definitions.
 
+* :pypi:`pytest-skip-slow`:
+  to skip tests marked ``@pytest.mark.slow`` by default, and run them with
+  ``--slow``.
+
 * :pypi:`pytest-pep8`:
   a ``--pep8`` option to enable PEP8 compliance checking.
 
@@ -188,9 +192,9 @@ manually specify each plugin with :option:`-p` or :envvar:`PYTEST_PLUGINS`, you 
 
    * :option:`-p` loads (or disables with ``-p no:<name>``) a plugin by name or entry point
      for a specific pytest invocation, and is processed early during startup.
-   * :envvar:`PYTEST_PLUGINS` is a comma-separated list of Python modules that are imported
-     and registered as plugins during startup. This mechanism is commonly used by test
-     suites, for example when testing a plugin.
+   * :envvar:`PYTEST_PLUGINS` is a comma-separated list of Python modules or plugin
+     entry point names that are loaded and registered as plugins during startup.
+     This mechanism is commonly used by test suites, for example when testing a plugin.
 
    When explicitly controlling plugin loading (especially with
    :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD` or :option:`--disable-plugin-autoload`),

@@ -1,0 +1,1 @@
+Replaced ``setup.py`` usage with ``pyproject.toml`` in :ref:`writing-plugins`.

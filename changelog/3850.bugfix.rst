@@ -1,1 +1,0 @@
-Fixed JUnit XML report: the ``tests`` attribute of the ``<testsuite>`` element now always matches the number of ``<testcase>`` elements in the file. In some cases (test passes but fails during teardown) the ``tests`` attribute would report an incorrect number of testcases in the XML file.

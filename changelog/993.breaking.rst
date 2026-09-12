@@ -1,0 +1,6 @@
+Plugin import failures at startup are now reported and classified instead of escaping as a raw traceback with the accidental exit code ``1``:
+
+* a plugin that cannot be found -- via ``-p``, ``pytest_plugins`` or ``PYTEST_PLUGINS`` -- exits with :class:`pytest.ExitCode` ``USAGE_ERROR`` (``4``), like a ``conftest.py`` that fails to import;
+* a plugin that is found but raises while importing -- including a broken ``pytest11`` entry point or a missing plugin dependency -- exits with :class:`pytest.ExitCode` ``INTERNAL_ERROR`` (``3``), with the traceback preserved.
+
+:func:`pytest.main` now returns these codes instead of raising ``ImportError``. Also fixed an ``IndexError`` from pytest's own internals when the plugin raised an exception with no arguments.

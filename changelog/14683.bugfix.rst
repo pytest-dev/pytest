@@ -1,0 +1,3 @@
+Fixed a regression in pytest 9.1 where a conftest.py located in the rootdir was no longer visible to tests and doctests collected from *outside* the rootdir (for example when passing a parent directory of the rootdir as a collection argument, or setting ``--rootdir`` to a subdirectory).
+
+As a result, fixtures defined in such a conftest -- including ``doctest_namespace`` injections -- were not available, causing errors such as ``NameError`` in doctests.

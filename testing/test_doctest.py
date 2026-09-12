@@ -875,6 +875,29 @@ class TestDoctests:
         reportinfo = items[0].reportinfo()
         assert reportinfo[1] == 1
 
+    @pytest.mark.skipif(
+        sys.version_info < (3, 12), reason="requires Python 3.12 or later"
+    )
+    def test_fixture_doctest_skip_has_line_number(self, pytester: Pytester):
+        p = pytester.makepyfile(
+            test_fixture_doctest_skip="""
+            import pytest
+
+            @pytest.fixture
+            def unavailable():
+                '''
+                >>> getfixture("unavailable")
+                '''
+                pytest.skip("unavailable")
+            """
+        )
+        items, _reprec = pytester.inline_genitems(p, "--doctest-modules")
+        assert items[0].reportinfo()[1] is not None
+
+        result = pytester.runpytest(p, "--doctest-modules")
+        assert "INTERNALERROR" not in result.stdout.str()
+        result.assert_outcomes(skipped=1)
+
     def test_valid_setup_py(self, pytester: Pytester):
         """
         Test to make sure that pytest ignores valid setup.py files when ran
@@ -1549,6 +1572,61 @@ class TestDoctestNamespaceFixture:
         )
         reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
+
+    def test_namespace_fixture_from_rootdir_when_modules_outside_rootdir(
+        self, pytester: Pytester
+    ) -> None:
+        """doctest_namespace injection from a conftest in the rootdir still
+        applies when the doctest modules are collected from outside the
+        rootdir.
+
+        Regression test for #14683: setting ``--rootdir`` to a subdirectory
+        while collecting modules from a parent directory made the rootdir
+        conftest's ``doctest_namespace`` injection invisible.
+        """
+        testing = pytester.path / "xclim" / "testing"
+        testing.mkdir(parents=True)
+        testing.joinpath("conftest.py").write_text(
+            textwrap.dedent(
+                """\
+                import pytest
+
+                @pytest.fixture(autouse=True, scope="session")
+                def add_var(doctest_namespace):
+                    doctest_namespace["my_var"] = 42
+                """
+            ),
+            encoding="utf-8",
+        )
+        core = pytester.path / "xclim" / "core"
+        core.mkdir()
+        core.joinpath("mod.py").write_text(
+            textwrap.dedent(
+                """\
+                def func():
+                    '''
+                    >>> my_var
+                    42
+                    '''
+                """
+            ),
+            encoding="utf-8",
+        )
+
+        testing.joinpath("pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+
+        # The config file sits next to the conftest at the rootdir, and the
+        # collection argument (``xclim``) is a *parent* of the rootdir
+        # (``xclim/testing``) -- the exact setup from #14683.
+        result = pytester.runpytest(
+            "--rootdir",
+            str(testing),
+            "--config-file",
+            str(testing / "pytest.ini"),
+            "--doctest-modules",
+            "xclim",
+        )
+        result.assert_outcomes(passed=1)
 
 
 class TestDoctestReportingOption:

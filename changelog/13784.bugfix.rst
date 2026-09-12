@@ -1,1 +1,0 @@
-Fixed ``capteesys`` producing doubled output when used with ``--capture=no`` (``-s``).

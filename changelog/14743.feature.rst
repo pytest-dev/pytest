@@ -1,0 +1,1 @@
+`Full diff:` now contains a legend explaining the `+` & `-` symbols in diff output.

@@ -1,0 +1,4 @@
+``--no-summary`` now only applies directly to pytest's own summary.
+
+The flag no longer skips the ``pytest_terminal_summary`` hook, so third-party
+plugins (for example coverage) can still write their terminal summaries.

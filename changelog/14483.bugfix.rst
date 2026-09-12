@@ -1,1 +1,0 @@
-Fixed JUnit XML report incorrectly escaping high Unicode codepoints (supplementary plane characters like emoji) in test failure messages. -- by :user:`EternalRights`

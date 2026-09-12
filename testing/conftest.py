@@ -194,7 +194,7 @@ def color_mapping():
             "endline": "\x1b[90m\x1b[39;49;00m",
         }
         RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
-        NO_COLORS = {k: "" for k in COLORS.keys()}
+        NO_COLORS = {k: "" for k in COLORS}
 
         @classmethod
         def format(cls, lines: list[str]) -> list[str]:

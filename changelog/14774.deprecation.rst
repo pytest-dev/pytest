@@ -1,0 +1,6 @@
+Similarly to the deprecation of class-scoped fixtures defined as instance methods in pytest 9.1,
+*all* higher-scoped fixtures (``module``, ``package``, and ``session``) defined
+as instance methods are now deprecated.
+
+They suffer from the same issue the original deprecation only fixed for
+class-scoped fixtures, see :issue:`10819` and :issue:`14011`.

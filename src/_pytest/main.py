@@ -34,6 +34,7 @@ from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import OverrideIniAction
 from _pytest.config.argparsing import Parser
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -144,6 +145,8 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "max_warnings",
         help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
+        type=int | str,
+        default=None,
     )
 
     group = parser.getgroup("collect", "collection")
@@ -608,7 +611,7 @@ class Session(nodes.Collector):
             parent=None,
             config=config,
             session=self,
-            nodeid="",
+            nodeid=NodeId(path=""),
         )
         self.testsfailed = 0
         self.testscollected = 0
@@ -893,6 +896,30 @@ class Session(nodes.Collector):
             return rep, True
         else:
             rep = collect_one_node(node)
+            if rep.passed and node in self._collection_cache:
+                # Re-collection (handle_dupes=False) creates fresh child nodes.
+                # Reuse previously-seen Directory children so that fixture
+                # registration (keyed by node identity) remains valid. (#14635)
+                #
+                # This post-processing reconciliation is intentional: the
+                # collection architecture is not ready for a session-global
+                # Directory node registry, and pushing deduplication into
+                # individual collectors (Dir.collect / Package.collect) would
+                # leak session-level concerns into node code and miss
+                # third-party Directory subclasses.
+                prev_result = self._collection_cache[node].result
+                prev_dirs = {
+                    child.path: child
+                    for child in prev_result
+                    if isinstance(child, nodes.Directory)
+                }
+                if prev_dirs:
+                    rep.result = [
+                        prev_dirs.get(child.path, child)
+                        if isinstance(child, nodes.Directory)
+                        else child
+                        for child in rep.result
+                    ]
             self._collection_cache[node] = rep
             return rep, False
 

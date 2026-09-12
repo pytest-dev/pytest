@@ -1,0 +1,1 @@
+``__tracebackhide__`` is now respected in ``ExceptionGroup`` tracebacks, both for the group itself and for its sub-exceptions.

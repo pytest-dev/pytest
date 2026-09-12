@@ -72,8 +72,53 @@ class TestLoadConfigDictFromFile:
         with pytest.raises(UsageError):
             load_config_dict_from_file(fn)
 
+    def test_custom_toml_file_reads_pytest_table(self, tmp_path: Path) -> None:
+        """.toml files with an arbitrary name read [pytest], like pytest.toml (#14705)."""
+        fn = tmp_path / "myconfig.toml"
+        fn.write_text(
+            dedent(
+                """
+            [pytest]
+            xfail_strict = true
+            testpaths = ["tests", "integration"]
+            """
+            ),
+            encoding="utf-8",
+        )
+        assert load_config_dict_from_file(fn) == {
+            "xfail_strict": ConfigValue(True, origin="file", mode="toml"),
+            "testpaths": ConfigValue(
+                ["tests", "integration"], origin="file", mode="toml"
+            ),
+        }
+
+    def test_custom_toml_file_with_both_table_styles(self, tmp_path: Path) -> None:
+        """[pytest] and [tool.pytest] in one file is ambiguous (#14705)."""
+        fn = tmp_path / "myconfig.toml"
+        fn.write_text(
+            dedent(
+                """
+            [pytest]
+            xfail_strict = true
+
+            [tool.pytest.ini_options]
+            xfail_strict = "false"
+            """
+            ),
+            encoding="utf-8",
+        )
+        with pytest.raises(UsageError, match="Cannot use both"):
+            load_config_dict_from_file(fn)
+
+    def test_custom_toml_file_with_top_level_options(self, tmp_path: Path) -> None:
+        """Options outside of any table name the table that was meant."""
+        fn = tmp_path / "myconfig.toml"
+        fn.write_text("xfail_strict = true\n", encoding="utf-8")
+        with pytest.raises(UsageError, match=r"must be under a \[pytest\] table"):
+            load_config_dict_from_file(fn)
+
     def test_custom_toml_file(self, tmp_path: Path) -> None:
-        """.toml files without [tool.pytest] are not considered for configuration."""
+        """.toml files with neither [pytest] nor [tool.pytest] hold no configuration."""
         fn = tmp_path / "myconfig.toml"
         fn.write_text(
             dedent(

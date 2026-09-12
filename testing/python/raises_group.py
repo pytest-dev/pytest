@@ -1350,3 +1350,21 @@ def test_tuples() -> None:
         ),
     ):
         RaisesGroup((ValueError, IndexError))  # type: ignore[call-overload]
+
+
+def test_expected_matching_only_on_matching() -> None:
+    """Regression test for #14220, logic error which caused the "which was
+    paired with" message to appear for wrong pairs."""
+    with (
+        fails_raises_group(
+            "\n"
+            "1 matched exception. \n"
+            "Too few exceptions raised!\n"
+            "The following expected exceptions did not find a match:\n"
+            "  ValueError\n"
+            "  TypeError\n"
+            "    It matches `TypeError()` which was paired with `TypeError`",
+        ),
+        RaisesGroup(TypeError, ValueError, TypeError),
+    ):
+        raise ExceptionGroup("", [TypeError()])

@@ -67,7 +67,7 @@ Rerunning any failed tests can mitigate the negative effects of flaky tests by g
 
 * `pytest-rerunfailures <https://github.com/pytest-dev/pytest-rerunfailures>`_
 * `pytest-replay <https://github.com/ESSS/pytest-replay>`_: This plugin helps to reproduce locally crashes or flaky tests observed during CI runs.
-* `pytest-flakefinder <https://github.com/dropbox/pytest-flakefinder>`_ - `blog post <https://blogs.dropbox.com/tech/2016/03/open-sourcing-pytest-tools/>`_
+* `pytest-flakefinder <https://github.com/dropbox/pytest-flakefinder>`_ - `blog post <https://web.archive.org/web/20200313031602/https://blogs.dropbox.com/tech/2016/03/open-sourcing-pytest-tools/>`_
 
 Plugins to deliberately randomize tests can help expose tests with state problems:
 
@@ -129,7 +129,7 @@ Resources
 * `Eradicating Non-Determinism in Tests <https://martinfowler.com/articles/nonDeterminism.html>`_ by Martin Fowler, 2011
 * `No more flaky tests on the Go team <https://www.thoughtworks.com/insights/blog/no-more-flaky-tests-go-team>`_ by Pavan Sudarshan, 2012
 * `The Build That Cried Broken: Building Trust in your Continuous Integration Tests <https://www.youtube.com/embed/VotJqV4n8ig>`_ talk (video) by `Angie Jones <https://angiejones.tech/>`_ at SeleniumConf Austin 2017
-* `Test and Code Podcast: Flaky Tests and How to Deal with Them <https://testandcode.com/50>`_ by Brian Okken and Anthony Shaw, 2018
+* `Test and Code Podcast: Flaky Tests and How to Deal with Them <https://web.archive.org/web/20221201011103/https://testandcode.com/50>`_ by Brian Okken and Anthony Shaw, 2018
 * Microsoft:
 
   * `How we approach testing VSTS to enable continuous delivery <https://blogs.msdn.microsoft.com/bharry/2017/06/28/testing-in-a-cloud-delivery-cadence/>`_ by Brian Harry MS, 2017

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import datetime
 import decimal
 from decimal import Decimal
 from fractions import Fraction
@@ -13,8 +14,8 @@ from operator import eq
 from operator import ne
 import re
 
+from _pytest.approx import _recursive_sequence_map
 from _pytest.pytester import Pytester
-from _pytest.python_api import _recursive_sequence_map
 import pytest
 from pytest import approx
 
@@ -313,7 +314,7 @@ class TestApprox:
                 rf"^  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}e-{SOME_INT}$",
                 rf"^  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}e-{SOME_INT}\.\.\.$",
                 "^  $",
-                rf"^  ...Full output truncated \({SOME_INT} lines hidden\), use '-vv' to show$",
+                r"^  ...Full output truncated, use '-vv' to show$",
             ],
             verbosity_level=0,
         )
@@ -424,7 +425,7 @@ class TestApprox:
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
-        assert not (1 != approx(1, rel=1e-6, abs=1e-12))
+        assert not (1 != approx(1, rel=1e-6, abs=1e-12))  # noqa: SIM202
         assert 10 != approx(1, rel=1e-6, abs=1e-12)
         assert not (10 == approx(1, rel=1e-6, abs=1e-12))
 
@@ -671,7 +672,7 @@ class TestApprox:
 
     def test_list_decimal(self):
         actual = [Decimal("1.000001"), Decimal("2.000001")]
-        expected = [Decimal("1"), Decimal("2")]
+        expected = [Decimal(1), Decimal(2)]
 
         assert actual == approx(expected)
 
@@ -712,7 +713,7 @@ class TestApprox:
         actual = {"a": Decimal("1.000001"), "b": Decimal("2.000001")}
         # Dictionaries became ordered in python3.6, so switch up the order here
         # to make sure it doesn't matter.
-        expected = {"b": Decimal("2"), "a": Decimal("1")}
+        expected = {"b": Decimal(2), "a": Decimal(1)}
 
         assert actual == approx(expected)
 
@@ -922,7 +923,14 @@ class TestApprox:
         "x, name",
         [
             pytest.param([[1]], "data structures", id="nested-list"),
+            pytest.param([(1,)], "data structures", id="list-of-tuple"),
+            pytest.param([{1}], "data structures", id="list-of-set"),
+            pytest.param([{"key": 1}], "data structures", id="list-of-dict"),
+            pytest.param(({"key": 1},), "data structures", id="tuple-of-dict"),
             pytest.param({"key": {"key": 1}}, "dictionaries", id="nested-dict"),
+            pytest.param({"key": [1]}, "dictionaries", id="dict-of-list"),
+            pytest.param({"key": (1,)}, "dictionaries", id="dict-of-tuple"),
+            pytest.param({"key": {1}}, "dictionaries", id="dict-of-set"),
         ],
     )
     def test_expected_value_type_error(self, x, name):
@@ -933,12 +941,35 @@ class TestApprox:
             approx(x)
 
     @pytest.mark.parametrize(
+        "expected, actual",
+        [
+            pytest.param([{"key": 1.0}], [{"key": 1.0 + 1e-9}], id="list-of-dict"),
+            pytest.param({"key": [1.0]}, {"key": [1.0 + 1e-9]}, id="dict-of-list"),
+            pytest.param([(1.0,)], [(1.0 + 1e-9,)], id="list-of-tuple"),
+            pytest.param(({1.0},), ({1.0 + 1e-9},), id="tuple-of-set"),
+        ],
+    )
+    def test_mixed_nested_containers_raise_instead_of_comparing_unequal(
+        self, expected, actual
+    ):
+        """A nested container of a different type used to slip past the check.
+
+        It was then compared as a leaf, so these all returned ``False``
+        despite being well inside the default tolerance, silently ignoring
+        it rather than reporting that nesting is unsupported (#10210).
+        """
+        with pytest.raises(TypeError, match=r"pytest.approx\(\) does not support"):
+            actual == approx(expected)
+
+    @pytest.mark.parametrize(
         "x",
         [
             pytest.param(None),
             pytest.param("string"),
             pytest.param(["string"], id="nested-str"),
             pytest.param({"key": "string"}, id="dict-with-string"),
+            pytest.param([b"bytes"], id="nested-bytes"),
+            pytest.param({"key": b"bytes"}, id="dict-with-bytes"),
         ],
     )
     def test_nonnumeric_okay_if_equal(self, x):
@@ -1034,6 +1065,16 @@ class TestApprox:
         approx_obj = pytest.approx(decimal.Decimal("2.60"))
         assert decimal.Decimal("2.600001") == approx_obj
 
+    def test_decimal_approx_float_rel(self) -> None:
+        approx_obj = pytest.approx(decimal.Decimal("2.60"), rel=0.01)
+        assert decimal.Decimal("2.600001") == approx_obj
+        assert repr(approx_obj) == "2.60 ± 1.0e-2"
+
+    def test_decimal_approx_float_abs(self) -> None:
+        approx_obj = pytest.approx(decimal.Decimal("2.60"), abs=0.01)
+        assert decimal.Decimal("2.600001") == approx_obj
+        assert repr(approx_obj) == "2.60 ± 1.0e-2"
+
     def test_allow_ordered_sequences_only(self) -> None:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""
         with pytest.raises(TypeError, match="only supports ordered sequences"):
@@ -1116,6 +1157,25 @@ class TestApprox:
             "  Obtained: 2",
             "  Expected: 1 ± 1.0e-06",
         ]
+
+    def test_scalar_rel_type_validation(self) -> None:
+        with pytest.raises(
+            TypeError, match=r"relative tolerance for a scalar value must"
+        ):
+            pytest.approx(0, rel=datetime.timedelta(1))
+
+    def test_scalar_rel_abs_expected_validation(self) -> None:
+        with pytest.raises(
+            TypeError,
+            match=re.escape("expected value must support abs(...) when relative"),
+        ):
+            pytest.approx(object(), rel=1)
+
+    def test_scalar_abs_type_validation(self) -> None:
+        with pytest.raises(
+            TypeError, match=r"absolute tolerance for a scalar value must"
+        ):
+            pytest.approx(0, abs=datetime.timedelta(1))
 
 
 class TestApproxDatetime:
@@ -1220,6 +1280,12 @@ class TestApproxDatetime:
 
         with pytest.raises(ValueError, match="relative tolerance can't be NaN"):
             approx(timedelta(seconds=1), rel=float("nan"))
+
+    def test_timedelta_rel_must_not_be_infinite(self):
+        from datetime import timedelta
+
+        with pytest.raises(ValueError, match="relative tolerance can't be infinite"):
+            approx(timedelta(seconds=1), rel=inf)
 
     def test_timedelta_abs_must_be_non_negative(self):
         from datetime import timedelta

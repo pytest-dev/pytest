@@ -1,0 +1,1 @@
+Fixed cleanup of temporary directories failing when subdirectories have their execute permission removed.

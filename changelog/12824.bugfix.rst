@@ -1,0 +1,3 @@
+Custom command-line options now fail with a clear error when their implicit
+destination conflicts with an existing option, avoiding silent overrides of
+built-in options such as ``-k``.

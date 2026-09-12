@@ -29,6 +29,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
+from _pytest.nodeid import NodeId
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
@@ -161,6 +162,20 @@ class Cache:
         self._ensure_cache_dir_and_supporting_files()
         path.mkdir(exist_ok=True, parents=True)
 
+    @staticmethod
+    def _join_within(base: Path, name: str) -> Path:
+        """Join ``name`` onto ``base``, keeping the result inside ``base``.
+
+        ``joinpath()`` lets an absolute or drive-qualified ``name`` replace
+        ``base`` outright, and keeps ``..`` segments verbatim. Normalizing
+        lexically and re-checking containment rejects both, while still
+        allowing a ``..`` that cancels out within ``base``.
+        """
+        path = Path(os.path.normpath(base.joinpath(name)))
+        if not path.is_relative_to(base):
+            raise ValueError(f"{name!r} is not allowed to escape the cache directory")
+        return path
+
     def mkdir(self, name: str) -> Path:
         """Return a directory path object with the given name.
 
@@ -175,15 +190,14 @@ class Cache:
             Make sure the name contains your plugin or application
             identifiers to prevent clashes with other cache users.
         """
-        path = Path(name)
-        if len(path.parts) > 1:
+        if len(Path(name).parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
-        res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
+        res = self._join_within(self._cachedir / self._CACHE_PREFIX_DIRS, name)
         self._mkdir(res)
         return res
 
     def _getvaluepath(self, key: str) -> Path:
-        return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
+        return self._join_within(self._cachedir / self._CACHE_PREFIX_VALUES, key)
 
     def get(self, key: str, default):
         """Return the cached value for the given key.
@@ -192,7 +206,8 @@ class Cache:
         default is returned.
 
         :param key:
-            Must be a ``/`` separated value. Usually the first
+            Must be a ``/`` separated value that does not resolve outside
+            the cache directory. Usually the first
             name is the name of your plugin or your application.
         :param default:
             The value to return in case of a cache-miss or invalid cache value.
@@ -208,7 +223,8 @@ class Cache:
         """Save value for the given key.
 
         :param key:
-            Must be a ``/`` separated value. Usually the first
+            Must be a ``/`` separated value that does not resolve outside
+            the cache directory. Usually the first
             name is the name of your plugin or your application.
         :param value:
             Must be of any combination of basic python types,
@@ -272,7 +288,7 @@ class LFPluginCollWrapper:
 
                 # Only filter with known failures.
                 if not self._collected_at_least_one_failure:
-                    if not any(x.nodeid in lastfailed for x in result):
+                    if not any(x.id in lastfailed for x in result):
                         return res
                     self.lfplugin.config.pluginmanager.register(
                         LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
@@ -283,7 +299,7 @@ class LFPluginCollWrapper:
                 result[:] = [
                     x
                     for x in result
-                    if x.nodeid in lastfailed
+                    if x.id in lastfailed
                     # Include any passed arguments (not trivial to filter).
                     or session.isinitpath(x.path)
                     # Keep all sub-collectors.
@@ -305,9 +321,7 @@ class LFPluginCollSkipfiles:
             if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 
-                return CollectReport(
-                    collector.nodeid, "passed", longrepr=None, result=[]
-                )
+                return CollectReport(collector.id, "passed", longrepr=None, result=[])
         return None
 
 
@@ -319,8 +333,11 @@ class LFPlugin:
         active_keys = "lf", "failedfirst"
         self.active = any(config.getoption(key) for key in active_keys)
         assert config.cache
-        self.lastfailed: dict[str, bool] = config.cache.get("cache/lastfailed", {})
-        self._tests_with_failed_subtests: set[str] = set()
+        self.lastfailed: dict[NodeId, bool] = {
+            NodeId.parse(k): v
+            for k, v in config.cache.get("cache/lastfailed", {}).items()
+        }
+        self._tests_with_failed_subtests: set[NodeId] = set()
         self._previously_failed_count: int | None = None
         self._report_status: str | None = None
         self._skipped_files = 0  # count skipped files during collection due to --lf
@@ -337,7 +354,7 @@ class LFPlugin:
         rootpath = self.config.rootpath
         result = set()
         for nodeid in self.lastfailed:
-            path = rootpath / nodeid.split("::")[0]
+            path = rootpath / nodeid.path
             result.add(path)
             result.update(path.parents)
         return {x for x in result if x.exists()}
@@ -349,29 +366,30 @@ class LFPlugin:
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         if report.when == "setup":
-            self._tests_with_failed_subtests.discard(report.nodeid)
+            self._tests_with_failed_subtests.discard(report.id)
 
         if isinstance(report, SubtestReport):
             if report.failed:
-                self._tests_with_failed_subtests.add(report.nodeid)
-                self.lastfailed[report.nodeid] = True
+                self._tests_with_failed_subtests.add(report.id)
+                self.lastfailed[report.id] = True
             return
 
         if (
             (report.when == "call" and report.passed) or report.skipped
-        ) and report.nodeid not in self._tests_with_failed_subtests:
-            self.lastfailed.pop(report.nodeid, None)
+        ) and report.id not in self._tests_with_failed_subtests:
+            self.lastfailed.pop(report.id, None)
         elif report.failed:
-            self.lastfailed[report.nodeid] = True
+            self.lastfailed[report.id] = True
 
     def pytest_collectreport(self, report: CollectReport) -> None:
         passed = report.outcome in ("passed", "skipped")
         if passed:
-            if report.nodeid in self.lastfailed:
-                self.lastfailed.pop(report.nodeid)
-                self.lastfailed.update((item.nodeid, True) for item in report.result)
+            report_id = report.id
+            if report_id in self.lastfailed:
+                self.lastfailed.pop(report_id)
+                self.lastfailed.update((item.id, True) for item in report.result)
         else:
-            self.lastfailed[report.nodeid] = True
+            self.lastfailed[report.id] = True
 
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
@@ -386,7 +404,7 @@ class LFPlugin:
             previously_failed = []
             previously_passed = []
             for item in items:
-                if item.nodeid in self.lastfailed:
+                if item.id in self.lastfailed:
                     previously_failed.append(item)
                 else:
                     previously_passed.append(item)
@@ -431,9 +449,10 @@ class LFPlugin:
             return
 
         assert config.cache is not None
+        current_lastfailed = {str(k): v for k, v in self.lastfailed.items()}
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
-        if saved_lastfailed != self.lastfailed:
-            config.cache.set("cache/lastfailed", self.lastfailed)
+        if saved_lastfailed != current_lastfailed:
+            config.cache.set("cache/lastfailed", current_lastfailed)
 
 
 class NFPlugin:
@@ -443,27 +462,29 @@ class NFPlugin:
         self.config = config
         self.active = config.option.newfirst
         assert config.cache is not None
-        self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
+        self.cached_nodeids: set[NodeId] = {
+            NodeId.parse(s) for s in config.cache.get("cache/nodeids", [])
+        }
 
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(self, items: list[nodes.Item]) -> Generator[None]:
         res = yield
 
         if self.active:
-            new_items: dict[str, nodes.Item] = {}
-            other_items: dict[str, nodes.Item] = {}
+            new_items: dict[NodeId, nodes.Item] = {}
+            other_items: dict[NodeId, nodes.Item] = {}
             for item in items:
-                if item.nodeid not in self.cached_nodeids:
-                    new_items[item.nodeid] = item
+                if item.id not in self.cached_nodeids:
+                    new_items[item.id] = item
                 else:
-                    other_items[item.nodeid] = item
+                    other_items[item.id] = item
 
             items[:] = self._get_increasing_order(
                 new_items.values()
             ) + self._get_increasing_order(other_items.values())
             self.cached_nodeids.update(new_items)
         else:
-            self.cached_nodeids.update(item.nodeid for item in items)
+            self.cached_nodeids.update(item.id for item in items)
 
         return res
 
@@ -479,7 +500,7 @@ class NFPlugin:
             return
 
         assert config.cache is not None
-        config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+        config.cache.set("cache/nodeids", sorted(str(n) for n in self.cached_nodeids))
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -626,11 +647,20 @@ def cacheshow(config: Config, session: Session) -> int:
     if glob is None:
         glob = "*"
 
+    def globfiles(base: Path) -> Iterable[Path]:
+        """Glob for files under `base`, discarding matches that escape it.
+
+        A glob may contain `..` segments, which `rglob()` happily follows.
+        """
+        for x in base.rglob(glob):
+            if x.is_file() and Path(os.path.normpath(x)).is_relative_to(base):
+                yield x
+
     dummy = object()
     basedir = config.cache._cachedir
     vdir = basedir / Cache._CACHE_PREFIX_VALUES
     tw.sep("-", f"cache values for {glob!r}")
-    for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
+    for valpath in sorted(globfiles(vdir)):
         key = str(valpath.relative_to(vdir))
         val = config.cache.get(key, dummy)
         if val is dummy:
@@ -642,12 +672,8 @@ def cacheshow(config: Config, session: Session) -> int:
 
     ddir = basedir / Cache._CACHE_PREFIX_DIRS
     if ddir.is_dir():
-        contents = sorted(ddir.rglob(glob))
         tw.sep("-", f"cache directories for {glob!r}")
-        for p in contents:
-            # if p.is_dir():
-            #    print("%s/" % p.relative_to(basedir))
-            if p.is_file():
-                key = str(p.relative_to(basedir))
-                tw.line(f"{key} is a file of length {p.stat().st_size}")
+        for p in sorted(globfiles(ddir)):
+            key = str(p.relative_to(basedir))
+            tw.line(f"{key} is a file of length {p.stat().st_size}")
     return 0

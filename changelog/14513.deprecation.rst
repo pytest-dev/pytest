@@ -1,2 +1,0 @@
-The private ``FixtureDef.has_location`` attribute is now deprecated and will be removed in pytest 10.
-See :ref:`fixturedef-has-location-deprecated` for details.

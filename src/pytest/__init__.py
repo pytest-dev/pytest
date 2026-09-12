@@ -6,6 +6,8 @@ from __future__ import annotations
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
+from _pytest.approx import Approx
+from _pytest.approx import approx
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
@@ -60,7 +62,6 @@ from _pytest.python import Function
 from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
-from _pytest.python_api import approx
 from _pytest.raises import raises
 from _pytest.raises import RaisesExc
 from _pytest.raises import RaisesGroup
@@ -98,6 +99,7 @@ set_trace = __pytestPDB.set_trace
 
 __all__ = [
     "HIDDEN_PARAM",
+    "Approx",
     "Cache",
     "CallInfo",
     "CaptureFixture",

@@ -14,6 +14,7 @@ import enum
 import inspect
 from typing import Any
 from typing import final
+from typing import Literal
 from typing import NamedTuple
 from typing import overload
 from typing import TYPE_CHECKING
@@ -21,9 +22,9 @@ from typing import TypeVar
 import warnings
 
 from .._code import getfslineno
-from ..compat import deprecated
 from ..compat import NOTSET
 from ..compat import NotSetType
+from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
@@ -39,6 +40,7 @@ if TYPE_CHECKING:
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
+_EmptyParameterSetMark = Literal["skip", "xfail", "fail_at_collect"]
 
 
 # Singleton type for HIDDEN_PARAM, as described in:
@@ -64,18 +66,18 @@ def get_empty_parameterset_mark(
 
     _fs, lineno = getfslineno(func)
     reason = f"got empty parameter set for ({argslisting})"
-    requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
-    if requested_mark in ("", None, "skip"):
-        mark = MARK_GEN.skip(reason=reason)
-    elif requested_mark == "xfail":
-        mark = MARK_GEN.xfail(reason=reason, run=False)
-    elif requested_mark == "fail_at_collect":
-        raise Collector.CollectError(
-            f"Empty parameter set in '{func.__name__}' at line {lineno + 1}"
-        )
-    else:
-        raise LookupError(requested_mark)
-    return mark
+    requested_mark: _EmptyParameterSetMark = config.getini(EMPTY_PARAMETERSET_OPTION)
+    match requested_mark:
+        case "skip":
+            return MARK_GEN.skip(reason=reason)
+        case "xfail":
+            return MARK_GEN.xfail(reason=reason, run=False)
+        case "fail_at_collect":
+            raise Collector.CollectError(
+                f"Empty parameter set in '{func.__name__}' at line {lineno + 1}"
+            )
+        case unreachable:
+            assert_never(unreachable)
 
 
 class ParameterSet(NamedTuple):
@@ -529,39 +531,24 @@ if TYPE_CHECKING:
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
-            raises: None
-            | type[BaseException]
+            raises: type[BaseException]
             | tuple[type[BaseException], ...]
-            | AbstractRaises[BaseException] = ...,
+            | AbstractRaises[BaseException]
+            | None = ...,
             strict: bool = ...,
         ) -> MarkDecorator: ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,no-overload-impl]
-        def __call__(
-            self,
-            argnames: str | Sequence[str],
-            argvalues: Collection[ParameterSet | Sequence[object] | object],
-            *,
-            indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool | _HiddenParam]
-            | Callable[[Any], object | None]
-            | None = ...,
-            scope: ScopeName | None = ...,
-        ) -> MarkDecorator: ...
-
-        @overload
-        @deprecated(
-            "Passing a non-Collection iterable to the 'argvalues' parameter of @pytest.mark.parametrize is deprecated. "
-            "Convert argvalues to a list or tuple.",
-        )
-        def __call__(
+        def __call__(  # type: ignore[override]
             self,
             argnames: str | Sequence[str],
             argvalues: Iterable[ParameterSet | Sequence[object] | object],
+            # TODO(pytest10): Change to below after PARAMETRIZE_NON_COLLECTION_ITERABLE deprecation.
+            #                 Overload doesn't work, see #14606.
+            # argvalues: Collection[ParameterSet | Sequence[object] | object],
             *,
             indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool]
+            ids: Iterable[str | float | int | bool | _HiddenParam | None]
             | Callable[[Any], object | None]
             | None = ...,
             scope: ScopeName | None = ...,
@@ -617,12 +604,9 @@ class MarkGenerator:
             # name is in the set we definitely know it, but a mark may be known and
             # not in the set.  We therefore start by updating the set!
             if name not in self._markers:
-                for line in self._config.getini("markers"):
-                    # example lines: "skipif(condition): skip the given test if..."
-                    # or "hypothesis: tests which use Hypothesis", so to get the
-                    # marker name we split on both `:` and `(`.
-                    marker = line.split(":")[0].split("(")[0].strip()
-                    self._markers.add(marker)
+                self._markers.update(
+                    m.name for m in self._config._iter_registered_markers()
+                )
 
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.

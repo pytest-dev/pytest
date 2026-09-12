@@ -1,2 +1,0 @@
-Fixed function-scoped fixture values being kept alive after a test was interrupted by ``KeyboardInterrupt`` or early exit,
-allowing them to potentially be released more promptly.

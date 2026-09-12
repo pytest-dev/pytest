@@ -1354,7 +1354,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
                 f"\n{indent_1}{self._repr_expected(self.expected_exceptions[i_failed])}"
             )
             for i_actual, actual in enumerate(actual_exceptions):
-                if results.get_result(i_exp, i_actual) is None:
+                if results.get_result(i_failed, i_actual) is None:
                     # we print full repr of match target
                     s += (
                         f"\n{indent_2}It matches {backquote(repr(actual))} which was paired with "
@@ -1432,14 +1432,16 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def expected_type(self) -> str:
         subexcs = []
         for e in self.expected_exceptions:
-            if isinstance(e, RaisesExc):
-                subexcs.append(repr(e))
-            elif isinstance(e, RaisesGroup):
-                subexcs.append(e.expected_type())
-            elif isinstance(e, type):
-                subexcs.append(e.__name__)
-            else:  # pragma: no cover
-                raise AssertionError("unknown type")
+            match e:
+                case RaisesExc():
+                    subexc = repr(e)
+                case RaisesGroup():
+                    subexc = e.expected_type()
+                case type():
+                    subexc = e.__name__
+                case _:  # pragma: no cover
+                    raise AssertionError("unknown type")
+            subexcs.append(subexc)
         group_type = "Base" if self.is_baseexception else ""
         return f"{group_type}ExceptionGroup({', '.join(subexcs)})"
 

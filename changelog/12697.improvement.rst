@@ -1,0 +1,1 @@
+Warnings emitted while importing plugins through :option:`-p`, :envvar:`PYTEST_PLUGINS`, or entry point autoloading are now captured, filtered, and reported like other warnings.
