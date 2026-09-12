@@ -356,15 +356,9 @@ def pytest_runtest_makereport(
         result_dict = item.stash[tmppath_result_key]
         setup_skipped = item.stash.get(tmppath_setup_skipped_key, False)
         if (
-            (
-                setup_skipped
-                or (
-                    result_dict.get("setup", True)
-                    and result_dict.get("call", True)
-                )
-            )
-            and rep.passed
-        ):
+            setup_skipped
+            or (result_dict.get("setup", True) and result_dict.get("call", True))
+        ) and rep.passed:
             # We do a "best effort" to remove files, but it might not be
             # possible due to some leaked resource, permissions, etc.
             rmtree(tmp_path, ignore_errors=True)
