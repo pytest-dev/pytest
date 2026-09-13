@@ -323,7 +323,7 @@ class TestFixtureNodeidDeprecations:
                 defs = request.session._fixturemanager.getfixturedefs(
                     "scoped_legacy", request._pyfuncitem
                 )
-                assert defs == ()
+                assert defs == []
             """
         )
         result = pytester.runpytest("-W", "ignore::pytest.PytestRemovedIn10Warning")
