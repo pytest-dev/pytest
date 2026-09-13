@@ -125,6 +125,8 @@ class ExitCode(enum.IntEnum):
     NO_TESTS_COLLECTED = 5
     #: All tests pass, but maximum number of warnings exceeded.
     MAX_WARNINGS_ERROR = 6
+    #: Errors occurred during collection.
+    COLLECTION_ERROR = 7
 
     __module__ = "pytest"
 

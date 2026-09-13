@@ -339,6 +339,8 @@ def wrap_session(
         except (KeyboardInterrupt, exit.Exception):
             excinfo = _pytest._code.ExceptionInfo.from_current()
             exitstatus: int | ExitCode = ExitCode.INTERRUPTED
+            if isinstance(excinfo.value, CollectionInterrupted):
+                exitstatus = ExitCode.COLLECTION_ERROR
             if isinstance(excinfo.value, exit.Exception):
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
@@ -399,7 +401,7 @@ def pytest_collection(session: Session) -> None:
 
 def pytest_runtestloop(session: Session) -> bool:
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
-        raise session.Interrupted(
+        raise session.CollectionInterrupted(
             f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
         )
 
@@ -520,6 +522,16 @@ class Interrupted(KeyboardInterrupt):
     __module__ = "builtins"  # For py3.
 
 
+class CollectionInterrupted(Interrupted):
+    """Signals that the test run was interrupted by collection errors.
+
+    Subclasses ``Interrupted`` for compatibility; ``wrap_session`` maps it
+    to ``ExitCode.COLLECTION_ERROR``.
+    """
+
+    __module__ = "builtins"  # Match Interrupted.
+
+
 class Failed(Exception):
     """Signals a stop as failed test run."""
 
@@ -596,6 +608,7 @@ class Session(nodes.Collector):
     """
 
     Interrupted = Interrupted
+    CollectionInterrupted = CollectionInterrupted
     Failed = Failed
     # Set on the session by runner.pytest_sessionstart.
     _setupstate: SetupState
