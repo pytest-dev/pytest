@@ -482,7 +482,14 @@ class ApproxScalar(Approx[ExpectedT]):
         # If a sensible tolerance can't be calculated, self.tolerance will
         # raise a ValueError.  In this case, display '???'.
         try:
-            if 1e-3 <= self.tolerance < 1e3:
+            if isinstance(self.tolerance, Decimal):
+                # Never let a Decimal meet a float literal: comparing against
+                # 1e-3/1e3 signals decimal.FloatOperation when that trap is set
+                # (#13530). Scientific notation is also the only readable choice
+                # here, because a tolerance derived from a float carries its
+                # full exact binary expansion (dozens of digits).
+                vetted_tolerance = f"{self.tolerance:.1e}"
+            elif 1e-3 <= self.tolerance < 1e3:
                 vetted_tolerance = f"{self.tolerance:n}"
             else:
                 vetted_tolerance = f"{self.tolerance:.1e}"
@@ -557,12 +564,12 @@ class ApproxScalar(Approx[ExpectedT]):
             self.abs if self.abs is not None else self.DEFAULT_ABSOLUTE_TOLERANCE
         )
 
+        if _is_nan(absolute_tolerance):
+            raise ValueError("absolute tolerance can't be NaN.")
         if absolute_tolerance < 0:
             raise ValueError(
                 f"absolute tolerance can't be negative: {absolute_tolerance}"
             )
-        if _is_nan(absolute_tolerance):
-            raise ValueError("absolute tolerance can't be NaN.")
 
         # If the user specified an absolute tolerance but not a relative one,
         # just return the absolute tolerance.
@@ -581,12 +588,12 @@ class ApproxScalar(Approx[ExpectedT]):
         abs_expected: ExpectedT = abs(self.expected)  # type: ignore[arg-type]
         relative_tolerance: float | Decimal = rel * abs_expected  # type: ignore[operator]
 
+        if _is_nan(relative_tolerance):
+            raise ValueError("relative tolerance can't be NaN.")
         if relative_tolerance < 0:
             raise ValueError(
                 f"relative tolerance can't be negative: {relative_tolerance}"
             )
-        if _is_nan(relative_tolerance):
-            raise ValueError("relative tolerance can't be NaN.")
 
         # Return the larger of the relative and absolute tolerances.
         return max(relative_tolerance, absolute_tolerance)
@@ -616,15 +623,6 @@ class ApproxDecimal(ApproxScalar[Decimal]):
         else:
             abs_ = abs
         super().__init__(expected, rel_, abs_, nan_ok)
-
-    def __repr__(self) -> str:
-        tol_str = "???"
-        if self.rel is not None and Decimal("1e-3") <= self.rel <= Decimal("1e3"):
-            tol_str = f"{self.rel:.1e}"
-        elif self.abs is not None:
-            tol_str = f"{self.abs:.1e}"
-
-        return f"{self.expected} ± {tol_str}"
 
 
 class ApproxTimedelta(Approx[datetime | timedelta]):
