@@ -1125,6 +1125,51 @@ class TestApprox:
         assert repr(approx(Decimal("NaN"))) == "NaN ± ???"
         assert repr(approx(nan)) == "nan ± ???"
 
+    @pytest.mark.parametrize(
+        ("other", "expected", "wanted"),
+        (
+            pytest.param(
+                [Decimal(1), Decimal(2)],
+                [Decimal(1), Decimal(9)],
+                ["Max absolute difference: 7", "Max relative difference: 3.5"],
+                id="sequence",
+            ),
+            pytest.param(
+                [Decimal(0)],
+                [Decimal(1)],
+                ["Max absolute difference: 1", "Max relative difference: inf"],
+                id="sequence-divide-by-zero",
+            ),
+            pytest.param(
+                {"a": Decimal(1)},
+                {"a": Decimal(9)},
+                [
+                    "Max absolute difference: 8",
+                    "Max relative difference: 0.8888888888888888888888888889",
+                ],
+                id="mapping",
+            ),
+            pytest.param(
+                {"a": Decimal(9)},
+                {"a": Decimal(0)},
+                ["Max absolute difference: 9", "Max relative difference: inf"],
+                id="mapping-divide-by-zero",
+            ),
+        ),
+    )
+    def test_decimal_repr_compare_is_float_free(
+        self, monkeypatch, other, expected, wanted
+    ) -> None:
+        """The failure message must not mix Decimals with float sentinels.
+
+        The sequence variant used to report ``-inf`` here, because
+        decimal.FloatOperation subclasses TypeError and was swallowed by the
+        handler meant for non-numbers.
+        """
+        monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
+        explanation = approx(expected)._repr_compare(other)
+        assert explanation[1:3] == wanted
+
     def test_decimal_nan_tolerance_raises_value_error(self) -> None:
         """A Decimal NaN tolerance must not escape as decimal.InvalidOperation."""
         nan_abs = approx(Decimal(1), abs=Decimal("NaN"))

@@ -12,6 +12,7 @@ from collections.abc import Sized
 from datetime import datetime
 from datetime import timedelta
 from decimal import Decimal
+from decimal import FloatOperation
 import math
 from numbers import Complex
 import pprint
@@ -28,6 +29,34 @@ if TYPE_CHECKING:
     from numpy import ndarray
 else:
     ndarray = object
+
+
+def _max_diff(current: Any, candidate: Any) -> Any:
+    """Track a running maximum without seeding it with a value of another type.
+
+    Seeding with ``-math.inf`` compares a float against whatever is being
+    accumulated. For Decimal that comparison is exact, but it signals
+    ``decimal.FloatOperation`` when that trap is set, and the sequence variant
+    used to swallow the signal (``decimal.FloatOperation`` is a ``TypeError``
+    subclass) and report ``-inf`` as the difference.
+    """
+    return candidate if current is None else max(current, candidate)
+
+
+def _vetted_diffs(
+    max_abs_diff: Any, max_rel_diff: Any, rel_diff_is_infinite: bool
+) -> tuple[Any, Any]:
+    """Turn the accumulators into the values shown in the failure message.
+
+    ``-math.inf`` means "no difference could be computed at all", which happens
+    when every mismatched element is a non-number (#13012).
+    """
+    if rel_diff_is_infinite:
+        max_rel_diff = math.inf
+    return (
+        -math.inf if max_abs_diff is None else max_abs_diff,
+        -math.inf if max_rel_diff is None else max_rel_diff,
+    )
 
 
 def _compare_approx(
@@ -153,7 +182,6 @@ class ApproxNumpy(Approx[ndarray]):
 
     def _repr_compare(self, other_side: ndarray | list[Any]) -> list[str]:
         import itertools
-        import math
 
         def get_value_from_nested_list(
             nested_list: list[Any], nd_index: tuple[Any, ...]
@@ -183,20 +211,25 @@ class ApproxNumpy(Approx[ndarray]):
             ]
 
         number_of_elements = self.expected.size
-        max_abs_diff = -math.inf
-        max_rel_diff = -math.inf
+        max_abs_diff: Any = None
+        max_rel_diff: Any = None
+        rel_diff_is_infinite = False
         different_ids = []
         for index in itertools.product(*(range(i) for i in np_array_shape)):
             approx_value = get_value_from_nested_list(approx_side_as_seq, index)
             other_value = get_value_from_nested_list(other_side_as_array, index)
             if approx_value != other_value:
                 abs_diff = abs(approx_value.expected - other_value)
-                max_abs_diff = max(max_abs_diff, abs_diff)
-                if other_value == 0.0:
-                    max_rel_diff = math.inf
+                max_abs_diff = _max_diff(max_abs_diff, abs_diff)
+                if other_value == 0:
+                    rel_diff_is_infinite = True
                 else:
-                    max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                    max_rel_diff = _max_diff(max_rel_diff, abs_diff / abs(other_value))
                 different_ids.append(index)
+
+        max_abs_diff, max_rel_diff = _vetted_diffs(
+            max_abs_diff, max_rel_diff, rel_diff_is_infinite
+        )
 
         message_data = [
             (
@@ -270,7 +303,6 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         return f"approx({ ({k: self._approx_scalar(v) for k, v in self.expected.items()})!r})"
 
     def _repr_compare(self, other_side: Mapping[object, float]) -> list[str]:
-        import math
 
         if len(self.expected) != len(other_side):
             return [
@@ -289,23 +321,24 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         }
 
         number_of_elements = len(approx_side_as_map)
-        max_abs_diff = -math.inf
-        max_rel_diff = -math.inf
+        max_abs_diff: Any = None
+        max_rel_diff: Any = None
+        rel_diff_is_infinite = False
         different_ids = []
         for approx_key, approx_value in approx_side_as_map.items():
             other_value = other_side[approx_key]
             if approx_value != other_value:
                 if approx_value.expected is not None and other_value is not None:
                     try:
-                        max_abs_diff = max(
+                        max_abs_diff = _max_diff(
                             max_abs_diff,
                             # TODO: The type error here seems correct.
                             abs(approx_value.expected - other_value),  # type: ignore[operator]
                         )
-                        if approx_value.expected == 0.0:
-                            max_rel_diff = math.inf
+                        if approx_value.expected == 0:
+                            rel_diff_is_infinite = True
                         else:
-                            max_rel_diff = max(
+                            max_rel_diff = _max_diff(
                                 max_rel_diff,
                                 abs(
                                     # TODO: The type error here seems correct.
@@ -316,6 +349,10 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
                     except ZeroDivisionError:
                         pass
                 different_ids.append(approx_key)
+
+        max_abs_diff, max_rel_diff = _vetted_diffs(
+            max_abs_diff, max_rel_diff, rel_diff_is_infinite
+        )
 
         message_data = [
             (str(key), str(other_side[key]), str(approx_side_as_map[key]))
@@ -371,7 +408,6 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         return f"approx({seq_type(self._approx_scalar(x) for x in self.expected)!r})"
 
     def _repr_compare(self, other_side: Sequence[float]) -> list[str]:
-        import math
 
         if len(self.expected) != len(other_side):
             return [
@@ -382,8 +418,9 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         approx_side_as_map = _recursive_sequence_map(self._approx_scalar, self.expected)
 
         number_of_elements = len(approx_side_as_map)
-        max_abs_diff = -math.inf
-        max_rel_diff = -math.inf
+        max_abs_diff: Any = None
+        max_rel_diff: Any = None
+        rel_diff_is_infinite = False
         different_ids = []
         for i, (approx_value, other_value) in enumerate(
             zip(approx_side_as_map, other_side, strict=True)
@@ -391,16 +428,26 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
             if approx_value != other_value:
                 try:
                     abs_diff = abs(approx_value.expected - other_value)
-                    max_abs_diff = max(max_abs_diff, abs_diff)
+                    max_abs_diff = _max_diff(max_abs_diff, abs_diff)
+                # decimal.FloatOperation subclasses TypeError, so it would be
+                # caught below and reported as a missing difference.
+                except FloatOperation:
+                    raise
                 # Ignore non-numbers for the diff calculations (#13012).
                 except TypeError:
                     pass
                 else:
-                    if other_value == 0.0:
-                        max_rel_diff = math.inf
+                    if other_value == 0:
+                        rel_diff_is_infinite = True
                     else:
-                        max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                        max_rel_diff = _max_diff(
+                            max_rel_diff, abs_diff / abs(other_value)
+                        )
                 different_ids.append(i)
+
+        max_abs_diff, max_rel_diff = _vetted_diffs(
+            max_abs_diff, max_rel_diff, rel_diff_is_infinite
+        )
         message_data = [
             (str(i), str(other_side[i]), str(approx_side_as_map[i]))
             for i in different_ids
