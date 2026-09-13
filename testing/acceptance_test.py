@@ -1029,7 +1029,9 @@ class TestDurations:
         result = pytester.runpytest_inprocess("--durations=2", "-k test_1")
         assert result.ret == ExitCode.COLLECTION_ERROR
 
-        result.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
+        result.stdout.fnmatch_lines(
+            ["*CollectionInterrupted: 1 error during collection*"]
+        )
         # Collection errors abort test execution, therefore no duration is
         # output
         result.stdout.no_fnmatch_line("*duration*")
