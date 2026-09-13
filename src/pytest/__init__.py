@@ -26,6 +26,7 @@ from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.doctest import DoctestItem
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureDef
+from _pytest.fixtures import FixtureFunctionDefinition
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import register_fixture
@@ -114,6 +115,7 @@ __all__ = [
     "ExitCode",
     "File",
     "FixtureDef",
+    "FixtureFunctionDefinition",
     "FixtureLookupError",
     "FixtureRequest",
     "Function",
