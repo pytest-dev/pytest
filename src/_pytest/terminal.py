@@ -975,6 +975,7 @@ class TerminalReporter:
             ExitCode.OK,
             ExitCode.TESTS_FAILED,
             ExitCode.INTERRUPTED,
+            ExitCode.COLLECTION_ERROR,
             ExitCode.USAGE_ERROR,
             ExitCode.NO_TESTS_COLLECTED,
             ExitCode.MAX_WARNINGS_ERROR,
@@ -999,7 +1000,7 @@ class TerminalReporter:
                 )
         if session.shouldfail:
             self.write_sep("!", str(session.shouldfail), red=True)
-        if exitstatus == ExitCode.INTERRUPTED:
+        if exitstatus in (ExitCode.INTERRUPTED, ExitCode.COLLECTION_ERROR):
             self._report_keyboardinterrupt()
             self._keyboardinterrupt_memo = None
         elif session.shouldstop:

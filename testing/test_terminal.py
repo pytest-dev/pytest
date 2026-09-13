@@ -578,7 +578,7 @@ class TestCollectonly:
     def test_collectonly_error(self, pytester: Pytester) -> None:
         p = pytester.makepyfile("import Errlkjqweqwe")
         result = pytester.runpytest("--collect-only", p)
-        assert result.ret == 2
+        assert result.ret == ExitCode.COLLECTION_ERROR
         result.stdout.fnmatch_lines(
             textwrap.dedent(
                 """\
@@ -856,7 +856,7 @@ class TestTerminalFunctional:
                 "* ERROR collecting test_selected_count_error.py *",
             ]
         )
-        assert result.ret == ExitCode.INTERRUPTED
+        assert result.ret == ExitCode.COLLECTION_ERROR
 
     def test_no_skip_summary_if_failure(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -2792,7 +2792,7 @@ def test_collecterror(pytester: Pytester) -> None:
             "E   SyntaxError: *",
             "*= short test summary info =*",
             "ERROR test_collecterror.py",
-            "*! Interrupted: 1 error during collection !*",
+            "*! CollectionInterrupted: 1 error during collection !*",
             "*= 1 error in *",
         ]
     )

@@ -1207,7 +1207,7 @@ def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
             "*= 1 error in *",
         ]
     )
-    assert result.ret == ExitCode.INTERRUPTED
+    assert result.ret == ExitCode.COLLECTION_ERROR
 
 
 def test_paramset_empty_no_idfunc(
