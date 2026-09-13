@@ -38,10 +38,15 @@ Pytest supports several ways to run and select tests from the command-line or fr
 
     pytest -k 'MyClass and not method'
 
-This will run tests which contain names that match the given *string expression* (case-insensitive),
-which can include Python operators that use filenames, class names and function names as variables.
+This will run tests whose *keywords* match the given expression (case-insensitive).
 The example above will run ``TestMyClass.test_something``  but not ``TestMyClass.test_method_simple``.
 Use ``""`` instead of ``''`` in expression when running this on Windows
+
+The keywords of a test are its own name, the names of the file, class and directories it is in,
+the names of the markers applied to it or to its parents, and attributes assigned directly to the
+test function. Each name in the expression is matched as a *substring* of any of them, so
+``-k slow`` selects both tests marked ``@pytest.mark.slow`` and tests merely named
+``test_slow_path``. Use :option:`-m` to match markers and nothing else.
 
 .. _nodeids:
 
