@@ -1099,14 +1099,73 @@ class TestApprox:
         assert repr(approx_obj) == "2.60 ± 2.6e-6"
 
     def test_decimal_approx_float_rel(self) -> None:
-        approx_obj = pytest.approx(decimal.Decimal("2.60"), rel=0.01)
+        with pytest.warns(pytest.PytestApproxDecimalToleranceWarning):
+            approx_obj = pytest.approx(decimal.Decimal("2.60"), rel=0.01)
         assert decimal.Decimal("2.600001") == approx_obj
         assert repr(approx_obj) == "2.60 ± 2.6e-2"
 
     def test_decimal_approx_float_abs(self) -> None:
-        approx_obj = pytest.approx(decimal.Decimal("2.60"), abs=0.01)
+        with pytest.warns(pytest.PytestApproxDecimalToleranceWarning):
+            approx_obj = pytest.approx(decimal.Decimal("2.60"), abs=0.01)
         assert decimal.Decimal("2.600001") == approx_obj
         assert repr(approx_obj) == "2.60 ± 1.0e-2"
+
+    @pytest.mark.parametrize(
+        ("expected", "kwargs"),
+        (
+            pytest.param(Decimal("2.60"), {"rel": 0.01}, id="scalar-rel"),
+            pytest.param(Decimal("2.60"), {"abs": 0.01}, id="scalar-abs"),
+            pytest.param([Decimal("2.60")], {"rel": 0.01}, id="sequence"),
+            pytest.param({"a": Decimal("2.60")}, {"rel": 0.01}, id="mapping"),
+        ),
+    )
+    def test_inexact_float_tolerance_warns(self, expected, kwargs) -> None:
+        """A float tolerance is widened to its exact binary value (#15006)."""
+        name = next(iter(kwargs))
+        with pytest.warns(
+            pytest.PytestApproxDecimalToleranceWarning,
+            match=rf"{name}=0\.01 cannot be represented exactly",
+        ):
+            approx(expected, **kwargs)
+
+    @pytest.mark.parametrize(
+        ("expected", "kwargs"),
+        (
+            pytest.param(2.60, {"rel": 0.01}, id="float-expected"),
+            pytest.param([1.0, 2.0], {"rel": 0.01}, id="float-sequence"),
+            pytest.param(Decimal("2.60"), {}, id="no-tolerance"),
+            pytest.param(Decimal("2.60"), {"rel": Decimal("0.01")}, id="decimal-rel"),
+            pytest.param(Decimal("2.60"), {"rel": 0.5}, id="exactly-representable"),
+            pytest.param(Decimal("2.60"), {"rel": 1}, id="int-rel"),
+        ),
+    )
+    def test_exact_tolerance_does_not_warn(self, expected, kwargs, recwarn) -> None:
+        approx(expected, **kwargs)
+        assert not [
+            w
+            for w in recwarn
+            if issubclass(w.category, pytest.PytestApproxDecimalToleranceWarning)
+        ]
+
+    def test_inexact_float_tolerance_warns_once_at_the_call_site(
+        self, pytester: Pytester
+    ) -> None:
+        """The warning must point at the user's line, not into approx itself."""
+        pytester.makepyfile(
+            """
+            from decimal import Decimal
+            import pytest
+
+            def test_seq():
+                values = [Decimal(i) for i in range(20)]
+                assert values == pytest.approx(values, rel=0.01)
+            """
+        )
+        result = pytester.runpytest("-Wdefault")
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            ["*:6: PytestApproxDecimalToleranceWarning: rel=0.01 *"]
+        )
 
     @pytest.mark.parametrize(
         ("kwargs", "expected_repr"),

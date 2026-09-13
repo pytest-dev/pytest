@@ -23,6 +23,9 @@ from typing import SupportsAbs
 from typing import TYPE_CHECKING
 from typing import TypeGuard
 from typing import TypeVar
+import warnings
+
+from _pytest.warning_types import PytestApproxDecimalToleranceWarning
 
 
 if TYPE_CHECKING:
@@ -1002,6 +1005,8 @@ def approx(
 
     __tracebackhide__ = True
 
+    _warn_on_inexact_decimal_tolerance(expected, rel, abs)
+
     if isinstance(expected, Decimal):
         return ApproxDecimal(expected, rel=rel, abs=abs, nan_ok=nan_ok)  # type: ignore[return-value]
     elif isinstance(expected, Mapping):
@@ -1017,6 +1022,55 @@ def approx(
         return ApproxTimedelta(expected, rel=rel, abs=abs, nan_ok=nan_ok)  # type: ignore[return-value]
     else:
         return ApproxScalar(expected, rel=rel, abs=abs, nan_ok=nan_ok)
+
+
+def _contains_decimal(expected: object) -> bool:
+    """Whether a comparison against ``expected`` will use Decimal arithmetic."""
+    if isinstance(expected, Decimal):
+        return True
+    if isinstance(expected, Mapping):
+        return any(isinstance(value, Decimal) for value in expected.values())
+    if _is_sequence_like(expected):
+        # ``.flat`` also makes a 0-d numpy array iterable, which it is not
+        # otherwise, despite being sized and subscriptable.
+        values = getattr(expected, "flat", expected)
+        return any(isinstance(value, Decimal) for value in values)
+    return False
+
+
+def _warn_on_inexact_decimal_tolerance(
+    expected: object,
+    rel: float | Decimal | timedelta | None,
+    abs: float | Decimal | timedelta | None,
+) -> None:
+    """Warn when a float tolerance is used for a Decimal comparison.
+
+    A float tolerance is converted with ``Decimal.from_float()``, which is
+    exact and therefore keeps the float's full binary expansion: ``rel=0.01``
+    really means a tolerance of ``0.010000000000000000208...``. That is wider
+    than the ``0.01`` that was written, which defeats the point of comparing
+    Decimals in the first place.
+
+    Only floats that cannot be represented exactly are worth warning about;
+    ``0.5`` and friends survive the conversion unchanged, as do ints.
+    """
+    inexact = [
+        (name, value)
+        for name, value in (("rel", rel), ("abs", abs))
+        if type(value) is float and Decimal.from_float(value) != Decimal(repr(value))
+    ]
+    if not inexact or not _contains_decimal(expected):
+        return
+    for name, value in inexact:
+        warnings.warn(
+            PytestApproxDecimalToleranceWarning(
+                f"{name}={value!r} cannot be represented exactly as a Decimal "
+                f"and was widened to {Decimal.from_float(value)}.\n"
+                f"Pass {name}=Decimal({str(value)!r}) to compare against the "
+                f"tolerance you wrote."
+            ),
+            stacklevel=3,
+        )
 
 
 def _is_sequence_like(expected: object) -> TypeGuard[Sequence[Any]]:
