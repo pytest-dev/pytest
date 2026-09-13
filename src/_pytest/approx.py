@@ -1,6 +1,9 @@
+"""The implementation of pytest.approx()."""
+
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import abc
 import builtins
 from collections.abc import Collection
 from collections.abc import Mapping
@@ -9,16 +12,54 @@ from collections.abc import Sized
 from datetime import datetime
 from datetime import timedelta
 from decimal import Decimal
+from decimal import FloatOperation
 import math
 from numbers import Complex
 import pprint
 import sys
 from typing import Any
+from typing import Generic
+from typing import SupportsAbs
 from typing import TYPE_CHECKING
+from typing import TypeGuard
+from typing import TypeVar
+import warnings
+
+from _pytest.warning_types import PytestApproxDecimalToleranceWarning
 
 
 if TYPE_CHECKING:
     from numpy import ndarray
+else:
+    ndarray = object
+
+
+def _max_diff(current: Any, candidate: Any) -> Any:
+    """Track a running maximum without seeding it with a value of another type.
+
+    Seeding with ``-math.inf`` compares a float against whatever is being
+    accumulated. For Decimal that comparison is exact, but it signals
+    ``decimal.FloatOperation`` when that trap is set, and the sequence variant
+    used to swallow the signal (``decimal.FloatOperation`` is a ``TypeError``
+    subclass) and report ``-inf`` as the difference.
+    """
+    return candidate if current is None else max(current, candidate)
+
+
+def _vetted_diffs(
+    max_abs_diff: Any, max_rel_diff: Any, rel_diff_is_infinite: bool
+) -> tuple[Any, Any]:
+    """Turn the accumulators into the values shown in the failure message.
+
+    ``-math.inf`` means "no difference could be computed at all", which happens
+    when every mismatched element is a non-number (#13012).
+    """
+    if rel_diff_is_infinite:
+        max_rel_diff = math.inf
+    return (
+        -math.inf if max_abs_diff is None else max_abs_diff,
+        -math.inf if max_rel_diff is None else max_rel_diff,
+    )
 
 
 def _compare_approx(
@@ -47,29 +88,46 @@ def _compare_approx(
     return explanation
 
 
-# builtin pytest.approx helper
+T = TypeVar("T")
+ExpectedT = TypeVar("ExpectedT", covariant=True)
 
 
-class ApproxBase:
-    """Provide shared utilities for making approximate comparisons between
-    numbers or sequences of numbers."""
+class Approx(abc.ABC, Generic[ExpectedT]):
+    """The return type of :func:`pytest.approx`.
+
+    ``Approx`` objects support (approximate) equality comparisons and ``repr``,
+    and can also be used with ``isinstance(..., pytest.Approx)``.
+
+    .. versionadded:: 9.2
+    """
+
+    __module__ = "pytest"
 
     # Tell numpy to use our `__eq__` operator instead of its.
     __array_ufunc__ = None
     __array_priority__ = 100
 
-    def __init__(self, expected, rel=None, abs=None, nan_ok: bool = False) -> None:
-        __tracebackhide__ = True
+    def __init__(
+        self,
+        expected: ExpectedT,
+        rel: float | Decimal | timedelta | None,
+        abs: float | Decimal | timedelta | None,
+        nan_ok: bool,
+    ) -> None:
+        #: The expected value passed.
         self.expected = expected
-        self.abs = abs
+        #: The relative tolerance.
         self.rel = rel
+        #: The absolute tolerance.
+        self.abs = abs
+        #: Whether NaNs compare equal to NaN.
         self.nan_ok = nan_ok
-        self._check_type()
 
+    @abc.abstractmethod
     def __repr__(self) -> str:
         raise NotImplementedError
 
-    def _repr_compare(self, other_side: Any) -> list[str]:
+    def _repr_compare(self, other_side) -> list[str]:
         return [
             "comparison failed",
             f"Obtained: {other_side}",
@@ -90,30 +148,19 @@ class ApproxBase:
     # Ignore type because of https://github.com/python/mypy/issues/4266.
     __hash__ = None  # type: ignore
 
-    def __ne__(self, actual) -> bool:
-        return not (actual == self)
-
-    def _approx_scalar(self, x) -> ApproxBase:
+    def _approx_scalar(self, x) -> ApproxScalar[Any] | ApproxTimedelta:
         if isinstance(x, Decimal):
             return ApproxDecimal(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
         if isinstance(x, (datetime, timedelta)):
             return ApproxTimedelta(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
-    def _yield_comparisons(self, actual):
+    def _yield_comparisons(self, actual: object):
         """Yield all the pairs of numbers to be compared.
 
         This is used to implement the `__eq__` method.
         """
         raise NotImplementedError
-
-    def _check_type(self) -> None:
-        """Raise a TypeError if the expected value is not a valid type."""
-        # This is only a concern if the expected value is a sequence.  In every
-        # other case, the approx() function ensures that the expected value has
-        # a numeric type.  For this reason, the default is to do nothing.  The
-        # classes that deal with sequences should reimplement this method to
-        # raise if there are any non-numeric elements in the sequence.
 
 
 def _recursive_sequence_map(f, x):
@@ -127,7 +174,7 @@ def _recursive_sequence_map(f, x):
         return f(x)
 
 
-class ApproxNumpy(ApproxBase):
+class ApproxNumpy(Approx[ndarray]):
     """Perform approximate comparisons where the expected value is numpy array."""
 
     def __repr__(self) -> str:
@@ -138,7 +185,6 @@ class ApproxNumpy(ApproxBase):
 
     def _repr_compare(self, other_side: ndarray | list[Any]) -> list[str]:
         import itertools
-        import math
 
         def get_value_from_nested_list(
             nested_list: list[Any], nd_index: tuple[Any, ...]
@@ -168,20 +214,25 @@ class ApproxNumpy(ApproxBase):
             ]
 
         number_of_elements = self.expected.size
-        max_abs_diff = -math.inf
-        max_rel_diff = -math.inf
+        max_abs_diff: Any = None
+        max_rel_diff: Any = None
+        rel_diff_is_infinite = False
         different_ids = []
         for index in itertools.product(*(range(i) for i in np_array_shape)):
             approx_value = get_value_from_nested_list(approx_side_as_seq, index)
             other_value = get_value_from_nested_list(other_side_as_array, index)
             if approx_value != other_value:
                 abs_diff = abs(approx_value.expected - other_value)
-                max_abs_diff = max(max_abs_diff, abs_diff)
-                if other_value == 0.0:
-                    max_rel_diff = math.inf
+                max_abs_diff = _max_diff(max_abs_diff, abs_diff)
+                if other_value == 0:
+                    rel_diff_is_infinite = True
                 else:
-                    max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                    max_rel_diff = _max_diff(max_rel_diff, abs_diff / abs(other_value))
                 different_ids.append(index)
+
+        max_abs_diff, max_rel_diff = _vetted_diffs(
+            max_abs_diff, max_rel_diff, rel_diff_is_infinite
+        )
 
         message_data = [
             (
@@ -225,21 +276,39 @@ class ApproxNumpy(ApproxBase):
 
         if np.isscalar(actual):
             for i in np.ndindex(self.expected.shape):
-                yield actual, self.expected[i].item()
+                yield actual, _unbox_numpy_scalar(self.expected[i])
         else:
             for i in np.ndindex(self.expected.shape):
-                yield actual[i].item(), self.expected[i].item()
+                yield (
+                    _unbox_numpy_scalar(actual[i]),
+                    _unbox_numpy_scalar(self.expected[i]),
+                )
 
 
-class ApproxMapping(ApproxBase):
+class ApproxMapping(Approx[Mapping[Any, Any]]):
     """Perform approximate comparisons where the expected value is a mapping
     with numeric values (the keys can be anything)."""
+
+    def __init__(
+        self,
+        expected: Mapping[Any, Any],
+        rel: float | Decimal | timedelta | None,
+        abs: float | Decimal | timedelta | None,
+        nan_ok: bool,
+    ) -> None:
+        __tracebackhide__ = True
+
+        for key, value in expected.items():
+            if _is_nested_container(value):
+                msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
+                raise TypeError(msg.format(key, value, pprint.pformat(expected)))
+
+        super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 
     def __repr__(self) -> str:
         return f"approx({ ({k: self._approx_scalar(v) for k, v in self.expected.items()})!r})"
 
     def _repr_compare(self, other_side: Mapping[object, float]) -> list[str]:
-        import math
 
         if len(self.expected) != len(other_side):
             return [
@@ -258,30 +327,38 @@ class ApproxMapping(ApproxBase):
         }
 
         number_of_elements = len(approx_side_as_map)
-        max_abs_diff = -math.inf
-        max_rel_diff = -math.inf
+        max_abs_diff: Any = None
+        max_rel_diff: Any = None
+        rel_diff_is_infinite = False
         different_ids = []
         for approx_key, approx_value in approx_side_as_map.items():
             other_value = other_side[approx_key]
             if approx_value != other_value:
                 if approx_value.expected is not None and other_value is not None:
                     try:
-                        max_abs_diff = max(
-                            max_abs_diff, abs(approx_value.expected - other_value)
+                        max_abs_diff = _max_diff(
+                            max_abs_diff,
+                            # TODO: The type error here seems correct.
+                            abs(approx_value.expected - other_value),  # type: ignore[operator]
                         )
-                        if approx_value.expected == 0.0:
-                            max_rel_diff = math.inf
+                        if approx_value.expected == 0:
+                            rel_diff_is_infinite = True
                         else:
-                            max_rel_diff = max(
+                            max_rel_diff = _max_diff(
                                 max_rel_diff,
                                 abs(
-                                    (approx_value.expected - other_value)
+                                    # TODO: The type error here seems correct.
+                                    (approx_value.expected - other_value)  # type: ignore[operator]
                                     / approx_value.expected
                                 ),
                             )
                     except ZeroDivisionError:
                         pass
                 different_ids.append(approx_key)
+
+        max_abs_diff, max_rel_diff = _vetted_diffs(
+            max_abs_diff, max_rel_diff, rel_diff_is_infinite
+        )
 
         message_data = [
             (str(key), str(other_side[key]), str(approx_side_as_map[key]))
@@ -307,19 +384,28 @@ class ApproxMapping(ApproxBase):
         return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
-        for k in self.expected.keys():
+        for k in self.expected:
             yield actual[k], self.expected[k]
 
-    def _check_type(self) -> None:
-        __tracebackhide__ = True
-        for key, value in self.expected.items():
-            if isinstance(value, type(self.expected)):
-                msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
-                raise TypeError(msg.format(key, value, pprint.pformat(self.expected)))
 
-
-class ApproxSequenceLike(ApproxBase):
+class ApproxSequenceLike(Approx[Sequence[Any]]):
     """Perform approximate comparisons where the expected value is a sequence of numbers."""
+
+    def __init__(
+        self,
+        expected: Sequence[Any],
+        rel: float | Decimal | timedelta | None,
+        abs: float | Decimal | timedelta | None,
+        nan_ok: bool,
+    ) -> None:
+        __tracebackhide__ = True
+
+        for index, x in enumerate(expected):
+            if _is_nested_container(x):
+                msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
+                raise TypeError(msg.format(x, index, pprint.pformat(expected)))
+
+        super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 
     def __repr__(self) -> str:
         seq_type = type(self.expected)
@@ -328,7 +414,6 @@ class ApproxSequenceLike(ApproxBase):
         return f"approx({seq_type(self._approx_scalar(x) for x in self.expected)!r})"
 
     def _repr_compare(self, other_side: Sequence[float]) -> list[str]:
-        import math
 
         if len(self.expected) != len(other_side):
             return [
@@ -339,8 +424,9 @@ class ApproxSequenceLike(ApproxBase):
         approx_side_as_map = _recursive_sequence_map(self._approx_scalar, self.expected)
 
         number_of_elements = len(approx_side_as_map)
-        max_abs_diff = -math.inf
-        max_rel_diff = -math.inf
+        max_abs_diff: Any = None
+        max_rel_diff: Any = None
+        rel_diff_is_infinite = False
         different_ids = []
         for i, (approx_value, other_value) in enumerate(
             zip(approx_side_as_map, other_side, strict=True)
@@ -348,16 +434,26 @@ class ApproxSequenceLike(ApproxBase):
             if approx_value != other_value:
                 try:
                     abs_diff = abs(approx_value.expected - other_value)
-                    max_abs_diff = max(max_abs_diff, abs_diff)
+                    max_abs_diff = _max_diff(max_abs_diff, abs_diff)
+                # decimal.FloatOperation subclasses TypeError, so it would be
+                # caught below and reported as a missing difference.
+                except FloatOperation:
+                    raise
                 # Ignore non-numbers for the diff calculations (#13012).
                 except TypeError:
                     pass
                 else:
-                    if other_value == 0.0:
-                        max_rel_diff = math.inf
+                    if other_value == 0:
+                        rel_diff_is_infinite = True
                     else:
-                        max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                        max_rel_diff = _max_diff(
+                            max_rel_diff, abs_diff / abs(other_value)
+                        )
                 different_ids.append(i)
+
+        max_abs_diff, max_rel_diff = _vetted_diffs(
+            max_abs_diff, max_rel_diff, rel_diff_is_infinite
+        )
         message_data = [
             (str(i), str(other_side[i]), str(approx_side_as_map[i]))
             for i in different_ids
@@ -383,21 +479,42 @@ class ApproxSequenceLike(ApproxBase):
     def _yield_comparisons(self, actual):
         return zip(actual, self.expected, strict=True)
 
-    def _check_type(self) -> None:
-        __tracebackhide__ = True
-        for index, x in enumerate(self.expected):
-            if isinstance(x, type(self.expected)):
-                msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
-                raise TypeError(msg.format(x, index, pprint.pformat(self.expected)))
 
-
-class ApproxScalar(ApproxBase):
+class ApproxScalar(Approx[ExpectedT]):
     """Perform approximate comparisons where the expected value is a single number."""
 
     # Using Real should be better than this Union, but not possible yet:
     # https://github.com/python/typeshed/pull/3108
     DEFAULT_ABSOLUTE_TOLERANCE: float | Decimal = 1e-12
     DEFAULT_RELATIVE_TOLERANCE: float | Decimal = 1e-6
+    rel: float | Decimal | None
+    abs: float | Decimal | None
+
+    def __init__(
+        self,
+        expected: ExpectedT,
+        rel: float | Decimal | timedelta | None,
+        abs: float | Decimal | timedelta | None,
+        nan_ok: bool,
+    ) -> None:
+        __tracebackhide__ = True
+        if rel is not None:
+            if not isinstance(rel, (int, float, Decimal)):
+                raise TypeError(
+                    f"relative tolerance for a scalar value must be an int, float or Decimal, "
+                    f"got {type(rel).__name__}"
+                )
+            if not isinstance(expected, SupportsAbs):
+                raise TypeError(
+                    f"expected value must support abs(...) when relative tolerance is used, "
+                    f"got {type(expected).__name__}"
+                )
+        if abs is not None and not isinstance(abs, (int, float, Decimal)):
+            raise TypeError(
+                f"absolute tolerance for a scalar value must be an int, float or Decimal, "
+                f"got {type(abs).__name__}"
+            )
+        super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 
     def __repr__(self) -> str:
         """Return a string communicating both the expected value and the
@@ -409,16 +526,23 @@ class ApproxScalar(ApproxBase):
         # tolerances, i.e. non-numerics and infinities. Need to call abs to
         # handle complex numbers, e.g. (inf + 1j).
         if (
-            isinstance(self.expected, bool)
+            _is_bool(self.expected)
             or (not isinstance(self.expected, Complex | Decimal))
-            or math.isinf(abs(self.expected) or isinstance(self.expected, bool))
+            or _is_inf(abs(self.expected))
         ):
             return str(self.expected)
 
         # If a sensible tolerance can't be calculated, self.tolerance will
         # raise a ValueError.  In this case, display '???'.
         try:
-            if 1e-3 <= self.tolerance < 1e3:
+            if isinstance(self.tolerance, Decimal):
+                # Never let a Decimal meet a float literal: comparing against
+                # 1e-3/1e3 signals decimal.FloatOperation when that trap is set
+                # (#13530). Scientific notation is also the only readable choice
+                # here, because a tolerance derived from a float carries its
+                # full exact binary expansion (dozens of digits).
+                vetted_tolerance = f"{self.tolerance:.1e}"
+            elif 1e-3 <= self.tolerance < 1e3:
                 vetted_tolerance = f"{self.tolerance:n}"
             else:
                 vetted_tolerance = f"{self.tolerance:.1e}"
@@ -426,7 +550,7 @@ class ApproxScalar(ApproxBase):
             if (
                 isinstance(self.expected, Complex)
                 and self.expected.imag
-                and not math.isinf(self.tolerance)
+                and not _is_inf(self.tolerance)
             ):
                 vetted_tolerance += " ∠ ±180°"
         except ValueError:
@@ -437,15 +561,6 @@ class ApproxScalar(ApproxBase):
     def __eq__(self, actual) -> bool:
         """Return whether the given value is equal to the expected value
         within the pre-specified tolerance."""
-
-        def is_bool(val: Any) -> bool:
-            # Check if `val` is a native bool or numpy bool.
-            if isinstance(val, bool):
-                return True
-            if np := sys.modules.get("numpy"):
-                return isinstance(val, np.bool_)
-            return False
-
         asarray = _as_numpy_array(actual)
         if asarray is not None:
             # Call ``__eq__()`` manually to prevent infinite-recursion with
@@ -453,7 +568,7 @@ class ApproxScalar(ApproxBase):
             return all(self.__eq__(a) for a in asarray.flat)
 
         # Short-circuit exact equality, except for bool and np.bool_
-        if is_bool(self.expected) and not is_bool(actual):
+        if _is_bool(self.expected) and not _is_bool(actual):
             return False
         elif actual == self.expected:
             return True
@@ -462,7 +577,7 @@ class ApproxScalar(ApproxBase):
         # NB: we need Complex, rather than just Number, to ensure that __abs__,
         # __sub__, and __float__ are defined. Also, consider bool to be
         # non-numeric, even though it has the required arithmetic.
-        if is_bool(self.expected) or not (
+        if _is_bool(self.expected) or not (
             isinstance(self.expected, Complex | Decimal)
             and isinstance(actual, Complex | Decimal)
         ):
@@ -471,8 +586,8 @@ class ApproxScalar(ApproxBase):
         # Allow the user to control whether NaNs are considered equal to each
         # other or not.  The abs() calls are for compatibility with complex
         # numbers.
-        if math.isnan(abs(self.expected)):
-            return self.nan_ok and math.isnan(abs(actual))
+        if _is_nan(abs(self.expected)):
+            return self.nan_ok and _is_nan(abs(actual))
 
         # Infinity shouldn't be approximately equal to anything but itself, but
         # if there's a relative tolerance, it will be infinite and infinity
@@ -480,7 +595,7 @@ class ApproxScalar(ApproxBase):
         # case would have been short circuited above, so here we can just
         # return false if the expected value is infinite.  The abs() call is
         # for compatibility with complex numbers.
-        if math.isinf(abs(self.expected)):
+        if _is_inf(abs(self.expected)):
             return False
 
         # Return true if the two numbers are within the tolerance.
@@ -496,20 +611,18 @@ class ApproxScalar(ApproxBase):
         This could be either an absolute tolerance or a relative tolerance,
         depending on what the user specified or which would be larger.
         """
-
-        def set_default(x, default):
-            return x if x is not None else default
-
         # Figure out what the absolute tolerance should be.  ``self.abs`` is
         # either None or a value specified by the user.
-        absolute_tolerance = set_default(self.abs, self.DEFAULT_ABSOLUTE_TOLERANCE)
+        absolute_tolerance = (
+            self.abs if self.abs is not None else self.DEFAULT_ABSOLUTE_TOLERANCE
+        )
 
+        if _is_nan(absolute_tolerance):
+            raise ValueError("absolute tolerance can't be NaN.")
         if absolute_tolerance < 0:
             raise ValueError(
                 f"absolute tolerance can't be negative: {absolute_tolerance}"
             )
-        if math.isnan(absolute_tolerance):
-            raise ValueError("absolute tolerance can't be NaN.")
 
         # If the user specified an absolute tolerance but not a relative one,
         # just return the absolute tolerance.
@@ -522,48 +635,50 @@ class ApproxScalar(ApproxBase):
         # we've made sure the user didn't ask for an absolute tolerance only,
         # because we don't want to raise errors about the relative tolerance if
         # we aren't even going to use it.
-        relative_tolerance = set_default(
-            self.rel, self.DEFAULT_RELATIVE_TOLERANCE
-        ) * abs(self.expected)
+        rel = self.rel if self.rel is not None else self.DEFAULT_RELATIVE_TOLERANCE
+        # expected is SupportAbs, checked in __init__.
+        # The typing here is not exact...
+        abs_expected: ExpectedT = abs(self.expected)  # type: ignore[arg-type]
+        relative_tolerance: float | Decimal = rel * abs_expected  # type: ignore[operator]
 
+        if _is_nan(relative_tolerance):
+            raise ValueError("relative tolerance can't be NaN.")
         if relative_tolerance < 0:
             raise ValueError(
                 f"relative tolerance can't be negative: {relative_tolerance}"
             )
-        if math.isnan(relative_tolerance):
-            raise ValueError("relative tolerance can't be NaN.")
 
         # Return the larger of the relative and absolute tolerances.
         return max(relative_tolerance, absolute_tolerance)
 
 
-class ApproxDecimal(ApproxScalar):
+class ApproxDecimal(ApproxScalar[Decimal]):
     """Perform approximate comparisons where the expected value is a Decimal."""
 
     DEFAULT_ABSOLUTE_TOLERANCE = Decimal("1e-12")
     DEFAULT_RELATIVE_TOLERANCE = Decimal("1e-6")
+    rel: Decimal | None
+    abs: Decimal | None
 
-    def __repr__(self) -> str:
-        if isinstance(self.rel, float):
-            rel = Decimal.from_float(self.rel)
+    def __init__(
+        self,
+        expected: Decimal,
+        rel: float | Decimal | timedelta | None,
+        abs: float | Decimal | timedelta | None,
+        nan_ok: bool,
+    ) -> None:
+        if isinstance(rel, (float, int)):
+            rel_: Decimal | timedelta | None = Decimal.from_float(rel)
         else:
-            rel = self.rel
-
-        if isinstance(self.abs, float):
-            abs_ = Decimal.from_float(self.abs)
+            rel_ = rel
+        if isinstance(abs, (float, int)):
+            abs_: Decimal | timedelta | None = Decimal.from_float(abs)
         else:
-            abs_ = self.abs
-
-        tol_str = "???"
-        if rel is not None and Decimal("1e-3") <= rel <= Decimal("1e3"):
-            tol_str = f"{rel:.1e}"
-        elif abs_ is not None:
-            tol_str = f"{abs_:.1e}"
-
-        return f"{self.expected} ± {tol_str}"
+            abs_ = abs
+        super().__init__(expected, rel_, abs_, nan_ok)
 
 
-class ApproxTimedelta(ApproxBase):
+class ApproxTimedelta(Approx[datetime | timedelta]):
     """Perform approximate comparisons where the expected value is a
     datetime or timedelta.
 
@@ -571,7 +686,13 @@ class ApproxTimedelta(ApproxBase):
     Relative tolerance is not supported for datetime comparisons.
     """
 
-    def __init__(self, expected, rel=None, abs=None, nan_ok: bool = False) -> None:
+    def __init__(
+        self,
+        expected: datetime | timedelta,
+        rel: float | Decimal | timedelta | None,
+        abs: float | Decimal | timedelta | None,
+        nan_ok: bool,
+    ) -> None:
         __tracebackhide__ = True
         if isinstance(expected, datetime) and rel is not None:
             raise TypeError(
@@ -607,12 +728,19 @@ class ApproxTimedelta(ApproxBase):
                 raise ValueError(f"relative tolerance can't be negative: {rel}")
             if math.isnan(rel):
                 raise ValueError("relative tolerance can't be NaN.")
+            if math.isinf(rel):
+                raise ValueError("relative tolerance can't be infinite.")
         # Compute the effective tolerance. abs_tolerance is a timedelta, rel * expected
         # gives a timedelta (timedelta * float works in Python).
         abs_tolerance = abs
-        rel_tolerance = rel * builtins.abs(expected) if rel is not None else None
+        if rel is None:
+            rel_tolerance = None
+        else:
+            # Checked above.
+            assert not isinstance(expected, datetime)
+            rel_tolerance = rel * builtins.abs(expected)
         if abs_tolerance is not None and rel_tolerance is not None:
-            tolerance = max(abs_tolerance, rel_tolerance)
+            tolerance: timedelta | None = max(abs_tolerance, rel_tolerance)
         else:
             tolerance = abs_tolerance if abs_tolerance is not None else rel_tolerance
         super().__init__(expected, rel=rel, abs=tolerance, nan_ok=False)
@@ -626,7 +754,7 @@ class ApproxTimedelta(ApproxBase):
         except (TypeError, OverflowError):
             return False
 
-    def _yield_comparisons(self, actual):
+    def _yield_comparisons(self, actual: object):
         yield actual, self.expected
 
     def _repr_compare(self, other_side: Any) -> list[str]:
@@ -644,11 +772,11 @@ class ApproxTimedelta(ApproxBase):
 
 
 def approx(
-    expected: Any,
+    expected: T,
     rel: float | Decimal | timedelta | None = None,
     abs: float | Decimal | timedelta | None = None,
     nan_ok: bool = False,
-) -> ApproxBase:
+) -> Approx[T]:
     """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
     within some tolerance.
 
@@ -877,31 +1005,90 @@ def approx(
 
     __tracebackhide__ = True
 
+    _warn_on_inexact_decimal_tolerance(expected, rel, abs)
+
     if isinstance(expected, Decimal):
-        cls: type[ApproxBase] = ApproxDecimal
+        return ApproxDecimal(expected, rel=rel, abs=abs, nan_ok=nan_ok)  # type: ignore[return-value]
     elif isinstance(expected, Mapping):
-        cls = ApproxMapping
+        return ApproxMapping(expected, rel=rel, abs=abs, nan_ok=nan_ok)  # type: ignore[return-value]
     elif (np_array := _as_numpy_array(expected)) is not None:
-        expected = np_array
-        cls = ApproxNumpy
+        return ApproxNumpy(np_array, rel=rel, abs=abs, nan_ok=nan_ok)
     elif _is_sequence_like(expected):
-        cls = ApproxSequenceLike
+        return ApproxSequenceLike(expected, rel=rel, abs=abs, nan_ok=nan_ok)  # type: ignore[return-value]
     elif isinstance(expected, Collection) and not isinstance(expected, str | bytes):
         msg = f"pytest.approx() only supports ordered sequences, but got: {expected!r}"
         raise TypeError(msg)
     elif isinstance(expected, (datetime, timedelta)):
-        cls = ApproxTimedelta
+        return ApproxTimedelta(expected, rel=rel, abs=abs, nan_ok=nan_ok)  # type: ignore[return-value]
     else:
-        cls = ApproxScalar
-
-    return cls(expected, rel, abs, nan_ok)
+        return ApproxScalar(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 
 
-def _is_sequence_like(expected: object) -> bool:
+def _contains_decimal(expected: object) -> bool:
+    """Whether a comparison against ``expected`` will use Decimal arithmetic."""
+    if isinstance(expected, Decimal):
+        return True
+    if isinstance(expected, Mapping):
+        return any(isinstance(value, Decimal) for value in expected.values())
+    if _is_sequence_like(expected):
+        # ``.flat`` also makes a 0-d numpy array iterable, which it is not
+        # otherwise, despite being sized and subscriptable.
+        values = getattr(expected, "flat", expected)
+        return any(isinstance(value, Decimal) for value in values)
+    return False
+
+
+def _warn_on_inexact_decimal_tolerance(
+    expected: object,
+    rel: float | Decimal | timedelta | None,
+    abs: float | Decimal | timedelta | None,
+) -> None:
+    """Warn when a float tolerance is used for a Decimal comparison.
+
+    A float tolerance is converted with ``Decimal.from_float()``, which is
+    exact and therefore keeps the float's full binary expansion: ``rel=0.01``
+    really means a tolerance of ``0.010000000000000000208...``. That is wider
+    than the ``0.01`` that was written, which defeats the point of comparing
+    Decimals in the first place.
+
+    Only floats that cannot be represented exactly are worth warning about;
+    ``0.5`` and friends survive the conversion unchanged, as do ints.
+    """
+    inexact = [
+        (name, value)
+        for name, value in (("rel", rel), ("abs", abs))
+        if type(value) is float and Decimal.from_float(value) != Decimal(repr(value))
+    ]
+    if not inexact or not _contains_decimal(expected):
+        return
+    for name, value in inexact:
+        warnings.warn(
+            PytestApproxDecimalToleranceWarning(
+                f"{name}={value!r} cannot be represented exactly as a Decimal "
+                f"and was widened to {Decimal.from_float(value)}.\n"
+                f"Pass {name}=Decimal({str(value)!r}) to compare against the "
+                f"tolerance you wrote."
+            ),
+            stacklevel=3,
+        )
+
+
+def _is_sequence_like(expected: object) -> TypeGuard[Sequence[Any]]:
     return (
         hasattr(expected, "__getitem__")
         and isinstance(expected, Sized)
         and not isinstance(expected, str | bytes)
+    )
+
+
+def _is_nested_container(value: object) -> bool:
+    """Whether ``value`` is a container ``approx`` cannot descend into.
+
+    ``str``, ``bytes`` and ``bytearray`` are collections as well, but they
+    compare exactly and are handled as leaves, so they are not nesting.
+    """
+    return isinstance(value, Collection) and not isinstance(
+        value, str | bytes | bytearray
     )
 
 
@@ -920,3 +1107,36 @@ def _as_numpy_array(obj: object) -> ndarray | None:
         elif hasattr(obj, "__array__") or hasattr(obj, "__array_interface__"):
             return np.asarray(obj)
     return None
+
+
+def _unbox_numpy_scalar(value: Any) -> Any:
+    """Return the Python object behind a numpy scalar.
+
+    Indexing an object-dtype array yields the stored Python object, which has
+    no ``item()`` of its own -- only numpy's own scalar types need unboxing.
+    """
+    item = getattr(value, "item", None)
+    return value if item is None else item()
+
+
+def _is_bool(val: Any) -> bool:
+    # Check if `val` is a native bool or numpy bool.
+    if isinstance(val, bool):
+        return True
+    if np := sys.modules.get("numpy"):
+        return isinstance(val, np.bool_)
+    return False
+
+
+def _is_nan(val: Any) -> bool:
+    # Decimal must not go through float(), which loses exactness and turns
+    # out-of-float-range values into infinities (see #15005).
+    if isinstance(val, Decimal):
+        return val.is_nan()
+    return math.isnan(val)
+
+
+def _is_inf(val: Any) -> bool:
+    if isinstance(val, Decimal):
+        return val.is_infinite()
+    return math.isinf(val)

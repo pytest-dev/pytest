@@ -429,8 +429,7 @@ Alternatively, you can examine raised warnings in detail using the
 :fixture:`recwarn` fixture (see :ref:`below <recwarn>`).
 
 
-The :fixture:`recwarn` fixture automatically ensures to reset the warnings
-filter at the end of the test, so no global state is leaked.
+The :fixture:`recwarn` fixture automatically resets the warnings filter at the end of the test, so no global state is leaked.
 
 .. _`recording warnings`:
 

@@ -1,0 +1,1 @@
+Fixed fixture resolution failures when specifying multiple test paths on the command line that share common parent directories. Parametrized fixtures defined in a ``conftest.py`` could be silently dropped depending on the order of the specified paths.

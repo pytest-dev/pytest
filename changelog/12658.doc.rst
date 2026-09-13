@@ -1,0 +1,1 @@
+Moved the fixture setup and finalizer hooks to the test running hooks section in the reference documentation.

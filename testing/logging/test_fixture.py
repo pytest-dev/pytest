@@ -206,6 +206,40 @@ def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
     assert unfiltered_tuple == ("test_fixture", 20, "handler call")
 
 
+class DropAllFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return False
+
+
+def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> None:
+    drop_all = DropAllFilter()
+
+    with caplog.filtering(drop_all):
+        logger.warning("Will not be captured")
+        with caplog.filtering(drop_all):
+            logger.warning("Will also not be captured")
+        logger.warning("Should not be captured either")
+
+    assert caplog.records == []
+
+
+def test_with_statement_filtering_already_present(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    drop_all = DropAllFilter()
+
+    caplog.handler.addFilter(drop_all)
+    try:
+        with caplog.filtering(drop_all):
+            logger.warning("Should not be captured")
+
+        # After context manager, filter should STILL be present because it was already there
+        logger.warning("Should still not be captured")
+        assert caplog.records == []
+    finally:
+        caplog.handler.removeFilter(drop_all)
+
+
 @pytest.mark.parametrize(
     "level_str,expected_disable_level",
     [

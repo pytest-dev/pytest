@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterator
 from collections.abc import Sequence
-from typing import Literal
+from collections.abc import Set as AbstractSet
 from unicodedata import normalize
 
 from _pytest import outcomes
@@ -15,14 +15,13 @@ from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.assertion._compare_any import _compare_eq_any
 from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
-from _pytest.assertion._guards import isset
-from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
+from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
+from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _notin_text
 from _pytest.assertion.highlight import dummy_highlighter as dummy_highlighter
 from _pytest.config import Config
-from _pytest.config import UsageError
 
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -37,32 +36,6 @@ _assertion_pass: Callable[[int, str, str], None] | None = None
 
 # Config object which is assigned during pytest_runtest_protocol.
 _config: Config | None = None
-
-ASSERTION_TEXT_DIFF_STYLE_INI = "assertion_text_diff_style"
-ASSERTION_TEXT_DIFF_STYLE_NDIFF: Literal["ndiff"] = "ndiff"
-ASSERTION_TEXT_DIFF_STYLE_BLOCK: Literal["block"] = "block"
-ASSERTION_TEXT_DIFF_STYLE_CHOICES = (
-    ASSERTION_TEXT_DIFF_STYLE_NDIFF,
-    ASSERTION_TEXT_DIFF_STYLE_BLOCK,
-)
-
-
-def get_assertion_text_diff_style(config: Config) -> _AssertionTextDiffStyle:
-    style = str(config.getini(ASSERTION_TEXT_DIFF_STYLE_INI))
-    match style:
-        case "ndiff" | "block":
-            return style
-        case _:
-            choices = ", ".join(
-                repr(choice) for choice in ASSERTION_TEXT_DIFF_STYLE_CHOICES
-            )
-            raise UsageError(
-                f"{ASSERTION_TEXT_DIFF_STYLE_INI} must be one of {choices}; got {style!r}"
-            )
-
-
-def validate_assertion_text_diff_style(config: Config) -> None:
-    get_assertion_text_diff_style(config)
 
 
 def format_explanation(explanation: str) -> str:
@@ -140,6 +113,7 @@ def assertrepr_compare(
     verbose: int,
     highlighter: _HighlightFunc,
     assertion_text_diff_style: _AssertionTextDiffStyle,
+    truncation_budget: TruncationBudget = NO_TRUNCATION_BUDGET,
 ) -> Iterator[str]:
     """Yield specialised explanations for some operators/operands.
 
@@ -176,20 +150,22 @@ def assertrepr_compare(
     summary = f"{left_repr} {op} {right_repr}"
 
     try:
-        if op == "==":
-            source = _compare_eq_any(
-                left,
-                right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
-            )
-        elif op == "not in" and istext(left) and istext(right):
-            source = _notin_text(left, right, verbose)
-        elif op in {"!=", ">=", "<=", ">", "<"} and isset(left) and isset(right):
-            source = SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
-        else:
-            source = iter(())
+        match (left, op, right):
+            case (_, "==", _):
+                source = _compare_eq_any(
+                    left,
+                    right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
+                    truncation_budget,
+                )
+            case (str(), "not in", str()):
+                source = _notin_text(left, right, verbose, truncation_budget)
+            case (AbstractSet(), "!=" | ">=" | "<=" | ">" | "<", AbstractSet()):
+                source = SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
+            case _:
+                source = iter(())
 
         # Only yield the summary if there is a detailed explanation.
         # Make sure there's a separating empty line after the summary.

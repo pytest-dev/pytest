@@ -1,0 +1,3 @@
+The line numbers of a module's statements are now computed once per traceback
+instead of once per traceback entry, which noticeably speeds up rendering
+failures raised from large test modules.

@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import re
 import sys
 import warnings
 
@@ -500,6 +501,31 @@ class TestWarns:
             with pytest.warns(UserWarning, match="v1 warning"):
                 warnings.warn("v1 warning", UserWarning)
                 warnings.warn("non-matching v2 warning", UserWarning)
+
+    def test_re_emit_filename_derived_module(self) -> None:
+        """Regression test for #11933.
+
+        Re-emitted warnings were attributed to the ``warnings`` module rather
+        than the location the warning was originally emitted from, so
+        ``module``-based warning filters were applied to the wrong warnings.
+        """
+        # When no `module` is passed to `warn_explicit`, it derives one from
+        # the filename by stripping the ".py" suffix.
+        derived_module = re.escape(
+            sys._getframe().f_code.co_filename.removesuffix(".py")
+        )
+        with warnings.catch_warnings():
+            # Must not match the re-emitted warning below; before the fix it
+            # did, because the warning was attributed to the `warnings` module.
+            warnings.filterwarnings("ignore", module="warnings")
+            # Must match the re-emitted warning.
+            warnings.filterwarnings(
+                "error", category=DeprecationWarning, module=derived_module
+            )
+            with pytest.raises(DeprecationWarning, match="unmatched"):
+                with pytest.warns(UserWarning, match="user warning"):
+                    warnings.warn("user warning", UserWarning)
+                    warnings.warn("unmatched", DeprecationWarning)
 
     def test_catch_warning_within_raise(self) -> None:
         # warns-in-raises works since https://github.com/pytest-dev/pytest/pull/11129

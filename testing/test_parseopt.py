@@ -74,6 +74,11 @@ class TestParser:
         argument = parseopt.Argument(action)
         assert argument.type is str
 
+    def test_get_argparse_dest(self) -> None:
+        assert parseopt._get_argparse_dest(("--keyword",)) == "keyword"
+        assert parseopt._get_argparse_dest(("-x",)) == "x"
+        assert parseopt._get_argparse_dest(("-x", "--exit-first")) == "exit_first"
+
     def test_group_add_and_get(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("hello")
         assert group.name == "hello"
@@ -122,6 +127,32 @@ class TestParser:
         assert len(group.options) == 0
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
+
+    def test_group_addoption_rejects_implicit_dest_conflict(
+        self, parser: parseopt.Parser
+    ) -> None:
+        group = parser.getgroup("hello")
+        group._addoption("-k", dest="keyword", action="store")
+
+        with pytest.raises(ValueError) as err:
+            group.addoption("--keyword", action="store")
+
+        assert str(err.value) == (
+            "option dest 'keyword' already used by ['-k'] "
+            "(this is the option that maps to dest 'keyword'); "
+            "pass dest='keyword' explicitly to share the destination"
+        )
+
+    def test_group_addoption_allows_explicit_dest_conflict(
+        self, parser: parseopt.Parser
+    ) -> None:
+        group = parser.getgroup("hello")
+        group.addoption("--capture", action="store", default="fd")
+        group._addoption("-s", dest="capture", action="store_const", const="no")
+
+        args = parser.parse(["-s"])
+
+        assert args.capture == "no"
 
     def test_parse(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", dest="hello", action="store")

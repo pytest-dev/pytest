@@ -1,0 +1,5 @@
+:func:`pytest.approx` now raises a ``TypeError`` for any nested container, not
+only for one of the same type as its parent. Previously ``approx([{"k": 1}])``
+and ``approx({"k": [1]})`` were accepted and then compared unequal to every
+value, silently ignoring the tolerance, while ``approx([[1]])`` correctly
+reported that nesting is unsupported.

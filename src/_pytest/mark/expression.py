@@ -70,10 +70,11 @@ class Token:
 
 
 class Scanner:
-    __slots__ = ("current", "input", "tokens")
+    __slots__ = ("current", "idents", "input", "tokens")
 
     def __init__(self, input: str) -> None:
         self.input = input
+        self.idents: set[str] = set()
         self.tokens = self.lex(input)
         self.current = next(self.tokens)
 
@@ -163,13 +164,13 @@ class Scanner:
 IDENT_PREFIX = "$"
 
 
-def expression(s: Scanner) -> ast.Expression:
+def expression(s: Scanner) -> tuple[ast.Expression, frozenset[str]]:
     if s.accept(TokenType.EOF):
         ret: ast.expr = ast.Constant(False)
     else:
         ret = expr(s)
         s.accept(TokenType.EOF, reject=True)
-    return ast.fix_missing_locations(ast.Expression(ret))
+    return ast.fix_missing_locations(ast.Expression(ret)), frozenset(s.idents)
 
 
 def expr(s: Scanner) -> ast.expr:
@@ -197,6 +198,7 @@ def not_expr(s: Scanner) -> ast.expr:
         return ret
     ident = s.accept(TokenType.IDENT)
     if ident:
+        s.idents.add(ident.value)
         name = ast.Name(IDENT_PREFIX + ident.value, ast.Load())
         if s.accept(TokenType.LPAREN):
             ret = ast.Call(func=name, args=[], keywords=all_kwargs(s))
@@ -314,12 +316,16 @@ class Expression:
     The expression can be evaluated against different matchers.
     """
 
-    __slots__ = ("_code", "input")
+    __slots__ = ("_code", "_idents", "input")
 
-    def __init__(self, input: str, code: types.CodeType) -> None:
+    def __init__(
+        self, input: str, code: types.CodeType, idents: frozenset[str]
+    ) -> None:
         #: The original input line, as a string.
         self.input: Final = input
         self._code: Final = code
+        #: All identifiers which appear in the expression.
+        self._idents: Final = idents
 
     @classmethod
     def compile(cls, input: str) -> Expression:
@@ -329,13 +335,17 @@ class Expression:
 
         :raises SyntaxError: If the expression is malformed.
         """
-        astexpr = expression(Scanner(input))
+        astexpr, idents = expression(Scanner(input))
         code = compile(
             astexpr,
             filename="<pytest match expression>",
             mode="eval",
         )
-        return Expression(input, code)
+        return Expression(input, code, idents)
+
+    def idents(self) -> frozenset[str]:
+        """Return the set of all identifiers which appear in the expression."""
+        return self._idents
 
     def evaluate(self, matcher: ExpressionMatcher) -> bool:
         """Evaluate the match expression.

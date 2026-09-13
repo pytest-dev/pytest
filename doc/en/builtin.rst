@@ -142,7 +142,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         For more details: :ref:`doctest_namespace`.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1563
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1564
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 

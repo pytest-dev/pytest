@@ -408,7 +408,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     call = CallInfo.from_call(
         collect, "collect", reraise=(KeyboardInterrupt, SystemExit)
     )
-    longrepr: None | tuple[str, int, str] | str | TerminalRepr = None
+    longrepr: tuple[str, int, str] | str | TerminalRepr | None = None
     if not call.excinfo:
         outcome: Literal["passed", "skipped", "failed"] = "passed"
     else:
@@ -431,7 +431,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
     result = call.result if not call.excinfo else None
-    rep = CollectReport(collector.nodeid, outcome, longrepr, result)
+    rep = CollectReport(collector.id, outcome, longrepr, result)
     rep.call = call  # type: ignore # see collect_one_node
     return rep
 

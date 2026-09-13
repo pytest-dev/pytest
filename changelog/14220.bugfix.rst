@@ -1,1 +1,0 @@
-Fixed a logic bug in :class:`pytest.RaisesGroup` which would might cause it to display incorrect "It matches `FooError()` which was paired with `BarError`" messages.

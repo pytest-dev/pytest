@@ -15,6 +15,19 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _callspec2-renamed:
+
+``_pytest.python.CallSpec2`` renamed to ``CallSpec``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+The private ``_pytest.python.CallSpec2`` name has been renamed to ``CallSpec``.
+
+Plugins that import ``CallSpec2`` should update to ``CallSpec``. The old
+``CallSpec2`` alias remains available for now and will be removed in pytest 10.
+
+
 .. _fixture-nodeid-deprecated:
 
 Passing ``baseid``/``nodeid`` strings to fixture registration APIs
@@ -263,6 +276,11 @@ test class for each test method, while the fixture runs only once per class on a
 Using ``@classmethod`` ensures attributes are set on the class itself, making them accessible
 to all test methods.
 
+.. deprecated:: 9.2
+
+Similarly, using a scope higher than ``class`` (``module``, ``package`` or ``session``)
+without using ``@classmethod`` (or ``@staticmethod``) is deprecated and will be
+removed in pytest 10.0.
 
 .. _monkeypatch-fixup-namespace-packages:
 
@@ -422,7 +440,7 @@ The ``yield_fixture`` function/decorator
 
 .. deprecated:: 6.2
 
-``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
+``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture` and will be removed in pytest 10.
 
 It has been so for a very long time, so it can be searched/replaced safely.
 

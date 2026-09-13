@@ -10,6 +10,7 @@ import dataclasses
 from typing import TYPE_CHECKING
 
 from .expression import Expression
+from .structures import _EmptyParameterSetMark
 from .structures import _HiddenParam
 from .structures import EMPTY_PARAMETERSET_OPTION
 from .structures import get_empty_parameterset_mark
@@ -124,7 +125,12 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
     parser.addini("markers", "Register new markers for test functions", "linelist")
-    parser.addini(EMPTY_PARAMETERSET_OPTION, "Default marker for empty parametersets")
+    parser.addini(
+        EMPTY_PARAMETERSET_OPTION,
+        "Default marker for empty parametersets",
+        type=_EmptyParameterSetMark,
+        default="skip",
+    )
 
 
 @hookimpl(tryfirst=True)
@@ -134,12 +140,9 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.markers:
         config._do_configure()
         tw = _pytest.config.create_terminal_writer(config)
-        for line in config.getini("markers"):
-            parts = line.split(":", 1)
-            name = parts[0]
-            rest = parts[1] if len(parts) == 2 else ""
-            tw.write(f"@pytest.mark.{name}:", bold=True)
-            tw.line(rest)
+        for marker in config._iter_registered_markers():
+            tw.write(f"@pytest.mark.{marker.signature}:", bold=True)
+            tw.line(f" {marker.description}" if marker.description else "")
             tw.line()
         config._ensure_unconfigure()
         return 0
@@ -258,6 +261,8 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
         return
 
     expr = _parse_expression(matchexpr, "Wrong expression passed to '-m'")
+    _validate_marker_names(expr, config)
+
     remaining: list[Item] = []
     deselected: list[Item] = []
     for item in items:
@@ -268,6 +273,28 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
+
+
+def _validate_marker_names(expr: Expression, config: Config) -> None:
+    """Validate that all marker names in the expression are registered.
+
+    Only validates when strict_markers is enabled.
+    """
+    strict_markers = config.getini("strict_markers")
+    if strict_markers is None:
+        strict_markers = config.getini("strict")
+    if not strict_markers:
+        return
+
+    registered_markers = {m.name for m in config._iter_registered_markers()}
+
+    unknown_markers = expr.idents() - registered_markers
+    if unknown_markers:
+        unknown_str = ", ".join(sorted(unknown_markers))
+        raise UsageError(
+            f"Unknown marker(s) in '-m' expression: {unknown_str}. "
+            "Use 'pytest --markers' to see available markers."
+        )
 
 
 def _parse_expression(expr: str, exc_message: str) -> Expression:
@@ -288,13 +315,8 @@ def pytest_configure(config: Config) -> None:
     config.stash[old_mark_config_key] = MARK_GEN._config
     MARK_GEN._config = config
 
-    empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
-
-    if empty_parameterset not in ("skip", "xfail", "fail_at_collect", None, ""):
-        raise UsageError(
-            f"{EMPTY_PARAMETERSET_OPTION!s} must be one of skip, xfail or fail_at_collect"
-            f" but it is {empty_parameterset!r}"
-        )
+    # Eagerly validate the value; it is only read lazily during collection.
+    config.getini(EMPTY_PARAMETERSET_OPTION)
 
 
 def pytest_unconfigure(config: Config) -> None:

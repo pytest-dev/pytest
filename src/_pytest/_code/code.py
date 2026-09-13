@@ -17,6 +17,8 @@ from traceback import extract_tb
 from traceback import format_exception
 from traceback import format_exception_only
 from traceback import FrameSummary
+from traceback import StackSummary
+from traceback import TracebackException
 from types import CodeType
 from types import FrameType
 from types import TracebackType
@@ -676,8 +678,7 @@ class ExceptionInfo(Generic[E]):
         text = "".join(lines)
         text = text.rstrip()
         if tryshort:
-            if text.startswith(self._striptext):
-                text = text[len(self._striptext) :]
+            text = text.removeprefix(self._striptext)
         return text
 
     def errisinstance(self, exc: EXCEPTION_OR_MORE) -> bool:
@@ -1167,10 +1168,10 @@ class ExceptionInfoFormatter:
         TypeError), in which case we do our best to warn the user of the
         error and show a limited traceback.
         """
+        max_frames = 10
         try:
             recursionindex = traceback.recursionindex()
         except Exception as e:
-            max_frames = 10
             extraline: str | None = (
                 "!!! Recursion error detected, but an error occurred locating the origin of recursion.\n"
                 "  The following exception happened when comparing locals in the stack frame:\n"
@@ -1184,6 +1185,18 @@ class ExceptionInfoFormatter:
             if recursionindex is not None:
                 extraline = "!!! Recursion detected (same locals & position)"
                 traceback = traceback[: recursionindex + 1]
+            elif self.tbfilter is not False and len(traceback) > 2 * max_frames:
+                # The origin of the recursion could not be pinned down (the frames
+                # differ), but rendering hundreds of near-identical entries is both
+                # slow and unreadable -- show the ends only, as above.
+                extraline = (
+                    "!!! Recursion error detected, but the origin of the recursion "
+                    "could not be located.\n"
+                    f"  Displaying first and last {max_frames} stack frames out of {len(traceback)}.\n"
+                    "  Pass `--full-trace` to see all frames."
+                )
+                # Type ignored for the same reason as above.
+                traceback = traceback[:max_frames] + traceback[-max_frames:]  # type: ignore
             else:
                 extraline = None
 
@@ -1204,19 +1217,16 @@ class ExceptionInfoFormatter:
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 reprtraceback: ReprTraceback | ReprTracebackNative
                 if isinstance(e, BaseExceptionGroup):
-                    # don't filter any sub-exceptions since they shouldn't have any internal frames
                     traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
                     extraline = (
                         "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames."
                         if not traceback
                         else None
                     )
+                    tb_exc = TracebackException.from_exception(excinfo.value)
+                    _filter_tracebackexception(tb_exc, excinfo.value, self.tbfilter)
                     reprtraceback = ReprTracebackNative(
-                        format_exception(
-                            type(excinfo.value),
-                            excinfo.value,
-                            traceback[0]._rawentry if traceback else None,
-                        ),
+                        list(tb_exc.format()),
                         extraline=extraline,
                     )
 
@@ -1226,11 +1236,15 @@ class ExceptionInfoFormatter:
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
-                reprtraceback = ReprTracebackNative(format_exception(type(e), e, None))
+                reprtraceback = ReprTracebackNative(
+                    format_exception(type(e), e, None, chain=False)
+                )
                 reprcrash = None
             repr_chain.append((reprtraceback, reprcrash, description))
 
-            if e.__cause__ is not None and self.chain:
+            if isinstance(e, BaseExceptionGroup) and self.chain:
+                e = None
+            elif e.__cause__ is not None and self.chain:
                 e = e.__cause__
                 excinfo_ = ExceptionInfo.from_exception(e) if e.__traceback__ else None
                 description = "The above exception was the direct cause of the following exception:"
@@ -1630,3 +1644,38 @@ def filter_excinfo_traceback(
         return excinfo.traceback.filter(excinfo)
     else:
         return excinfo.traceback
+
+
+def _filter_tracebackexception(
+    tb_exc: TracebackException,
+    e: BaseException,
+    tbfilter: TracebackFilter,
+) -> None:
+    """Filter a ``TracebackException`` in-place, respecting ``__tracebackhide__``.
+
+    This is used to filter native-style tracebacks (currently the only style
+    used for ``BaseExceptionGroup``) without mutating the original exception
+    objects. It recurses into exception group sub-exceptions and into
+    ``__cause__`` / ``__context__`` chains.
+
+    Frames are matched by ``(filename, lineno)``: ``TracebackEntry._rawentry.tb_lineno``
+    is 1-based absolute, matching ``FrameSummary.lineno``.
+    """
+    if e.__traceback__ is not None:
+        excinfo = ExceptionInfo.from_exception(e)
+        filtered = filter_excinfo_traceback(tbfilter, excinfo)
+        kept = {
+            (str(entry.frame.code.path), entry._rawentry.tb_lineno)
+            for entry in filtered
+        }
+        tb_exc.stack = StackSummary.from_list(
+            [fs for fs in tb_exc.stack if (fs.filename, fs.lineno) in kept]
+        )
+    if isinstance(e, BaseExceptionGroup):
+        sub_tb_excs = getattr(tb_exc, "exceptions", None) or []
+        for sub_tb_exc, sub_e in zip(sub_tb_excs, e.exceptions, strict=True):
+            _filter_tracebackexception(sub_tb_exc, sub_e, tbfilter)
+    if tb_exc.__cause__ is not None and e.__cause__ is not None:
+        _filter_tracebackexception(tb_exc.__cause__, e.__cause__, tbfilter)
+    if tb_exc.__context__ is not None and e.__context__ is not None:
+        _filter_tracebackexception(tb_exc.__context__, e.__context__, tbfilter)

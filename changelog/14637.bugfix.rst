@@ -1,0 +1,1 @@
+Pytest now correctly skips identical trailing characters in assertion text diffs even when the compared strings differ at the beginning.

@@ -1,0 +1,3 @@
+The ``indirect``, ``ids`` and ``scope`` arguments of :func:`Metafunc.parametrize() <pytest.Metafunc.parametrize>` -- and therefore of :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` -- are now keyword-only.
+
+Passing them positionally was a common source of confusing errors, e.g. ``parametrize("arg1", "arg2", [(1, 2)])`` made the argvalues land in ``indirect`` and failed with ``indirect fixture '(1, 2)' doesn't exist``; such mistakes now fail with an understandable ``TypeError``. The type annotations have always declared these arguments as keyword-only.

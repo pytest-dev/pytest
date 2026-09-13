@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import textwrap
 
+from _pytest._code import ExceptionInfo
 from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
@@ -453,6 +454,32 @@ class TestXFail:
             ]
         )
 
+    def test_xfail_not_run_does_not_format_traceback(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+
+            @pytest.mark.xfail(run=False, reason="noway")
+            def test_func():
+                assert 0
+            """
+        )
+        getrepr = ExceptionInfo.getrepr
+        styles = []
+
+        def spy_getrepr(self, *args, **kwargs):
+            styles.append(kwargs["style"])
+            return getrepr(self, *args, **kwargs)
+
+        monkeypatch.setattr(ExceptionInfo, "getrepr", spy_getrepr)
+
+        reports = runtestprotocol(item, log=False)
+
+        assert reports[0].skipped
+        assert styles == ["value"]
+
     def test_xfail_not_run_no_setup_run(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             test_one="""
@@ -765,6 +792,56 @@ class TestXFailwithSetupTeardown:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 xfail*"])
+
+    def test_xfail_call_and_teardown_reports_show_phase(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_case="""
+            import pytest
+
+            @pytest.fixture
+            def my_fix():
+                yield
+                raise Exception("teardown")
+
+            @pytest.mark.xfail(reason="Some reason")
+            def test_func(my_fix):
+                raise Exception("call")
+            """
+        )
+
+        result = pytester.runpytest("-rx")
+
+        result.stdout.fnmatch_lines(
+            [
+                "*XFAIL*test_case.py::test_func*",
+                "*XFAIL at teardown of*test_case.py::test_func*",
+            ]
+        )
+
+    def test_xfail_setup_report_shows_phase(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_case="""
+            import pytest
+
+            @pytest.fixture
+            def my_fix():
+                raise Exception("setup")
+
+            @pytest.mark.xfail(reason="Some reason")
+            def test_func(my_fix):
+                pass
+            """
+        )
+
+        result = pytester.runpytest("-rx")
+
+        result.stdout.fnmatch_lines(
+            [
+                "*XFAIL at setup of*test_case.py::test_func*",
+            ]
+        )
 
 
 class TestSkip:

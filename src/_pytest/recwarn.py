@@ -347,7 +347,6 @@ class WarningsChecker(WarningsRecorder):
                         category=w.category,
                         filename=w.filename,
                         lineno=w.lineno,
-                        module=w.__module__,
                         source=w.source,
                     )
 

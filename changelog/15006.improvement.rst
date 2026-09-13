@@ -1,0 +1,1 @@
+:func:`pytest.approx` now emits :class:`pytest.PytestApproxDecimalToleranceWarning` when a ``rel`` or ``abs`` tolerance is given as a :class:`float` that cannot be represented exactly for a :class:`~decimal.Decimal` comparison, since such a tolerance is widened to the float's exact binary value.

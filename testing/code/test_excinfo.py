@@ -1592,6 +1592,121 @@ raise ValueError()
             ]
         )
 
+    def _render_output(self, excinfo: ExceptionInfo[BaseException]) -> str:
+        r = excinfo.getrepr()
+        file = io.StringIO()
+        tw = TerminalWriter(file=file)
+        tw.hasmarkup = False
+        r.toterminal(tw)
+        return file.getvalue()
+
+    def test_exc_chain_repr_exception_group_with_cause(self) -> None:
+        """An exception group raised from another exception must not print that
+        exception's cause chain twice."""
+        try:
+            try:
+                raise RuntimeError("original cause")
+            except RuntimeError as exc:
+                raise ExceptionGroup("group", [ValueError("inner")]) from exc
+        except ExceptionGroup:
+            excinfo = ExceptionInfo.from_current()
+
+        output = self._render_output(excinfo)
+        assert output.count("RuntimeError: original cause") == 1
+        assert output.count("ExceptionGroup: group") == 1
+        assert output.count("ValueError: inner") == 1
+        assert output.count("The above exception was the direct cause") == 1
+
+    def test_exc_chain_repr_exception_group_with_context(self) -> None:
+        """An exception group raised during handling must not print the
+        implicit context chain twice."""
+        exc1 = RuntimeError("implicit context")
+        try:
+            raise exc1
+        except RuntimeError as exc:
+            group = ExceptionGroup("group", [ValueError("inner")])
+            group.__context__ = exc
+        try:
+            raise group
+        except ExceptionGroup:
+            excinfo = ExceptionInfo.from_current()
+
+        output = self._render_output(excinfo)
+        assert output.count("RuntimeError: implicit context") == 1
+        assert output.count("During handling of the above exception") == 1
+
+    def test_exc_chain_repr_nested_exception_group_with_cause(self) -> None:
+        """A nested exception group raised from another exception must not
+        print the cause chain twice."""
+        try:
+            try:
+                raise RuntimeError("root cause")
+            except RuntimeError as exc:
+                raise ExceptionGroup(
+                    "outer", [ExceptionGroup("inner", [ValueError("v")])]
+                ) from exc
+        except ExceptionGroup:
+            excinfo = ExceptionInfo.from_current()
+
+        output = self._render_output(excinfo)
+        assert output.count("RuntimeError: root cause") == 1
+        assert output.count("The above exception was the direct cause") == 1
+
+    def test_exc_chain_repr_without_traceback_multiple_links(self) -> None:
+        """
+        Exceptions without a traceback that are themselves part of a longer
+        chain must not have their remaining chain printed twice: once by
+        Python's own ``traceback.format_exception`` (used as a fallback when
+        an exception has no ``__traceback__``) and once more by pytest's own
+        chain-walking loop (#8321).
+        """
+        exc1 = ValueError("abcd")
+        exc2 = IndexError("efgh")
+        exc3 = KeyError("ijkl")
+        exc4 = RuntimeError("mnop")
+        exc1.__cause__ = exc2
+        exc2.__context__ = exc3
+        exc3.__cause__ = exc4
+
+        try:
+            raise exc1
+        except ValueError:
+            excinfo = ExceptionInfo.from_current()
+
+        output = self._render_output(excinfo)
+        for message in (
+            "ValueError: abcd",
+            "IndexError: efgh",
+            "KeyError: 'ijkl'",
+            "RuntimeError: mnop",
+        ):
+            assert output.count(message) == 1, (
+                f"{message!r} should appear exactly once in the output, "
+                f"got {output.count(message)} occurrences:\n{output}"
+            )
+        assert output.count("The above exception was the direct cause") == 2
+        assert output.count("During handling of the above exception") == 1
+
+    def test_exc_chain_repr_mixed_traceback(self) -> None:
+        """
+        An exception without a traceback whose chain member has a traceback
+        must have that member printed once, in pytest's own style.
+        """
+        exc1 = ValueError("outer without traceback")
+        try:
+            raise RuntimeError("inner with traceback")
+        except RuntimeError as exc:
+            exc1.__cause__ = exc
+        try:
+            raise exc1
+        except ValueError:
+            excinfo = ExceptionInfo.from_current()
+
+        output = self._render_output(excinfo)
+        assert output.count("ValueError: outer without traceback") == 1
+        assert output.count("RuntimeError: inner with traceback") == 1
+        assert output.count("The above exception was the direct cause") == 1
+
     def test_exc_chain_repr_cycle(self, importasmod, tw_mock):
         __tracebackhide__ = True
         mod = importasmod(
@@ -1759,6 +1874,47 @@ def test_exception_repr_extraction_error_on_recursion():
             "*ValueError: The truth value of an array*",
         ]
     )
+
+
+@pytest.mark.usefixtures("limited_recursion_depth")
+def test_undetectable_recursion_is_truncated() -> None:
+    """A recursion whose origin cannot be located is shown ends-only (#10745)."""
+
+    def f(x):
+        # The locals differ in every frame, so recursionindex() finds nothing.
+        f(x + 1)
+
+    with pytest.raises(RecursionError) as excinfo:
+        f(0)
+
+    p = ExceptionInfoFormatter(style="long", tbfilter=True)
+    traceback, extraline = p._truncate_recursive_traceback(excinfo.traceback)
+    assert len(traceback) == 20
+    assert extraline is not None
+    matcher = LineMatcher(extraline.splitlines())
+    matcher.fnmatch_lines(
+        [
+            "!!! Recursion error detected, but the origin of the recursion could not be located.",
+            "*Displaying first and last 10 stack frames out of *",
+            "*--full-trace*",
+        ]
+    )
+
+
+@pytest.mark.usefixtures("limited_recursion_depth")
+def test_undetectable_recursion_kept_with_full_trace() -> None:
+    """``--full-trace`` (tbfilter=False) still renders every frame (#10745)."""
+
+    def f(x):
+        f(x + 1)
+
+    with pytest.raises(RecursionError) as excinfo:
+        f(0)
+
+    p = ExceptionInfoFormatter(style="long", tbfilter=False)
+    traceback, extraline = p._truncate_recursive_traceback(excinfo.traceback)
+    assert len(traceback) == len(excinfo.traceback)
+    assert extraline is None
 
 
 @pytest.mark.usefixtures("limited_recursion_depth")
@@ -2009,6 +2165,59 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
         ],
         consecutive=True,
     )
+
+
+def test_tracebackhide_in_exceptiongroup_is_respected(pytester: Pytester) -> None:
+    """ExceptionGroup tracebacks respect __tracebackhide__ (#14036)."""
+    p = pytester.makepyfile(
+        """
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
+
+        def g1():
+            __tracebackhide__ = True
+            str.does_not_exist
+
+        def f3():
+            __tracebackhide__ = True
+            1 / 0
+
+        def f2():
+            __tracebackhide__ = True
+            exc = None
+            try:
+                f3()
+            except Exception as e:
+                exc = e
+            exc2 = None
+            try:
+                g1()
+            except Exception as e:
+                exc2 = e
+            raise ExceptionGroup("blah", [exc, exc2])
+
+        def f1():
+            __tracebackhide__ = True
+            f2()
+
+        def test():
+            f1()
+        """
+    )
+    result = pytester.runpytest(str(p), "--tb=short")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*ExceptionGroup: blah (2 sub-exceptions)*",
+            "*ZeroDivisionError: division by zero*",
+            "*AttributeError*does_not_exist*",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*in f1*")
+    result.stdout.no_fnmatch_line("*in f2*")
+    result.stdout.no_fnmatch_line("*in f3*")
+    result.stdout.no_fnmatch_line("*in g1*")
 
 
 def add_note(err: BaseException, msg: str) -> None:
