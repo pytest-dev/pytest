@@ -1891,6 +1891,65 @@ class TestFixtureManagerParseFactories:
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
+    def test_parsefactories_only_unwraps_attributes_that_can_hide_fixtures(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Only wrapper-bearing attributes are checked for hidden fixtures.
+
+        Regression test for #14877: scanning plugin objects (which usually
+        contain no fixtures at all) should not pay the cost of
+        ``inspect.unwrap`` on every attribute. Only attributes which could
+        hide a fixture definition behind another decorator - a
+        ``staticmethod``/``classmethod`` descriptor or an object with a
+        ``__wrapped__`` chain (including a bare
+        :class:`FixtureFunctionDefinition`) - need to be checked.
+        """
+        from _pytest.fixtures import FixtureManager
+        from _pytest.main import Session
+
+        config = pytester.parseconfigure()
+        session = Session.from_config(config)
+        session._fixturemanager = FixtureManager(session)
+        fm = session._fixturemanager
+
+        class Holder:
+            """A plugin-like object with mostly plain attributes."""
+
+            plain_value = 1
+
+            @staticmethod
+            def plain_static_method() -> None:
+                """A plain static method - cannot hide a fixture."""
+
+            def plain_method(self) -> None:
+                """A plain method - cannot hide a fixture."""
+
+            @pytest.fixture
+            def plain_fixture(self) -> int:
+                """A normal fixture - discovered directly."""
+                return 1
+
+            @staticmethod
+            @pytest.fixture
+            def hidden_fixture() -> int:
+                """A fixture hidden behind @staticmethod - must be checked."""
+                return 1
+
+        checked: list[str] = []
+        monkeypatch.setattr(
+            fm, "_check_for_wrapped_fixture", lambda name, obj: checked.append(name)
+        )
+        fm.parsefactories(holder=Holder, node=session)
+        # Plain values, methods and functions are skipped entirely (the bulk
+        # of any plugin object's attributes); only fixture-bearing attributes
+        # and ``staticmethod``/``classmethod`` descriptors - which could hide
+        # a fixture behind a wrapper - are unwrapped.
+        assert sorted(checked) == [
+            "hidden_fixture",
+            "plain_fixture",
+            "plain_static_method",
+        ]
+
     def test_parsefactories_conftest_and_module_and_class(
         self, pytester: Pytester
     ) -> None:
