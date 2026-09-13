@@ -1,0 +1,1 @@
+Restored the tolerance shown by :func:`pytest.approx` for :class:`~decimal.Decimal` values, which since 9.0 displayed ``???`` for the default tolerance and reported the raw ``rel`` ratio instead of the absolute tolerance actually compared against.

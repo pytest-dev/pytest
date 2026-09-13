@@ -1290,6 +1290,9 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestWarning
    :show-inheritance:
 
+.. autoclass:: pytest.PytestApproxDecimalToleranceWarning
+   :show-inheritance:
+
 .. autoclass:: pytest.PytestAssertRewriteWarning
    :show-inheritance:
 

@@ -15,6 +15,7 @@ from operator import ne
 import re
 
 from _pytest.approx import _recursive_sequence_map
+from _pytest.approx import ApproxScalar
 from _pytest.pytester import Pytester
 import pytest
 from pytest import approx
@@ -620,6 +621,19 @@ class TestApprox:
             assert approx(x, rel=0, abs=Decimal("5e-3")) == a
             assert approx(x, rel=0, abs=Decimal("5e-7")) != a
 
+    def test_decimal_outside_float_range(self):
+        """Decimals beyond the float range must not be treated as infinite (#15005)."""
+        expected = Decimal("1e400")
+        actual = Decimal("1.0000001e400")
+        rel = Decimal("1e-6")
+        assert actual == approx(expected, rel=rel)
+        assert actual == approx(expected, abs=rel * expected)
+        assert Decimal("2e400") != approx(expected, rel=rel)
+        # Actual infinities keep behaving as before.
+        assert Decimal("Infinity") == approx(Decimal("Infinity"))
+        assert expected != approx(Decimal("Infinity"))
+        assert Decimal("Infinity") != approx(expected)
+
     def test_fraction(self):
         within_1e6 = [
             (1 + Fraction(1, 1000000), Fraction(1)),
@@ -835,6 +849,13 @@ class TestApprox:
             assert op(a, approx(np.array(x)))
             assert op(np.array(a), approx(np.array(x)))
 
+    def test_numpy_actual_not_convertible(self):
+        np = pytest.importorskip("numpy")
+
+        with pytest.raises(TypeError, match=r"cannot compare .* to numpy\.ndarray"):
+            # A ragged nested sequence has no array representation.
+            [[1, 2], [3]] == approx(np.array([[1, 2], [3, 4]]))
+
     def test_numpy_array_wrong_shape(self):
         np = pytest.importorskip("numpy")
 
@@ -843,6 +864,22 @@ class TestApprox:
 
         assert a12 != approx(a21)
         assert a21 != approx(a12)
+
+    @pytest.mark.parametrize(
+        ("values", "offset"),
+        (
+            pytest.param([Decimal("1.0"), Decimal("2.0")], Decimal(5), id="decimal"),
+            pytest.param([1.0, 2.0], 5.0, id="float"),
+            pytest.param([Fraction(1), Fraction(2)], Fraction(5), id="fraction"),
+        ),
+    )
+    def test_numpy_object_dtype(self, values, offset) -> None:
+        """Object arrays hold plain Python objects, which have no item()."""
+        np = pytest.importorskip("numpy")
+
+        expected = np.array(values, dtype=object)
+        assert expected == approx(expected)
+        assert np.array([v + offset for v in values], dtype=object) != approx(expected)
 
     def test_numpy_array_implicit_conversion(self):
         np = pytest.importorskip("numpy")
@@ -1064,16 +1101,199 @@ class TestApprox:
         monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
         approx_obj = pytest.approx(decimal.Decimal("2.60"))
         assert decimal.Decimal("2.600001") == approx_obj
+        # Building the repr must not touch a float either (#13530); asserting
+        # only the comparison above is what let #15006 slip through.
+        assert repr(approx_obj) == "2.60 ± 2.6e-6"
 
     def test_decimal_approx_float_rel(self) -> None:
-        approx_obj = pytest.approx(decimal.Decimal("2.60"), rel=0.01)
+        with pytest.warns(pytest.PytestApproxDecimalToleranceWarning):
+            approx_obj = pytest.approx(decimal.Decimal("2.60"), rel=0.01)
+        assert decimal.Decimal("2.600001") == approx_obj
+        assert repr(approx_obj) == "2.60 ± 2.6e-2"
+
+    def test_decimal_approx_float_abs(self) -> None:
+        with pytest.warns(pytest.PytestApproxDecimalToleranceWarning):
+            approx_obj = pytest.approx(decimal.Decimal("2.60"), abs=0.01)
         assert decimal.Decimal("2.600001") == approx_obj
         assert repr(approx_obj) == "2.60 ± 1.0e-2"
 
-    def test_decimal_approx_float_abs(self) -> None:
-        approx_obj = pytest.approx(decimal.Decimal("2.60"), abs=0.01)
-        assert decimal.Decimal("2.600001") == approx_obj
-        assert repr(approx_obj) == "2.60 ± 1.0e-2"
+    @pytest.mark.parametrize(
+        ("expected", "kwargs"),
+        (
+            pytest.param(Decimal("2.60"), {"rel": 0.01}, id="scalar-rel"),
+            pytest.param(Decimal("2.60"), {"abs": 0.01}, id="scalar-abs"),
+            pytest.param([Decimal("2.60")], {"rel": 0.01}, id="sequence"),
+            pytest.param({"a": Decimal("2.60")}, {"rel": 0.01}, id="mapping"),
+        ),
+    )
+    def test_inexact_float_tolerance_warns(self, expected, kwargs) -> None:
+        """A float tolerance is widened to its exact binary value (#15006)."""
+        name = next(iter(kwargs))
+        with pytest.warns(
+            pytest.PytestApproxDecimalToleranceWarning,
+            match=rf"{name}=0\.01 cannot be represented exactly",
+        ):
+            approx(expected, **kwargs)
+
+    @pytest.mark.parametrize(
+        ("expected", "kwargs"),
+        (
+            pytest.param(2.60, {"rel": 0.01}, id="float-expected"),
+            pytest.param([1.0, 2.0], {"rel": 0.01}, id="float-sequence"),
+            pytest.param(Decimal("2.60"), {}, id="no-tolerance"),
+            pytest.param(Decimal("2.60"), {"rel": Decimal("0.01")}, id="decimal-rel"),
+            pytest.param(Decimal("2.60"), {"rel": 0.5}, id="exactly-representable"),
+            pytest.param(Decimal("2.60"), {"rel": 1}, id="int-rel"),
+        ),
+    )
+    def test_exact_tolerance_does_not_warn(self, expected, kwargs, recwarn) -> None:
+        approx(expected, **kwargs)
+        assert not [
+            w
+            for w in recwarn
+            if issubclass(w.category, pytest.PytestApproxDecimalToleranceWarning)
+        ]
+
+    def test_inexact_float_tolerance_warns_once_at_the_call_site(
+        self, pytester: Pytester
+    ) -> None:
+        """The warning must point at the user's line, not into approx itself."""
+        pytester.makepyfile(
+            """
+            from decimal import Decimal
+            import pytest
+
+            def test_seq():
+                values = [Decimal(i) for i in range(20)]
+                assert values == pytest.approx(values, rel=0.01)
+            """
+        )
+        result = pytester.runpytest("-Wdefault")
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            ["*:6: PytestApproxDecimalToleranceWarning: rel=0.01 *"]
+        )
+
+    @pytest.mark.parametrize(
+        ("kwargs", "expected_repr"),
+        (
+            ({}, "2.60 ± 2.6e-6"),
+            ({"rel": Decimal("1e-6")}, "2.60 ± 2.6e-6"),
+            ({"rel": Decimal("0.01")}, "2.60 ± 2.6e-2"),
+            ({"abs": Decimal("0.01")}, "2.60 ± 1.0e-2"),
+            ({"rel": Decimal("0.01"), "abs": Decimal(1)}, "2.60 ± 1.0e+0"),
+        ),
+    )
+    def test_decimal_repr_shows_effective_tolerance(
+        self, kwargs, expected_repr
+    ) -> None:
+        """The ± value is the band actually compared against, not ``rel`` (#15006)."""
+        approx_obj = approx(Decimal("2.60"), **kwargs)
+        assert isinstance(approx_obj, ApproxScalar)
+        assert repr(approx_obj) == expected_repr
+        assert Decimal("2.60") + approx_obj.tolerance == approx_obj
+
+    def test_decimal_repr_outside_float_range(self) -> None:
+        """Reprs must not go through float() any more than comparisons do (#15005)."""
+        assert (
+            repr(approx(Decimal("1e400"), rel=Decimal("1e-6"))) == "1E+400 ± 1.0e+394"
+        )
+        assert repr(approx(Decimal("1e-400"))) == "1E-400 ± 1.0e-12"
+
+    def test_decimal_repr_nan_and_infinity(self) -> None:
+        # Infinity is not compared using a tolerance, so none is shown.
+        assert repr(approx(Decimal("Infinity"))) == "Infinity"
+        # A NaN expected value has no sensible tolerance, as for float("nan").
+        assert repr(approx(Decimal("NaN"))) == "NaN ± ???"
+        assert repr(approx(nan)) == "nan ± ???"
+
+    @pytest.mark.parametrize(
+        ("other", "expected", "wanted"),
+        (
+            pytest.param(
+                [Decimal(1), Decimal(2)],
+                [Decimal(1), Decimal(9)],
+                ["Max absolute difference: 7", "Max relative difference: 3.5"],
+                id="sequence",
+            ),
+            pytest.param(
+                [Decimal(0)],
+                [Decimal(1)],
+                ["Max absolute difference: 1", "Max relative difference: inf"],
+                id="sequence-divide-by-zero",
+            ),
+            pytest.param(
+                {"a": Decimal(1)},
+                {"a": Decimal(9)},
+                [
+                    "Max absolute difference: 8",
+                    "Max relative difference: 0.8888888888888888888888888889",
+                ],
+                id="mapping",
+            ),
+            pytest.param(
+                {"a": Decimal(9)},
+                {"a": Decimal(0)},
+                ["Max absolute difference: 9", "Max relative difference: inf"],
+                id="mapping-divide-by-zero",
+            ),
+        ),
+    )
+    def test_decimal_repr_compare_is_float_free(
+        self, monkeypatch, other, expected, wanted
+    ) -> None:
+        """The failure message must not mix Decimals with float sentinels.
+
+        The sequence variant used to report ``-inf`` here, because
+        decimal.FloatOperation subclasses TypeError and was swallowed by the
+        handler meant for non-numbers.
+        """
+        monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
+        explanation = approx(expected)._repr_compare(other)
+        assert explanation[1:3] == wanted
+
+    def test_mapping_relative_diff_undefined(self) -> None:
+        """A zero expected value that does not compare equal to 0.
+
+        timedelta(0) != 0, so the divide-by-zero guard does not catch it and
+        the relative difference stays unknown.
+        """
+        explanation = approx({"a": datetime.timedelta(0)}, rel=0.01)._repr_compare(
+            {"a": datetime.timedelta(seconds=1)}
+        )
+        assert explanation[1:3] == [
+            "Max absolute difference: 0:00:01",
+            "Max relative difference: -inf",
+        ]
+
+    def test_mixed_decimal_and_float_sequence_does_not_hide_float_operation(
+        self, monkeypatch
+    ) -> None:
+        """Comparing the running maximum can still mix a Decimal with a float.
+
+        decimal.FloatOperation subclasses TypeError, so without the explicit
+        re-raise it would be swallowed as a non-number and the reported maximum
+        would silently be the smaller of the two differences.
+        """
+        expected = [Decimal(9), 9.0]
+        other = [Decimal(1), 2.0]
+        assert approx(expected)._repr_compare(other)[1] == "Max absolute difference: 8"
+
+        monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
+        with pytest.raises(decimal.FloatOperation):
+            approx(expected)._repr_compare(other)
+
+    def test_decimal_nan_tolerance_raises_value_error(self) -> None:
+        """A Decimal NaN tolerance must not escape as decimal.InvalidOperation."""
+        nan_abs = approx(Decimal(1), abs=Decimal("NaN"))
+        assert isinstance(nan_abs, ApproxScalar)
+        with pytest.raises(ValueError, match="absolute tolerance can't be NaN"):
+            _ = nan_abs.tolerance
+
+        nan_rel = approx(Decimal(1), rel=Decimal("NaN"))
+        assert isinstance(nan_rel, ApproxScalar)
+        with pytest.raises(ValueError, match="relative tolerance can't be NaN"):
+            _ = nan_rel.tolerance
 
     def test_allow_ordered_sequences_only(self) -> None:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""
