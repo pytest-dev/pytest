@@ -2430,6 +2430,149 @@ class TestRootdir:
         )
         assert rootpath == explicit
 
+    def test_config_file_in_subdir_keeps_project_rootdir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """``-c config/pytest.ini`` must not move the rootdir into ``config/``.
+
+        Doing so broke conftest discovery and node ids (#13246, #9703). The
+        config file's directory takes part in the rootdir decision but does not
+        make it alone.
+        """
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        inipath = config_dir / "pytest.ini"
+        inipath.touch()
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        monkeypatch.chdir(tmp_path)
+
+        # With test paths: common ancestor of the config dir and the paths.
+        rootpath, found_inipath, *_ = determine_setup(
+            inifile=str(inipath),
+            override_ini=None,
+            args=[str(tests_dir)],
+            rootdir_cmd_arg=None,
+            invocation_dir=tmp_path,
+        )
+        assert rootpath == tmp_path
+        assert found_inipath == inipath
+
+        # Without test paths the invocation dir stands in for them.
+        rootpath, _, *_ = determine_setup(
+            inifile=str(inipath),
+            override_ini=None,
+            args=[],
+            rootdir_cmd_arg=None,
+            invocation_dir=tmp_path,
+        )
+        assert rootpath == tmp_path
+
+    def test_config_file_sibling_of_invocation_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Invoking from a subdir with a sibling config dir roots at their ancestor."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        inipath = config_dir / "pytest.ini"
+        inipath.touch()
+        sub = tmp_path / "sub"
+        sub.mkdir()
+        sub_tests = sub / "tests"
+        sub_tests.mkdir()
+        monkeypatch.chdir(sub)
+
+        rootpath, *_ = determine_setup(
+            inifile=str(inipath),
+            override_ini=None,
+            args=[str(sub_tests)],
+            rootdir_cmd_arg=None,
+            invocation_dir=sub,
+        )
+        assert rootpath == tmp_path
+
+    def test_config_file_with_unrelated_invocation_dir(self, tmp_path: Path) -> None:
+        """The rootdir follows the project, not an unrelated working directory."""
+        project = tmp_path / "proj"
+        config_dir = project / "config"
+        config_dir.mkdir(parents=True)
+        inipath = config_dir / "pytest.ini"
+        inipath.touch()
+        tests_dir = project / "tests"
+        tests_dir.mkdir()
+        elsewhere = tmp_path / "elsewhere"
+        elsewhere.mkdir()
+
+        rootpath, *_ = determine_setup(
+            inifile=str(inipath),
+            override_ini=None,
+            args=[str(tests_dir)],
+            rootdir_cmd_arg=None,
+            invocation_dir=elsewhere,
+        )
+        assert rootpath == project
+
+    def test_config_file_and_args_in_unrelated_trees(self, tmp_path: Path) -> None:
+        """With no meaningful common ancestor, keep the config file's directory.
+
+        An argument at the filesystem root leaves nothing but the root itself in
+        common with the config file, and the whole disk is never a useful rootdir.
+        """
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        inipath = config_dir / "pytest.ini"
+        inipath.touch()
+
+        rootpath, *_ = determine_setup(
+            inifile=str(inipath),
+            override_ini=None,
+            args=[tmp_path.anchor],
+            rootdir_cmd_arg=None,
+            invocation_dir=tmp_path,
+        )
+        assert rootpath == config_dir
+
+    def test_config_file_in_subdir_nodeids(self, pytester: Pytester) -> None:
+        """Node ids stay relative to the project root, and per-directory
+        conftests keep their own fixtures (#9703)."""
+        tests_dir = pytester.mkdir("tests")
+        tests_dir.joinpath("test_file1.py").write_text(
+            textwrap.dedent(
+                """\
+                import pytest
+
+                @pytest.fixture(autouse=True)
+                def some_fixture():
+                    print("Fixture called")
+
+                def test_in_file1():
+                    pass
+                """
+            ),
+            encoding="utf-8",
+        )
+        tests_dir.joinpath("test_file2.py").write_text(
+            "def test_in_file2():\n    pass\n", encoding="utf-8"
+        )
+        config_dir = pytester.mkdir("config")
+        config_dir.joinpath("pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+
+        result = pytester.runpytest(
+            "-c",
+            "config/pytest.ini",
+            "-v",
+            "tests/test_file1.py",
+            "tests/test_file2.py",
+        )
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(
+            [
+                f"rootdir: {pytester.path}",
+                "*tests/test_file1.py::test_in_file1*",
+                "*tests/test_file2.py::test_in_file2*",
+            ]
+        )
+
     def test_with_arg_outside_cwd_without_inifile(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
