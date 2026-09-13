@@ -618,7 +618,7 @@ class FixtureRequest(abc.ABC):
 
     @property
     def keywords(self) -> MutableMapping[str, Any]:
-        """Keywords/markers dictionary for the underlying node."""
+        """The :attr:`~_pytest.nodes.Node.keywords` of the underlying node."""
         node: nodes.Node = self.node
         return node.keywords
 
@@ -634,10 +634,11 @@ class FixtureRequest(abc.ABC):
         raise NotImplementedError()
 
     def applymarker(self, marker: str | MarkDecorator) -> None:
-        """Apply a marker to a single test function invocation.
+        """Apply a marker to the test(s) this fixture is running for.
 
-        This method is useful if you don't want to have a keyword/marker
-        on all function invocations.
+        Unlike decorating a test function, which marks every invocation of it,
+        this adds the marker to the request's ``node``: for a function-scoped
+        fixture, the single test invocation currently being set up.
 
         :param marker:
             An object created by a call to ``pytest.mark.NAME(...)``.
