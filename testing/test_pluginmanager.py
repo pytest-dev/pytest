@@ -46,10 +46,6 @@ class TestPytestPluginInteractions:
         """
         )
         config = _config_for_test
-        pm = config.pluginmanager
-        pm.hook.pytest_addhooks.call_historic(
-            kwargs=dict(pluginmanager=config.pluginmanager)
-        )
         config.pluginmanager._importconftest(
             conf,
             importmode="prepend",
@@ -59,6 +55,27 @@ class TestPytestPluginInteractions:
         # print(config.pluginmanager.get_plugins())
         res = config.hook.pytest_myhook(xyz=10)
         assert res == [11]
+
+    def test_addhooks_on_registration(self, pytestpm: PytestPluginManager) -> None:
+        """A plugin contributes its hookspecs when it is registered, not when
+        some Config gets around to parsing a command line (#2720)."""
+
+        class NewHooks:
+            def pytest_myhook(self, xyz):
+                """New hook"""
+
+        class Plugin:
+            def pytest_addhooks(self, pluginmanager):
+                pluginmanager.add_hookspecs(NewHooks)
+
+            def pytest_myhook(self, xyz):
+                return xyz + 1
+
+        pytestpm.register(Plugin())
+
+        assert pytestpm.hook.pytest_myhook.has_spec()
+        pytestpm.check_pending()
+        assert pytestpm.hook.pytest_myhook(xyz=10) == [11]
 
     def test_addhooks_nohooks(self, pytester: Pytester) -> None:
         pytester.makeconftest(
