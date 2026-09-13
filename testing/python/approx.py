@@ -1105,6 +1105,22 @@ class TestApprox:
         ):
             assert actual == approx(expected)
 
+    def test_approx_dicts_with_nonnumeric_mismatch(self) -> None:
+        """https://github.com/pytest-dev/pytest/issues/15009
+
+        Unlike ApproxSequenceLike, ApproxMapping's _repr_compare only
+        guarded against ZeroDivisionError, so a TypeError from diffing
+        non-numeric values (e.g. two unequal strings under the same key)
+        propagated out of the formatter instead of being ignored.
+        """
+        expected = {"item": "a"}
+        actual = {"item": "b"}
+
+        # this would raise TypeError instead of returning normally
+        result = approx(expected)._repr_compare(actual)
+
+        assert any("item" in line for line in result)
+
     def test_approx_on_unordered_mapping_with_mismatch(
         self, pytester: Pytester
     ) -> None:

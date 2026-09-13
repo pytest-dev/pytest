@@ -315,6 +315,9 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
                             )
                     except ZeroDivisionError:
                         pass
+                    # Ignore non-numbers for the diff calculations (#15009).
+                    except TypeError:
+                        pass
                 different_ids.append(approx_key)
 
         message_data = [
