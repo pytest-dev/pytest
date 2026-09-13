@@ -273,10 +273,13 @@ class ApproxNumpy(Approx[ndarray]):
 
         if np.isscalar(actual):
             for i in np.ndindex(self.expected.shape):
-                yield actual, self.expected[i].item()
+                yield actual, _unbox_numpy_scalar(self.expected[i])
         else:
             for i in np.ndindex(self.expected.shape):
-                yield actual[i].item(), self.expected[i].item()
+                yield (
+                    _unbox_numpy_scalar(actual[i]),
+                    _unbox_numpy_scalar(self.expected[i]),
+                )
 
 
 class ApproxMapping(Approx[Mapping[Any, Any]]):
@@ -1050,6 +1053,16 @@ def _as_numpy_array(obj: object) -> ndarray | None:
         elif hasattr(obj, "__array__") or hasattr(obj, "__array_interface__"):
             return np.asarray(obj)
     return None
+
+
+def _unbox_numpy_scalar(value: Any) -> Any:
+    """Return the Python object behind a numpy scalar.
+
+    Indexing an object-dtype array yields the stored Python object, which has
+    no ``item()`` of its own -- only numpy's own scalar types need unboxing.
+    """
+    item = getattr(value, "item", None)
+    return value if item is None else item()
 
 
 def _is_bool(val: Any) -> bool:

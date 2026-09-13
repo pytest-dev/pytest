@@ -858,6 +858,22 @@ class TestApprox:
         assert a12 != approx(a21)
         assert a21 != approx(a12)
 
+    @pytest.mark.parametrize(
+        ("values", "offset"),
+        (
+            pytest.param([Decimal("1.0"), Decimal("2.0")], Decimal(5), id="decimal"),
+            pytest.param([1.0, 2.0], 5.0, id="float"),
+            pytest.param([Fraction(1), Fraction(2)], Fraction(5), id="fraction"),
+        ),
+    )
+    def test_numpy_object_dtype(self, values, offset) -> None:
+        """Object arrays hold plain Python objects, which have no item()."""
+        np = pytest.importorskip("numpy")
+
+        expected = np.array(values, dtype=object)
+        assert expected == approx(expected)
+        assert np.array([v + offset for v in values], dtype=object) != approx(expected)
+
     def test_numpy_array_implicit_conversion(self):
         np = pytest.importorskip("numpy")
 
