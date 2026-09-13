@@ -94,18 +94,16 @@ def pytest_addoption(parser: Parser) -> None:
         dest="keyword",
         default="",
         metavar="EXPRESSION",
-        help="Only run tests which match the given substring expression. "
-        "An expression is a Python evaluable expression "
-        "where all names are substring-matched against test names "
-        "and their parent classes. Example: -k 'test_method or test_"
-        "other' matches all test functions and classes whose name "
-        "contains 'test_method' or 'test_other', while -k 'not test_method' "
-        "matches those that don't contain 'test_method' in their names. "
-        "-k 'not test_method and not test_other' will eliminate the matches. "
-        "Additionally keywords are matched to classes and functions "
-        "containing extra names in their 'extra_keyword_matches' set, "
-        "as well as functions which have names assigned directly to them. "
-        "The matching is case-insensitive.",
+        help="Only run tests matching the given keyword expression, "
+        "e.g. -k 'test_method or test_other', -k 'not (slow or network)'.\n"
+        "Names in the expression are matched case-insensitively as substrings "
+        "of the test's keywords, which are:\n"
+        "- its own name, including any parametrization id\n"
+        "- the names of its class, module and directories\n"
+        "- the names of the markers applied to it or to its parents\n"
+        "- attributes assigned directly to the test function\n"
+        "- any names in its 'extra_keyword_matches' set\n"
+        "Use -m to match marker names exactly, including their arguments.",
     )
 
     group._addoption(  # private to use reserved lower-case short option
