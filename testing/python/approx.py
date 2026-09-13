@@ -620,6 +620,19 @@ class TestApprox:
             assert approx(x, rel=0, abs=Decimal("5e-3")) == a
             assert approx(x, rel=0, abs=Decimal("5e-7")) != a
 
+    def test_decimal_outside_float_range(self):
+        """Decimals beyond the float range must not be treated as infinite (#15005)."""
+        expected = Decimal("1e400")
+        actual = Decimal("1.0000001e400")
+        rel = Decimal("1e-6")
+        assert actual == approx(expected, rel=rel)
+        assert actual == approx(expected, abs=rel * expected)
+        assert Decimal("2e400") != approx(expected, rel=rel)
+        # Actual infinities keep behaving as before.
+        assert Decimal("Infinity") == approx(Decimal("Infinity"))
+        assert expected != approx(Decimal("Infinity"))
+        assert Decimal("Infinity") != approx(expected)
+
     def test_fraction(self):
         within_1e6 = [
             (1 + Fraction(1, 1000000), Fraction(1)),

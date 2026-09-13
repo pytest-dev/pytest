@@ -475,7 +475,7 @@ class ApproxScalar(Approx[ExpectedT]):
         if (
             _is_bool(self.expected)
             or (not isinstance(self.expected, Complex | Decimal))
-            or math.isinf(abs(self.expected))
+            or _is_inf(abs(self.expected))
         ):
             return str(self.expected)
 
@@ -490,7 +490,7 @@ class ApproxScalar(Approx[ExpectedT]):
             if (
                 isinstance(self.expected, Complex)
                 and self.expected.imag
-                and not math.isinf(self.tolerance)
+                and not _is_inf(self.tolerance)
             ):
                 vetted_tolerance += " ∠ ±180°"
         except ValueError:
@@ -526,8 +526,8 @@ class ApproxScalar(Approx[ExpectedT]):
         # Allow the user to control whether NaNs are considered equal to each
         # other or not.  The abs() calls are for compatibility with complex
         # numbers.
-        if math.isnan(abs(self.expected)):
-            return self.nan_ok and math.isnan(abs(actual))
+        if _is_nan(abs(self.expected)):
+            return self.nan_ok and _is_nan(abs(actual))
 
         # Infinity shouldn't be approximately equal to anything but itself, but
         # if there's a relative tolerance, it will be infinite and infinity
@@ -535,7 +535,7 @@ class ApproxScalar(Approx[ExpectedT]):
         # case would have been short circuited above, so here we can just
         # return false if the expected value is infinite.  The abs() call is
         # for compatibility with complex numbers.
-        if math.isinf(abs(self.expected)):
+        if _is_inf(abs(self.expected)):
             return False
 
         # Return true if the two numbers are within the tolerance.
@@ -561,7 +561,7 @@ class ApproxScalar(Approx[ExpectedT]):
             raise ValueError(
                 f"absolute tolerance can't be negative: {absolute_tolerance}"
             )
-        if math.isnan(absolute_tolerance):
+        if _is_nan(absolute_tolerance):
             raise ValueError("absolute tolerance can't be NaN.")
 
         # If the user specified an absolute tolerance but not a relative one,
@@ -585,7 +585,7 @@ class ApproxScalar(Approx[ExpectedT]):
             raise ValueError(
                 f"relative tolerance can't be negative: {relative_tolerance}"
             )
-        if math.isnan(relative_tolerance):
+        if _is_nan(relative_tolerance):
             raise ValueError("relative tolerance can't be NaN.")
 
         # Return the larger of the relative and absolute tolerances.
@@ -1014,3 +1014,17 @@ def _is_bool(val: Any) -> bool:
     if np := sys.modules.get("numpy"):
         return isinstance(val, np.bool_)
     return False
+
+
+def _is_nan(val: Any) -> bool:
+    # Decimal must not go through float(), which loses exactness and turns
+    # out-of-float-range values into infinities (see #15005).
+    if isinstance(val, Decimal):
+        return val.is_nan()
+    return math.isnan(val)
+
+
+def _is_inf(val: Any) -> bool:
+    if isinstance(val, Decimal):
+        return val.is_infinite()
+    return math.isinf(val)
