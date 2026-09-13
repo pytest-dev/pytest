@@ -535,6 +535,26 @@ class TestIntrospectionName:
 class TestIntrospectionSubscript:
     """Subscript / indexing."""
 
+    def test_dict_subscript_shows_key_and_container(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                d = {"a": 1, "b": 2}
+                assert d["a"] == 99
+            """,
+            must_contain=["where 1 = ", "['a']"],
+        )
+
+    def test_list_subscript_shows_index_and_container(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                items = [10, 20, 30]
+                assert items[1] == 99
+            """,
+            must_contain=["where 20 = ", "[1]"],
+        )
+
     def test_subscript_semantics_preserved(self) -> None:
         assert_semantically_equivalent("""
             def check():
@@ -976,6 +996,21 @@ class TestEvaluationOrder:
                 return "passed", value
             """)
 
+    def test_starred_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                items = [1]
+                try:
+                    assert collect(*items, identity(items := [9])) == (1, [9])
+                except AssertionError:
+                    return "raised", items
+                return "passed", items
+            """)
+
     def test_chained_compare_operands_in_order(self) -> None:
         assert_evaluation_order("""
             def check():
@@ -987,6 +1022,21 @@ class TestEvaluationOrder:
                 except AssertionError:
                     return "raised", value
                 return "passed", value
+            """)
+
+    def test_bare_walrus_argument_in_order(self) -> None:
+        """A walrus argument is evaluated in place, before the ones after it."""
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                try:
+                    assert collect((x := 1), identity(x := 2)) == (1, 2)
+                except AssertionError:
+                    return "raised", x
+                return "passed", x
             """)
 
     def test_container_literal_operand_in_order(self) -> None:
@@ -1119,6 +1169,18 @@ class TestEvaluationOrder:
 
 class TestEdgeCases:
     """Regression and edge-case tests combining multiple expression types."""
+
+    def test_subscript_with_variable_key(self) -> None:
+        """Subscript where the key is a variable (not constant)."""
+        assert_introspects(
+            """
+            def check():
+                d = {"hello": 42}
+                key = "hello"
+                assert d[key] == 100
+            """,
+            must_contain=["where 42 = ", "['hello']"],
+        )
 
     def test_subscript_with_call_key(self) -> None:
         """Subscript where the key is a function call."""
