@@ -121,6 +121,9 @@ Here is an example test function that performs some output related checks:
 
 .. code-block:: python
 
+    import sys
+
+
     def test_myoutput(capsys):  # or use "capfd" for fd-level
         print("hello")
         sys.stderr.write("world\n")
