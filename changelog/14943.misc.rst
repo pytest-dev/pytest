@@ -1,0 +1,1 @@
+``ConftestImportFailure`` no longer carries a ``cause`` attribute; the original error is available as ``__cause__`` via the regular exception chain.
