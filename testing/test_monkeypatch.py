@@ -52,6 +52,55 @@ def test_setattr() -> None:
         monkeypatch.setattr(A, "y")  # type: ignore[call-overload]
 
 
+class RaisingDescriptor:
+    """A descriptor whose binding always fails, to detect unwanted ``__get__`` calls."""
+
+    def __get__(self, instance, owner=None):
+        raise AssertionError("descriptor was bound")
+
+
+def test_setattr_raising_does_not_bind_descriptors() -> None:
+    class A:
+        z = RaisingDescriptor()
+
+    # With raising=True the existence check binds descriptors on purpose.
+    monkeypatch = MonkeyPatch()
+    with pytest.raises(AssertionError, match="descriptor was bound"):
+        monkeypatch.setattr(A, "z", 2)
+    with pytest.raises(AssertionError, match="descriptor was bound"):
+        monkeypatch.setattr(A(), "z", 2)
+
+    # With raising=False the attribute must be probed statically, without
+    # binding descriptors (gh-10646).
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(A, "z", 2, raising=False)
+    assert A.z == 2
+    monkeypatch.undo()
+    assert isinstance(A.__dict__["z"], RaisingDescriptor)
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(A(), "z", 2, raising=False)
+    monkeypatch.undo()
+
+
+def test_delattr_raising_does_not_bind_descriptors() -> None:
+    class A:
+        z = RaisingDescriptor()
+
+    # With raising=True the existence check binds descriptors on purpose.
+    monkeypatch = MonkeyPatch()
+    with pytest.raises(AssertionError, match="descriptor was bound"):
+        monkeypatch.delattr(A, "z")
+
+    # With raising=False the attribute must be probed statically, without
+    # binding descriptors (gh-10646).
+    monkeypatch = MonkeyPatch()
+    monkeypatch.delattr(A, "z", raising=False)
+    assert "z" not in A.__dict__
+    monkeypatch.undo()
+    assert isinstance(A.__dict__["z"], RaisingDescriptor)
+
+
 class TestSetattrWithImportPath:
     def test_string_expression(self, monkeypatch: MonkeyPatch) -> None:
         with monkeypatch.context() as mp:

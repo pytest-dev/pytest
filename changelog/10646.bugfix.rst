@@ -1,0 +1,4 @@
+``monkeypatch.setattr`` and ``monkeypatch.delattr`` called with
+``raising=False`` no longer bind descriptors when probing for the attribute's
+existence: the check now reads the attribute statically, so descriptor
+``__get__`` methods are no longer invoked with their side effects.
