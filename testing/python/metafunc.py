@@ -132,7 +132,6 @@ class TestMetafunc:
         result = pytester.runpytest("-q")
         result.assert_outcomes(passed=1)
 
-
     def test_fixturedefs_with_transitive_dependency(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -156,7 +155,6 @@ class TestMetafunc:
         )
         result = pytester.runpytest("-q")
         result.assert_outcomes(passed=1)
-
 
     def test_fixturedefs_with_override(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -195,7 +193,6 @@ class TestMetafunc:
         result = pytester.runpytest("-q")
         result.assert_outcomes(passed=1)
 
-
     def test_fixturedefs_with_direct_parametrization(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -216,7 +213,6 @@ class TestMetafunc:
         )
         result = pytester.runpytest("-q")
         result.assert_outcomes(passed=1)
-
 
     def test_fixturedefs_with_unused_override(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -247,7 +243,6 @@ class TestMetafunc:
         result = pytester.runpytest("-q")
         result.assert_outcomes(passed=1)
 
-
     def test_fixturedefs_with_circular_dependency(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -272,7 +267,6 @@ class TestMetafunc:
         result = pytester.runpytest("-q")
         result.assert_outcomes(errors=1)
 
-
     def test_fixturedefs_is_tuple(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -291,7 +285,6 @@ class TestMetafunc:
         )
         result = pytester.runpytest("-q")
         result.assert_outcomes(passed=1)
-
 
     def test_parametrize_single_arg_trailing_comma(self) -> None:
         """Test that trailing comma in string argnames behaves like tuple argnames.
