@@ -401,7 +401,7 @@ def pytest_collection(session: Session) -> None:
 
 def pytest_runtestloop(session: Session) -> bool:
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
-        raise session.CollectionInterrupted(
+        raise CollectionInterrupted(
             f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
         )
 
@@ -608,7 +608,6 @@ class Session(nodes.Collector):
     """
 
     Interrupted = Interrupted
-    CollectionInterrupted = CollectionInterrupted
     Failed = Failed
     # Set on the session by runner.pytest_sessionstart.
     _setupstate: SetupState
