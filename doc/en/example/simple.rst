@@ -229,7 +229,7 @@ the command line arguments before they get processed:
 If you have the :pypi:`xdist plugin <pytest-xdist>` installed
 you will now always perform test runs using a number
 of subprocesses close to your CPU. Running in an empty
-directory with the above conftest.py:
+directory with the above plugin:
 
 .. code-block:: pytest
 
