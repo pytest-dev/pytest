@@ -224,15 +224,30 @@ The two mechanisms serve distinct roles:
 
       pytest --pyargs mypkg.testing
 
+Combining ``--pyargs`` and ``testpaths``
+""""""""""""""""""""""""""""""""""""""""
+
+When both features intersect:
+
+* If :confval:`testpaths` is defined in configuration and you run ``pytest --pyargs mypkg.testing``, the positional argument ``mypkg.testing`` takes precedence. As with any positional argument, :confval:`testpaths` is ignored and only tests from ``mypkg.testing`` are collected.
+* If you invoke bare ``pytest --pyargs`` without positional arguments, pytest still uses :confval:`testpaths` to locate test directories on the filesystem.
+
+Which one should you use?
+"""""""""""""""""""""""""
+
+For typical development workflows working from a source repository checkout, use :confval:`testpaths`. It avoids scanning unrelated directories (such as virtual environments or build artifacts) during bare runs and leaves command-line arguments free to select individual test files or node IDs.
+
+Reserve :option:`--pyargs` for verifying installed packages in clean environments (such as Docker images or deployment virtual environments) where the original repository source tree is not present.
+
 .. warning::
 
     Avoid placing package names with :option:`--pyargs` inside :confval:`addopts` (such as ``addopts = ["--pyargs", "mypkg.testing"]``) to specify default test locations.
 
-    Because :confval:`addopts` appends options to every pytest invocation as if typed on the command line:
+    Because :confval:`addopts` appends its arguments to every pytest invocation as if typed on the command line:
 
-    * The configured package tests will run on every test execution, even when you attempt to run a single test file such as ``pytest tests/test_single.py``.
-    * Any positional path arguments passed on the command line will also be interpreted as Python package names, which will fail if the path does not match an importable module name.
-    * Common package names such as ``tests`` can collide with other packages or standard library modules found on ``sys.path``.
+    * Positional arguments in :confval:`addopts` run on every test execution. Even when you run a single test file such as ``pytest tests/test_single.py``, pytest will still collect and run all tests from ``mypkg.testing``.
+    * If ``mypkg.testing`` is not installed in the active Python environment, any ``pytest`` invocation will fail with an import error.
+    * If :option:`--pyargs` is enabled globally without specific package names (such as ``addopts = ["--pyargs"]``), pytest checks ``sys.path`` first for any command-line argument. If a local directory or file matches an installed package or standard library module name, pytest will collect tests from the installed package instead of the local filesystem.
 
     For repository test discovery, configure :confval:`testpaths` instead.
 

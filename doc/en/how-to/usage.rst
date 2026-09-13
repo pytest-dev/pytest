@@ -102,7 +102,7 @@ This will import ``pkg.testing`` via ``sys.path`` and use its filesystem locatio
 This is particularly useful when verifying installed packages in a clean virtual environment or container without needing the original test source tree.
 
 Note that :option:`--pyargs` is distinct from the :confval:`testpaths` configuration option: :confval:`testpaths` defines default repository-relative directories to search when running ``pytest`` without file arguments, whereas :option:`--pyargs` imports arguments as modules.
-Avoid adding :option:`--pyargs` to :confval:`addopts` to set default test paths.
+Avoid adding package names with :option:`--pyargs` to :confval:`addopts` to set default test paths.
 See :ref:`pyargs-vs-testpaths` for more details.
 
 .. _args-from-file:
