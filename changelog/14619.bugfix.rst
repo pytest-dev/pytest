@@ -1,0 +1,1 @@
+Fixed a crash in ``pytest.mark.parametrize`` when a non-sequence value is passed for a parameter set. It now provides a clear error message during collection.
