@@ -10,6 +10,7 @@ import textwrap
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
+from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import ParamValueKey
 from _pytest.fixtures import TopRequest
 from _pytest.monkeypatch import MonkeyPatch
@@ -1949,6 +1950,379 @@ class TestFixtureManagerParseFactories:
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
+
+    def test_arg2fixturedefs_mutated_by_plugins(self, pytester: Pytester) -> None:
+        """Plugins mutate `FixtureManager._arg2fixturedefs` directly instead of
+        going through `_register_fixture()` -- pytest-bdd, pytest-bdd-ng,
+        pytest-psqlgraph, pytest-codspeed, pytest-keyring, pytest-fixture-forms
+        and pykiso all do. `getfixturedefs()` must reflect those mutations
+        (#14942)."""
+        pytester.makeconftest(
+            """
+            import pytest
+            from _pytest.fixtures import FixtureDef
+
+
+            def make(fm, name, value, node):
+                return FixtureDef(
+                    config=fm.config,
+                    baseid=None,
+                    argname=name,
+                    func=lambda: value,
+                    scope="function",
+                    params=None,
+                    node=node,
+                    _ispytest=True,
+                )
+
+
+            @pytest.hookimpl(wrapper=True)
+            def pytest_collection(session):
+                result = yield
+                fm = session._fixturemanager
+                item = session.items[0]
+
+                def values(name):
+                    return [d.func() for d in fm.getfixturedefs(name, item) or ()]
+
+                # Whole-key assignment (pytest-codspeed, pytest-keyring, pykiso).
+                fm._arg2fixturedefs["a"] = [make(fm, "a", "a1", session)]
+                assert values("a") == ["a1"], values("a")
+                fm._arg2fixturedefs["a"] = [make(fm, "a", "a2", session)]
+                assert values("a") == ["a2"], values("a")
+
+                # setdefault(...).append(...) followed by remove(...), as
+                # pytest-bdd does around each step. Same list object at the same
+                # length before and after, so a cache keyed on length alone
+                # would serve the removed fixturedef.
+                base = make(fm, "b", "b0", session)
+                fm._arg2fixturedefs["b"] = [base]
+                extra = make(fm, "b", "b1", session)
+                fm._arg2fixturedefs.setdefault("b", []).append(extra)
+                assert values("b") == ["b0", "b1"], values("b")
+                fm._arg2fixturedefs["b"].remove(extra)
+                assert values("b") == ["b0"], values("b")
+
+                # insert(0, ...) (pytest-bdd-ng, pytest-psqlgraph).
+                front = make(fm, "b", "b-front", session)
+                fm._arg2fixturedefs.setdefault("b", []).insert(0, front)
+                assert values("b") == ["b-front", "b0"], values("b")
+
+                # del (pytest-bdd, once the scenario is done).
+                del fm._arg2fixturedefs["a"]
+                assert fm.getfixturedefs("a", item) is None
+
+                return result
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test():
+                pass
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_arg2fixturedefs_mutation_surface(self, pytester: Pytester) -> None:
+        """Every way of mutating `_arg2fixturedefs` and its lists keeps the
+        visibility index that `getfixturedefs()` answers from correct (#14942).
+
+        `test_arg2fixturedefs_mutated_by_plugins` covers the shapes plugins are
+        known to use; this covers the rest of the `list`/`dict` mutation
+        surface, so that a plugin reaching for one of them is not silently
+        served a stale index.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            from _pytest.fixtures import _Arg2FixtureDefs
+            from _pytest.fixtures import FixtureDef
+
+
+            @pytest.fixture
+            def real():
+                return "real"
+
+
+            def test_surface(request, real):
+                fm = request.session._fixturemanager
+                session = request.session
+
+                def make(value):
+                    return FixtureDef(
+                        config=fm.config,
+                        baseid=None,
+                        argname="probe",
+                        func=lambda: value,
+                        scope="function",
+                        params=None,
+                        node=session,
+                        _ispytest=True,
+                    )
+
+                def values(name="probe"):
+                    defs = fm.getfixturedefs(name, request.node)
+                    return None if defs is None else [d.func() for d in defs]
+
+                # Seed via whole-key assignment, and look up once so that an
+                # index exists to be kept in sync or dropped.
+                fm._arg2fixturedefs["probe"] = [make("a")]
+                assert values() == ["a"]
+                probe = fm._arg2fixturedefs["probe"]
+
+                probe.append(make("b"))
+                assert values() == ["a", "b"]
+
+                probe.insert(0, make("c"))
+                assert values() == ["c", "a", "b"]
+
+                probe.extend([make("d")])
+                assert values() == ["c", "a", "b", "d"]
+
+                probe.remove(probe[0])
+                assert values() == ["a", "b", "d"]
+
+                assert probe.pop().func() == "d"
+                assert values() == ["a", "b"]
+
+                probe[0] = make("e")
+                assert values() == ["e", "b"]
+
+                del probe[0]
+                assert values() == ["b"]
+
+                probe += [make("f")]
+                assert values() == ["b", "f"]
+
+                probe.sort(key=lambda d: d.func(), reverse=True)
+                assert values() == ["f", "b"]
+
+                probe.reverse()
+                assert values() == ["b", "f"]
+
+                probe.clear()
+                assert values() == []
+
+                # Dict-level mutation.
+                fm._arg2fixturedefs.setdefault("probe").append(make("g"))
+                assert values() == ["g"]
+
+                fm._arg2fixturedefs.update({"probe": [make("h")]})
+                assert values() == ["h"]
+
+                assert fm._arg2fixturedefs.pop("probe")
+                assert values() is None
+                assert fm._arg2fixturedefs.pop("probe", None) is None
+
+                fm._arg2fixturedefs["probe"] = [make("i")]
+                assert values() == ["i"]
+                del fm._arg2fixturedefs["probe"]
+                assert values() is None
+
+                # Re-assigning a list already tracked under this name keeps
+                # it as-is rather than wrapping it again.
+                fm._arg2fixturedefs["probe"] = [make("l")]
+                same = fm._arg2fixturedefs["probe"]
+                fm._arg2fixturedefs["probe"] = same
+                assert fm._arg2fixturedefs["probe"] is same
+                assert values() == ["l"]
+
+                # Wrapping copies, so one list assigned under two names gives
+                # two independent lists, and the original tracks neither.
+                shared = [make("m")]
+                fm._arg2fixturedefs["probe"] = shared
+                fm._arg2fixturedefs["probe2"] = shared
+                shared.append(make("n"))
+                assert values() == ["m"]
+                assert values("probe2") == ["m"]
+                del fm._arg2fixturedefs["probe2"]
+
+                # `popitem()` pops the most recently inserted key.
+                fm._arg2fixturedefs["probe"] = [make("j")]
+                name, popped = fm._arg2fixturedefs.popitem()
+                assert name == "probe"
+                assert [d.func() for d in popped] == ["j"]
+                assert values() is None
+
+                # `clear()` is exercised on a throwaway mapping: on the live one
+                # it would drop every fixture in the session. It clears the
+                # whole index cache, which lookups then rebuild.
+                throwaway = _Arg2FixtureDefs(fm)
+                throwaway["probe"] = [make("k")]
+                throwaway.clear()
+                assert not throwaway
+                assert fm._arg2fixturedefs_by_key == {}
+                # The cleared cache is rebuilt on the next lookup.
+                assert values("real") == ["real"]
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_visibility_index_matches_naive_lookup(self, request) -> None:
+        """`getfixturedefs()` answers from an index bucketed by visibility key.
+
+        Property-test it against the same question answered the naive way --
+        scan the authoritative `_arg2fixturedefs` list, keep the fixturedefs
+        defined on the requesting node or one of its ancestors, order them most
+        general first -- under arbitrary sequences of the mutations plugins
+        perform on `_arg2fixturedefs` (#14942).
+
+        This is what catches a missing invalidation: dropping the
+        `_invalidate()` from any single `_FixtureDefsList` method fails here.
+        """
+        import warnings
+
+        hypothesis = pytest.importorskip("hypothesis")
+        from hypothesis import stateful
+        import hypothesis.strategies as st
+
+        fm = request.session._fixturemanager
+        names = ["_probe_a", "_probe_b"]
+
+        class FakeNode:
+            """Enough of a `Node` for visibility: identity, nodeid, parents."""
+
+            def __init__(self, nodeid: str, parent: FakeNode | None) -> None:
+                self.nodeid = nodeid
+                self.parent = parent
+
+            def iter_parents(self):
+                node: FakeNode | None = self
+                while node is not None:
+                    yield node
+                    node = node.parent
+
+        # A tree with two branches, so that some fixturedefs are registered on
+        # nodes which are not ancestors of the node being queried.
+        tree = [FakeNode("", None)]
+        for parent_index, part in [
+            (0, "d1"),
+            (1, "d2"),
+            (2, "m.py"),
+            (3, "Cls"),
+            (0, "e1"),
+            (5, "n.py"),
+        ]:
+            parent = tree[parent_index]
+            tree.append(FakeNode(f"{parent.nodeid}/{part}".lstrip("/"), parent))
+
+        def naive(argname, node):
+            faclist = fm._arg2fixturedefs.get(argname)
+            if faclist is None:
+                return None
+            parents = list(node.iter_parents())[::-1]  # most general first
+            rank_by_id = {id(p): r for r, p in enumerate(parents)}
+            rank_by_nodeid = {p.nodeid: r for r, p in enumerate(parents)}
+            matches = []
+            for ordinal, fixturedef in enumerate(faclist):
+                if fixturedef.node is not None:
+                    rank = rank_by_id.get(id(fixturedef.node))
+                else:
+                    rank = rank_by_nodeid.get(fixturedef.baseid)
+                if rank is not None:
+                    matches.append((rank, ordinal, fixturedef))
+            matches.sort(key=lambda match: match[:2])
+            return tuple(fixturedef for _, _, fixturedef in matches)
+
+        def drop_probes():
+            for name in names:
+                fm._arg2fixturedefs.pop(name, None)
+
+        NAME = st.sampled_from(names)
+        NODE = st.integers(0, len(tree) - 1)
+
+        class VisibilityIndex(stateful.RuleBasedStateMachine):
+            def __init__(self):
+                super().__init__()
+                drop_probes()
+
+            def _make(self, name, node_index):
+                return FixtureDef(
+                    config=fm.config,
+                    baseid=None,
+                    argname=name,
+                    func=lambda: None,
+                    scope="function",
+                    params=None,
+                    node=tree[node_index],
+                    _ispytest=True,
+                )
+
+            def _make_legacy(self, name, node_index):
+                """A fixturedef with a string baseid and no node, as plugins
+                which have not moved off the deprecated API still produce."""
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", pytest.PytestRemovedIn10Warning)
+                    return FixtureDef(
+                        config=fm.config,
+                        baseid=tree[node_index].nodeid,
+                        argname=name,
+                        func=lambda: None,
+                        scope="function",
+                        params=None,
+                        _ispytest=True,
+                    )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def register(self, name, node_index):
+                fm._register_fixture(
+                    name=name, func=lambda: None, node=tree[node_index]
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def append(self, name, node_index):
+                fm._arg2fixturedefs.setdefault(name, []).append(
+                    self._make(name, node_index)
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def append_legacy(self, name, node_index):
+                fm._arg2fixturedefs.setdefault(name, []).append(
+                    self._make_legacy(name, node_index)
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def insert_front(self, name, node_index):
+                fm._arg2fixturedefs.setdefault(name, []).insert(
+                    0, self._make(name, node_index)
+                )
+
+            @stateful.rule(name=NAME, node_index=NODE)
+            def assign(self, name, node_index):
+                fm._arg2fixturedefs[name] = [self._make(name, node_index)]
+
+            @stateful.rule(name=NAME, index=st.integers(0, 5))
+            def remove(self, name, index):
+                faclist = fm._arg2fixturedefs.get(name)
+                if faclist:
+                    faclist.remove(faclist[index % len(faclist)])
+
+            @stateful.rule(name=NAME)
+            def delete(self, name):
+                fm._arg2fixturedefs.pop(name, None)
+
+            @stateful.invariant()
+            def index_agrees_with_naive_lookup(self):
+                for name in names:
+                    for node in tree:
+                        assert fm.getfixturedefs(name, node) == naive(name, node), (
+                            name,
+                            node.nodeid,
+                        )
+
+            def teardown(self):
+                drop_probes()
+
+        try:
+            stateful.run_state_machine_as_test(
+                VisibilityIndex,
+                settings=hypothesis.settings(max_examples=100, deadline=None),
+            )
+        finally:
+            drop_probes()
 
     def test_parsefactories_relative_node_ids(
         self, pytester: Pytester, monkeypatch: MonkeyPatch

@@ -182,7 +182,7 @@ class TestFixtureNodeidDeprecations:
     - parsefactories() with no args raises TypeError
     - _register_fixture(nodeid=string) deprecation warning
     - _nodeid_autousenames population and _getautousenames yield
-    - _matchfactories string-based fallback (match + non-match branches)
+    - baseid string-based visibility matching (match + non-match branches)
     """
 
     def test_parsefactories_nodeid_deprecation(self, pytester: Pytester) -> None:
@@ -289,8 +289,9 @@ class TestFixtureNodeidDeprecations:
         result = pytester.runpytest("-W", "default::pytest.PytestRemovedIn10Warning")
         result.assert_outcomes(passed=1)
 
-    def test_matchfactories_string_fallback(self, pytester: Pytester) -> None:
-        """_matchfactories uses baseid string matching for legacy fixtures.
+    def test_baseid_string_fallback(self, pytester: Pytester) -> None:
+        """Fixture visibility falls back to baseid string matching for legacy
+        fixturedefs, which have no node.
 
         Exercises both branches:
         - baseid="" matches all nodes (global fixture)

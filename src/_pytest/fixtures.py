@@ -28,6 +28,7 @@ from typing import Generic
 from typing import Literal
 from typing import NoReturn
 from typing import overload
+from typing import SupportsIndex
 from typing import TYPE_CHECKING
 from typing import TypeVar
 import warnings
@@ -84,6 +85,8 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from _pytest.python import CallSpec
     from _pytest.python import Function
     from _pytest.python import Metafunc
@@ -134,31 +137,6 @@ def get_scope_package(
                 if parent.nodeid == fixturedef.baseid:
                     return parent
     return node.session
-
-
-def is_visibility_more_specific(
-    candidate: FixtureDef[Any], other: FixtureDef[Any]
-) -> bool:
-    """Return whether the visibility of ``candidate`` is strictly more specific
-    than that of ``other``, i.e. ``candidate`` is defined on a strict descendant
-    in the collection tree of where ``other`` is defined."""
-    if candidate.node is None or other.node is None:
-        # Fallback for fixtures registered with a string nodeid (deprecated).
-        # In this case compare baseids, which are nodeid prefixes.
-        # This branch can be removed once baseid deprecation is done (pytest 10).
-        if candidate.baseid == other.baseid:
-            return False
-        if other.baseid == "":
-            return True
-        # `candidate.baseid` must continue with a node separator for it to be a
-        # true descendant.
-        return candidate.baseid.startswith(other.baseid) and candidate.baseid[
-            len(other.baseid)
-        ] in ("/", ":")
-
-    return (
-        candidate.node is not other.node and other.node in candidate.node.iter_parents()
-    )
 
 
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
@@ -999,9 +977,8 @@ class FixtureLookupError(LookupError):
             available = set()
             parent = self.request._pyfuncitem.parent
             assert parent is not None
-            for name, fixturedefs in fm._arg2fixturedefs.items():
-                faclist = list(fm._matchfactories(fixturedefs, parent))
-                if faclist:
+            for name in fm._arg2fixturedefs:
+                if fm.getfixturedefs(name, parent):
                     available.add(name)
             if self.argname in available:
                 msg = (
@@ -1156,6 +1133,25 @@ class FixtureDef(Generic[FixtureValue]):
         #
         # Deprecated: replaced by ``node``.
         self.baseid: Final = node.nodeid if node is not NOTSET else (baseid or "")
+        # Precomputed key for visibility matching, see
+        # `FixtureManager._index_for`: `id()` of the node for node-based
+        # fixtures, the baseid string for legacy ones. The two kinds can never
+        # compare equal, so a single mapping can hold both.
+        #
+        # `id()` is a workaround, not the natural key. The natural key is the
+        # node itself -- nodes compare by identity -- but `Node.__hash__` is a
+        # Python-level function hashing `nodeid`, so using nodes as dict keys
+        # costs a Python call per fixturedef per lookup, which is what made this
+        # a bottleneck in the first place (#14942). If `Node` ever gets an
+        # identity hash (which is what its identity `__eq__` implies anyway),
+        # this can go back to keying on the node.
+        #
+        # Reusing an id would mean matching the wrong node, so it must not
+        # outlive the object: `self.node` holds the node for as long as this
+        # fixturedef exists, and the fixturedef is what carries the key around.
+        self._match_key: Final[int | str] = (
+            id(node) if node is not NOTSET else self.baseid
+        )
         # Whether the fixture was found from a node or a conftest in the
         # collection tree. Will be false for fixtures defined in non-conftest
         # plugins.
@@ -1753,6 +1749,159 @@ def deduplicate_names(*seqs: Iterable[str]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(name for seq in seqs for name in seq))
 
 
+class _FixtureDefsList(list["FixtureDef[Any]"]):
+    """The fixturedef list of one fixture name in `FixtureManager._arg2fixturedefs`.
+
+    `getfixturedefs()` answers from a per-name index bucketed by visibility key
+    (see `FixtureManager._index_for`). Plugins are known to mutate
+    `_arg2fixturedefs` directly rather than going through `_register_fixture()`
+    -- pytest-bdd, pytest-bdd-ng, pytest-psqlgraph, pytest-codspeed,
+    pytest-keyring, pytest-fixture-forms and pykiso all do -- so the list keeps
+    that index in sync: an append extends it in place, and anything else drops
+    it, to be rebuilt on the next lookup.
+    """
+
+    __slots__ = ("_manager", "_name")
+
+    def __init__(
+        self,
+        iterable: Iterable[FixtureDef[Any]] = (),
+        *,
+        manager: FixtureManager,
+        name: str,
+    ) -> None:
+        super().__init__(iterable)
+        self._manager = manager
+        self._name = name
+
+    def _invalidate(self) -> None:
+        self._manager._arg2fixturedefs_by_key.pop(self._name, None)
+
+    def append(self, fixturedef: FixtureDef[Any]) -> None:
+        # Appending only adds a fixturedef with the next ordinal, which the
+        # index can absorb without being rebuilt. This is the hot path: it is
+        # how every fixture in the suite is registered.
+        super().append(fixturedef)
+        index = self._manager._arg2fixturedefs_by_key.get(self._name)
+        if index is not None:
+            index.setdefault(fixturedef._match_key, []).append(
+                (len(self) - 1, fixturedef)
+            )
+
+    def insert(self, index: SupportsIndex, fixturedef: FixtureDef[Any]) -> None:
+        super().insert(index, fixturedef)
+        self._invalidate()
+
+    def extend(self, iterable: Iterable[FixtureDef[Any]]) -> None:
+        super().extend(iterable)
+        self._invalidate()
+
+    def remove(self, fixturedef: FixtureDef[Any]) -> None:
+        super().remove(fixturedef)
+        self._invalidate()
+
+    def pop(self, index: SupportsIndex = -1) -> FixtureDef[Any]:
+        try:
+            return super().pop(index)
+        finally:
+            self._invalidate()
+
+    def clear(self) -> None:
+        super().clear()
+        self._invalidate()
+
+    def sort(self, **kwargs: Any) -> None:
+        super().sort(**kwargs)
+        self._invalidate()
+
+    def reverse(self) -> None:
+        super().reverse()
+        self._invalidate()
+
+    def __setitem__(self, index: Any, value: Any) -> None:
+        super().__setitem__(index, value)
+        self._invalidate()
+
+    def __delitem__(self, index: Any) -> None:
+        super().__delitem__(index)
+        self._invalidate()
+
+    def __iadd__(self, other: Iterable[FixtureDef[Any]]) -> Self:  # type: ignore[misc,override]
+        super().__iadd__(other)
+        self._invalidate()
+        return self
+
+
+class _Arg2FixtureDefs(dict[str, "_FixtureDefsList"]):
+    """`FixtureManager._arg2fixturedefs`, keeping the visibility index in sync.
+
+    Values are coerced to `_FixtureDefsList` so that in-place mutation by
+    plugins is noticed too. See `_FixtureDefsList`.
+
+    That coercion copies: a list assigned under one name is a different object
+    from the one handed in, so assigning the same list under two names gives two
+    independent lists rather than one shared by both, and a list held from
+    before the assignment no longer tracks the stored one::
+
+        fm._arg2fixturedefs["a"] = shared
+        fm._arg2fixturedefs["b"] = shared  # "a" and "b" are now separate
+        shared.append(fixturedef)  # visible under neither
+
+    No known plugin relies on that aliasing, and `_arg2fixturedefs` is internal,
+    so some churn is expected; it is called out because the failure is silent.
+    Assigning a list already stored under the same name is a no-op, so the
+    common ``fm._arg2fixturedefs[name].append(...)`` and re-assignment of a list
+    read back out of the mapping keep working unchanged.
+    """
+
+    __slots__ = ("_manager",)
+
+    def __init__(self, manager: FixtureManager) -> None:
+        super().__init__()
+        self._manager = manager
+
+    def _wrap(self, name: str, value: Iterable[FixtureDef[Any]]) -> _FixtureDefsList:
+        if isinstance(value, _FixtureDefsList) and value._name == name:
+            return value
+        return _FixtureDefsList(value, manager=self._manager, name=name)
+
+    def __setitem__(self, name: str, value: Iterable[FixtureDef[Any]]) -> None:
+        super().__setitem__(name, self._wrap(name, value))
+        self._manager._arg2fixturedefs_by_key.pop(name, None)
+
+    def __delitem__(self, name: str) -> None:
+        super().__delitem__(name)
+        self._manager._arg2fixturedefs_by_key.pop(name, None)
+
+    def setdefault(
+        self, name: str, default: Iterable[FixtureDef[Any]] = ()
+    ) -> _FixtureDefsList:
+        try:
+            return self[name]
+        except KeyError:
+            self[name] = default
+            return self[name]
+
+    def pop(self, name: str, *args: Any) -> Any:
+        try:
+            return super().pop(name, *args)
+        finally:
+            self._manager._arg2fixturedefs_by_key.pop(name, None)
+
+    def popitem(self) -> tuple[str, _FixtureDefsList]:
+        name, value = super().popitem()
+        self._manager._arg2fixturedefs_by_key.pop(name, None)
+        return name, value
+
+    def clear(self) -> None:
+        super().clear()
+        self._manager._arg2fixturedefs_by_key.clear()
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        for name, value in dict(*args, **kwargs).items():
+            self[name] = value
+
+
 class FixtureManager:
     """pytest fixture definitions and information is stored and managed
     from this class.
@@ -1791,7 +1940,18 @@ class FixtureManager:
         # suite/plugins defined with this name. Populated by parsefactories().
         # TODO: The order of the FixtureDefs list of each arg is significant,
         #       explain.
-        self._arg2fixturedefs: Final[dict[str, list[FixtureDef[Any]]]] = {}
+        # Cache of the visibility index, keyed by fixture name; must be
+        # assigned before `_arg2fixturedefs`, which keeps it in sync.
+        # Each entry buckets the name's fixturedefs by the visibility key they
+        # are matched on (see `FixtureDef._match_key`), as ``(registration
+        # ordinal, fixturedef)`` pairs, so that `getfixturedefs()` can walk the
+        # requesting node's parent chain instead of scanning every fixturedef
+        # registered under the name. Entries are built on demand by
+        # `_index_for()` and dropped when the name's fixturedefs change.
+        self._arg2fixturedefs_by_key: Final[
+            dict[str, dict[int | str, list[tuple[int, FixtureDef[Any]]]]]
+        ] = {}
+        self._arg2fixturedefs: Final[_Arg2FixtureDefs] = _Arg2FixtureDefs(self)
         # A mapping from a node to a list of autouse fixture names it defines.
         # The Session entry holds global usefixtures from config.
         self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
@@ -2095,24 +2255,10 @@ class FixtureManager:
             node=node,
         )
 
-        faclist = self._arg2fixturedefs.setdefault(name, [])
-        # Insert the fixturedef into the list while maintaining a partial order
-        # based on visibility: a fixturedef whose visibility is more specific
-        # sorts after a more general one, so that it takes precedence in the
-        # override chain (the last applicable fixturedef in the list is used
-        # first, see getfixturedefs).
-        # fixturedefs with the same visibility keep registration order, i.e. the
-        # last registered wins.
-        # The order between non-comparable fixturedefs doesn't matter since they
-        # cannot be visible together.
-        # The idea is that a fixture that is defined closer to the item should
-        # take precedence.
-        for i, existing in enumerate(faclist):
-            if is_visibility_more_specific(existing, fixture_def):
-                faclist.insert(i, fixture_def)
-                break
-        else:
-            faclist.append(fixture_def)
+        # Registration order is kept as-is; the override chain is ordered by
+        # visibility at lookup time instead, see getfixturedefs(). The append
+        # keeps the visibility index in sync, see `_FixtureDefsList`.
+        self._arg2fixturedefs.setdefault(name).append(fixture_def)
         if autouse:
             if node is not NOTSET:
                 self._node_autousenames.setdefault(node, []).append(name)
@@ -2352,27 +2498,47 @@ class FixtureManager:
         :param argname: Name of the fixture to search for.
         :param node: The requesting Node.
         """
-        try:
-            fixturedefs = self._arg2fixturedefs[argname]
-        except KeyError:
+        index = self._index_for(argname)
+        if index is None:
             return None
-        return tuple(self._matchfactories(fixturedefs, node))
 
-    def _matchfactories(
-        self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
-    ) -> Iterator[FixtureDef[Any]]:
-        # Collect parent nodes and their IDs for matching
-        parent_nodes = set(node.iter_parents())
-        parentnodeids = {n.nodeid for n in parent_nodes}
+        # The fixturedefs visible to `node` are exactly those defined on `node`
+        # or on one of its ancestors, so walk the (short) parent chain rather
+        # than scanning every fixturedef registered under `argname`.
+        #
+        # They are returned ordered by visibility -- most general first, so that
+        # the last one is the most specific and takes precedence in the override
+        # chain. Since the ancestors form a chain, this is a total order; ties
+        # (fixturedefs on the same node) are broken by registration order, i.e.
+        # the last registered wins.
+        matches: list[tuple[int, int, FixtureDef[Any]]] = []
+        # `iter_parents()` yields `node` first, so rank it last.
+        for rank, parent in enumerate(reversed(list(node.iter_parents()))):
+            for key in (id(parent), parent.nodeid):
+                for regindex, fixturedef in index.get(key, ()):
+                    matches.append((rank, regindex, fixturedef))
+        matches.sort(key=lambda match: match[:2])
+        return tuple(fixturedef for _, _, fixturedef in matches)
 
-        for fixturedef in fixturedefs:
-            if fixturedef.node is not None:
-                # Node-based matching: check if fixture's node is a parent
-                if fixturedef.node in parent_nodes:
-                    yield fixturedef
-            elif fixturedef.baseid in parentnodeids:
-                # Fallback to string-based matching for legacy/plugins
-                yield fixturedef
+    def _index_for(
+        self, argname: str
+    ) -> dict[int | str, list[tuple[int, FixtureDef[Any]]]] | None:
+        """Return the visibility index of ``argname``, building it if needed.
+
+        Returns None if no fixture is defined with that name at all.
+        """
+        index = self._arg2fixturedefs_by_key.get(argname)
+        if index is None:
+            faclist = self._arg2fixturedefs.get(argname)
+            if faclist is None:
+                return None
+            index = {}
+            for ordinal, fixturedef in enumerate(faclist):
+                index.setdefault(fixturedef._match_key, []).append(
+                    (ordinal, fixturedef)
+                )
+            self._arg2fixturedefs_by_key[argname] = index
+        return index
 
 
 def show_fixtures_per_test(config: Config) -> int | ExitCode:
