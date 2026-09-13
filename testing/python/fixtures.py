@@ -4536,6 +4536,95 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "failure", ["pytest.skip('unavailable')", "raise RuntimeError('boom')"]
+)
+def test_fixture_setup_hook_failure_does_not_break_subsequent_params(
+    pytester: Pytester, failure: str
+) -> None:
+    """A pytest_fixture_setup hookimpl raising before the result is cached
+    must not leave stale finalizers on the FixtureDef, which broke every
+    subsequent parameter of the same fixture with an internal AssertionError
+    (#14800).
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_fixture_setup(fixturedef, request):
+            param = getattr(request, "param", None)
+            if isinstance(param, str) and param.startswith("fixture:"):
+                request.param = request.getfixturevalue(param[len("fixture:"):])
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.fixture
+        def failing_base():
+            {failure}
+
+        @pytest.fixture
+        def derived(failing_base):
+            return "derived"
+
+        @pytest.mark.parametrize("val", ["fixture:derived", "plain-1", "plain-2"])
+        def test_thing(val):
+            assert isinstance(val, str)
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.no_fnmatch_line("*AssertionError*")
+    if "skip" in failure:
+        result.assert_outcomes(passed=2, skipped=1)
+    else:
+        result.assert_outcomes(passed=2, errors=1)
+        result.stdout.fnmatch_lines(["*RuntimeError: boom*"])
+
+
+def test_fixture_post_finalizer_called_once_after_fixture_setup_hook_failure(
+    pytester: Pytester,
+) -> None:
+    """Draining the stale finalizer of a failed setup must not cause duplicate
+    pytest_fixture_post_finalizer calls for later parameters (#5848, #14800)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        calls = []
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_fixture_setup(fixturedef, request):
+            if getattr(request, "param", None) == "fail":
+                raise RuntimeError("setup hook failed")
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            if fixturedef.argname == "val":
+                calls.append(request.node.name)
+
+        def pytest_terminal_summary(terminalreporter):
+            terminalreporter.write_line(f"post_finalizer calls: {calls}")
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("val", ["fail", "ok-1", "ok-2"])
+        def test_thing(val):
+            assert val.startswith("ok")
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2, errors=1)
+    assert (
+        "post_finalizer calls: "
+        "['test_thing[fail]', 'test_thing[ok-1]', 'test_thing[ok-2]']"
+    ) in result.stdout.str()
+
+
 class TestParamValueKey:
     """Unit tests for the equivalence key used by `reorder_items` (#8914)."""
 

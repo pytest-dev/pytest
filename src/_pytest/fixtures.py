@@ -1205,9 +1205,13 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
-        if self.cached_result is None:
-            # Already finished. It is assumed that finalizers cannot be added in
-            # this state.
+        if self.cached_result is None and not self._finalizers:
+            # Already finished.
+            # Note: finalizers may be pending even without a cached result --
+            # execute() registers the pytest_fixture_post_finalizer finalizer
+            # before running the pytest_fixture_setup hook, so if a hookimpl
+            # raises, the failure is not cached but the finalizer must still
+            # run (#14800).
             return
 
         exceptions: list[BaseException] = []
