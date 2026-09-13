@@ -1,0 +1,1 @@
+Fixed incorrect timing information for subtests and parent tests when ``console_output_style="times"``.
