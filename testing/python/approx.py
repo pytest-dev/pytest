@@ -849,6 +849,13 @@ class TestApprox:
             assert op(a, approx(np.array(x)))
             assert op(np.array(a), approx(np.array(x)))
 
+    def test_numpy_actual_not_convertible(self):
+        np = pytest.importorskip("numpy")
+
+        with pytest.raises(TypeError, match=r"cannot compare .* to numpy\.ndarray"):
+            # A ragged nested sequence has no array representation.
+            [[1, 2], [3]] == approx(np.array([[1, 2], [3, 4]]))
+
     def test_numpy_array_wrong_shape(self):
         np = pytest.importorskip("numpy")
 
@@ -1244,6 +1251,37 @@ class TestApprox:
         monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
         explanation = approx(expected)._repr_compare(other)
         assert explanation[1:3] == wanted
+
+    def test_mapping_relative_diff_undefined(self) -> None:
+        """A zero expected value that does not compare equal to 0.
+
+        timedelta(0) != 0, so the divide-by-zero guard does not catch it and
+        the relative difference stays unknown.
+        """
+        explanation = approx({"a": datetime.timedelta(0)}, rel=0.01)._repr_compare(
+            {"a": datetime.timedelta(seconds=1)}
+        )
+        assert explanation[1:3] == [
+            "Max absolute difference: 0:00:01",
+            "Max relative difference: -inf",
+        ]
+
+    def test_mixed_decimal_and_float_sequence_does_not_hide_float_operation(
+        self, monkeypatch
+    ) -> None:
+        """Comparing the running maximum can still mix a Decimal with a float.
+
+        decimal.FloatOperation subclasses TypeError, so without the explicit
+        re-raise it would be swallowed as a non-number and the reported maximum
+        would silently be the smaller of the two differences.
+        """
+        expected = [Decimal(9), 9.0]
+        other = [Decimal(1), 2.0]
+        assert approx(expected)._repr_compare(other)[1] == "Max absolute difference: 8"
+
+        monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
+        with pytest.raises(decimal.FloatOperation):
+            approx(expected)._repr_compare(other)
 
     def test_decimal_nan_tolerance_raises_value_error(self) -> None:
         """A Decimal NaN tolerance must not escape as decimal.InvalidOperation."""
