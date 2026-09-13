@@ -2889,7 +2889,7 @@ Test Selection
     * attributes assigned directly to the test function, as in the legacy ``test_func.slow = True`` style;
     * any names added to the :attr:`~_pytest.nodes.Node.extra_keyword_matches` set of it or of a parent.
 
-    See :ref:`select-tests` for more information and examples.
+    See :ref:`keyword expressions` for more information and examples.
 
 .. option:: -m MARKEXPR
 
