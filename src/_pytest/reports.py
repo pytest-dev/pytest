@@ -370,8 +370,9 @@ class TestReport(BaseReport):
         #: The line number is 0-based.
         self.location: tuple[str, int | None, str] = location
 
-        #: A name -> value dictionary containing all keywords and
-        #: markers associated with a test invocation.
+        #: The names in :attr:`Node.keywords <_pytest.nodes.Node.keywords>`
+        #: of the item, each mapping to ``1``; the values of the node keywords
+        #: are not carried over.
         self.keywords: Mapping[str, Any] = keywords
 
         #: Test outcome, always one of "passed", "failed", "skipped".

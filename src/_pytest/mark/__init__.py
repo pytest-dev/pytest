@@ -164,17 +164,19 @@ def _is_matchable_function_attribute(name: str) -> bool:
 
 @dataclasses.dataclass
 class KeywordMatcher:
-    """A matcher for keywords.
+    """A matcher for keywords, used by ``-k``.
 
-    Given a list of names, matches any substring of one of these names. The
+    Given a set of names, matches any substring of one of these names. The
     string inclusion check is case-insensitive.
 
-    Will match on the name of colitem, including the names of its parents.
-    Only matches names of items which are either a :class:`Class` or a
-    :class:`Function`.
+    The names are collected in :meth:`from_item` from the item and its
+    parents: their node names, the names of the markers in scope, the
+    attributes assigned to the test function, and the
+    :attr:`~_pytest.nodes.Node.extra_keyword_matches` sets.
 
-    Additionally, matches on names in the 'extra_keyword_matches' set of
-    any item, as well as names directly assigned to test functions.
+    Note that these names are collected independently of
+    :attr:`Node.keywords <_pytest.nodes.Node.keywords>`; writing into that
+    mapping does not affect ``-k``.
     """
 
     __slots__ = ("_names",)
