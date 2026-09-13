@@ -604,12 +604,29 @@ class Module(nodes.File, PyCollector):
             return
 
         def xunit_setup_module_fixture(request) -> Generator[None]:
+            # Mark-and-drain unittest module cleanups around this module visit
+            # (#14958). Import-time registrations sit below the mark and are
+            # handled by the session-end backstop in _pytest.unittest.
+            from _pytest.unittest import drain_module_cleanups_to
+            from _pytest.unittest import module_cleanup_mark
+
             module = request.module
+            mark = module_cleanup_mark()
             if setup_module is not None:
-                _call_with_optional_argument(setup_module, module)
-            yield
-            if teardown_module is not None:
-                _call_with_optional_argument(teardown_module, module)
+                try:
+                    _call_with_optional_argument(setup_module, module)
+                # Match unittest / class-fixture: only Exception, not BaseException.
+                except Exception:
+                    drain_module_cleanups_to(mark)
+                    raise
+            try:
+                yield
+            finally:
+                try:
+                    if teardown_module is not None:
+                        _call_with_optional_argument(teardown_module, module)
+                finally:
+                    drain_module_cleanups_to(mark)
 
         fixtures.register_fixture(
             # Use a unique name to speed up lookup.

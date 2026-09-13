@@ -50,6 +50,75 @@ if TYPE_CHECKING:
     import twisted.trial.unittest
 
 
+def _unittest_module_cleanups() -> list[Any]:
+    """Return unittest's process-global module cleanup list (#14958).
+
+    Relies on the private ``unittest.case._module_cleanups`` attribute; see
+    ``test_unittest_module_cleanups_private_api_contract``.
+    """
+    import unittest.case
+
+    cleanups = getattr(unittest.case, "_module_cleanups")
+    assert isinstance(cleanups, list)
+    return cleanups
+
+
+def module_cleanup_mark() -> int:
+    """Return the current length of unittest's process-global module cleanups.
+
+    Used to attribute cleanups registered during a module visit (see #14958).
+    """
+    return len(_unittest_module_cleanups())
+
+
+def drain_module_cleanups_to(mark: int) -> None:
+    """Run module cleanups down to ``mark`` (LIFO), leaving older entries intact.
+
+    Unlike :func:`unittest.case.doModuleCleanups`, this does not drain the entire
+    process-global list. That matters because pytest may interleave and re-enter
+    modules (#14958). Multiple cleanup failures are raised as an
+    :class:`ExceptionGroup`, matching class-cleanup handling.
+    """
+    cleanups = _unittest_module_cleanups()
+    exceptions: list[Exception] = []
+    while len(cleanups) > mark:
+        function, args, kwargs = cleanups.pop()
+        try:
+            function(*args, **kwargs)
+        except Exception as exc:
+            exceptions.append(exc)
+    if not exceptions:
+        return
+    if len(exceptions) == 1:
+        raise exceptions[0]
+    raise ExceptionGroup("Unittest module cleanup errors", exceptions)
+
+
+def drain_remaining_module_cleanups() -> None:
+    """Session-end backstop for cleanups left below every module mark (#14958).
+
+    Import-time ``addModuleCleanup`` registrations are recorded before any
+    module fixture can take a mark, so they are drained here rather than at an
+    arbitrary module boundary.
+    """
+    case = sys.modules.get("unittest.case")
+    if case is None:
+        return
+    cleanups = getattr(case, "_module_cleanups", None)
+    if not cleanups:
+        return
+    # Use the public drain for leftovers; attribution no longer applies.
+    case.doModuleCleanups()
+
+
+@hookimpl(trylast=True)
+def pytest_sessionfinish() -> None:
+    # Runs after the last item's teardown (module mark-and-drain already done).
+    # Session.addfinalizer cannot be used from sessionstart: the session is not
+    # on the SetupState stack yet (#14958).
+    drain_remaining_module_cleanups()
+
+
 _SysExcInfoType = (
     tuple[type[BaseException], BaseException, types.TracebackType]
     | tuple[None, None, None]
