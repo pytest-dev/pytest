@@ -150,6 +150,18 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     return None
 
 
+#: Attributes which are never meaningful as keywords, but do end up in the
+#: ``__dict__`` of a test function: pytest's own mark storage, and the
+#: bookkeeping decorators leave behind (``functools.wraps`` copies ``__wrapped__``
+#: and friends, ``functools.lru_cache`` adds ``cache_parameters``, ...).
+IGNORED_FUNCTION_ATTRIBUTES = frozenset({"pytestmark", "cache_parameters"})
+
+
+def _is_matchable_function_attribute(name: str) -> bool:
+    """Whether a test function attribute may be matched by ``-k``."""
+    return not name.startswith("_") and name not in IGNORED_FUNCTION_ATTRIBUTES
+
+
 @dataclasses.dataclass
 class KeywordMatcher:
     """A matcher for keywords.
@@ -190,10 +202,16 @@ class KeywordMatcher:
         # Add the names added as extra keywords to current or parent items.
         mapped_names.update(item.listextrakeywords())
 
-        # Add the names attached to the current function through direct assignment.
+        # Add the names attached to the current function through direct
+        # assignment, ignoring the attributes that merely happen to live in the
+        # function's __dict__ without anyone meaning them as keywords.
         function_obj = getattr(item, "function", None)
         if function_obj:
-            mapped_names.update(function_obj.__dict__)
+            mapped_names.update(
+                name
+                for name in function_obj.__dict__
+                if _is_matchable_function_attribute(name)
+            )
 
         # Add the markers to the keywords as we no longer handle them correctly.
         mapped_names.update(mark.name for mark in item.iter_markers())

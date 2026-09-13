@@ -1033,6 +1033,36 @@ class TestKeywordSelection:
         _passed, _skipped, failed = reprec.countoutcomes()
         assert failed == 1
 
+    @pytest.mark.parametrize("keyword", ["pytestmark", "wrapped", "cache_parameters"])
+    def test_no_match_on_ignored_function_attributes(
+        self, pytester: Pytester, keyword: str
+    ) -> None:
+        """`-k` ignores attributes that end up in a test function's __dict__
+        without being meant as keywords (#4569)."""
+        pytester.makepyfile(
+            """
+            import functools
+            import pytest
+
+            def deco(fn):
+                @functools.wraps(fn)
+                def wrapper(*args, **kwargs):
+                    return fn(*args, **kwargs)
+                return wrapper
+
+            @pytest.mark.some_mark
+            def test_marked(): pass
+
+            @deco
+            def test_decorated(): pass
+
+            @functools.lru_cache
+            def test_cached(): pass
+            """
+        )
+        result = pytester.runpytest("-k", keyword)
+        result.assert_outcomes(deselected=3)
+
     @pytest.mark.xfail
     def test_keyword_extra_dash(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
