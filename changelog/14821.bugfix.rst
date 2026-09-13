@@ -1,0 +1,1 @@
+Fixed assertion rewriting reading an operand after a later call had rebound its name, so ``assert count == bump()`` compares the ``count`` Python would have compared even when ``bump()`` assigns to it via ``global`` or ``nonlocal``.
