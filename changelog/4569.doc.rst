@@ -1,0 +1,1 @@
+The documentation of :option:`-k` now lists what a test's keywords actually are, including marker names, and says how ``-k`` differs from :option:`-m`.
