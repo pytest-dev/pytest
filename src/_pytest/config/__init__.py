@@ -2320,6 +2320,11 @@ def _strtobool(val: str) -> bool:
         raise ValueError(f"invalid truth value {val!r}")
 
 
+WARNING_FILTER_DOC_URL = (
+    "https://docs.python.org/3/library/warnings.html#describing-warning-filters"
+)
+
+
 @lru_cache(maxsize=50)
 def parse_warning_filter(
     arg: str, *, escape: bool
@@ -2331,6 +2336,8 @@ def parse_warning_filter(
     * Does not apply the filter.
     * Escaping is optional.
     * Raises UsageError so we get nice error messages on failure.
+    * Invalid actions name the valid choices, and hint at the `-W`/`-Wait`
+      short-option pitfall when relevant.
     """
     __tracebackhide__ = True
     error_template = dedent(
@@ -2347,16 +2354,13 @@ def parse_warning_filter(
 
     parts = arg.split(":")
     if len(parts) > 5:
-        doc_url = (
-            "https://docs.python.org/3/library/warnings.html#describing-warning-filters"
-        )
         error = dedent(
             f"""\
             Too many fields ({len(parts)}), expected at most 5 separated by colons:
 
               action:message:category:module:line
 
-            For more information please consult: {doc_url}
+            For more information please consult: {WARNING_FILTER_DOC_URL}
             """
         )
         raise UsageError(error_template.format(error=error))
@@ -2368,10 +2372,10 @@ def parse_warning_filter(
         action: warnings._ActionKind = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
         hint = (
-            " (choose from: default, error, ignore, always, module, once)."
-            " See https://docs.python.org/3/library/warnings.html#describing-warning-filters"
+            " (choose from: default, error, ignore, always, all, module, once)."
+            f" See {WARNING_FILTER_DOC_URL}"
         )
-        if action_ == "ait":
+        if action_.lower() == "ait":
             hint = (
                 " Note that '-W' takes a value, so '-Wait' is parsed as '-W ait'."
                 + hint
