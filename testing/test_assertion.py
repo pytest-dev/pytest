@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import MutableSequence
+from collections.abc import Sequence
 import dataclasses
 import sys
 import textwrap
@@ -1104,6 +1105,65 @@ class TestAssert_reprcompare:
             "      3,",
             "  )",
         ]
+
+    @pytest.mark.parametrize(
+        ("left", "right", "expected"),
+        [
+            ([], [1], "Right contains one more item: 1"),
+            ([1], [], "Left contains one more item: 1"),
+            ([1, 2, 3], [0, 1, 2, 3], "Right contains one more item: 0"),
+            ([1, 2, 3], [1, 2, 3, 4], "Right contains one more item: 4"),
+            ([1, 2, 3], [1, 2, 0, 3], "Right contains one more item: 0"),
+            ([1, 2, 0, 3], [1, 2, 3], "Left contains one more item: 0"),
+            ([1, 1], [1, 0, 1], "Right contains one more item: 0"),
+            ([3, 4, 5], [1, 2], "Left contains one more item: 5"),
+            # Fallback: single extra item but tails don't align
+            ([1, 2, 3], [1, 9, 8, 3], "Right contains one more item: 3"),
+            ([1, 9, 8, 3], [1, 2, 3], "Left contains one more item: 3"),
+            (
+                [1, 2, 3],
+                [0, 1, 2, 3, 4],
+                "Right contains 2 more items, first extra item: 3",
+            ),
+        ],
+    )
+    def test_sequence_extra_item_message(
+        self, left: list[object], right: list[object], expected: str
+    ) -> None:
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert expected in lines
+
+    def test_sequence_extra_item_exotic_eq_falls_back(self) -> None:
+        """Exotic elementwise __eq__ must not break rendering (fallback)."""
+
+        class Exotic(Sequence[int]):
+            def __init__(self, iterable):
+                self.elements = list(iterable)
+
+            def __getitem__(self, item):
+                result = self.elements[item]
+                return Exotic(result) if isinstance(item, slice) else result
+
+            def __len__(self):
+                return len(self.elements)
+
+            def __eq__(self, other):
+                if isinstance(other, Exotic):
+                    result = [
+                        a == b
+                        for a, b in zip(self.elements, other.elements, strict=False)
+                    ]
+                    if len(result) != 1:
+                        raise ValueError("ambiguous, like numpy")
+                    return result[0]
+                return NotImplemented
+
+        lines = callequal(Exotic([1, 2, 3, 4]), Exotic([1, 9, 2, 3, 4]), verbose=1)
+        assert lines is not None
+        assert "Right contains one more item: 4" in lines
+        assert (Exotic([2]) == Exotic([2])) is True
+        assert Exotic([2]).__eq__([2]) is NotImplemented
 
     def test_set(self) -> None:
         expl = callequal({0, 1}, {0, 2})
