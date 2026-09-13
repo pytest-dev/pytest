@@ -447,6 +447,48 @@ def traverse_fixture_closure(
         yield from process_argname(argname)
 
 
+def traverse_fixturedef_closure(
+    initialnames: Iterable[str],
+    *,
+    getfixturedefs: Callable[[str], Sequence[FixtureDef[Any]] | None],
+) -> Iterator[FixtureDef[Any]]:
+    """Statically traverse the fixture definition closure in DFS order.
+
+    Each fixture definition is only yielded once.
+    """
+    current_indices: dict[str, int] = {}
+    yielded: set[FixtureDef[Any]] = set()
+
+    def process_argname(argname: str) -> Iterator[FixtureDef[Any]]:
+        index = current_indices.get(argname)
+
+        if index == -1:
+            return
+
+        fixturedefs = getfixturedefs(argname)
+        if not fixturedefs:
+            return
+
+        index = current_indices.get(argname, -1)
+        if -index > len(fixturedefs):
+            return
+
+        fixturedef = fixturedefs[index]
+        current_indices[argname] = index - 1
+
+        if fixturedef not in yielded:
+            yielded.add(fixturedef)
+            yield fixturedef
+
+        for dep in fixturedef.argnames:
+            yield from process_argname(dep)
+
+        current_indices[argname] = index
+
+    for argname in initialnames:
+        yield from process_argname(argname)
+
+
 @dataclasses.dataclass(frozen=True)
 class FuncFixtureInfo:
     """Fixture-related information for a fixture-requesting item (e.g. test

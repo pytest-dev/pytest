@@ -1,0 +1,1 @@
+﻿Added ``Metafunc.fixturedefs`` to expose the fixture definitions used by a test function, including transitive dependencies and fixture overrides. The returned tuple reflects fixture definitions after parametrization.

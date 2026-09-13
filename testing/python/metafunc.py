@@ -67,6 +67,7 @@ class TestMetafunc:
             name2fixturedefs: dict[str, list[fixtures.FixtureDef[object]]] = {}
 
             def __init__(self, names):
+                self.initialnames = names
                 self.names_closure = names
 
         @dataclasses.dataclass
@@ -110,6 +111,187 @@ class TestMetafunc:
         assert "arg1" in metafunc.fixturenames
         assert metafunc.function is func
         assert metafunc.cls is None
+
+    def test_fixturedefs(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def foo():
+                return 1
+
+            def pytest_generate_tests(metafunc):
+                assert len(metafunc.fixturedefs) == 1
+                assert metafunc.fixturedefs[0].argname == "foo"
+
+            def test_func(foo):
+                assert foo == 1
+            """
+        )
+        result = pytester.runpytest("-q")
+        result.assert_outcomes(passed=1)
+
+
+    def test_fixturedefs_with_transitive_dependency(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def db():
+                return 1
+
+            @pytest.fixture
+            def app(db):
+                return db
+
+            def pytest_generate_tests(metafunc):
+                fixturedefs = metafunc.fixturedefs
+                assert [fixturedef.argname for fixturedef in fixturedefs] == ["app", "db"]
+
+            def test_func(app):
+                assert app == 1
+            """
+        )
+        result = pytester.runpytest("-q")
+        result.assert_outcomes(passed=1)
+
+
+    def test_fixturedefs_with_override(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture
+            def db():
+                return 1
+
+            @pytest.fixture
+            def app(db):
+                return db
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def app(app):
+                return app
+
+            def pytest_generate_tests(metafunc):
+                fixturedefs = metafunc.fixturedefs
+                assert [fixturedef.func.__name__ for fixturedef in fixturedefs] == [
+                    "app",
+                    "app",
+                    "db",
+                ]
+
+            def test_func(app):
+                assert app == 1
+            """
+        )
+        result = pytester.runpytest("-q")
+        result.assert_outcomes(passed=1)
+
+
+    def test_fixturedefs_with_direct_parametrization(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def foo():
+                return "fixture"
+
+            def pytest_generate_tests(metafunc):
+                assert metafunc.fixturedefs[0].func.__name__ == "foo"
+                metafunc.parametrize("foo", ["param"])
+                assert metafunc.fixturedefs[0].func.__name__ != "foo"
+
+            def test_func(foo):
+                assert foo == "param"
+            """
+        )
+        result = pytester.runpytest("-q")
+        result.assert_outcomes(passed=1)
+
+
+    def test_fixturedefs_with_unused_override(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture
+            def app():
+                return "parent"
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def app():
+                return "local"
+
+            def pytest_generate_tests(metafunc):
+                fixturedefs = metafunc.fixturedefs
+                assert [fixturedef.func.__name__ for fixturedef in fixturedefs] == ["app"]
+
+            def test_func(app):
+                assert app == "local"
+            """
+        )
+        result = pytester.runpytest("-q")
+        result.assert_outcomes(passed=1)
+
+
+    def test_fixturedefs_with_circular_dependency(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def a(b):
+                return b
+
+            @pytest.fixture
+            def b(a):
+                return a
+
+            def pytest_generate_tests(metafunc):
+                fixturedefs = metafunc.fixturedefs
+                assert [fixturedef.argname for fixturedef in fixturedefs] == ["a", "b"]
+
+            def test_func(a):
+                pass
+            """
+        )
+        result = pytester.runpytest("-q")
+        result.assert_outcomes(errors=1)
+
+
+    def test_fixturedefs_is_tuple(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def foo():
+                return 1
+
+            def pytest_generate_tests(metafunc):
+                assert isinstance(metafunc.fixturedefs, tuple)
+
+            def test_func(foo):
+                assert foo == 1
+            """
+        )
+        result = pytester.runpytest("-q")
+        result.assert_outcomes(passed=1)
+
 
     def test_parametrize_single_arg_trailing_comma(self) -> None:
         """Test that trailing comma in string argnames behaves like tuple argnames.

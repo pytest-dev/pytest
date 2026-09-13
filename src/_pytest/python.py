@@ -1293,6 +1293,7 @@ class Metafunc:
 
         #: Set of fixture names required by the test function.
         self.fixturenames = fixtureinfo.names_closure
+        self._initialnames = fixtureinfo.initialnames
 
         #: Class object where the test function is defined in or ``None``.
         self.cls = cls
@@ -1303,6 +1304,16 @@ class Metafunc:
         self._calls: list[CallSpec] = []
 
         self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
+
+    @property
+    def fixturedefs(self) -> tuple[fixtures.FixtureDef[Any], ...]:
+        """Fixture definitions used by the test function."""
+        return tuple(
+            fixtures.traverse_fixturedef_closure(
+                self._initialnames,
+                getfixturedefs=self._arg2fixturedefs.get,
+            )
+        )
 
     def parametrize(
         self,
