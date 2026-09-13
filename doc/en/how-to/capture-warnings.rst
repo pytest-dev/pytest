@@ -585,6 +585,21 @@ The full list of warnings is listed in :ref:`the reference documentation <warnin
 Resource Warnings
 -----------------
 
+Unlike warnings emitted directly by application code, :class:`ResourceWarning` warnings for leaked resources are commonly
+emitted later, when the Python interpreter notices the leak during garbage collection. This means a warning filter such
+as ``error::ResourceWarning`` might not fail the test that created the leaked resource, because the warning does not yet
+exist while that test is running. Some Python implementations might never emit the warning.
+
+When pytest observes an unraisable exception caused by a delayed warning, it reports
+:class:`pytest.PytestUnraisableExceptionWarning`. If you want leaked resources to fail tests, consider filtering both
+warning categories:
+
+.. code-block:: python
+
+    @pytest.mark.filterwarnings("error::ResourceWarning")
+    @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
+    def test_resource_cleanup(): ...
+
 Additional information of the source of a :class:`ResourceWarning` can be obtained when captured by pytest if
 :mod:`tracemalloc` module is enabled.
 
