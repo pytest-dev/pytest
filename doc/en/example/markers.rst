@@ -162,15 +162,24 @@ Or select multiple nodes:
     when running pytest with the ``-rf`` option.  You can also
     construct Node IDs from the output of ``pytest --collect-only``.
 
-Using ``-k expr`` to select tests based on their name
+Using ``-k expr`` to select tests by keyword
 -------------------------------------------------------
 
 .. versionadded:: 2.0/2.3.4
 
 You can use the :option:`-k` command line option to specify an expression
-which implements a substring match on the test names instead of the
-exact match on markers that :option:`-m` provides.  This makes it easy to
-select tests based on their names:
+which implements a substring match on the test's *keywords*, instead of the
+exact match on markers that :option:`-m` provides.
+
+The keywords of a test are its own name, the names of the test's parents
+(usually the name of the file and class it is in), the names of the markers
+applied to it or to its parents, attributes set on the test function, and any
+:attr:`extra keywords <_pytest.nodes.Node.extra_keyword_matches>` explicitly
+added to it or to its parents.
+
+Because marker names are keywords, ``-k http`` below selects tests marked
+``@pytest.mark.http`` just as well as tests merely named ``test_send_http``.
+Use :option:`-m` when you want markers and nothing else.
 
 .. versionchanged:: 5.4
 
@@ -223,11 +232,6 @@ Or to select "http" and "quick" tests:
     ===================== 2 passed, 2 deselected in 0.12s ======================
 
 You can use ``and``, ``or``, ``not`` and parentheses.
-
-
-In addition to the test's name, :option:`-k` also matches the names of the test's parents (usually, the name of the file and class it's in),
-attributes set on the test function, markers applied to it or its parents and any :attr:`extra keywords <_pytest.nodes.Node.extra_keyword_matches>`
-explicitly added to it or its parents.
 
 
 Registering markers

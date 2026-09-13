@@ -94,18 +94,18 @@ def pytest_addoption(parser: Parser) -> None:
         dest="keyword",
         default="",
         metavar="EXPRESSION",
-        help="Only run tests which match the given substring expression. "
-        "An expression is a Python evaluable expression "
-        "where all names are substring-matched against test names "
-        "and their parent classes. Example: -k 'test_method or test_"
-        "other' matches all test functions and classes whose name "
-        "contains 'test_method' or 'test_other', while -k 'not test_method' "
-        "matches those that don't contain 'test_method' in their names. "
-        "-k 'not test_method and not test_other' will eliminate the matches. "
-        "Additionally keywords are matched to classes and functions "
-        "containing extra names in their 'extra_keyword_matches' set, "
-        "as well as functions which have names assigned directly to them. "
-        "The matching is case-insensitive.",
+        help="Only run tests which match the given keyword expression. "
+        "An expression is made of names combined with 'and', 'or', 'not' "
+        "and parentheses; each name is matched case-insensitively as a "
+        "substring of any of the test's keywords. Example: -k 'test_method "
+        "or test_other' matches all tests whose keywords contain "
+        "'test_method' or 'test_other', while -k 'not test_method' matches "
+        "those that do not. The keywords of a test are its own name "
+        "including any parametrization id, the names of its parent class, "
+        "module and directories, the names of the markers applied to it or "
+        "to its parents, attributes assigned directly to the test function, "
+        "and any names in an 'extra_keyword_matches' set. Unlike -m, -k "
+        "matches substrings and cannot match marker arguments.",
     )
 
     group._addoption(  # private to use reserved lower-case short option
@@ -150,19 +150,33 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     return None
 
 
+#: Attributes which are never meaningful as keywords, but do end up in the
+#: ``__dict__`` of a test function: pytest's own mark storage, and the
+#: bookkeeping decorators leave behind (``functools.wraps`` copies ``__wrapped__``
+#: and friends, ``functools.lru_cache`` adds ``cache_parameters``, ...).
+IGNORED_FUNCTION_ATTRIBUTES = frozenset({"pytestmark", "cache_parameters"})
+
+
+def _is_matchable_function_attribute(name: str) -> bool:
+    """Whether a test function attribute may be matched by ``-k``."""
+    return not name.startswith("_") and name not in IGNORED_FUNCTION_ATTRIBUTES
+
+
 @dataclasses.dataclass
 class KeywordMatcher:
-    """A matcher for keywords.
+    """A matcher for keywords, used by ``-k``.
 
-    Given a list of names, matches any substring of one of these names. The
+    Given a set of names, matches any substring of one of these names. The
     string inclusion check is case-insensitive.
 
-    Will match on the name of colitem, including the names of its parents.
-    Only matches names of items which are either a :class:`Class` or a
-    :class:`Function`.
+    The names are collected in :meth:`from_item` from the item and its
+    parents: their node names, the names of the markers in scope, the
+    attributes assigned to the test function, and the
+    :attr:`~_pytest.nodes.Node.extra_keyword_matches` sets.
 
-    Additionally, matches on names in the 'extra_keyword_matches' set of
-    any item, as well as names directly assigned to test functions.
+    Note that these names are collected independently of
+    :attr:`Node.keywords <_pytest.nodes.Node.keywords>`; writing into that
+    mapping does not affect ``-k``.
     """
 
     __slots__ = ("_names",)
@@ -190,10 +204,16 @@ class KeywordMatcher:
         # Add the names added as extra keywords to current or parent items.
         mapped_names.update(item.listextrakeywords())
 
-        # Add the names attached to the current function through direct assignment.
+        # Add the names attached to the current function through direct
+        # assignment, ignoring the attributes that merely happen to live in the
+        # function's __dict__ without anyone meaning them as keywords.
         function_obj = getattr(item, "function", None)
         if function_obj:
-            mapped_names.update(function_obj.__dict__)
+            mapped_names.update(
+                name
+                for name in function_obj.__dict__
+                if _is_matchable_function_attribute(name)
+            )
 
         # Add the markers to the keywords as we no longer handle them correctly.
         mapped_names.update(mark.name for mark in item.iter_markers())

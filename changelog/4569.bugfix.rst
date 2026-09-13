@@ -1,0 +1,1 @@
+``-k`` no longer matches attributes that end up in a test function's ``__dict__`` without being meant as keywords, such as pytest's own ``pytestmark`` storage and the bookkeeping left behind by :func:`functools.wraps` and :func:`functools.lru_cache`.
