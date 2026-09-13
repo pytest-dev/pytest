@@ -1,0 +1,1 @@
+:func:`pytest.approx` no longer treats finite :class:`~decimal.Decimal` values outside the :class:`float` range (such as ``Decimal("1e400")``) as infinite, which made in-tolerance comparisons fail.
