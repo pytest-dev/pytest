@@ -63,6 +63,10 @@ PYTEST_TAG = f"{sys.implementation.cache_tag}-pytest-{version}"
 PYC_EXT = ".py" + ((__debug__ and "c") or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
+# Top level packages that never hold test code. Answering for them without any
+# import or path lookup is what stops find_spec() from recursing (#14632).
+_NEVER_REWRITTEN_ROOTS = frozenset({"pytest", "_pytest"}) | sys.stdlib_module_names
+
 
 class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """PEP302/PEP451 import hook which rewrites asserts."""
@@ -186,6 +190,11 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         tries to filter what we're sure won't be rewritten before getting to
         it.
         """
+        # No imports or path lookups here (see _NEVER_REWRITTEN_ROOTS), but an
+        # explicit register_assert_rewrite() still wins.
+        if name.partition(".")[0] in _NEVER_REWRITTEN_ROOTS:
+            return not self._is_marked_for_rewrite(name, state)
+
         if self.session is not None and not self._session_paths_checked:
             self._session_paths_checked = True
             for initial_path in self.session._initialpaths:
