@@ -1,0 +1,1 @@
+Clarified the distinction between :option:`--pyargs` and :confval:`testpaths` in documentation, and added guidance on avoiding misusing :option:`--pyargs` in :confval:`addopts`.

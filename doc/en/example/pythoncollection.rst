@@ -191,6 +191,51 @@ Now a simple invocation of ``pytest NAME`` will check
 if NAME exists as an importable package/module and otherwise
 treat it as a filesystem path.
 
+.. _pyargs-vs-testpaths:
+
+Difference between ``--pyargs`` and ``testpaths``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Users often ask about the difference between the :option:`--pyargs` option and the :confval:`testpaths` configuration value, especially when configuring how tests are discovered in a project.
+
+The two mechanisms serve distinct roles:
+
+* :confval:`testpaths` specifies directories relative to the :ref:`rootdir <rootdir>` to search for tests when no specific files, directories, or test IDs are passed on the command line. It sets a default discovery scope for bare ``pytest`` invocations. When specific paths are given on the command line (for example, ``pytest tests/unit/test_app.py``), :confval:`testpaths` is ignored and only the specified files are collected. Use :confval:`testpaths` for repository checkouts where tests live in a project folder:
+
+  .. tab:: toml
+
+      .. code-block:: toml
+
+          # pyproject.toml
+          [tool.pytest.ini_options]
+          testpaths = ["tests"]
+
+  .. tab:: ini
+
+      .. code-block:: ini
+
+          # pytest.ini
+          [pytest]
+          testpaths = tests
+
+* :option:`--pyargs` instructs pytest to interpret positional command-line arguments as importable Python module or package names (resolved via ``sys.path``) rather than filesystem paths. pytest imports the target, locates its installed directory, and collects tests from there. Use :option:`--pyargs` when tests are distributed as part of an installed package:
+
+  .. code-block:: bash
+
+      pytest --pyargs mypkg.testing
+
+.. warning::
+
+    Avoid placing package names with :option:`--pyargs` inside :confval:`addopts` (such as ``addopts = ["--pyargs", "mypkg.testing"]``) to specify default test locations.
+
+    Because :confval:`addopts` appends options to every pytest invocation as if typed on the command line:
+
+    * The configured package tests will run on every test execution, even when you attempt to run a single test file such as ``pytest tests/test_single.py``.
+    * Any positional path arguments passed on the command line will also be interpreted as Python package names, which will fail if the path does not match an importable module name.
+    * Common package names such as ``tests`` can collide with other packages or standard library modules found on ``sys.path``.
+
+    For repository test discovery, configure :confval:`testpaths` instead.
+
 Finding out what is collected
 -----------------------------------------------
 

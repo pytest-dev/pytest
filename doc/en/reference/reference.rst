@@ -2623,6 +2623,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
        pytest testing doc
 
+   .. note::
+
+      :confval:`testpaths` sets filesystem directories relative to the :ref:`rootdir <rootdir>` and is only used when no positional arguments are passed on the command line.
+
+      To run tests from installed Python packages or modules resolved via ``sys.path``, use the :option:`--pyargs` command-line option instead. Do not put :option:`--pyargs` in :confval:`addopts` as a substitute for :confval:`testpaths`. See :ref:`pyargs-vs-testpaths` for details.
+
+
 .. confval:: tmp_path_retention_count
    :type: ``str``
    :default: ``"3"``
@@ -2968,10 +2975,15 @@ Collection
 
 .. option:: --pyargs
 
-    Try to interpret all arguments as Python packages.
+    Try to interpret all positional arguments as Python packages or modules.
+    pytest imports the target via ``sys.path``, derives its filesystem location, and collects tests from there.
     Useful for running tests of installed packages::
 
         pytest --pyargs pkg.testing
+
+    This differs from :confval:`testpaths`, which sets default rootdir-relative filesystem directories when no arguments are provided.
+    Avoid placing :option:`--pyargs` in :confval:`addopts` to specify default test locations, because :confval:`addopts` applies to all test runs and causes positional file arguments to be interpreted as module names.
+    See :ref:`pyargs-vs-testpaths` for a detailed comparison.
 
 .. option:: --ignore=PATH
 
