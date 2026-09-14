@@ -42,6 +42,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._io.saferepr import saferepr
+from _pytest.assertion import warn_if_not_rewritten
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
@@ -570,6 +571,7 @@ def importtestmodule(
             "If you want to skip a specific test or an entire class, "
             "use the @pytest.mark.skip or @pytest.mark.skipif decorators."
         ) from e
+    warn_if_not_rewritten(config, mod, path)
     config.pluginmanager.consider_module(mod)
     return mod
 

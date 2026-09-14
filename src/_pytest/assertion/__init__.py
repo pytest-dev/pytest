@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import os
 import sys
 from typing import Any
 from typing import Protocol
 from typing import TYPE_CHECKING
+import warnings
 
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
@@ -23,6 +25,8 @@ from _pytest.nodes import Item
 
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
     from _pytest.main import Session
 
 
@@ -145,6 +149,41 @@ def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
 
     config.add_cleanup(undo)
     return hook
+
+
+def warn_if_not_rewritten(
+    config: Config, mod: ModuleType, path: os.PathLike[str]
+) -> None:
+    """Warn if *mod* should have been assertion-rewritten but was imported too early.
+
+    Rewriting only happens on import, so a module which something else -- a
+    conftest, a plugin, another test module -- has already imported by the time
+    collection reaches it silently loses assertion introspection (#1930).
+    """
+    from _pytest.warning_types import PytestAssertRewriteWarning
+
+    state = config.stash.get(assertstate_key, None)
+    if state is None or state.hook is None:
+        # Rewriting is disabled (``--assert=plain``) or the plugin is blocked.
+        return
+    hook = state.hook
+    loader = mod.__spec__.loader if mod.__spec__ is not None else None
+    if isinstance(loader, type(hook)):
+        return
+    if rewrite.AssertionRewriter.is_rewrite_disabled(mod.__doc__ or ""):
+        return
+    if not hook._should_rewrite(mod.__name__, os.fspath(path), state):
+        return
+    warnings.warn(
+        PytestAssertRewriteWarning(
+            f"Module {mod.__name__!r} ({os.fspath(path)}) was already imported "
+            f"when pytest collected it, so its assertions were not rewritten "
+            f"and will not be introspected.\n"
+            f"It was most likely imported by a conftest file or a plugin. "
+            f"Delay that import until after collection, or call "
+            f"pytest.register_assert_rewrite({mod.__name__!r}) before it."
+        )
+    )
 
 
 def pytest_collection(session: Session) -> None:
