@@ -146,6 +146,37 @@ class TestFillFixtures:
             """
         )
 
+    def test_fixture_not_found_nodeid_fallback(self, pytester: Pytester) -> None:
+        """Test for fallback string nodeid handling in fixture not found error.
+
+        This test can be deleted with FIXTURE_NODEID_DEPRECATED deprecation.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_finish(session):
+                session._fixturemanager._register_fixture(
+                    name="does_exist",
+                    func=lambda: 0,
+                    nodeid="",
+                )
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_it(does_not_exist): pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.stdout.fnmatch_lines(
+            [
+                "*fixture 'does_not_exist' not found*",
+                "*available fixtures: *does_exist*",
+            ]
+        )
+
     def test_detect_recursive_dependency_error(self, pytester: Pytester) -> None:
         pytester.copy_example()
         result = pytester.runpytest()
@@ -4094,6 +4125,31 @@ class TestShowFixtures:
             @pytest.fixture
             def foo():
                 raise NotImplementedError()
+
+    def test_show_fixtures_deprecated_nodeid_fixture(self, pytester: Pytester) -> None:
+        """Test for fallback string nodeid handling in showfixtures.
+
+        This test can be deleted with FIXTURE_NODEID_DEPRECATED deprecation.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_finish(session):
+                session._fixturemanager._register_fixture(
+                    name="does_exist",
+                    func=lambda: 0,
+                    nodeid="",
+                )
+            """
+        )
+
+        result = pytester.runpytest("--fixtures")
+        result.stdout.fnmatch_lines(
+            [
+                "*does_exist -- conftest.py:*",
+            ]
+        )
 
 
 class TestContextManagerFixtureFuncs:
