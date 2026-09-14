@@ -1,0 +1,5 @@
+# Only meaningful inside a ``git archive``, where ``export-subst`` has filled it
+# in; an sdist carries its version in the metadata instead. Shipping the
+# unexpanded template would leave setuptools-scm a stray ``$Format:...$`` to
+# consider on every build from an unpacked sdist.
+exclude .git_archival.txt
