@@ -536,6 +536,8 @@ def importtestmodule(
         repr_ = excinfo.getrepr(style="short")
         reprcrash = excinfo._getreprcrash()
         msg = str(repr_)
+        # A column is present only when the SyntaxError carried its own
+        # location; a fallback crash line would just repeat the last entry.
         if reprcrash is not None and reprcrash.column is not None:
             msg += "\n" + str(reprcrash)
         raise nodes.Collector.CollectError(msg) from e

@@ -496,15 +496,20 @@ def stringify_exception(
 E = TypeVar("E", bound=BaseException, covariant=True)
 
 
-def _syntax_error_location(exc: BaseException) -> tuple[str, int, int] | None:
-    """Return (filename, lineno, offset) for a SyntaxError with location info, else None."""
+def _syntax_error_location(exc: BaseException) -> tuple[str, int, int, str] | None:
+    """Return (filename, lineno, offset, message) for a SyntaxError with location info, else None."""
     if (
         isinstance(exc, SyntaxError)
         and exc.offset
         and exc.lineno is not None
         and exc.filename
     ):
-        return (exc.filename, exc.lineno, exc.offset)
+        return (
+            exc.filename,
+            exc.lineno,
+            exc.offset,
+            exc.msg or "<no detail available>",
+        )
     return None
 
 
@@ -705,12 +710,11 @@ class ExceptionInfo(Generic[E]):
         # the traceback entry where it was raised (#2388).
         loc = _syntax_error_location(self.value)
         if loc is not None:
-            filename, lineno, offset = loc
-            assert isinstance(self.value, SyntaxError)
+            filename, lineno, offset, message = loc
             return ReprFileLocation(
                 filename,
                 lineno,
-                f"{self.typename}: {self.value.msg or '<no detail available>'}",
+                f"{self.typename}: {message}",
                 column=offset,
             )
         # Find last non-hidden traceback entry that led to the exception of the

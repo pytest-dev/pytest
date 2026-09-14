@@ -1,1 +1,1 @@
-:class:`SyntaxError` crashes now contain an extra `FILE:LINE:COLUMN ERROR` line, as in other traceback lines. This format is widely supported by most editors/IDEs.
+:class:`SyntaxError` crash lines now report the error's own `FILE:LINE:COLUMN` location instead of the traceback entry that raised it, in the format most editors/IDEs understand.
