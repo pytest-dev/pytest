@@ -1032,6 +1032,10 @@ class TerminalReporter:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
 
     def pytest_unconfigure(self) -> None:
+        # Reports as a fallback because wrap_session skips sessionfinish
+        # for interrupts raised before the session starts (initstate < 2).
+        # sessionfinish clears the memo after reporting, so this cannot
+        # double-print.
         if self._keyboardinterrupt_memo is not None:
             self._report_keyboardinterrupt()
 
