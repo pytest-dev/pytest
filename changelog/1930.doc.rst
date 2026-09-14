@@ -1,0 +1,1 @@
+Documented that a test module which has already been imported when collection reaches it cannot have its assertions rewritten, and how to avoid importing one too early from a ``conftest.py``.
