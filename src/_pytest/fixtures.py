@@ -1275,6 +1275,14 @@ class FixtureDef(Generic[FixtureValue]):
         for parent_fixture in requested_fixtures_that_should_finalize_us:
             parent_fixture.addfinalizer(finalizer)
 
+        # If a previous call to execute() raised before caching the result
+        # (e.g. because pytest_fixture_setup turned a warning into an error),
+        # self._finalizers may still contain stale entries: finish() is a
+        # no-op when cached_result is None (it assumes "already finished"),
+        # so those finalizers are never drained.  Clear them here so this
+        # fresh execution starts from a clean slate.
+        # See https://github.com/pytest-dev/pytest/issues/14775
+        self._finalizers.clear()
         # Register the pytest_fixture_post_finalizer as the first finalizer,
         # which is executed last.
         assert not self._finalizers

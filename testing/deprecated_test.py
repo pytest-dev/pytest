@@ -123,6 +123,49 @@ def test_higher_scope_instance_method_is_deprecated(
     )
 
 
+def test_class_scoped_instance_method_werror_multiple_tests(
+    pytester: Pytester,
+) -> None:
+    """Multiple tests sharing a class-scoped instance-method fixture must each report
+    the deprecation warning (not an internal AssertionError) when -Werror is active.
+
+    Regression test for https://github.com/pytest-dev/pytest/issues/14775.
+    When -Werror turns the PytestRemovedIn10Warning into an error during fixture
+    setup, FixtureDef.execute() exited without caching the result, leaving stale
+    entries in self._finalizers.  The second test then hit
+    ``assert not self._finalizers`` with an internal AssertionError instead of the
+    expected deprecation error.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestFixt:
+            @pytest.fixture(scope="class")
+            def fixt(self):
+                yield
+
+            def test_1(self, fixt):
+                pass
+
+            def test_2(self, fixt):
+                pass
+        """
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(errors=2)
+    # Both tests should report the deprecation warning, not an AssertionError.
+    result.stdout.fnmatch_lines(
+        [
+            "*ERROR at setup of TestFixt.test_1*",
+            "*PytestRemovedIn10Warning*",
+            "*ERROR at setup of TestFixt.test_2*",
+            "*PytestRemovedIn10Warning*",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*AssertionError*")
+
+
 @pytest.mark.parametrize(
     "scope", [Scope.Class, Scope.Module, Scope.Package, Scope.Session]
 )
