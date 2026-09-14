@@ -341,7 +341,7 @@ def wrap_session(
             exitstatus: int | ExitCode = ExitCode.INTERRUPTED
             if isinstance(excinfo.value, CollectionInterrupted):
                 exitstatus = ExitCode.COLLECTION_ERROR
-            if isinstance(excinfo.value, exit.Exception):
+            elif isinstance(excinfo.value, exit.Exception):
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
                 if initstate < 2:
@@ -525,8 +525,7 @@ class Interrupted(KeyboardInterrupt):
 class CollectionInterrupted(Interrupted):
     """Signals that the test run was interrupted by collection errors.
 
-    Subclasses ``Interrupted`` for compatibility; ``wrap_session`` maps it
-    to ``ExitCode.COLLECTION_ERROR``.
+    Subclasses ``Interrupted`` for compatibility.
     """
 
     __module__ = "builtins"  # Match Interrupted.
