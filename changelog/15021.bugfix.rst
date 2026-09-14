@@ -1,0 +1,1 @@
+Preserved blank lines between paragraphs in command-line option help text.
