@@ -1937,6 +1937,25 @@ class TestEarlyRewriteBailout:
         assert hook.find_spec("foobar") is not None
         assert self.find_spec_calls == ["conftest", "test_foo", "foobar"]
 
+    def test_package_init_given_as_initial_path(self, pytester: Pytester) -> None:
+        """A package ``__init__.py`` named on the command-line is rewritten.
+
+        The bailout derives the basenames to check from the initial paths, which
+        for an ``__init__.py`` is the name of the package directory, not
+        ``__init__`` (#1930).
+        """
+        pytester.makepyfile(
+            **{
+                "sub/__init__.py": """\
+                    def test_init():
+                        x = 1
+                        assert x == 2
+                """
+            }
+        )
+        result = pytester.runpytest("sub/__init__.py")
+        result.stdout.fnmatch_lines(["E*assert 1 == 2"])
+
     def test_pattern_contains_subdirectories(
         self, pytester: Pytester, hook: AssertionRewritingHook
     ) -> None:

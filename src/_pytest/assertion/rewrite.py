@@ -194,6 +194,11 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
                 parts = str(initial_path).split(os.sep)
                 # add 'path' to basenames to be checked.
                 self._basenames_to_check_rewrite.add(os.path.splitext(parts[-1])[0])
+                if parts[-1] == "__init__.py" and len(parts) > 1:
+                    # A package's ``__init__.py`` is imported under the name of
+                    # the directory containing it, so that is the basename which
+                    # has to survive the bailout below.
+                    self._basenames_to_check_rewrite.add(parts[-2])
 
         # Note: conftest already by default in _basenames_to_check_rewrite.
         parts = name.split(".")
