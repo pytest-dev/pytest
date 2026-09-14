@@ -1,0 +1,17 @@
+Source archives of arbitrary commits -- the tarballs GitHub serves under
+``/archive/``, not just the ones for tags -- can now be built into an sdist or a
+wheel with a correct version. A ``.git_archival.txt`` file, expanded by ``git
+archive`` via ``export-subst``, carries the describe output that
+``setuptools-scm`` would otherwise have to ask ``git`` for.
+
+The archival file deliberately omits ``ref-names``. Recording it would make the
+content of an archive -- and therefore its checksum -- change whenever a branch
+that points at the archived commit is moved afterwards, which is how the
+equivalent tarballs of tagged releases became unstable for other projects.
+Describe output alone depends only on the commit and on the tags reachable from
+it.
+
+The archival file is not shipped in the sdist -- an sdist carries its version
+in its metadata, and the template is only ever expanded by ``git archive``.
+
+Building pytest from a git checkout now requires ``setuptools-scm >= 10.1``.
