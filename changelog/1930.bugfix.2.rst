@@ -1,0 +1,5 @@
+Assertions in a package's ``__init__.py`` are now rewritten under ``--import-mode=importlib``.
+
+The meta path finders were consulted for the package using the package's own
+directory as the search path rather than the directory containing it, so the
+assertion-rewrite hook never matched and the file was loaded unrewritten.

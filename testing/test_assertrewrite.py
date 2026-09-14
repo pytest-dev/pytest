@@ -1938,6 +1938,33 @@ def test_rewrite_infinite_recursion(
     assert len(write_pyc_called) == 1
 
 
+def test_rewrite_package_init_with_importlib_mode(pytester: Pytester) -> None:
+    """A package's ``__init__.py`` is rewritten under ``--import-mode=importlib``.
+
+    The meta path finder has to be asked for the package in the directory
+    *containing* it, not in the package directory itself (#1930).
+    """
+    pytester.makeini(
+        """
+        [pytest]
+        python_files = *.py
+        pythonpath = .
+        """
+    )
+    pytester.makepyfile(
+        **{
+            "pkg/__init__.py": "",
+            "pkg/sub/__init__.py": """\
+                def test_init():
+                    x = 1
+                    assert x == 2
+            """,
+        }
+    )
+    result = pytester.runpytest("--import-mode=importlib")
+    result.stdout.fnmatch_lines(["E*assert 1 == 2"])
+
+
 class TestEarlyRewriteBailout:
     @pytest.fixture
     def hook(
