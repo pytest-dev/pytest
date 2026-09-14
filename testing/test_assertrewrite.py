@@ -1253,6 +1253,49 @@ def test_rewritten():
         )
         assert pytester.runpytest_subprocess().ret == 0
 
+    def test_warn_collected_module_imported_too_early(self, pytester: Pytester) -> None:
+        """Collecting an already-imported test module warns (#1930).
+
+        The module is only a test module because it was named on the
+        command line, so the conftest import wins the race and assertion
+        introspection is silently lost.
+        """
+        pytester.makeconftest("import foo")
+        pytester.makepyfile(
+            foo="""
+            def test_compare():
+                x = 1
+                assert x == 2
+        """
+        )
+        # needs to be a subprocess because pytester explicitly disables this warning
+        result = pytester.runpytest_subprocess("foo.py")
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestAssertRewriteWarning: Module 'foo'*was already imported*",
+                "*pytest.register_assert_rewrite('foo')*",
+            ]
+        )
+
+    def test_no_warning_when_import_delayed(self, pytester: Pytester) -> None:
+        """Importing the module from inside a hook leaves rewriting intact."""
+        pytester.makeconftest(
+            """
+            def pytest_assertrepr_compare(op, left, right):
+                import foo  # noqa: F401
+        """
+        )
+        pytester.makepyfile(
+            foo="""
+            def test_compare():
+                x = 1
+                assert x == 2
+        """
+        )
+        result = pytester.runpytest_subprocess("foo.py")
+        result.stdout.fnmatch_lines(["E*assert 1 == 2"])
+        result.stdout.no_fnmatch_line("*PytestAssertRewriteWarning*")
+
     def test_remember_rewritten_modules(
         self, pytestconfig, pytester: Pytester, monkeypatch
     ) -> None:
