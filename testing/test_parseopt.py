@@ -286,6 +286,31 @@ class TestParser:
         help = parser.optparser.format_help()
         assert "--func-args, --doit  foo" in help
 
+    def test_help_preserves_blank_lines(self, parser: parseopt.Parser) -> None:
+        parser.addoption(
+            "--paragraph-help",
+            action="store_true",
+            help="first paragraph\n\nsecond paragraph",
+        )
+
+        lines = parser.optparser.format_help().splitlines()
+        first_line = next(
+            i for i, line in enumerate(lines) if "first paragraph" in line
+        )
+
+        assert lines[first_line + 1].strip() == ""
+        assert lines[first_line + 2].strip() == "second paragraph"
+
+    def test_help_line_wrapping_with_blank_lines(self) -> None:
+        formatter = parseopt.DropShorterLongHelpFormatter("prog")
+
+        assert formatter._split_lines("first paragraph\n\nsecond paragraph", 80) == [
+            "first paragraph",
+            "",
+            "second paragraph",
+        ]
+        assert formatter._split_lines("one two three", 7) == ["one two", "three"]
+
     # testing would be more helpful with all help generated
     def test_drop_short_help1(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("general")

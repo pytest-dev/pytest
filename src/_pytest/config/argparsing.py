@@ -574,7 +574,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         """
         lines = []
         for line in text.splitlines():
-            lines.extend(textwrap.wrap(line.strip(), width))
+            lines.extend(textwrap.wrap(line.strip(), width) or [""])
         return lines
 
 
