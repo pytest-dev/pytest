@@ -443,9 +443,7 @@ class Cache:
         """
         if len(Path(name).parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
-        res = self._join_within(
-            self._scope_root(scope) / self._CACHE_PREFIX_DIRS, name
-        )
+        res = self._join_within(self._scope_root(scope) / self._CACHE_PREFIX_DIRS, name)
         self._mkdir(res)
         return res
 
