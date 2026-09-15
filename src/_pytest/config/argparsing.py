@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from collections.abc import Mapping
 from collections.abc import Sequence
 import dataclasses
 import os
@@ -20,6 +21,11 @@ from typing import TypeAlias
 from typing import Union
 
 from .exceptions import UsageError
+from .settings import _ConfigSettingsView
+from .settings import CliEntry
+from .settings import Setting
+from .settings import SettingsRegistry
+from .settings import Source
 import _pytest._io
 from _pytest.compat import NOTSET
 from _pytest.deprecated import check_ispytest
@@ -30,6 +36,9 @@ if TYPE_CHECKING:
 
 
 FILE_OR_DIR = "file_or_dir"
+
+#: Namespace attribute carrying the ordered command line setting values.
+CLI_SETTINGS = "_pytest_cli_settings"
 
 #: The string tags accepted by :meth:`Parser.addini` for its ``type`` argument.
 _IniTypeTag: TypeAlias = Literal[
@@ -55,6 +64,7 @@ class _IniLiteral:
 #: value of any of these" (e.g. ``("int", "string")``, normalized from
 #: ``int | str``).
 IniType: TypeAlias = _IniTypeTag | _IniLiteral | tuple[_IniTypeTag | _IniLiteral, ...]
+
 
 #: Maps each string tag or plain Python type accepted by :meth:`Parser.addini`
 #: for its ``type`` argument to the normalized string tag.
@@ -140,9 +150,14 @@ class Parser:
         file_or_dir_arg = self.optparser.add_argument(FILE_OR_DIR, nargs="*")
         file_or_dir_arg.completer = filescompleter  # type: ignore
 
-        self._inidict: dict[str, tuple[str, IniType, Any]] = {}
-        # Maps alias -> canonical name.
-        self._ini_aliases: dict[str, str] = {}
+        self._settings = SettingsRegistry()
+        # The settings a configuration file can set, by canonical name.
+        self._inidict: Mapping[str, Setting] = _ConfigSettingsView(self._settings)
+
+    @property
+    def _ini_aliases(self) -> dict[str, str]:
+        """Maps alias -> canonical name."""
+        return self._settings._aliases
 
     @property
     def prog(self) -> str:
@@ -272,6 +287,7 @@ class Parser:
         default: Any = NOTSET,
         *,
         aliases: Sequence[str] = (),
+        fallback: str | Sequence[str] = (),
     ) -> None:
         """Register a configuration file option.
 
@@ -331,6 +347,23 @@ class Parser:
 
             .. versionadded:: 9.0
                 The ``aliases`` parameter.
+        :param fallback:
+            Name (or names, tried in order) of another registered option to
+            consult when this one is not set in any configuration file and was
+            not overridden on the command line. The registered ``default``
+            applies only if no fallback is configured either.
+
+            Unlike an alias, a fallback is a *different* option with its own
+            help and its own value; it just supplies this option's value when
+            this option says nothing. For example ``log_cli_format`` falls back
+            to ``log_format``.
+
+            Each fallback must already be registered and must have the same
+            type as this option, which also makes fallback cycles impossible.
+
+            .. versionadded:: 9.2
+                The ``fallback`` parameter. It is experimental; its behaviour
+                may change in future releases.
 
         The value of configuration keys can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
@@ -353,7 +386,24 @@ class Parser:
                 )
             default = get_ini_default_for_type(ini_type)
 
-        self._inidict[name] = (help, ini_type, default)
+        fallbacks = (fallback,) if isinstance(fallback, str) else tuple(fallback)
+        for target in fallbacks:
+            canonical = self._ini_aliases.get(target, target)
+            try:
+                target_spec = self._inidict[canonical]
+            except KeyError:
+                raise ValueError(
+                    f"fallback {target!r} of ini option {name!r} is not "
+                    "registered; register it first"
+                ) from None
+            # A setting a config file can set always has a type.
+            assert target_spec.type is not None
+            if target_spec.type != ini_type:
+                raise ValueError(
+                    f"fallback {target!r} of ini option {name!r} has type "
+                    f"{_ini_type_repr(target_spec.type)}, expected "
+                    f"{_ini_type_repr(ini_type)}"
+                )
 
         for alias in aliases:
             if alias in self._inidict:
@@ -362,7 +412,117 @@ class Parser:
                 )
             if (already := self._ini_aliases.get(alias)) is not None:
                 raise ValueError(f"{alias!r} is already an alias of {already!r}")
-            self._ini_aliases[alias] = name
+
+        self._settings.add_config(
+            name, help, ini_type, default, tuple(aliases), fallbacks
+        )
+
+    def addconfig(
+        self,
+        name: str,
+        help: str,
+        type: _IniTypeArg = None,
+        default: Any = NOTSET,
+        *,
+        aliases: Sequence[str] = (),
+        fallback: str | Sequence[str] = (),
+        cli: str | Sequence[str] = (),
+        cli_value: str | None = None,
+        cli_help: str | None = None,
+        group: str | OptionGroup | None = None,
+        metavar: str | None = None,
+    ) -> None:
+        """Register a configuration option, optionally with a command line
+        option that sets it.
+
+        This declares in one call what :meth:`addini` and :meth:`addoption`
+        otherwise declare twice, in two APIs whose ``type`` arguments mean
+        different things. The type is given once, and
+        :func:`config.getini(name) <pytest.Config.getini>` is the only way the
+        value is read -- the command line option overrides the configuration
+        value rather than living in a separate namespace, so consuming code
+        never has to consider which of the two the user used.
+
+        :param name:
+            Name of the configuration option. Also the ``dest`` of the command
+            line option, so the value is additionally visible as
+            ``config.option.<name>``.
+        :param help:
+            Description, used for both the configuration option and the command
+            line option unless ``cli_help`` overrides the latter.
+        :param type:
+            Type of the value, as for :meth:`addini`.
+        :param default:
+            Default value, as for :meth:`addini`.
+        :param aliases:
+            Additional configuration names for this option, as for
+            :meth:`addini`.
+        :param fallback:
+            Another registered option to take the value from when this one is
+            not configured, as for :meth:`addini`.
+        :param cli:
+            Command line option string, or several of them (for example
+            ``("--junitxml", "--junit-xml")``). If empty, no command line
+            option is registered and this behaves exactly like :meth:`addini`.
+        :param cli_help:
+            Help for the command line option; defaults to ``help``.
+        :param cli_value:
+            Makes the command line option a flag taking no argument, which sets
+            the configuration option to this value. Defaults to ``"true"`` for
+            a ``bool`` option and to taking an argument otherwise.
+        :param group:
+            Option group for ``--help`` output, by name or as an
+            :class:`OptionGroup`. Defaults to the anonymous group.
+        :param metavar:
+            Argument placeholder in ``--help`` output.
+
+        .. versionadded:: 9.2
+
+        .. note::
+
+            This method is experimental; its behaviour and signature may change
+            in future releases.
+        """
+        self.addini(
+            name,
+            help,
+            type,
+            default,
+            aliases=aliases,
+            fallback=fallback,
+        )
+        opts = (cli,) if isinstance(cli, str) else tuple(cli)
+        if not opts:
+            if cli_value is not None or cli_help is not None or metavar is not None:
+                raise ValueError(
+                    f"config option {name!r} has no `cli` option strings, so "
+                    "`cli_value`, `cli_help` and `metavar` have no effect"
+                )
+            return
+
+        if cli_value is None and self._inidict[name].type == "bool":
+            cli_value = "true"
+
+        attrs: dict[str, Any] = {
+            "action": OverrideIniAction,
+            "ini_option": name,
+            "ini_value": cli_value,
+            "dest": name,
+            "help": help if cli_help is None else cli_help,
+            # The value lives in the ini config; argparse must not seed
+            # `config.option.<name>` with a second, competing default.
+            "default": None,
+        }
+        if metavar is not None:
+            attrs["metavar"] = metavar
+
+        if group is None:
+            target = self._anonymous
+        elif isinstance(group, str):
+            target = self.getgroup(group)
+        else:
+            target = group
+        target.addoption(*opts, **attrs)
 
 
 def get_ini_default_for_type(type: _IniTypeTag) -> Any:
@@ -482,12 +642,26 @@ class OptionGroup:
                 if len(opt) >= 2 and opt[0] == "-" and opt[1].islower():
                     raise ValueError("lowercase short options are reserved")
 
+        # A private attribute, consumed here rather than by argparse: the name
+        # to register this option under when its `dest` is already taken by a
+        # configuration setting.
+        setting_name = attrs.pop("_setting_name", None)
+
         action = self._arggroup.add_argument(*opts, **attrs)
         option = Argument(action)
         self.options.append(option)
         if self.parser:
             for name in option.names():
                 self.parser._opt2dest[name] = option.dest
+            # An `OverrideIniAction` names the setting it sets, whether it was
+            # registered by `addconfig` or by hand.
+            binds = getattr(action, "ini_option", None)
+            self.parser._settings.add_option(
+                option,
+                None if self.name == "_anonymous" else self.name,
+                binds=binds,
+                setting_name=setting_name,
+            )
             self.parser.processoption(option)
 
 
@@ -578,12 +752,64 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         return lines
 
 
+def _append_cli_entry(namespace: argparse.Namespace, entry: CliEntry) -> None:
+    """Record a setting value on the namespace, in command line order.
+
+    Copy-on-write: the first parse rounds parse into a throwaway
+    ``copy.copy(config.option)``, and appending in place would let their
+    entries leak into the namespace the copy was taken from.
+    """
+    entries = [*getattr(namespace, CLI_SETTINGS, ())]
+    entries.append(entry)
+    setattr(namespace, CLI_SETTINGS, entries)
+
+
+class OverrideIniOptionAction(argparse.Action):
+    """The action behind ``-o``/``--override-ini``.
+
+    Records the override as a setting value, and keeps appending the raw
+    ``option=value`` string to ``override_ini``, which rootdir discovery reads
+    before there is a config to record anything on.
+    """
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None = None,
+        option_string: str | None = None,
+    ) -> None:
+        assert isinstance(values, str)
+        current = getattr(namespace, self.dest, None) or []
+        setattr(namespace, self.dest, [*current, values])
+        try:
+            name, value = values.split("=", 1)
+        except ValueError:
+            # Reported by `parse_override_ini`, which owns the message.
+            return
+        _append_cli_entry(
+            namespace,
+            CliEntry(name, value, Source.OVERRIDE, option_string=option_string),
+        )
+
+
 class OverrideIniAction(argparse.Action):
-    """Custom argparse action that makes a CLI flag equivalent to overriding an
-    option, in addition to behaving like `store_true`.
+    """Argparse action that makes a CLI option equivalent to overriding a
+    configuration option.
 
     This can simplify things since code only needs to inspect the config option
     and not consider the CLI flag.
+
+    Two shapes, chosen by whether ``ini_value`` is given:
+
+    * with ``ini_value``, the option is a flag taking no argument, and sets the
+      config option to that fixed value (e.g. ``--strict-markers``);
+    * without it, the option takes one argument, and sets the config option to
+      it (e.g. ``--log-cli-format=FORMAT``).
+
+    The override joins the same ordered channel ``-o`` writes to, so the two
+    compose in command line order and the value goes through exactly the same
+    coercion as one written in a config file.
     """
 
     def __init__(
@@ -593,10 +819,20 @@ class OverrideIniAction(argparse.Action):
         nargs: int | str | None = None,
         *args,
         ini_option: str,
-        ini_value: str,
+        ini_value: str | None = None,
         **kwargs,
     ) -> None:
-        super().__init__(option_strings, dest, 0, *args, **kwargs)
+        if ini_value is None:
+            if nargs is None:
+                nargs = 1
+            elif nargs != 1:
+                raise ValueError(
+                    "OverrideIniAction takes exactly one argument unless "
+                    "`ini_value` makes it a flag"
+                )
+        else:
+            nargs = 0
+        super().__init__(option_strings, dest, nargs, *args, **kwargs)
         self.ini_option = ini_option
         self.ini_value = ini_value
 
@@ -604,12 +840,22 @@ class OverrideIniAction(argparse.Action):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        *args,
-        **kwargs,
+        values: str | Sequence[Any] | None = None,
+        option_string: str | None = None,
     ) -> None:
-        setattr(namespace, self.dest, True)
-        current_overrides = getattr(namespace, "override_ini", None)
-        if current_overrides is None:
-            current_overrides = []
-        current_overrides.append(f"{self.ini_option}={self.ini_value}")
-        setattr(namespace, "override_ini", current_overrides)
+        value: str
+        if self.ini_value is not None:
+            value = self.ini_value
+            # Keep behaving like `store_true` for `config.option.<dest>`.
+            setattr(namespace, self.dest, True)
+        else:
+            if isinstance(values, str):
+                value = values
+            else:
+                assert values is not None
+                value = str(values[0])
+            setattr(namespace, self.dest, value)
+        _append_cli_entry(
+            namespace,
+            CliEntry(self.ini_option, value, Source.CLI, option_string=option_string),
+        )

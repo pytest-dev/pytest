@@ -34,6 +34,7 @@ from _pytest.config import create_terminal_writer
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.config.settings import Source
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
@@ -222,107 +223,137 @@ class PercentStyleMultiline(logging.PercentStyle):
         return self._fmt % record.__dict__
 
 
-def get_option_ini(config: Config, *names: str):
-    for name in names:
-        ret = config.getoption(name)  # 'default' arg won't work as expected
-        if ret is None:
-            ret = config.getini(name)
-        if ret:
-            return ret
-
-
 def pytest_addoption(parser: Parser) -> None:
     """Add options to control log capturing."""
-    group = parser.getgroup("logging")
-
-    def add_option_ini(option, dest, default=None, type=None, **kwargs):
-        parser.addini(
-            dest, default=default, type=type, help="Default value for " + option
-        )
-        group.addoption(option, dest=dest, **kwargs)
-
-    add_option_ini(
-        "--log-level",
-        dest="log_level",
+    parser.addconfig(
+        "log_level",
+        "Level of messages to catch/display. Not set by default, so it depends"
+        " on the root/parent log handler's effective level, where it is"
+        ' "WARNING" by default.',
+        type=int | str,
         default=None,
+        cli="--log-level",
         metavar="LEVEL",
-        help=(
-            "Level of messages to catch/display."
-            " Not set by default, so it depends on the root/parent log handler's"
-            ' effective level, where it is "WARNING" by default.'
-        ),
+        group="logging",
     )
-    add_option_ini(
-        "--log-format",
-        dest="log_format",
+    parser.addconfig(
+        "log_format",
+        "Log format used by the logging module",
+        type=str,
         default=DEFAULT_LOG_FORMAT,
-        help="Log format used by the logging module",
+        cli="--log-format",
+        metavar="FORMAT",
+        group="logging",
     )
-    add_option_ini(
-        "--log-date-format",
-        dest="log_date_format",
+    parser.addconfig(
+        "log_date_format",
+        "Log date format used by the logging module",
+        type=str,
         default=DEFAULT_LOG_DATE_FORMAT,
-        help="Log date format used by the logging module",
+        cli="--log-date-format",
+        metavar="FORMAT",
+        group="logging",
     )
-    parser.addini(
+    parser.addconfig(
+        "log_auto_indent",
+        "Auto-indent multiline messages passed to the logging module. "
+        "Accepts true|on, false|off or an integer.",
+        type=bool | int | str,
+        default=None,
+        cli="--log-auto-indent",
+        metavar="INDENT",
+        group="logging",
+    )
+
+    parser.addconfig(
         "log_cli",
+        'Enable log display during test run (also known as "live logging")',
+        type=bool,
         default=False,
-        type="bool",
-        help='Enable log display during test run (also known as "live logging")',
+        cli="--log-cli",
+        group="logging",
     )
-    add_option_ini(
-        "--log-cli-level", dest="log_cli_level", default=None, help="CLI logging level"
-    )
-    add_option_ini(
-        "--log-cli-format",
-        dest="log_cli_format",
+    parser.addconfig(
+        "log_cli_level",
+        "Level of messages to catch/display during live logging",
+        type=int | str,
         default=None,
-        help="Log format used by the logging module",
+        fallback="log_level",
+        cli="--log-cli-level",
+        metavar="LEVEL",
+        group="logging",
     )
-    add_option_ini(
-        "--log-cli-date-format",
-        dest="log_cli_date_format",
+    parser.addconfig(
+        "log_cli_format",
+        "Log format used for live logging",
+        type=str,
+        default=DEFAULT_LOG_FORMAT,
+        fallback="log_format",
+        cli="--log-cli-format",
+        metavar="FORMAT",
+        group="logging",
+    )
+    parser.addconfig(
+        "log_cli_date_format",
+        "Log date format used for live logging",
+        type=str,
+        default=DEFAULT_LOG_DATE_FORMAT,
+        fallback="log_date_format",
+        cli="--log-cli-date-format",
+        metavar="FORMAT",
+        group="logging",
+    )
+
+    parser.addconfig(
+        "log_file",
+        "Path to a file when logging will be written to",
+        type=str,
         default=None,
-        help="Log date format used by the logging module",
+        cli="--log-file",
+        metavar="PATH",
+        group="logging",
     )
-    add_option_ini(
-        "--log-file",
-        dest="log_file",
-        default=None,
-        help="Path to a file when logging will be written to",
-    )
-    add_option_ini(
-        "--log-file-mode",
-        dest="log_file_mode",
+    parser.addconfig(
+        "log_file_mode",
+        "Log file open mode",
+        type=Literal["w", "a"],
         default="w",
-        choices=["w", "a"],
-        help="Log file open mode",
+        cli="--log-file-mode",
+        metavar="MODE",
+        group="logging",
     )
-    add_option_ini(
-        "--log-file-level",
-        dest="log_file_level",
+    parser.addconfig(
+        "log_file_level",
+        "Level of messages to catch/display in the log file",
+        type=int | str,
         default=None,
-        help="Log file logging level",
+        fallback="log_level",
+        cli="--log-file-level",
+        metavar="LEVEL",
+        group="logging",
     )
-    add_option_ini(
-        "--log-file-format",
-        dest="log_file_format",
-        default=None,
-        help="Log format used by the logging module",
+    parser.addconfig(
+        "log_file_format",
+        "Log format used for the log file",
+        type=str,
+        default=DEFAULT_LOG_FORMAT,
+        fallback="log_format",
+        cli="--log-file-format",
+        metavar="FORMAT",
+        group="logging",
     )
-    add_option_ini(
-        "--log-file-date-format",
-        dest="log_file_date_format",
-        default=None,
-        help="Log date format used by the logging module",
+    parser.addconfig(
+        "log_file_date_format",
+        "Log date format used for the log file",
+        type=str,
+        default=DEFAULT_LOG_DATE_FORMAT,
+        fallback="log_date_format",
+        cli="--log-file-date-format",
+        metavar="FORMAT",
+        group="logging",
     )
-    add_option_ini(
-        "--log-auto-indent",
-        dest="log_auto_indent",
-        default=None,
-        help="Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
-    )
-    group.addoption(
+
+    parser.getgroup("logging").addoption(
         "--log-disable",
         action="append",
         default=[],
@@ -627,14 +658,10 @@ def caplog(request: FixtureRequest) -> Generator[LogCaptureFixture]:
     result._finalize()
 
 
-def get_log_level_for_setting(config: Config, *setting_names: str) -> int | None:
-    for setting_name in setting_names:
-        log_level = config.getoption(setting_name)
-        if log_level is None:
-            log_level = config.getini(setting_name)
-        if log_level:
-            break
-    else:
+def get_log_level_for_setting(config: Config, setting_name: str) -> int | None:
+    """Resolve a logging level setting to a numeric level, or None if unset."""
+    log_level = config.getini(setting_name)
+    if log_level is None:
         return None
 
     if isinstance(log_level, str):
@@ -669,9 +696,9 @@ class LoggingPlugin:
 
         # Report logging.
         self.formatter = self._create_formatter(
-            get_option_ini(config, "log_format"),
-            get_option_ini(config, "log_date_format"),
-            get_option_ini(config, "log_auto_indent"),
+            config.getini("log_format"),
+            config.getini("log_date_format"),
+            config.getini("log_auto_indent"),
         )
         self.log_level = get_log_level_for_setting(config, "log_level")
         self.caplog_handler = LogCaptureHandler()
@@ -680,23 +707,20 @@ class LoggingPlugin:
         self.report_handler.setFormatter(self.formatter)
 
         # File logging.
-        self.log_file_level = get_log_level_for_setting(
-            config, "log_file_level", "log_level"
-        )
-        log_file = get_option_ini(config, "log_file") or os.devnull
+        self.log_file_level = get_log_level_for_setting(config, "log_file_level")
+        log_file = config.getini("log_file") or os.devnull
         if log_file != os.devnull:
             directory = os.path.dirname(os.path.abspath(log_file))
             if not os.path.isdir(directory):
                 os.makedirs(directory)
 
-        self.log_file_mode = get_option_ini(config, "log_file_mode") or "w"
+        # Guaranteed by the `Literal["w", "a"]` registration above.
+        self.log_file_mode: Literal["w", "a"] = config.getini("log_file_mode")
         self.log_file_handler = _FileHandler(
             log_file, mode=self.log_file_mode, encoding="UTF-8"
         )
-        log_file_format = get_option_ini(config, "log_file_format", "log_format")
-        log_file_date_format = get_option_ini(
-            config, "log_file_date_format", "log_date_format"
-        )
+        log_file_format = config.getini("log_file_format")
+        log_file_date_format = config.getini("log_file_date_format")
 
         log_file_formatter = DatetimeFormatter(
             log_file_format, datefmt=log_file_date_format
@@ -704,9 +728,7 @@ class LoggingPlugin:
         self.log_file_handler.setFormatter(log_file_formatter)
 
         # CLI/live logging.
-        self.log_cli_level = get_log_level_for_setting(
-            config, "log_cli_level", "log_level"
-        )
+        self.log_cli_level = get_log_level_for_setting(config, "log_cli_level")
         if self._log_cli_enabled():
             terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
             # Guaranteed by `_log_cli_enabled()`.
@@ -719,9 +741,9 @@ class LoggingPlugin:
         else:
             self.log_cli_handler = _LiveLoggingNullHandler()
         log_cli_formatter = self._create_formatter(
-            get_option_ini(config, "log_cli_format", "log_format"),
-            get_option_ini(config, "log_cli_date_format", "log_date_format"),
-            get_option_ini(config, "log_auto_indent"),
+            config.getini("log_cli_format"),
+            config.getini("log_cli_date_format"),
+            config.getini("log_auto_indent"),
         )
         self.log_cli_handler.setFormatter(log_cli_formatter)
         self._disable_loggers(loggers_to_disable=config.option.logger_disable)
@@ -768,17 +790,18 @@ class LoggingPlugin:
         if not fpath.parent.exists():
             fpath.parent.mkdir(exist_ok=True, parents=True)
 
-        # https://github.com/python/mypy/issues/11193
-        stream: io.TextIOWrapper = fpath.open(mode=self.log_file_mode, encoding="UTF-8")  # type: ignore[assignment]
+        stream: io.TextIOWrapper = fpath.open(mode=self.log_file_mode, encoding="UTF-8")
         old_stream = self.log_file_handler.setStream(stream)
         if old_stream:
             old_stream.close()
 
     def _log_cli_enabled(self) -> bool:
         """Return whether live logging is enabled."""
-        enabled = self._config.getoption(
-            "--log-cli-level"
-        ) is not None or self._config.getini("log_cli")
+        # A level given on the command line turns live logging on; the same
+        # level in a configuration file does not.
+        enabled = self._config.settings.source_of(
+            "log_cli_level"
+        ) is Source.CLI or self._config.getini("log_cli")
         if not enabled:
             return False
 

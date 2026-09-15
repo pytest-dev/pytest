@@ -309,6 +309,149 @@ If you want to look at the names of existing plugins, use
 the :option:`--trace-config` option.
 
 
+.. _declaring-config-options:
+
+Declaring configuration options
+-------------------------------
+
+.. versionadded:: 9.2
+
+.. note::
+
+    :func:`parser.addconfig() <pytest.Parser.addconfig>` and the ``fallback``
+    argument to :func:`parser.addini() <pytest.Parser.addini>` are
+    experimental. Their behaviour and signatures may change in future
+    releases.
+
+A setting that your plugin reads -- a name to greet, a format to print in, a
+limit to enforce -- is declared once, from the :hook:`pytest_addoption` hook,
+with :func:`parser.addconfig() <pytest.Parser.addconfig>`:
+
+.. code-block:: python
+
+    def pytest_addoption(parser):
+        parser.addconfig(
+            "hello_name",
+            'Name to greet, as in "Hello World!"',
+            type=str,
+            default="World",
+            cli="--hello-name",
+            metavar="NAME",
+            group="helloworld",
+        )
+
+This gives users both a ``hello_name`` configuration option and a
+``--hello-name`` command line option. There is one way to read it, whichever
+way the user set it:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def hello(request):
+        def _hello(name=None):
+            return f"Hello {name or request.config.getini('hello_name')}!"
+
+        return _hello
+
+The command line option *overrides* the configuration option rather than being
+a separate value, which is what lets there be a single read. Leave ``cli`` out
+and the setting is configuration-only; users can still change it for one run
+with ``-o hello_name=Bob``, so a setting does not need a command line option
+merely to be overridable.
+
+Types
+~~~~~
+
+``type`` accepts ``str``, ``bool``, ``int`` and ``float``, a union of those
+such as ``int | str``, a ``Literal`` of strings for a fixed set of choices, and
+the list-valued tags ``"args"``, ``"linelist"`` and ``"paths"``:
+
+.. code-block:: python
+
+    from typing import Literal
+
+    parser.addconfig(
+        "hello_style",
+        "How enthusiastic to be",
+        type=Literal["plain", "shouting"],
+        default="plain",
+        cli="--hello-style",
+    )
+
+Declaring the type once is what makes ``-o hello_style=whispering`` a clean
+usage error: it is enforced wherever the value comes from -- a configuration
+file, ``-o``, or the command line option.
+
+A ``bool`` setting becomes a flag taking no argument. Pass ``cli_value`` to
+make a flag out of any other type, so that a ``--shout`` flag can set
+``hello_style`` to ``shouting``.
+
+Falling back to another setting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When one setting refines another -- a format for one output stream, defaulting
+to the format used for all of them -- say so with ``fallback`` rather than
+resolving it at each place you read the value:
+
+.. code-block:: python
+
+    parser.addconfig("hello_name", "Name to greet", type=str, default="World")
+    parser.addconfig(
+        "hello_shout_name",
+        "Name to greet when shouting",
+        type=str,
+        default="World",
+        fallback="hello_name",
+    )
+
+``config.getini("hello_shout_name")`` then returns ``hello_name`` whenever
+``hello_shout_name`` itself is not configured. A fallback must be registered
+before the settings naming it, and must have the same type; several may be
+given, and the first one that is configured wins.
+
+Declaring the fallback also gets two things right that are easy to miss when
+writing the chain by hand: a setting explicitly configured to an empty value is
+honoured rather than falling through, and ``pytest --help`` says what this
+setting falls back to.
+
+Reading a setting
+~~~~~~~~~~~~~~~~~
+
+:func:`config.getini() <pytest.Config.getini>` reads a setting whichever way
+the user set it. :class:`config.settings <pytest.Settings>` is the same values
+as a mapping, and can also say where one came from:
+
+.. code-block:: python
+
+    config.settings["hello_name"]  # same as config.getini("hello_name")
+    config.settings.source_of("hello_name")  # Source.FILE, Source.CLI, ...
+    config.settings.spec("hello_name").default  # how it was declared
+
+Note that a setting is *not* read as ``config.option.<name>``. That still
+works, and shows the resolved value, but it is deprecated: writing it there
+does not change the setting. ``config.option`` remains the way to read the
+command line options that are not settings, which are also listed as
+``config.settings.options``.
+
+The underlying calls
+~~~~~~~~~~~~~~~~~~~~
+
+``addconfig`` is a convenience over two lower-level calls, which remain
+available and are what you want when a setting is not really a setting:
+
+* :func:`parser.addoption() <pytest.Parser.addoption>` registers a command line
+  option only, taking argparse's arguments and read with
+  :func:`config.getoption() <pytest.Config.getoption>`. Use it for things that
+  are not configuration at all -- selecting what to run, entering a debugger,
+  anything meaningless to write down in a file.
+* :func:`parser.addini() <pytest.Parser.addini>` registers a configuration
+  option only, read with :func:`config.getini() <pytest.Config.getini>`. It
+  also accepts ``fallback``.
+
+Note that their ``type`` arguments are unrelated: ``addoption`` takes an
+argparse converter, ``addini`` takes the types described above.
+
+
 .. _registering-markers:
 
 Registering custom markers
@@ -362,23 +505,22 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
 
 
     def pytest_addoption(parser):
-        group = parser.getgroup("helloworld")
-        group.addoption(
-            "--name",
-            action="store",
-            dest="name",
+        parser.addconfig(
+            "hello_name",
+            'Default "name" for hello().',
+            type=str,
             default="World",
-            help='Default "name" for hello().',
+            cli="--hello-name",
+            metavar="NAME",
+            group="helloworld",
         )
 
 
     @pytest.fixture
     def hello(request):
-        name = request.config.getoption("name")
-
         def _hello(name=None):
             if not name:
-                name = request.config.getoption("name")
+                name = request.config.getini("hello_name")
             return f"Hello {name}!"
 
         return _hello

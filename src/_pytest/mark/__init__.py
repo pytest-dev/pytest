@@ -122,6 +122,10 @@ def pytest_addoption(parser: Parser) -> None:
         "--markers",
         action="store_true",
         help="show markers (builtin, plugin and per-project ones).",
+        # `markers` is the linelist config option below; the flag keeps its
+        # historic dest, so `config.option.markers` is unchanged, but it needs
+        # a name of its own in the settings registry.
+        _setting_name="show_markers",
     )
 
     parser.addini("markers", "Register new markers for test functions", "linelist")
@@ -280,10 +284,7 @@ def _validate_marker_names(expr: Expression, config: Config) -> None:
 
     Only validates when strict_markers is enabled.
     """
-    strict_markers = config.getini("strict_markers")
-    if strict_markers is None:
-        strict_markers = config.getini("strict")
-    if not strict_markers:
+    if not config.getini("strict_markers"):
         return
 
     registered_markers = {m.name for m in config._iter_registered_markers()}
