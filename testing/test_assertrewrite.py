@@ -1165,9 +1165,10 @@ def test_rewritten():
         self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Moving a test module must keep ``co_filename`` synchronized with ``__file__``."""
+        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
 
-        pytester.makepyfile(
+        source = pytester.makepyfile(
             **{
                 "test1/test_a.py": """
                 from inspect import currentframe
@@ -1181,7 +1182,14 @@ def test_rewritten():
         first = pytester.runpytest_subprocess("-s", "test1/test_a.py")
         first.assert_outcomes(passed=1)
 
+        pyc = get_cache_dir(source) / ("test_a" + PYC_TAIL)
+        assert pyc.is_file()
+
         pytester.path.joinpath("test1").rename(pytester.path.joinpath("test2"))
+
+        moved_source = pytester.path / "test2" / "test_a.py"
+        moved_pyc = get_cache_dir(moved_source) / ("test_a" + PYC_TAIL)
+        assert moved_pyc.is_file()
 
         second = pytester.runpytest_subprocess("-s", "test2/test_a.py")
         second.assert_outcomes(passed=1)
