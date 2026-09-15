@@ -2,7 +2,7 @@
 build-backend = "setuptools.build_meta"
 requires = [
     "setuptools>=77",
-    "setuptools-scm[toml]>=6.2.3",
+    "setuptools-scm[toml]>=10.1",
 ]
 
 [project]
@@ -82,7 +82,10 @@ scripts.pytest = "_pytest.config:_console_main"
 ]
 
 [tool.setuptools_scm]
-write_to = "src/_pytest/_version.py"
+version_file = "src/_pytest/_version.py"
+# keep writing _version.py into the checkout: running pytest from a source
+# tree relies on it. The setuptools-scm default flips in a future major.
+write_to_source = true
 
 [tool.black]
 # See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#t-target-version
