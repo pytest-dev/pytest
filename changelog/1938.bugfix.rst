@@ -1,0 +1,1 @@
+``monkeypatch.undo()`` now restores ``__bases__`` and similar type-level attributes patched via ``monkeypatch.setattr()``, instead of raising ``TypeError``.
