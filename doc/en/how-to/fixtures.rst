@@ -497,10 +497,8 @@ Fixtures are created when first requested by a test, and are destroyed based on 
 * ``class``: the fixture is destroyed during teardown of the last test in the class.
 * ``module``: the fixture is destroyed during teardown of the last test in the module.
 * ``package``: the fixture is destroyed during teardown of the last test in the
-  package where the fixture is defined, including sub-packages and
-  sub-directories within it. Here, a package is a directory collected by pytest
-  as a :class:`~pytest.Package`, which by default requires an ``__init__.py``
-  file.
+  :term:`regular <python:regular package>` :ref:`Python package <python:tut-packages>` where the fixture is defined, including sub-packages and
+  sub-directories within it.
 * ``session``: the fixture is destroyed at the end of the test session.
 
 .. note::
