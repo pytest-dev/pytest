@@ -1869,6 +1869,16 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.assert_outcomes(passed=1)
 
+    def test_fixture_function_definition_public_api(self) -> None:
+        """FixtureFunctionDefinition is accessible as pytest.FixtureFunctionDefinition."""
+        assert "FixtureFunctionDefinition" in pytest.__all__
+
+        @pytest.fixture
+        def fixture_func() -> None:
+            pass
+
+        assert isinstance(fixture_func, pytest.FixtureFunctionDefinition)
+
 
 class TestFixtureManagerParseFactories:
     @pytest.fixture
