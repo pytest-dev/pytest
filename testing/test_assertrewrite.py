@@ -1161,12 +1161,38 @@ def test_rewritten():
             glob.glob("__pycache__/*.pyc")
         )
 
+    @pytest.mark.parametrize("implementation", ["import-lib", "pure-python"])
     def test_moved_test_file_updates_code_filename(
-        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+        self,
+        pytester: Pytester,
+        monkeypatch: pytest.MonkeyPatch,
+        implementation: str,
     ) -> None:
-        """Moving a test module must keep ``co_filename`` synchronized with ``__file__``."""
+        """Moving a test module must keep ``co_filename`` synchronized with ``__file__``.
+
+        The rewritten pyc is reused: filenames are corrected in memory, not by
+        rewriting the cache.
+        """
+        from _pytest.assertion.rewrite import (  # type: ignore[attr-defined]
+            _imp_fix_co_filename,
+        )
+
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+
+        if implementation == "import-lib":
+            if _imp_fix_co_filename is None:
+                pytest.skip(
+                    "_imp._fix_co_filename is not available"
+                )  # pragma: no cover
+        else:
+            # The inner pytest runs in a subprocess, so patch there.
+            pytester.makeconftest(
+                """
+                import _pytest.assertion.rewrite as rewrite
+                rewrite._imp_fix_co_filename = None
+                """
+            )
 
         source = pytester.makepyfile(
             **{
@@ -1185,6 +1211,8 @@ def test_rewritten():
         pyc = get_cache_dir(source) / ("test_a" + PYC_TAIL)
         assert pyc.is_file()
 
+        pyc_mtime = pyc.stat().st_mtime_ns
+
         pytester.path.joinpath("test1").rename(pytester.path.joinpath("test2"))
 
         moved_source = pytester.path / "test2" / "test_a.py"
@@ -1193,6 +1221,7 @@ def test_rewritten():
 
         second = pytester.runpytest_subprocess("-s", "test2/test_a.py")
         second.assert_outcomes(passed=1)
+        assert moved_pyc.stat().st_mtime_ns == pyc_mtime
 
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(
