@@ -297,9 +297,14 @@ class DoctestItem(Item):
         _check_all_skipped(self.dtest)
         self._disable_output_capturing_for_darwin()
         failures: list[doctest.DocTestFailure] = []
-        # Type ignored because we change the type of `out` from what
-        # doctest expects.
-        self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type]
+        optionflags = self.runner.optionflags
+        try:
+            # Type ignored because we change the type of `out` from what
+            # doctest expects.
+            self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type]
+        finally:
+            # Our runner can raise before doctest restores its option flags.
+            self.runner.optionflags = optionflags
         if failures:
             raise MultipleDoctestFailures(failures)
 
