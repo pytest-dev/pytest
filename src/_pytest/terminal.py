@@ -45,6 +45,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.deselect import get_deselection_reason
 from _pytest.nodeid import NodeId
 from _pytest.nodes import Item
 from _pytest.nodes import Node
@@ -76,6 +77,10 @@ KNOWN_TYPES = (
 )
 
 _REPORTCHARS_DEFAULT = "fE"
+
+#: Shown for items deselected by a plugin, which currently has no way to record
+#: a reason -- see :mod:`_pytest.deselect`.
+_NO_DESELECTION_REASON = "deselected by a plugin, no reason recorded"
 
 _ConsoleOutputStyle = Literal[
     "classic", "progress", "count", "times", "progress-even-when-capture-no"
@@ -413,6 +418,7 @@ class TerminalReporter:
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
+        self._deselections: list[tuple[str | None, list[Item]]] = []
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
 
     def _determine_show_progress_info(
@@ -618,6 +624,10 @@ class TerminalReporter:
 
     def pytest_deselected(self, items: Sequence[Item]) -> None:
         self._add_stats("deselected", items)
+        if items:
+            # The reason is side-channeled rather than passed to the hook; see
+            # _pytest.deselect for why it is None for everyone but pytest.
+            self._deselections.append((get_deselection_reason(self.config), [*items]))
 
     def pytest_runtest_logstart(
         self, nodeid: str, location: tuple[str, int | None, str]
@@ -1023,6 +1033,7 @@ class TerminalReporter:
             return (yield)
         finally:
             if show_summary:
+                self.summary_deselected()
                 self.short_test_summary()
                 # Display any extra warnings from teardown here (if any).
                 self.summary_warnings()
@@ -1296,6 +1307,16 @@ class TerminalReporter:
             self.write_sep("=", msg, fullwidth=fullwidth, **main_markup)
         else:
             self.write_line(msg, **main_markup)
+
+    def summary_deselected(self) -> None:
+        """List the deselected items and, where known, why they were deselected."""
+        if self.verbosity < 1 or not self._deselections:
+            return
+        self.write_sep("=", "deselected")
+        for reason, items in self._deselections:
+            self.write_line(f"{reason or _NO_DESELECTION_REASON}:", yellow=True)
+            for item in items:
+                self.write_line(f"  {item.nodeid}")
 
     def short_test_summary(self) -> None:
         if not self.reportchars:
