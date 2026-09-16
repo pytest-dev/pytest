@@ -444,6 +444,13 @@ def pytest_deselected(items: Sequence[Item]) -> None:
 
     May be called multiple times.
 
+    The hook carries no reason for the deselection, and cannot grow one: since
+    plugins call it, a new argument would be one that no existing caller passes,
+    and pluggy has no way to evolve the arguments of a hook *call*.  pytest
+    reports a reason for its own deselections by passing it next to the call
+    (see ``_pytest.deselect``); items deselected by a plugin are reported
+    without one.
+
     :param items:
         The items.
 
