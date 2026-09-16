@@ -1021,10 +1021,7 @@ def _plugin_rewrite_name(module: str) -> str | None:
     parts = module.split(".")
     search_path: list[str] | None = None
     for i, part in enumerate(parts):
-        try:
-            spec = importlib.machinery.PathFinder.find_spec(part, search_path)
-        except (ImportError, AttributeError, ValueError):
-            return None
+        spec = importlib.machinery.PathFinder.find_spec(part, search_path)
         if spec is None:
             return None
         if spec.origin is not None or spec.submodule_search_locations is None:
@@ -1042,10 +1039,7 @@ def _is_editable_install(dist: importlib.metadata.Distribution) -> bool:
     read_text = getattr(dist, "read_text", None)
     if read_text is None:
         return False
-    try:
-        direct_url = read_text("direct_url.json")
-    except OSError:
-        return False
+    direct_url = read_text("direct_url.json")
     if not direct_url:
         return False
     try:

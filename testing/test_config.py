@@ -1692,6 +1692,8 @@ class TestConfigAPI:
         # A regular package is marked as a whole, so its helpers are rewritten.
         assert _plugin_rewrite_name("myplug.plugin") == "myplug"
         assert _plugin_rewrite_name("does_not_exist.plugin") is None
+        # Nothing to mark when the entry point points at the namespace itself.
+        assert _plugin_rewrite_name("myns") is None
 
     @pytest.mark.parametrize(
         "direct_url, expected",
@@ -1703,6 +1705,8 @@ class TestConfigAPI:
             ('{"dir_info": {}, "url": "file:///src"}', []),
             # Installed from an index: no direct_url.json at all.
             (None, []),
+            # Unreadable metadata is treated as a non-editable install.
+            ("not json", []),
         ],
     )
     def test_mark_plugins_for_rewrite_editable_install(
