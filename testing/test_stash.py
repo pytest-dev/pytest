@@ -67,3 +67,57 @@ def test_stash() -> None:
     assert stash2[key2] + stash2[key3] == 300
     assert stash[key2] == 1
     assert key3 not in stash
+
+
+def test_stash_replaced_restores_previous_value() -> None:
+    stash = Stash()
+    key = StashKey[str]()
+    stash[key] = "before"
+
+    with stash.replaced(key, "during"):
+        assert stash[key] == "during"
+
+    assert stash[key] == "before"
+
+
+def test_stash_replaced_removes_a_key_that_was_absent() -> None:
+    stash = Stash()
+    key = StashKey[str]()
+
+    with stash.replaced(key, "during"):
+        assert stash[key] == "during"
+
+    assert key not in stash
+
+
+def test_stash_replaced_restores_on_exception() -> None:
+    stash = Stash()
+    key = StashKey[str]()
+    stash[key] = "before"
+
+    with pytest.raises(ValueError), stash.replaced(key, "during"):
+        raise ValueError
+
+    assert stash[key] == "before"
+
+
+def test_stash_replaced_nests() -> None:
+    stash = Stash()
+    key = StashKey[str]()
+
+    with stash.replaced(key, "outer"):
+        with stash.replaced(key, "inner"):
+            assert stash[key] == "inner"
+        assert stash[key] == "outer"
+
+    assert key not in stash
+
+
+def test_stash_replaced_tolerates_deletion_inside_the_block() -> None:
+    stash = Stash()
+    key = StashKey[str]()
+
+    with stash.replaced(key, "during"):
+        del stash[key]
+
+    assert key not in stash

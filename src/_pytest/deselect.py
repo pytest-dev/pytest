@@ -45,16 +45,8 @@ def deselect_items(config: Config, items: Sequence[Item], reason: str) -> None:
     *reason* is phrased as the answer to "why is this item not selected?", e.g.
     ``"-m 'slow' did not match"``.
     """
-    stash = config.stash
-    previous = stash.get(deselection_reason_key, None)
-    stash[deselection_reason_key] = reason
-    try:
+    with config.stash.replaced(deselection_reason_key, reason):
         config.hook.pytest_deselected(items=items)
-    finally:
-        if previous is None:
-            del stash[deselection_reason_key]
-        else:
-            stash[deselection_reason_key] = previous
 
 
 def get_deselection_reason(config: Config) -> str | None:
