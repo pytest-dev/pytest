@@ -240,15 +240,13 @@ class Cache:
             return
         data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
-            f = path.open("w", encoding="UTF-8")
+            with path.open("w", encoding="UTF-8") as f:
+                f.write(data)
         except OSError as exc:
             self.warn(
                 f"cache could not write path {path}: {exc}",
                 _ispytest=True,
             )
-        else:
-            with f:
-                f.write(data)
 
     def _ensure_cache_dir_and_supporting_files(self) -> None:
         """Create the cache dir and its supporting files."""
