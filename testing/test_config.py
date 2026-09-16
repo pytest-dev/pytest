@@ -1669,6 +1669,51 @@ class TestConfigAPI:
     def test_iter_rewritable_modules(self, names, expected) -> None:
         assert list(_iter_rewritable_modules(names)) == expected
 
+    @pytest.mark.parametrize(
+        "direct_url, expected",
+        [
+            # PEP 660 editable install: no Python files are recorded, so the
+            # entry point is the only way to find the package (#11783).
+            ('{"dir_info": {"editable": true}, "url": "file:///src"}', ["myplug"]),
+            # A regular install of a local directory is not editable.
+            ('{"dir_info": {}, "url": "file:///src"}', []),
+            # Installed from an index: no direct_url.json at all.
+            (None, []),
+        ],
+    )
+    def test_mark_plugins_for_rewrite_editable_install(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch, direct_url, expected
+    ) -> None:
+        """Plugins installed in editable mode are still marked for rewrite."""
+
+        class DummyEntryPoint:
+            name = "myplug"
+            group = "pytest11"
+            value = "myplug.plugin"
+
+        class DummyDistribution:
+            metadata = {"name": "myplug"}
+            entry_points = (DummyEntryPoint(),)
+            files = ()
+
+            def read_text(self, filename):
+                return direct_url if filename == "direct_url.json" else None
+
+        class DummyHook:
+            def __init__(self):
+                self.marked: list[str] = []
+
+            def mark_rewrite(self, *names: str) -> None:
+                self.marked.extend(names)
+
+        monkeypatch.setattr(
+            importlib.metadata, "distributions", lambda: (DummyDistribution(),)
+        )
+        hook = DummyHook()
+        config = pytester.parseconfig()
+        config._mark_plugins_for_rewrite(hook, disable_autoload=False)
+        assert hook.marked == expected
+
     def test_add_cleanup(self, pytester: Pytester) -> None:
         config = Config.fromdictargs({}, [])
         config._do_configure()

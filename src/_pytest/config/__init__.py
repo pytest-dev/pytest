@@ -22,6 +22,7 @@ import glob
 import importlib
 import importlib.metadata
 import inspect
+import json
 import os
 import pathlib
 import re
@@ -1006,6 +1007,28 @@ def _get_plugin_specs_as_list(
     )
 
 
+def _is_editable_install(dist: importlib.metadata.Distribution) -> bool:
+    """Whether the distribution was installed in editable mode (PEP 660).
+
+    Such installs do not record the package's Python files in the distribution
+    metadata, so they need special handling when looking for modules to rewrite.
+    """
+    read_text = getattr(dist, "read_text", None)
+    if read_text is None:
+        return False
+    try:
+        direct_url = read_text("direct_url.json")
+    except OSError:
+        return False
+    if not direct_url:
+        return False
+    try:
+        dir_info = json.loads(direct_url).get("dir_info", {})
+    except ValueError:
+        return False
+    return bool(dir_info.get("editable"))
+
+
 def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
     """Given an iterable of file names in a source distribution, return the "names" that should
     be marked for assertion rewrite.
@@ -1477,15 +1500,23 @@ class Config:
             # no need to continue.
             return
 
-        package_files = (
-            str(file)
-            for dist in importlib.metadata.distributions()
-            if any(ep.group == "pytest11" for ep in dist.entry_points)
-            for file in dist.files or []
-        )
-
-        for name in _iter_rewritable_modules(package_files):
-            hook.mark_rewrite(name)
+        for dist in importlib.metadata.distributions():
+            entry_points = [ep for ep in dist.entry_points if ep.group == "pytest11"]
+            if not entry_points:
+                continue
+            names = set(
+                _iter_rewritable_modules(str(file) for file in dist.files or [])
+            )
+            if not names and _is_editable_install(dist):
+                # An editable install lists no Python files, so fall back to the
+                # top-level package of each plugin entry point (#11783).
+                names = {
+                    top_level
+                    for ep in entry_points
+                    if (top_level := ep.value.partition(":")[0].strip().split(".")[0])
+                }
+            for name in names:
+                hook.mark_rewrite(name)
 
     def _configure_python_path(self) -> None:
         # `pythonpath = a b` will set `sys.path` to `[a, b, x, y, z, ...]`
