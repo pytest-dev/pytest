@@ -1281,10 +1281,12 @@ fixture as :py:attr:`request.param`.
 
     import pytest
 
+
     @pytest.fixture
     def service(request):
         # request.param carries the value passed from the test
         return f"Service launched with {request.param!r}"
+
 
     @pytest.mark.parametrize("service", ["--verbose"], indirect=True)
     def test_with_service(service):

@@ -1574,9 +1574,11 @@ def fixture(
 
             import pytest
 
+
             @pytest.fixture
             def service(request):
                 return f"Service launched with {request.param!r}"
+
 
             @pytest.mark.parametrize("service", ["--verbose"], indirect=True)
             def test_with_service(service):
