@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 import dataclasses
+import importlib
 import importlib.metadata
 import os
 from pathlib import Path
@@ -18,6 +19,7 @@ from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _get_prog_name
 from _pytest.config import _iter_rewritable_modules
+from _pytest.config import _plugin_rewrite_name
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
@@ -1671,6 +1673,26 @@ class TestConfigAPI:
     def test_iter_rewritable_modules(self, names, expected) -> None:
         assert list(_iter_rewritable_modules(names)) == expected
 
+    def test_plugin_rewrite_name_skips_namespace_packages(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A namespace package can be shared with unrelated distributions, so
+        the plugin's own package is marked instead of the whole namespace."""
+        (tmp_path / "myns" / "plug").mkdir(parents=True)
+        (tmp_path / "myns" / "plug" / "__init__.py").touch()
+        (tmp_path / "myns" / "other").mkdir(parents=True)
+        (tmp_path / "myns" / "other" / "__init__.py").touch()
+        (tmp_path / "myplug").mkdir()
+        (tmp_path / "myplug" / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        importlib.invalidate_caches()
+
+        # "myns" is a namespace package, so descend into the plugin's package.
+        assert _plugin_rewrite_name("myns.plug.plugin") == "myns.plug"
+        # A regular package is marked as a whole, so its helpers are rewritten.
+        assert _plugin_rewrite_name("myplug.plugin") == "myplug"
+        assert _plugin_rewrite_name("does_not_exist.plugin") is None
+
     @pytest.mark.parametrize(
         "direct_url, expected",
         [
@@ -1684,9 +1706,18 @@ class TestConfigAPI:
         ],
     )
     def test_mark_plugins_for_rewrite_editable_install(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch, direct_url, expected
+        self,
+        pytester: Pytester,
+        tmp_path: Path,
+        monkeypatch: MonkeyPatch,
+        direct_url,
+        expected,
     ) -> None:
         """Plugins installed in editable mode are still marked for rewrite."""
+        (tmp_path / "myplug").mkdir()
+        (tmp_path / "myplug" / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        importlib.invalidate_caches()
 
         class DummyEntryPoint:
             name = "myplug"
