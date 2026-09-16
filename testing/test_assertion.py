@@ -1165,6 +1165,35 @@ class TestAssert_reprcompare:
         assert (Exotic([2]) == Exotic([2])) is True
         assert Exotic([2]).__eq__([2]) is NotImplemented
 
+        lines = callequal(Exotic([1, 9, 2, 3, 4]), Exotic([1, 2, 3, 4]), verbose=1)
+        assert lines is not None
+        assert "Left contains one more item: 4" in lines
+
+    def test_sequence_extra_item_no_slice_falls_back(self) -> None:
+        """Sequences without slice support must fall back, not break."""
+
+        class NoSliceSeq(Sequence[int]):
+            def __init__(self, iterable):
+                self.elements = list(iterable)
+
+            def __getitem__(self, item):
+                if not isinstance(item, int):
+                    raise TypeError("indices must be integers, not slice")
+                return self.elements[item]
+
+            def __len__(self):
+                return len(self.elements)
+
+        lines = callequal(NoSliceSeq([1, 2, 3]), NoSliceSeq([1, 2, 0, 3]), verbose=1)
+        assert lines is not None
+        assert "Right contains one more item: 3" in lines
+        assert not any("representation of details failed" in line for line in lines)
+
+        lines = callequal(NoSliceSeq([1, 2, 0, 3]), NoSliceSeq([1, 2, 3]), verbose=1)
+        assert lines is not None
+        assert "Left contains one more item: 3" in lines
+        assert not any("representation of details failed" in line for line in lines)
+
     def test_set(self) -> None:
         expl = callequal({0, 1}, {0, 2})
         assert expl is not None
