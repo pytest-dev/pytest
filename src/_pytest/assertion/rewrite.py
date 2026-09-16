@@ -56,6 +56,14 @@ if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
 
+try:
+    from _imp import (  # type: ignore[attr-defined]
+        _fix_co_filename as _imp_fix_co_filename,
+    )
+except ImportError:  # pragma: no cover
+    _imp_fix_co_filename = None
+
+
 assertstate_key = StashKey["AssertionState"]()
 
 # pytest caches rewritten pycs in pycache dirs
@@ -379,7 +387,37 @@ def _read_pyc(
         if not isinstance(co, types.CodeType):
             trace(f"_read_pyc({source}): not a code object")
             return None
+        # A cached pyc can be moved together with the source file (for example
+        # by renaming a package or test directory). In that case the marshaled
+        # code object's ``co_filename`` still points to the old source path.
+        # Fix it in memory the same way importlib does for ordinary pycs: the
+        # cache stays valid, only the in-memory location is corrected.
+        return _fix_code_filename(co, str(source))
+
+
+def _replace_code_filenames(co: types.CodeType, filename: str) -> types.CodeType:
+    """Pure-Python fallback: rebuild the code object tree with *filename*."""
+    return co.replace(
+        co_filename=filename,
+        co_consts=tuple(
+            _replace_code_filenames(c, filename) if isinstance(c, types.CodeType) else c
+            for c in co.co_consts
+        ),
+    )
+
+
+def _fix_code_filename(co: types.CodeType, filename: str) -> types.CodeType:
+    """Point *co* and its nested code objects at *filename*.
+
+    Mirrors what importlib does for every pyc it loads: the cache stays valid,
+    only the in-memory location is corrected.
+    """
+    if co.co_filename == filename:
         return co
+    if _imp_fix_co_filename is not None:
+        _imp_fix_co_filename(co, filename)  # in place, recursive, C
+        return co
+    return _replace_code_filenames(co, filename)
 
 
 def rewrite_asserts(
