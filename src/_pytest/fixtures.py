@@ -1567,6 +1567,24 @@ def fixture(
         of the fixture function and all of the tests using it. The current
         parameter is available in ``request.param``.
 
+        Parameters can also be passed to a fixture from a specific test using
+        :ref:`indirect parametrization <indirect parametrization>`. This is
+        useful when a test needs to configure a fixture in a way that shouldn't
+        affect other tests using the same fixture. For example::
+
+            import pytest
+
+            @pytest.fixture
+            def service(request):
+                return f"Service launched with {request.param!r}"
+
+            @pytest.mark.parametrize("service", ["--verbose"], indirect=True)
+            def test_with_service(service):
+                assert service == "Service launched with '--verbose'"
+
+        See the :ref:`indirect parametrization` section in the parametrize
+        documentation for more details and examples.
+
     :param autouse:
         If True, the fixture func is activated for all tests that can see it.
         If False (the default), an explicit reference is needed to activate
