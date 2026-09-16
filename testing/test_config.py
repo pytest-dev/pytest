@@ -10,9 +10,11 @@ import re
 import sys
 import textwrap
 from typing import Any
+from typing import cast
 from typing import Literal
 
 import _pytest._code
+from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _get_prog_name
 from _pytest.config import _iter_rewritable_modules
@@ -1711,7 +1713,9 @@ class TestConfigAPI:
         )
         hook = DummyHook()
         config = pytester.parseconfig()
-        config._mark_plugins_for_rewrite(hook, disable_autoload=False)
+        config._mark_plugins_for_rewrite(
+            cast(AssertionRewritingHook, hook), disable_autoload=False
+        )
         assert hook.marked == expected
 
     def test_add_cleanup(self, pytester: Pytester) -> None:
