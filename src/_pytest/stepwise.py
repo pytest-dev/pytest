@@ -10,6 +10,7 @@ from _pytest import nodes
 from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
+from _pytest.deselect import deselect_items
 from _pytest.main import Session
 from _pytest.nodeid import NodeId
 from _pytest.reports import TestReport
@@ -171,7 +172,11 @@ class StepwisePlugin:
             )
             deselected = items[:failed_index]
             del items[:failed_index]
-            config.hook.pytest_deselected(items=deselected)
+            deselect_items(
+                config,
+                deselected,
+                "already passed before the last failure (--stepwise)",
+            )
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         if report.failed:
