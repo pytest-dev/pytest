@@ -1,0 +1,1 @@
+Fixed stale ``co_filename`` values after a test module or directory is moved. Assertion-rewrite caches are reused when the source hash still matches, and in-memory code objects are pointed at the current path.
