@@ -2560,6 +2560,39 @@ class TestAutouseManagement:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_autouse_cancelled_by_non_autouse_override(
+        self, pytester: Pytester
+    ) -> None:
+        """A non-autouse override cancels the autouse fixture it shadows (#3225)."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def foo():
+                pass
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture()
+            def foo():
+                assert False
+
+            def test_bar(foo):
+                pass
+
+            def test_baz():
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, errors=1)
+        result = pytester.runpytest("-o", "usefixtures=foo")
+        result.assert_outcomes(errors=2)
+
     @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00", "p01"])
     @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10", "p11"])
     def test_ordering_dependencies_torndown_first(

@@ -1938,14 +1938,29 @@ class FixtureManager:
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures visible to node."""
+        usefixtures_ini = set(self.config.getini("usefixtures"))
         for parentnode in node.listchain():
             basenames = self._node_autousenames.get(parentnode)
             if basenames:
-                yield from basenames
+                for name in basenames:
+                    if name in usefixtures_ini or self._is_autouse(name, node):
+                        yield name
             # Legacy fallback: check string-based nodeid autouse names.
             nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
             if nodeid_basenames:
-                yield from nodeid_basenames
+                for name in nodeid_basenames:
+                    if self._is_autouse(name, node):
+                        yield name
+
+    def _is_autouse(self, name: str, node: nodes.Node) -> bool:
+        """Whether the fixture resolved for name is itself autouse.
+
+        A non-autouse override cancels the autouse fixture it shadows (#3225).
+        """
+        fixturedefs = self.getfixturedefs(name, node)
+        if not fixturedefs:
+            return True
+        return fixturedefs[-1]._autouse
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures visible to node."""
