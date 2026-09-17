@@ -161,27 +161,49 @@ def test_verbose_include_private_fixtures_and_loc(pytester: Pytester) -> None:
 
 
 def test_doctest_items(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture(autouse=True)
+        def one():
+            return 1
+        """
+    )
     pytester.makepyfile(
         '''
         def foo():
             """
-            >>> 1 + 1
+            >>> getfixture('one') + 1
             2
             """
     '''
     )
     pytester.maketxtfile(
         """
-        >>> 1 + 1
+        >>> getfixture('one') + 1
         2
     """
     )
+
     result = pytester.runpytest(
         "--fixtures-per-test", "--doctest-modules", "--doctest-glob=*.txt", "-v"
     )
-    assert result.ret == 0
 
-    result.stdout.fnmatch_lines(["*collected 2 items*"])
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(
+        [
+            "*collected 2 items*",
+            "* fixtures used by test_doctest_items.foo *",
+            "* (test_doctest_items.py:2) *",
+            "one -- conftest.py:3",
+            "* no docstring available",
+            "* fixtures used by test_doctest_items.txt *",
+            "* (test_doctest_items.txt:1) *",
+            "one -- conftest.py:3",
+            "* no docstring available",
+        ]
+    )
 
 
 def test_multiline_docstring_in_module(pytester: Pytester) -> None:
