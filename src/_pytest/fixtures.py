@@ -1945,9 +1945,9 @@ class FixtureManager:
                 for name in basenames:
                     if name in usefixtures_ini or self._is_autouse(name, node):
                         yield name
-            # Legacy fallback: check string-based nodeid autouse names.
+            # Legacy fallback: string-based nodeid autouse names.
             nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
-            if nodeid_basenames:
+            if nodeid_basenames:  # pragma: no cover
                 for name in nodeid_basenames:
                     if self._is_autouse(name, node):
                         yield name
@@ -1958,9 +1958,7 @@ class FixtureManager:
         A non-autouse override cancels the autouse fixture it shadows (#3225).
         """
         fixturedefs = self.getfixturedefs(name, node)
-        if not fixturedefs:
-            return True
-        return fixturedefs[-1]._autouse
+        return not fixturedefs or fixturedefs[-1]._autouse
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures visible to node."""
