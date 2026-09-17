@@ -1,0 +1,1 @@
+Clarified that ``package``-scoped fixtures use pytest package collection boundaries, which by default require an ``__init__.py`` file.
