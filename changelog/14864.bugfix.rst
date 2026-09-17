@@ -1,0 +1,1 @@
+Fixed collection on Windows collecting the whole suite instead of the given path, on file systems which do not support file IDs (``st_ino`` is ``0`` for every file, as seen for example on ``sshfs-win``/WinFsp mounts).

@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import re
 import sys
 import warnings
 
@@ -97,7 +98,8 @@ class TestWarningsRecorderChecker:
             rec.clear()
             assert len(rec.list) == 0
             assert values is rec.list
-            pytest.raises(AssertionError, rec.pop)
+            with pytest.raises(AssertionError):
+                rec.pop()
 
     def test_warn_stacklevel(self) -> None:
         """#4243"""
@@ -145,10 +147,12 @@ class TestDeprecatedCall:
 
     def test_deprecated_call_raises(self) -> None:
         with pytest.raises(pytest.fail.Exception, match="No warnings of type"):
-            pytest.deprecated_call(self.dep, 3, 5)
+            with pytest.deprecated_call():
+                self.dep(3, 5)
 
     def test_deprecated_call(self) -> None:
-        pytest.deprecated_call(self.dep, 0, 5)
+        with pytest.deprecated_call():
+            self.dep(0, 5)
 
     def test_deprecated_call_ret(self) -> None:
         ret = pytest.deprecated_call(self.dep, 0)
@@ -170,11 +174,14 @@ class TestDeprecatedCall:
 
     def test_deprecated_explicit_call_raises(self) -> None:
         with pytest.raises(pytest.fail.Exception):
-            pytest.deprecated_call(self.dep_explicit, 3)
+            with pytest.deprecated_call():
+                self.dep_explicit(3)
 
     def test_deprecated_explicit_call(self) -> None:
-        pytest.deprecated_call(self.dep_explicit, 0)
-        pytest.deprecated_call(self.dep_explicit, 0)
+        with pytest.deprecated_call():
+            self.dep_explicit(0)
+        with pytest.deprecated_call():
+            self.dep_explicit(0)
 
     @pytest.mark.parametrize("mode", ["context_manager", "call"])
     def test_deprecated_call_no_warning(self, mode) -> None:
@@ -198,7 +205,7 @@ class TestDeprecatedCall:
     )
     @pytest.mark.parametrize("mode", ["context_manager", "call"])
     @pytest.mark.parametrize("call_f_first", [True, False])
-    @pytest.mark.filterwarnings("ignore")
+    @pytest.mark.filterwarnings("ignore:hi")
     def test_deprecated_call_modes(self, warning_type, mode, call_f_first) -> None:
         """Ensure deprecated_call() captures a deprecation warning as expected inside its
         block/function.
@@ -258,11 +265,14 @@ class TestWarns:
 
     def test_several_messages(self) -> None:
         # different messages, b/c Python suppresses multiple identical warnings
-        pytest.warns(RuntimeWarning, lambda: warnings.warn("w1", RuntimeWarning))
+        with pytest.warns(RuntimeWarning):
+            warnings.warn("w1", RuntimeWarning)
         with pytest.warns(RuntimeWarning):
             with pytest.raises(pytest.fail.Exception):
-                pytest.warns(UserWarning, lambda: warnings.warn("w2", RuntimeWarning))
-        pytest.warns(RuntimeWarning, lambda: warnings.warn("w3", RuntimeWarning))
+                with pytest.warns(UserWarning):
+                    warnings.warn("w2", RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
+            warnings.warn("w3", RuntimeWarning)
 
     def test_function(self) -> None:
         pytest.warns(
@@ -270,20 +280,14 @@ class TestWarns:
         )
 
     def test_warning_tuple(self) -> None:
-        pytest.warns(
-            (RuntimeWarning, SyntaxWarning), lambda: warnings.warn("w1", RuntimeWarning)
-        )
-        pytest.warns(
-            (RuntimeWarning, SyntaxWarning), lambda: warnings.warn("w2", SyntaxWarning)
-        )
-        with pytest.warns():
-            pytest.raises(
-                pytest.fail.Exception,
-                lambda: pytest.warns(
-                    (RuntimeWarning, SyntaxWarning),
-                    lambda: warnings.warn("w3", UserWarning),
-                ),
-            )
+        with pytest.warns((RuntimeWarning, SyntaxWarning)):
+            warnings.warn("w1", RuntimeWarning)
+        with pytest.warns((RuntimeWarning, SyntaxWarning)):
+            warnings.warn("w2", SyntaxWarning)
+        with pytest.warns(UserWarning, match="^w3$"):
+            with pytest.raises(pytest.fail.Exception):
+                with pytest.warns((RuntimeWarning, SyntaxWarning)):
+                    warnings.warn("w3", UserWarning)
 
     def test_as_contextmanager(self) -> None:
         with pytest.warns(RuntimeWarning):
@@ -497,6 +501,31 @@ class TestWarns:
             with pytest.warns(UserWarning, match="v1 warning"):
                 warnings.warn("v1 warning", UserWarning)
                 warnings.warn("non-matching v2 warning", UserWarning)
+
+    def test_re_emit_filename_derived_module(self) -> None:
+        """Regression test for #11933.
+
+        Re-emitted warnings were attributed to the ``warnings`` module rather
+        than the location the warning was originally emitted from, so
+        ``module``-based warning filters were applied to the wrong warnings.
+        """
+        # When no `module` is passed to `warn_explicit`, it derives one from
+        # the filename by stripping the ".py" suffix.
+        derived_module = re.escape(
+            sys._getframe().f_code.co_filename.removesuffix(".py")
+        )
+        with warnings.catch_warnings():
+            # Must not match the re-emitted warning below; before the fix it
+            # did, because the warning was attributed to the `warnings` module.
+            warnings.filterwarnings("ignore", module="warnings")
+            # Must match the re-emitted warning.
+            warnings.filterwarnings(
+                "error", category=DeprecationWarning, module=derived_module
+            )
+            with pytest.raises(DeprecationWarning, match="unmatched"):
+                with pytest.warns(UserWarning, match="user warning"):
+                    warnings.warn("user warning", UserWarning)
+                    warnings.warn("unmatched", DeprecationWarning)
 
     def test_catch_warning_within_raise(self) -> None:
         # warns-in-raises works since https://github.com/pytest-dev/pytest/pull/11129

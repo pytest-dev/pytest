@@ -128,27 +128,30 @@ def runtestprotocol(
         # This only happens if the item is re-run, as is done by
         # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
-    rep = call_and_report(item, "setup", log)
-    reports = [rep]
-    if rep.passed:
-        if item.config.getoption("setupshow", False):
-            show_test_item(item)
-        if not item.config.getoption("setuponly", False):
-            reports.append(call_and_report(item, "call", log))
-    # If the session is about to fail or stop, teardown everything - this is
-    # necessary to correctly report fixture teardown errors (see #11706)
-    if item.session.shouldfail or item.session.shouldstop:
-        nextitem = None
-    reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
-    # After all teardown hooks have been called
-    # want funcargs and request info to go away.
-    if hasrequest:
-        item._request = False  # type: ignore[attr-defined]
-        item.funcargs = None  # type: ignore[attr-defined]
+    try:
+        rep = call_and_report(item, "setup", log)
+        reports = [rep]
+        if rep.passed:
+            setup_only = item.config.getoption("setuponly", False)
+            if item.config.getoption("setupshow", False):
+                show_test_item(item, add_space=not setup_only)
+            if not setup_only:
+                reports.append(call_and_report(item, "call", log))
+        # If the session is about to fail or stop, teardown everything - this is
+        # necessary to correctly report fixture teardown errors (see #11706)
+        if item.session.shouldfail or item.session.shouldstop:
+            nextitem = None
+        reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
+    finally:
+        # After all teardown hooks have been called (or an exception was reraised)
+        # want funcargs and request info to go away.
+        if hasrequest:
+            item._request = False  # type: ignore[attr-defined]
+            item.funcargs = None  # type: ignore[attr-defined]
     return reports
 
 
-def show_test_item(item: Item) -> None:
+def show_test_item(item: Item, *, add_space: bool) -> None:
     """Show test function, parameters and the fixtures of the test item."""
     tw = item.config.get_terminal_writer()
     tw.line()
@@ -156,7 +159,9 @@ def show_test_item(item: Item) -> None:
     tw.write(item.nodeid)
     used_fixtures = sorted(getattr(item, "fixturenames", []))
     if used_fixtures:
-        tw.write(" (fixtures used: {})".format(", ".join(used_fixtures)))
+        tw.write(f" (fixtures used: {', '.join(used_fixtures)})")
+    if add_space:
+        tw.write(" ")
     tw.flush()
 
 
@@ -403,7 +408,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     call = CallInfo.from_call(
         collect, "collect", reraise=(KeyboardInterrupt, SystemExit)
     )
-    longrepr: None | tuple[str, int, str] | str | TerminalRepr = None
+    longrepr: tuple[str, int, str] | str | TerminalRepr | None = None
     if not call.excinfo:
         outcome: Literal["passed", "skipped", "failed"] = "passed"
     else:
@@ -426,7 +431,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
     result = call.result if not call.excinfo else None
-    rep = CollectReport(collector.nodeid, outcome, longrepr, result)
+    rep = CollectReport(collector.id, outcome, longrepr, result)
     rep.call = call  # type: ignore # see collect_one_node
     return rep
 

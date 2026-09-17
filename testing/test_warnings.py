@@ -5,6 +5,7 @@ import os
 import sys
 import warnings
 
+from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import Pytester
 import pytest
@@ -699,6 +700,112 @@ def test_pytest_configure_warning(pytester: Pytester, recwarn) -> None:
     assert str(warning.message) == "from pytest_configure"
 
 
+@pytest.mark.parametrize("tryfirst", [True, False])
+def test_pytest_configure_warning_filter(pytester: Pytester, tryfirst: bool) -> None:
+    """Issue 10128.
+
+    Parametrize over ``tryfirst`` to guard against hooks that run early
+    from avoiding the filterwarnings configuration.
+    """
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            ignore::UserWarning
+        """
+    )
+    pytester.makeconftest(
+        f"""
+        import warnings
+        import pytest
+
+        @pytest.hookimpl(tryfirst={tryfirst})
+        def pytest_configure():
+            warnings.warn("from pytest_configure", UserWarning)
+        """
+    )
+    pytester.makepyfile("def test_it(): pass")
+
+    result = pytester.runpytest_subprocess()
+
+    result.assert_outcomes(passed=1)
+    result.stdout.no_fnmatch_line("*from pytest_configure*")
+    result.stderr.no_fnmatch_line("*from pytest_configure*")
+
+
+class TestPluginImportWarning:
+    """filterwarnings apply to warnings emitted whilst importing plugins.
+
+    Issue #12697.
+    """
+
+    @staticmethod
+    def _make_plugin_with_import_warning(pytester: Pytester) -> None:
+        pytester.makepyfile(
+            warning_plugin="""
+                import warnings
+                warnings.warn("from plugin import", DeprecationWarning)
+            """,
+            test_it="def test_it(): pass",
+        )
+
+    def test_plugin_import_warning(self, pytester: Pytester) -> None:
+        self._make_plugin_with_import_warning(pytester)
+        pytester.plugins = ["warning_plugin"]
+
+        result = pytester.runpytest_subprocess()
+
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines("*DeprecationWarning: from plugin import")
+
+    def test_plugin_import_warning_without_warnings_plugin(
+        self,
+        pytester: Pytester,
+    ) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                error::DeprecationWarning
+            """
+        )
+        self._make_plugin_with_import_warning(pytester)
+        pytester.plugins = ["warning_plugin"]
+
+        result = pytester.runpytest_subprocess("-p", "no:warnings")
+
+        result.assert_outcomes(passed=1)
+        result.stdout.no_fnmatch_line("*from plugin import*")
+        result.stderr.no_fnmatch_line("*from plugin import*")
+
+    def test_plugin_import_warning_with_warnings_plugin_reenabled(
+        self,
+        pytester: Pytester,
+    ) -> None:
+        self._make_plugin_with_import_warning(pytester)
+        pytester.syspathinsert()
+
+        result = pytester.runpytest(
+            "-p", "warning_plugin", "-p", "no:warnings", "-p", "warnings"
+        )
+
+        result.assert_outcomes(passed=1)
+        result.stdout.fnmatch_lines("*DeprecationWarning: from plugin import")
+
+    def test_plugin_import_warning_from_pytest_plugins(
+        self,
+        pytester: Pytester,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self._make_plugin_with_import_warning(pytester)
+        monkeypatch.setenv("PYTEST_PLUGINS", "warning_plugin")
+
+        result = pytester.runpytest_subprocess()
+
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines("*DeprecationWarning: from plugin import")
+
+
 class TestStackLevel:
     @pytest.fixture
     def capwarn(self, pytester: Pytester):
@@ -885,3 +992,181 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
         else []
     )
     result.stdout.fnmatch_lines([*expected_extra, "*1 passed*"])
+
+
+class TestMaxWarnings:
+    """Tests for the --max-warnings feature."""
+
+    PYFILE = """
+        import warnings
+        def test_one():
+            warnings.warn(UserWarning("warning one"))
+        def test_two():
+            warnings.warn(UserWarning("warning two"))
+    """
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_not_set(self, pytester: Pytester) -> None:
+        """Without --max-warnings, warnings don't affect exit code."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, warnings=2)
+        assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_not_exceeded(self, pytester: Pytester) -> None:
+        """When warning count is below the threshold, exit code is OK."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "10")
+        result.assert_outcomes(passed=2, warnings=2)
+        assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_exceeded(self, pytester: Pytester) -> None:
+        """When warning count exceeds threshold, exit code is MAX_WARNINGS_ERROR."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "1")
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_equal_to_count(self, pytester: Pytester) -> None:
+        """When warning count equals threshold exactly, exit code is OK."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "2")
+        result.assert_outcomes(passed=2, warnings=2)
+        assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_zero(self, pytester: Pytester) -> None:
+        """--max-warnings 0 means no warnings are allowed."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "0")
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_exceeded_message(self, pytester: Pytester) -> None:
+        """Verify the output message when max warnings is exceeded."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "1")
+        result.stdout.fnmatch_lines(
+            ["*Tests pass, but maximum allowed warnings exceeded: 2 > 1*"]
+        )
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_ini_option(self, pytester: Pytester) -> None:
+        """max_warnings can be set via INI configuration."""
+        pytester.makeini(
+            """
+            [pytest]
+            max_warnings = 1
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    @pytest.mark.parametrize("value", ["1", '"1"'])
+    def test_max_warnings_toml_option(self, pytester: Pytester, value: str) -> None:
+        """max_warnings can be set via TOML configuration.
+
+        Supports both int and str (for backward compat).
+        """
+        pytester.maketoml(
+            f"""
+            [pytest]
+            max_warnings = {value}
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_with_test_failure(self, pytester: Pytester) -> None:
+        """When tests fail AND warnings exceed max, TESTS_FAILED takes priority."""
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_fail():
+                warnings.warn(UserWarning("a warning"))
+                assert False
+            """
+        )
+        result = pytester.runpytest("--max-warnings", "0")
+        assert result.ret == ExitCode.TESTS_FAILED
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_with_filterwarnings_ignore(self, pytester: Pytester) -> None:
+        """Filtered (ignored) warnings don't count toward max_warnings."""
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_one():
+                warnings.warn(UserWarning("counted"))
+                warnings.warn(RuntimeWarning("ignored"))
+            """
+        )
+        result = pytester.runpytest(
+            "--max-warnings",
+            "1",
+            "-W",
+            "ignore::RuntimeWarning",
+        )
+        result.assert_outcomes(passed=1, warnings=1)
+        assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_with_filterwarnings_error(self, pytester: Pytester) -> None:
+        """Warnings turned into errors via filterwarnings don't count as warnings."""
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_one():
+                warnings.warn(UserWarning("still a warning"))
+            def test_two():
+                warnings.warn(RuntimeWarning("becomes an error"))
+            """
+        )
+        result = pytester.runpytest(
+            "--max-warnings",
+            "0",
+            "-W",
+            "error::RuntimeWarning",
+        )
+        # The RuntimeWarning becomes a test error, so TESTS_FAILED takes priority.
+        assert result.ret == ExitCode.TESTS_FAILED
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_with_filterwarnings_ini_ignore(
+        self, pytester: Pytester
+    ) -> None:
+        """Warnings ignored via ini filterwarnings don't count toward max_warnings."""
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                ignore::RuntimeWarning
+            max_warnings = 1
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_one():
+                warnings.warn(UserWarning("counted"))
+                warnings.warn(RuntimeWarning("ignored by ini"))
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, warnings=1)
+        assert result.ret == ExitCode.OK
+
+
+def test_pythonwarnings_not_duplicated(pytester: Pytester) -> None:
+    """Regression test for #13484: -W values should not be duplicated in
+    known_args_namespace due to the arg parser being called multiple times."""
+    config = pytester.parseconfig("-W", "error")
+    warnings_list = config.known_args_namespace.pythonwarnings
+    assert warnings_list is not None
+    assert warnings_list == ["error"]

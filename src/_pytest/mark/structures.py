@@ -14,6 +14,7 @@ import enum
 import inspect
 from typing import Any
 from typing import final
+from typing import Literal
 from typing import NamedTuple
 from typing import overload
 from typing import TYPE_CHECKING
@@ -21,15 +22,16 @@ from typing import TypeVar
 import warnings
 
 from .._code import getfslineno
-from ..compat import deprecated
 from ..compat import NOTSET
 from ..compat import NotSetType
+from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
 from _pytest.outcomes import fail
 from _pytest.raises import AbstractRaises
-from _pytest.scope import _ScopeName
+from _pytest.scope import ScopeName
+from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 
@@ -38,6 +40,7 @@ if TYPE_CHECKING:
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
+_EmptyParameterSetMark = Literal["skip", "xfail", "fail_at_collect"]
 
 
 # Singleton type for HIDDEN_PARAM, as described in:
@@ -63,18 +66,18 @@ def get_empty_parameterset_mark(
 
     _fs, lineno = getfslineno(func)
     reason = f"got empty parameter set for ({argslisting})"
-    requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
-    if requested_mark in ("", None, "skip"):
-        mark = MARK_GEN.skip(reason=reason)
-    elif requested_mark == "xfail":
-        mark = MARK_GEN.xfail(reason=reason, run=False)
-    elif requested_mark == "fail_at_collect":
-        raise Collector.CollectError(
-            f"Empty parameter set in '{func.__name__}' at line {lineno + 1}"
-        )
-    else:
-        raise LookupError(requested_mark)
-    return mark
+    requested_mark: _EmptyParameterSetMark = config.getini(EMPTY_PARAMETERSET_OPTION)
+    match requested_mark:
+        case "skip":
+            return MARK_GEN.skip(reason=reason)
+        case "xfail":
+            return MARK_GEN.xfail(reason=reason, run=False)
+        case "fail_at_collect":
+            raise Collector.CollectError(
+                f"Empty parameter set in '{func.__name__}' at line {lineno + 1}"
+            )
+        case unreachable:
+            assert_never(unreachable)
 
 
 class ParameterSet(NamedTuple):
@@ -214,7 +217,20 @@ class ParameterSet(NamedTuple):
         if parameters:
             # Check all parameter sets have the correct number of values.
             for param in parameters:
-                if len(param.values) != len(argnames):
+                try:
+                    values_len = len(param.values)
+                except TypeError:
+                    values_len = None
+                if values_len is None:
+                    fail(
+                        f'{nodeid}: in "parametrize" expected a sequence of values, '
+                        "for a single value use a one-element tuple like "
+                        "('value',), "
+                        f"got {type(param.values).__name__}:\n"
+                        f"  {param.values}",
+                        pytrace=False,
+                    )
+                if values_len != len(argnames):
                     msg = (
                         '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
                         "  {names}\n"
@@ -227,7 +243,7 @@ class ParameterSet(NamedTuple):
                             values=param.values,
                             names=argnames,
                             names_len=len(argnames),
-                            values_len=len(param.values),
+                            values_len=values_len,
                         ),
                         pytrace=False,
                     )
@@ -443,7 +459,18 @@ def get_unpacked_marks(
                 mark_list.append(item)
     else:
         mark_attribute = getattr(obj, "pytestmark", [])
-        if isinstance(mark_attribute, list):
+        if mark_attribute is None:
+            warnings.warn(
+                "Module defines a `__getattr__` which returns None for "
+                "'pytestmark' instead of raising AttributeError. "
+                "Make sure `__getattr__` raises AttributeError for "
+                "attributes it does not provide. "
+                "See https://github.com/pytest-dev/pytest/issues/8265",
+                PytestCollectionWarning,
+                stacklevel=2,
+            )
+            mark_list = []
+        elif isinstance(mark_attribute, list):
             mark_list = mark_attribute
         else:
             mark_list = [mark_attribute]
@@ -517,42 +544,27 @@ if TYPE_CHECKING:
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
-            raises: None
-            | type[BaseException]
+            raises: type[BaseException]
             | tuple[type[BaseException], ...]
-            | AbstractRaises[BaseException] = ...,
+            | AbstractRaises[BaseException]
+            | None = ...,
             strict: bool = ...,
         ) -> MarkDecorator: ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,no-overload-impl]
-        def __call__(
-            self,
-            argnames: str | Sequence[str],
-            argvalues: Collection[ParameterSet | Sequence[object] | object],
-            *,
-            indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool]
-            | Callable[[Any], object | None]
-            | None = ...,
-            scope: _ScopeName | None = ...,
-        ) -> MarkDecorator: ...
-
-        @overload
-        @deprecated(
-            "Passing a non-Collection iterable to the 'argvalues' parameter of @pytest.mark.parametrize is deprecated. "
-            "Convert argvalues to a list or tuple.",
-        )
-        def __call__(
+        def __call__(  # type: ignore[override]
             self,
             argnames: str | Sequence[str],
             argvalues: Iterable[ParameterSet | Sequence[object] | object],
+            # TODO(pytest10): Change to below after PARAMETRIZE_NON_COLLECTION_ITERABLE deprecation.
+            #                 Overload doesn't work, see #14606.
+            # argvalues: Collection[ParameterSet | Sequence[object] | object],
             *,
             indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool]
+            ids: Iterable[str | float | int | bool | _HiddenParam | None]
             | Callable[[Any], object | None]
             | None = ...,
-            scope: _ScopeName | None = ...,
+            scope: ScopeName | None = ...,
         ) -> MarkDecorator: ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):
@@ -605,12 +617,9 @@ class MarkGenerator:
             # name is in the set we definitely know it, but a mark may be known and
             # not in the set.  We therefore start by updating the set!
             if name not in self._markers:
-                for line in self._config.getini("markers"):
-                    # example lines: "skipif(condition): skip the given test if..."
-                    # or "hypothesis: tests which use Hypothesis", so to get the
-                    # marker name we split on both `:` and `(`.
-                    marker = line.split(":")[0].split("(")[0].strip()
-                    self._markers.add(marker)
+                self._markers.update(
+                    m.name for m in self._config._iter_registered_markers()
+                )
 
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.

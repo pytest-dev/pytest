@@ -1,0 +1,1 @@
+TOML configuration files passed via :option:`-c` now also read their configuration from the ``[pytest]`` table, the one pytest's own configuration files use. The ``[tool.pytest]`` and ``[tool.pytest.ini_options]`` tables such files were previously restricted to keep working; using both styles in one file is an error.

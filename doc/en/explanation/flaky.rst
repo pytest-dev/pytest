@@ -67,12 +67,16 @@ Rerunning any failed tests can mitigate the negative effects of flaky tests by g
 
 * `pytest-rerunfailures <https://github.com/pytest-dev/pytest-rerunfailures>`_
 * `pytest-replay <https://github.com/ESSS/pytest-replay>`_: This plugin helps to reproduce locally crashes or flaky tests observed during CI runs.
-* `pytest-flakefinder <https://github.com/dropbox/pytest-flakefinder>`_ - `blog post <https://blogs.dropbox.com/tech/2016/03/open-sourcing-pytest-tools/>`_
+* `pytest-flakefinder <https://github.com/dropbox/pytest-flakefinder>`_ - `blog post <https://web.archive.org/web/20200313031602/https://blogs.dropbox.com/tech/2016/03/open-sourcing-pytest-tools/>`_
 
 Plugins to deliberately randomize tests can help expose tests with state problems:
 
 * `pytest-random-order <https://github.com/jbasko/pytest-random-order>`_
 * `pytest-randomly <https://github.com/pytest-dev/pytest-randomly>`_
+
+Plugins to classify test failures as genuine or flaky:
+
+* `pytest-flakefighters <https://github.com/test-flare/pytest-flakefighters>`_
 
 
 Other general strategies
@@ -122,6 +126,14 @@ This is a limited list, please submit an issue or pull request to expand it!
 * Habchi, Sarra and Haben, Guillaume and Sohn, Jeongju and Franci, Adriano and Papadakis, Mike and Cordy, Maxime and Le Traon, Yves. "What Made This Test Flake? Pinpointing Classes Responsible for Test Flakiness." In Proceedings of the 38th IEEE International Conference on Software Maintenance and Evolution (ICSME), IEEE, 2022. `PDF <https://arxiv.org/abs/2207.10143>`__
 * Lamprou, Sokrates. "Non-deterministic tests and where to find them: Empirically investigating the relationship between flaky tests and test smells by examining test order dependency." Bachelor thesis, Department of Computer and Information Science, Linköping University, 2022. LIU-IDA/LITH-EX-G–19/056–SE. `PDF <https://www.diva-portal.org/smash/get/diva2:1713691/FULLTEXT01.pdf>`__
 * Leinen, Fabian and Elsner, Daniel and Pretschner, Alexander and Stahlbauer, Andreas and Sailer, Michael and Jürgens, Elmar. "Cost of Flaky Tests in Continuous Integration: An Industrial Case Study." Technical University of Munich and CQSE GmbH, Munich, Germany, 2023. `PDF <https://mediatum.ub.tum.de/doc/1730194/1730194.pdf>`__
+* Parry, Owain and Kapfhammer, Gregory M. and Hilton, Michael and McMinn, Phil. "A Survey of Flaky Tests." In *Transactions on Software Engineering and Methodology (TOSEM).* vol. 31, issue 1. ACM, 2021. `PDF <https://eprints.whiterose.ac.uk/id/eprint/230095/1/parry2021.pdf>`__
+* Parry, Owain and Kapfhammer, Gregory M. and Hilton, Michael and McMinn, Phil. "Evaluating Features for Machine Learning Detection of Order- and Non-Order-Dependent Flaky Tests." In *2022 IEEE Conference on Software Testing, Verification and Validation (ICST)*. 2022. `PDF <https://eprints.whiterose.ac.uk/id/eprint/230092/1/parry2022b.pdf>`__
+* Parry, Owain and Kapfhammer, Gregory M. and Hilton, Michael and McMinn, Phil. "What do developer-repaired Flaky tests tell us about the effectiveness of automated Flaky test detection?" In *Proceedings of the 3rd ACM/IEEE International Conference on Automation of Software Test (AST).* 2022. `PDF <https://philmcminn.com/publications/parry2022.pdf>`__
+* Parry, Owain and Kapfhammer, Gregory M. and Hilton, Michael and McMinn, Phil. "Surveying the developer experience of flaky tests." In *Proceedings of the 44th International Conference on Software Engineering (ICSE).* 2022. `PDF <https://dl.acm.org/doi/pdf/10.1145/3510457.3513037>`__
+* Parry, Owain and Kapfhammer, Gregory M. and Hilton, Michael and McMinn, Phil. "Empirically evaluating flaky test detection techniques combining test case rerunning and machine learning models." In *Empirical Software Engineering*.  vol. 28, issue 3. Springer, 2023. `PDF <https://eprints.whiterose.ac.uk/id/eprint/198846/1/s10664-023-10307-w.pdf>`__
+* Gruber, Martin and Roslan, Muhammad Firhard and Parry, Owain and Scharnb\"{o}ck, Fabian and McMinn, Phil and Fraser, Gordon. "Do Automatic Test Generation Tools Generate Flaky Tests?" In *Proceedings of the 46th IEEE/ACM International Conference on Software Engineering (ICSE)*. 2024. `PDF <https://arxiv.org/pdf/2310.05223>`__
+* Parry, Owain and Kapfhammer, Gregory and Hilton, Michael and McMinn, Phil. "Systemic Flakiness: An Empirical Analysis of Co-Occurring Flaky Test Failures." In *Proceedings of the 29th International Conference on Evaluation and Assessment in Software Engineering (EASE)*. 2025. `PDF <https://arxiv.org/pdf/2504.16777>`__
+* Parry, Owain and Kapfhammer, Gregory M. and Hilton, Michael and McMinn, Phil. "Test flimsiness: Characterizing flakiness induced by mutation to the code under test." In *Proceedings of 2026 IEEE/ACM 48th International Conference on Software Engineering (ICSE)*. 2026. `PDF <https://eprints.whiterose.ac.uk/id/eprint/236716/>`__
 
 Resources
 ^^^^^^^^^
@@ -129,7 +141,7 @@ Resources
 * `Eradicating Non-Determinism in Tests <https://martinfowler.com/articles/nonDeterminism.html>`_ by Martin Fowler, 2011
 * `No more flaky tests on the Go team <https://www.thoughtworks.com/insights/blog/no-more-flaky-tests-go-team>`_ by Pavan Sudarshan, 2012
 * `The Build That Cried Broken: Building Trust in your Continuous Integration Tests <https://www.youtube.com/embed/VotJqV4n8ig>`_ talk (video) by `Angie Jones <https://angiejones.tech/>`_ at SeleniumConf Austin 2017
-* `Test and Code Podcast: Flaky Tests and How to Deal with Them <https://testandcode.com/50>`_ by Brian Okken and Anthony Shaw, 2018
+* `Test and Code Podcast: Flaky Tests and How to Deal with Them <https://web.archive.org/web/20221201011103/https://testandcode.com/50>`_ by Brian Okken and Anthony Shaw, 2018
 * Microsoft:
 
   * `How we approach testing VSTS to enable continuous delivery <https://blogs.msdn.microsoft.com/bharry/2017/06/28/testing-in-a-cloud-delivery-cadence/>`_ by Brian Harry MS, 2017

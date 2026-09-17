@@ -71,7 +71,8 @@ def test_make_hook_recorder(pytester: Pytester) -> None:
     recorder.unregister()  # type: ignore[attr-defined]
     recorder.clear()
     recorder.hook.pytest_runtest_logreport(report=rep3)  # type: ignore[attr-defined]
-    pytest.raises(ValueError, recorder.getfailures)
+    with pytest.raises(ValueError):
+        recorder.getfailures()
 
 
 def test_parseconfig(pytester: Pytester) -> None:
@@ -196,7 +197,8 @@ def test_hookrecorder_basic(holder) -> None:
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
-    pytest.raises(pytest.fail.Exception, rec.popcall, "abc")
+    with pytest.raises(pytest.fail.Exception):
+        rec.popcall("abc")
     pm.hook.pytest_xyz_noarg()
     call = rec.popcall("pytest_xyz_noarg")
     assert call._name == "pytest_xyz_noarg"
@@ -297,8 +299,12 @@ def test_assert_outcomes_after_pytest_error(pytester: Pytester) -> None:
     pytester.makepyfile("def test_foo(): assert True")
 
     result = pytester.runpytest("--unexpected-argument")
-    with pytest.raises(ValueError, match="Pytest terminal summary report not found"):
+    with pytest.raises(ValueError) as exc_info:
         result.assert_outcomes(passed=0)
+
+    message = str(exc_info.value)
+    assert "Plugins that modify pytest's terminal output" in message
+    assert "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1" in message
 
 
 class TestSysModulesSnapshot:

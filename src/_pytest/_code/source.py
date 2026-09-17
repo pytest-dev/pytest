@@ -6,6 +6,7 @@ from bisect import bisect_right
 from collections.abc import Iterable
 from collections.abc import Iterator
 import inspect
+import linecache
 import textwrap
 import tokenize
 import types
@@ -23,23 +24,25 @@ class Source:
         if not obj:
             self.lines: list[str] = []
             self.raw_lines: list[str] = []
-        elif isinstance(obj, Source):
-            self.lines = obj.lines
-            self.raw_lines = obj.raw_lines
-        elif isinstance(obj, tuple | list):
-            self.lines = deindent(x.rstrip("\n") for x in obj)
-            self.raw_lines = list(x.rstrip("\n") for x in obj)
-        elif isinstance(obj, str):
-            self.lines = deindent(obj.split("\n"))
-            self.raw_lines = obj.split("\n")
-        else:
-            try:
-                rawcode = getrawcode(obj)
-                src = inspect.getsource(rawcode)
-            except TypeError:
-                src = inspect.getsource(obj)  # type: ignore[arg-type]
-            self.lines = deindent(src.split("\n"))
-            self.raw_lines = src.split("\n")
+            return
+        match obj:
+            case Source():
+                self.lines = obj.lines
+                self.raw_lines = obj.raw_lines
+            case tuple() | list():
+                self.lines = deindent(x.rstrip("\n") for x in obj)
+                self.raw_lines = [x.rstrip("\n") for x in obj]
+            case str():
+                self.lines = deindent(obj.split("\n"))
+                self.raw_lines = obj.split("\n")
+            case _:
+                try:
+                    rawcode = getrawcode(obj)
+                    src = inspect.getsource(rawcode)
+                except TypeError:
+                    src = inspect.getsource(obj)  # type: ignore[arg-type]
+                self.lines = deindent(src.split("\n"))
+                self.raw_lines = src.split("\n")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Source):
@@ -126,7 +129,20 @@ def findsource(obj) -> tuple[Source | None, int]:
     try:
         sourcelines, lineno = inspect.findsource(obj)
     except Exception:
-        return None, -1
+        # inspect.findsource() fails for code objects whose co_filename is
+        # relative to a directory other than the cwd, e.g. compiled Cython
+        # modules when running pytest from a subdirectory (#1139).
+        # Fall back to linecache, which also searches sys.path for bare
+        # filenames, as the standard traceback module does.
+        code = (
+            obj if isinstance(obj, types.CodeType) else getattr(obj, "__code__", None)
+        )
+        if code is None:
+            return None, -1
+        sourcelines = linecache.getlines(code.co_filename)
+        if not sourcelines:
+            return None, -1
+        lineno = code.co_firstlineno - 1
     source = Source()
     source.lines = [line.rstrip() for line in sourcelines]
     source.raw_lines = sourcelines
@@ -150,10 +166,19 @@ def deindent(lines: Iterable[str]) -> list[str]:
     return textwrap.dedent("\n".join(lines)).splitlines()
 
 
-def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None]:
+def _statement_linenos(node: ast.AST) -> list[int]:
+    """Sorted 0-based line numbers of all statements below ``node``.
+
+    Walking the tree is proportional to the size of the whole module, while a
+    traceback asks for many line numbers of the same module -- so the result is
+    memoized on the node, which shares the lifetime of the caller's ast cache.
+    """
+    values: list[int] | None = getattr(node, "_pytest_statement_linenos", None)
+    if values is not None:
+        return values
     # Flatten all statements and except handlers into one lineno-list.
     # AST's line numbers start indexing at 1.
-    values: list[int] = []
+    values = []
     for x in ast.walk(node):
         if isinstance(x, ast.stmt | ast.ExceptHandler):
             # The lineno points to the class/def, so need to include the decorators.
@@ -167,6 +192,15 @@ def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None
                     # Treat the finally/orelse part as its own statement.
                     values.append(val[0].lineno - 1 - 1)
     values.sort()
+    try:
+        node._pytest_statement_linenos = values  # type: ignore[attr-defined]
+    except AttributeError:  # pragma: no cover - defensive
+        pass
+    return values
+
+
+def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None]:
+    values = _statement_linenos(node)
     insert_index = bisect_right(values, lineno)
     if insert_index == 0:
         return 0, None

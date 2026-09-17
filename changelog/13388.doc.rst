@@ -1,1 +1,0 @@
-Clarified documentation for ``-p`` vs ``PYTEST_PLUGINS`` plugin loading and fixed an incorrect ``-p`` example.

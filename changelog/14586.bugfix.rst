@@ -1,0 +1,1 @@
+Negative values passed to ``log_auto_indent`` now correctly fall back to no indentation, matching the documented behavior.

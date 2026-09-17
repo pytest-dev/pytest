@@ -16,10 +16,11 @@ def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
         result.stdout.fnmatch_lines(["*registered third-party plugins:", "*at*"])
 
 
-def test_version_less_verbose(pytester: Pytester) -> None:
-    """Single ``--version`` parameter should display only the pytest version, without loading plugins (#13574)."""
+@pytest.mark.parametrize("flag", ["--version", "-V"])
+def test_version_less_verbose(pytester: Pytester, flag: str) -> None:
+    """Single ``--version`` or ``-V`` should display only the pytest version, without loading plugins (#13574)."""
     pytester.makeconftest("print('This should not be printed')")
-    result = pytester.runpytest_subprocess("--version")
+    result = pytester.runpytest_subprocess(flag)
     assert result.ret == ExitCode.OK
     assert result.stdout.str().strip() == f"pytest {pytest.__version__}"
 
@@ -47,6 +48,65 @@ def test_help(pytester: Pytester) -> None:
         *to see*markers*pytest --markers*
         *to see*fixtures*pytest --fixtures*
     """
+    )
+
+
+def test_help_ini_union_and_literal_types(pytester: Pytester) -> None:
+    """Union and Literal ini options display their members/choices in --help."""
+    pytester.makeconftest(
+        """
+        from typing import Literal
+
+        def pytest_addoption(parser):
+            parser.addini("ini_union", "union help", type=int | str, default=None)
+            parser.addini(
+                "ini_literal", "literal help", type=Literal["auto", "long"],
+                default="auto",
+            )
+            parser.addini(
+                "ini_mixed", "mixed help", type=int | Literal["auto"],
+                default="auto",
+            )
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "*ini_union (int | string):*",
+            "*union help*",
+            "*ini_literal ('auto' | 'long'):*",
+            "*literal help*",
+            "*ini_mixed (int | 'auto'):*",
+            "*mixed help*",
+        ]
+    )
+
+
+def test_help_ini_keeps_line_structure(pytester: Pytester) -> None:
+    """Ini help keeps its explicit line breaks and indentation, like option help."""
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini(
+                "ini_list",
+                "strategy for the thing\\n"
+                "- short: values over 100 chars fall back to argname plus index\\n"
+                "- sha256: replace the value with its sha256 hex digest",
+                default=None,
+            )
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "  ini_list (string):    strategy for the thing",
+            "                        - short: values over 100 chars fall back to argname plus",
+            "                          index",
+            "                        - sha256: replace the value with its sha256 hex digest",
+        ],
+        consecutive=True,
     )
 
 

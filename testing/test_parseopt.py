@@ -24,7 +24,8 @@ def parser() -> parseopt.Parser:
 class TestParser:
     def test_no_help_by_default(self) -> None:
         parser = parseopt.Parser(usage="xyz", _ispytest=True)
-        pytest.raises(UsageError, lambda: parser.parse(["-h"]))
+        with pytest.raises(UsageError):
+            parser.parse(["-h"])
 
     def test_custom_prog(self, parser: parseopt.Parser) -> None:
         """Custom prog can be set for `argparse.ArgumentParser`."""
@@ -72,6 +73,11 @@ class TestParser:
         action = parser.add_argument("-d", dest="dd", type=str, choices=["red", "blue"])
         argument = parseopt.Argument(action)
         assert argument.type is str
+
+    def test_get_argparse_dest(self) -> None:
+        assert parseopt._get_argparse_dest(("--keyword",)) == "keyword"
+        assert parseopt._get_argparse_dest(("-x",)) == "x"
+        assert parseopt._get_argparse_dest(("-x", "--exit-first")) == "exit_first"
 
     def test_group_add_and_get(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("hello")
@@ -121,6 +127,32 @@ class TestParser:
         assert len(group.options) == 0
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
+
+    def test_group_addoption_rejects_implicit_dest_conflict(
+        self, parser: parseopt.Parser
+    ) -> None:
+        group = parser.getgroup("hello")
+        group._addoption("-k", dest="keyword", action="store")
+
+        with pytest.raises(ValueError) as err:
+            group.addoption("--keyword", action="store")
+
+        assert str(err.value) == (
+            "option dest 'keyword' already used by ['-k'] "
+            "(this is the option that maps to dest 'keyword'); "
+            "pass dest='keyword' explicitly to share the destination"
+        )
+
+    def test_group_addoption_allows_explicit_dest_conflict(
+        self, parser: parseopt.Parser
+    ) -> None:
+        group = parser.getgroup("hello")
+        group.addoption("--capture", action="store", default="fd")
+        group._addoption("-s", dest="capture", action="store_const", const="no")
+
+        args = parser.parse(["-s"])
+
+        assert args.capture == "no"
 
     def test_parse(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", dest="hello", action="store")
@@ -254,6 +286,31 @@ class TestParser:
         help = parser.optparser.format_help()
         assert "--func-args, --doit  foo" in help
 
+    def test_help_keeps_indentation(self, parser: parseopt.Parser) -> None:
+        parser.addoption(
+            "--funcarg",
+            action="store_true",
+            help="do the thing\n"
+            "- fast: skip the expensive validation pass entirely\n"
+            "- slow: run every check, including the very expensive ones",
+        )
+        parser.parse([])
+        help = parser.optparser.format_help()
+        # The list items keep their own line, and a wrapped item hangs under
+        # its text rather than looking like a new item.
+        assert "- fast: skip the expensive validation pass entirely" in help
+        assert "- slow: run every check, including the very expensive ones" in help
+
+    def test_help_keeps_blank_lines(self, parser: parseopt.Parser) -> None:
+        parser.addoption(
+            "--funcarg", action="store_true", help="first paragraph\n\nsecond paragraph"
+        )
+        parser.parse([])
+        lines = parser.optparser.format_help().splitlines()
+        first = next(i for i, line in enumerate(lines) if "first paragraph" in line)
+        assert lines[first + 1] == ""
+        assert lines[first + 2].strip() == "second paragraph"
+
     # testing would be more helpful with all help generated
     def test_drop_short_help1(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("general")
@@ -340,3 +397,112 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("COMP_POINT", str(len("pytest " + arg)))
     result = pytester.run("bash", str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
+
+
+def test_argument_repr_uninitialized() -> None:
+    """Argument.__repr__ should not crash if _action is not set yet."""
+    arg = parseopt.Argument.__new__(parseopt.Argument)
+    assert repr(arg) == "Argument(<uninitialized>)"
+
+
+def test_argument_repr_initialized(parser: parseopt.Parser) -> None:
+    """Argument.__repr__ with properly initialized options."""
+    # Without type
+    parser.addoption("--myflag", dest="myflag", help="test flag")
+    option = parser._anonymous.options[-1]
+    assert repr(option) == "Argument(opts: ['--myflag'], dest: 'myflag', default: None)"
+
+    # With type
+    parser.addoption("--count", type=int, dest="count", help="count")
+    option = parser._anonymous.options[-1]
+    assert (
+        repr(option)
+        == "Argument(opts: ['--count'], dest: 'count', type: <class 'int'>, default: None)"
+    )
+
+
+class TestSplitHelpText:
+    def test_wraps_each_line_separately(self) -> None:
+        assert parseopt._split_help_text("one two three\nfour five", 8) == [
+            "one two",
+            "three",
+            "four",
+            "five",
+        ]
+
+    def test_keeps_blank_lines_between_paragraphs(self) -> None:
+        assert parseopt._split_help_text("first\n\nsecond", 40) == [
+            "first",
+            "",
+            "second",
+        ]
+
+    def test_strips_surrounding_blank_lines(self) -> None:
+        assert parseopt._split_help_text("\n\nonly\n\n", 40) == ["only"]
+
+    def test_dedents_docstring_style_help(self) -> None:
+        # The common indentation of a triple-quoted help text is source
+        # indentation and must not reach the terminal, but the relative
+        # indentation inside it must (#6817).
+        help = """
+            Select tests by marker expression.
+
+            Examples:
+                -m 'slow'
+        """
+        assert parseopt._split_help_text(help, 40) == [
+            "Select tests by marker expression.",
+            "",
+            "Examples:",
+            "    -m 'slow'",
+        ]
+
+    def test_dedents_help_starting_on_the_first_line(self) -> None:
+        # The first line shares no indentation with the body, so dedenting the
+        # text as a whole would find a common prefix of "" and do nothing.
+        help = """Select tests by marker expression.
+
+            Examples:
+                -m 'slow'
+        """
+        assert parseopt._split_help_text(help, 40) == [
+            "Select tests by marker expression.",
+            "",
+            "Examples:",
+            "    -m 'slow'",
+        ]
+
+    @pytest.mark.parametrize("marker", ["-", "*", "+", "1.", "(1)"])
+    def test_list_continuation_hangs_under_the_item(self, marker: str) -> None:
+        hang = " " * (len(marker) + 1)
+        assert parseopt._split_help_text(f"{marker} one two three four", 14) == [
+            f"{marker} one two",
+            f"{hang}three four",
+        ]
+
+    def test_relative_indentation_is_preserved_when_wrapping(self) -> None:
+        help = "head\n    one two three four\nfoot"
+        assert parseopt._split_help_text(help, 12) == [
+            "head",
+            "    one two",
+            "    three",
+            "    four",
+            "foot",
+        ]
+
+    def test_single_line_help_is_not_indented(self) -> None:
+        # A lone line carries only source indentation, never structure.
+        assert parseopt._split_help_text("    one two three four", 12) == [
+            "one two",
+            "three four",
+        ]
+
+    def test_does_not_break_on_hyphens(self) -> None:
+        assert parseopt._split_help_text("pass --no-header to it", 14) == [
+            "pass",
+            "--no-header to",
+            "it",
+        ]
+
+    def test_empty_help(self) -> None:
+        assert parseopt._split_help_text("", 40) == []

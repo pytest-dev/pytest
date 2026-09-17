@@ -600,6 +600,37 @@ class TestDoctests:
         reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
 
+    def test_module_fixture_available_to_normal_test_with_doctestmodules(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #14533.
+
+        Module-level fixtures collected with ``--doctest-modules`` are available
+        both to normal tests and doctests in the same file.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix():
+                return "fix"
+
+            def test(fix):
+                assert fix == "fix"
+
+            def func():
+                '''My function.
+
+                >>> getfixture("fix")
+                'fix'
+                '''
+            """
+        )
+
+        result = pytester.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=2)
+
     def test_doctestmodule_three_tests(self, pytester: Pytester):
         p = pytester.makepyfile(
             """
@@ -843,6 +874,29 @@ class TestDoctests:
         items, _reprec = pytester.inline_genitems(p, "--doctest-modules")
         reportinfo = items[0].reportinfo()
         assert reportinfo[1] == 1
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 12), reason="requires Python 3.12 or later"
+    )
+    def test_fixture_doctest_skip_has_line_number(self, pytester: Pytester):
+        p = pytester.makepyfile(
+            test_fixture_doctest_skip="""
+            import pytest
+
+            @pytest.fixture
+            def unavailable():
+                '''
+                >>> getfixture("unavailable")
+                '''
+                pytest.skip("unavailable")
+            """
+        )
+        items, _reprec = pytester.inline_genitems(p, "--doctest-modules")
+        assert items[0].reportinfo()[1] is not None
+
+        result = pytester.runpytest(p, "--doctest-modules")
+        assert "INTERNALERROR" not in result.stdout.str()
+        result.assert_outcomes(skipped=1)
 
     def test_valid_setup_py(self, pytester: Pytester):
         """
@@ -1302,6 +1356,37 @@ class TestDoctestAutoUseFixtures:
         result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["*2 passed*"])
 
+    def test_doctest_and_python_fixtures_not_shared(self, pytester: Pytester) -> None:
+        """Fixture scopes are not shared between doctest and python modules.
+
+        This test is not meant as a hard behavioral test -- sharing scope is
+        also an acceptable behavior (see #14533). But this test ensures and
+        behavior change is done knowingly.
+        """
+        pytester.makepyfile(
+            r"""
+            import pytest
+
+            @pytest.fixture(scope="session", autouse=True)
+            def auto():
+                with open("out", "a", encoding="utf-8") as f:
+                    f.write("RUN\n")
+
+            def test():
+                pass
+
+            def func():
+                '''My function.
+
+                >>> 1 + 1
+                2
+                '''
+        """
+        )
+        result = pytester.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=2)
+        assert Path("out").read_text("utf-8").split() == ["RUN"] * 2
+
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("enable_doctest", [True, False])
     def test_fixture_scopes(self, pytester, scope, enable_doctest):
@@ -1487,6 +1572,61 @@ class TestDoctestNamespaceFixture:
         )
         reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
+
+    def test_namespace_fixture_from_rootdir_when_modules_outside_rootdir(
+        self, pytester: Pytester
+    ) -> None:
+        """doctest_namespace injection from a conftest in the rootdir still
+        applies when the doctest modules are collected from outside the
+        rootdir.
+
+        Regression test for #14683: setting ``--rootdir`` to a subdirectory
+        while collecting modules from a parent directory made the rootdir
+        conftest's ``doctest_namespace`` injection invisible.
+        """
+        testing = pytester.path / "xclim" / "testing"
+        testing.mkdir(parents=True)
+        testing.joinpath("conftest.py").write_text(
+            textwrap.dedent(
+                """\
+                import pytest
+
+                @pytest.fixture(autouse=True, scope="session")
+                def add_var(doctest_namespace):
+                    doctest_namespace["my_var"] = 42
+                """
+            ),
+            encoding="utf-8",
+        )
+        core = pytester.path / "xclim" / "core"
+        core.mkdir()
+        core.joinpath("mod.py").write_text(
+            textwrap.dedent(
+                """\
+                def func():
+                    '''
+                    >>> my_var
+                    42
+                    '''
+                """
+            ),
+            encoding="utf-8",
+        )
+
+        testing.joinpath("pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+
+        # The config file sits next to the conftest at the rootdir, and the
+        # collection argument (``xclim``) is a *parent* of the rootdir
+        # (``xclim/testing``) -- the exact setup from #14683.
+        result = pytester.runpytest(
+            "--rootdir",
+            str(testing),
+            "--config-file",
+            str(testing / "pytest.ini"),
+            "--doctest-modules",
+            "xclim",
+        )
+        result.assert_outcomes(passed=1)
 
 
 class TestDoctestReportingOption:

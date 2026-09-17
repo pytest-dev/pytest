@@ -206,6 +206,40 @@ def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
     assert unfiltered_tuple == ("test_fixture", 20, "handler call")
 
 
+class DropAllFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return False
+
+
+def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> None:
+    drop_all = DropAllFilter()
+
+    with caplog.filtering(drop_all):
+        logger.warning("Will not be captured")
+        with caplog.filtering(drop_all):
+            logger.warning("Will also not be captured")
+        logger.warning("Should not be captured either")
+
+    assert caplog.records == []
+
+
+def test_with_statement_filtering_already_present(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    drop_all = DropAllFilter()
+
+    caplog.handler.addFilter(drop_all)
+    try:
+        with caplog.filtering(drop_all):
+            logger.warning("Should not be captured")
+
+        # After context manager, filter should STILL be present because it was already there
+        logger.warning("Should still not be captured")
+        assert caplog.records == []
+    finally:
+        caplog.handler.removeFilter(drop_all)
+
+
 @pytest.mark.parametrize(
     "level_str,expected_disable_level",
     [
@@ -409,6 +443,33 @@ def test_can_override_global_log_level(pytester: Pytester) -> None:
 
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_can_capture_non_propagating_logger(pytester: Pytester) -> None:
+    """Logs emitted by non-propagating loggers are still captured (#3697)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("catchlog")
+        logger.propagate = False
+        child_logger = logging.getLogger("catchlog.child")
+
+        def test_non_propagating_logger(caplog):
+            caplog.set_level(logging.INFO)
+
+            logger.info("parent logger message")
+            child_logger.info("child logger message")
+
+            assert caplog.record_tuples == [
+                ("catchlog", logging.INFO, "parent logger message"),
+                ("catchlog.child", logging.INFO, "child logger message"),
+            ]
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
 
 
 def test_captures_despite_exception(pytester: Pytester) -> None:

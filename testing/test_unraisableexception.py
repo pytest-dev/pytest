@@ -317,6 +317,8 @@ def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> Non
 
     # TODO: Should be a test failure or error. Currently the exception
     # propagates all the way to the top resulting in exit code 1.
+    # -Werror matches the wrapping PytestUnraisableExceptionWarning, so the
+    # wrapper propagates; its message embeds the original RuntimeWarning.
     assert result.ret == 1
 
     result.assert_outcomes(passed=1)
@@ -357,6 +359,138 @@ def test_refcycle_unraisable_warning_filter_default(pytester: Pytester) -> None:
     # by the time the warning triggers
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
+
+
+def test_unraisable_warning_without_filter_still_wraps(pytester: Pytester) -> None:
+    # A Warning raised from ``__del__`` gets wrapped in
+    # PytestUnraisableExceptionWarning like any other unraisable exception.
+    # pytest does not unwrap it to honor a filter on the inner class, so with
+    # no filter matching the wrapper, pytest logs the warning and the run
+    # passes. This guards against re-introducing the dropped unwrap path.
+    pytester.makepyfile(
+        test_it="""
+        class RaisingDel:
+            def __del__(self):
+                raise UserWarning("oops")
+
+        def test_it():
+            obj = RaisingDel()
+            del obj
+        """
+    )
+
+    # Subprocess so we don't inherit the outer pytest's ``error`` filter from
+    # pyproject.toml, which would promote the wrapper and fail the run.
+    # ``-Wdefault::pytest.PytestUnraisableExceptionWarning`` makes the wrapping
+    # warning visible on stderr whether ``__del__`` fires inside the test or
+    # during later GC (PyPy).
+    result = pytester.runpytest_subprocess(
+        "-Wdefault::pytest.PytestUnraisableExceptionWarning"
+    )
+
+    assert result.ret == 0
+    result.assert_outcomes(passed=1)
+    # The unraisable hook emitted PytestUnraisableExceptionWarning.
+    # The warning lands in the warnings-summary section of stdout on
+    # CPython (where ``__del__`` fires inside the test) and on stderr on
+    # PyPy (where it fires during later GC). Check both rather than the
+    # outcomes counter, which is timing-dependent.
+    combined = "\n".join(result.outlines + result.errlines)
+    assert "PytestUnraisableExceptionWarning" in combined
+
+
+@pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
+def test_unraisable_decouples_from_cleanup_stack_order(pytester: Pytester) -> None:
+    # Regression test for the structural fix. The garbage-collection step
+    # that surfaces queued unraisables must run before _cleanup_stack.close()
+    # so warning filters installed via cleanup-stack-managed contexts are
+    # still in effect when finalizers fire. Otherwise correctness depends
+    # on the order in which plugins register their cleanups under LIFO.
+    #
+    # The conftest uses ``@hookimpl(trylast=True)`` so its pytest_configure
+    # runs after all built-in pytest_configures. Its
+    # ``warnings.resetwarnings`` cleanup then lands on the cleanup stack
+    # last and pops first under LIFO. Under the pre-fix layout, where
+    # garbage collection runs inside unraisableexception's own cleanup
+    # callback, that pop clears the user's
+    # ``error::pytest.PytestUnraisableExceptionWarning`` filter before the
+    # finalizer raises; pytest logs the wrapped warning instead of
+    # promoting it, and the suite exits 0. Under the post-fix layout,
+    # ``pytest_unconfigure`` runs the garbage collection and queue processing
+    # before the cleanup stack starts closing, so the conftest's reset has no
+    # effect.
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            error::pytest.PytestUnraisableExceptionWarning
+        """
+    )
+    pytester.makeconftest(
+        """
+        import warnings
+        import pytest
+
+        @pytest.hookimpl(trylast=True)
+        def pytest_configure(config):
+            config.add_cleanup(warnings.resetwarnings)
+        """
+    )
+    pytester.makepyfile(
+        test_it="""
+        import gc; gc.disable()
+
+        class BrokenDel:
+            def __init__(self):
+                self.self = self  # cycle survives until session-end gc
+
+            def __del__(self):
+                raise ValueError("del is broken")
+
+        def test_it():
+            BrokenDel()
+        """
+    )
+
+    result = pytester.runpytest_subprocess()
+
+    assert result.ret == 1, (
+        "wrapper filter is still installed at GC time, so the unraisable "
+        "exits non-zero regardless of cleanup-stack pop order"
+    )
+    result.assert_outcomes(passed=1)
+    result.stderr.fnmatch_lines("*ValueError: del is broken*")
+
+
+def test_pytest_unconfigure_survives_failed_pytest_configure(
+    pytester: Pytester,
+) -> None:
+    # Regression test for the guard against an unset stash key. When
+    # another plugin's pytest_configure raises pytest.UsageError, pluggy
+    # stops calling the remaining configure hooks; the unraisable plugin's
+    # pytest_configure never runs and config.stash[unraisable_exceptions]
+    # stays unset. pytest_unconfigure still fires for partially-configured
+    # runs, so without a presence check the unraisable plugin's
+    # pytest_unconfigure raises KeyError and pytest reports INTERNALERROR
+    # instead of USAGE_ERROR.
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_configure(config):
+            raise pytest.UsageError("simulated bad config")
+        """
+    )
+    pytester.makepyfile(test_it="def test_it(): pass")
+
+    result = pytester.runpytest_subprocess()
+
+    assert result.ret == pytest.ExitCode.USAGE_ERROR, (
+        "the UsageError must surface as USAGE_ERROR, not a KeyError INTERNALERROR"
+    )
+    result.stderr.fnmatch_lines("*ERROR: simulated bad config*")
+    result.stderr.no_fnmatch_line("*INTERNALERROR*")
+    result.stderr.no_fnmatch_line("*KeyError*")
 
 
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")

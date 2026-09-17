@@ -15,6 +15,100 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _callspec2-renamed:
+
+``_pytest.python.CallSpec2`` renamed to ``CallSpec``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+The private ``_pytest.python.CallSpec2`` name has been renamed to ``CallSpec``.
+
+Plugins that import ``CallSpec2`` should update to ``CallSpec``. The old
+``CallSpec2`` alias remains available for now and will be removed in pytest 10.
+
+
+.. _fixture-nodeid-deprecated:
+
+Passing ``baseid``/``nodeid`` strings to fixture registration APIs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+Passing ``baseid`` to :class:`~pytest.FixtureDef` or ``nodeid`` strings to
+``FixtureManager._register_fixture`` and ``FixtureManager.parsefactories``
+is deprecated. These are internal pytest APIs that are used by some plugins.
+
+Use the ``node`` parameter instead for fixture scoping. This enables more robust
+node-based matching instead of fragile string prefix matching.
+
+.. code-block:: python
+
+    # Deprecated
+    fixture_manager.parsefactories(plugin_obj, nodeid="tests/sub")
+    fixture_manager._register_fixture(name="fix", func=func, nodeid="tests/sub")
+
+    # Use instead
+    fixture_manager.parsefactories(holder=plugin_obj, node=directory_node)
+    pytest.register_fixture(name="fix", func=func, node=directory_node)
+
+The equivalent of passing ``nodeid=None`` (global visibility) is ``node=session``.
+
+In pytest 10, the ``baseid`` and ``nodeid`` string parameters will be removed.
+
+
+.. _fixturedef-has-location-deprecated:
+
+``FixtureDef.has_location``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+The private ``FixtureDef.has_location`` attribute is deprecated and will be removed in pytest 10.
+
+It indicated whether a fixture was found from a node or a conftest in the collection tree (as opposed to a non-conftest plugin).
+It was used to determine the override order of fixtures, pushing fixtures with "no location" to the front of the override chain (such that they are chosen last).
+The override order is now determined by the visibility of the fixtures in the collection tree, making this distinction obsolete.
+
+
+.. _console-main:
+
+``pytest.console_main()``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+:func:`pytest.console_main` is deprecated and will be removed in pytest 10.
+
+This function is the CLI entry point used internally by the ``pytest`` console script
+and ``python -m pytest``. It was never intended for programmatic use, and exposing it
+in the public API led to confusion with :func:`pytest.main`, which is the correct way
+to invoke pytest from Python code.
+
+If you are calling ``pytest.console_main()`` in your code, replace it with :func:`pytest.main`:
+
+.. code-block:: python
+
+    # Deprecated
+    pytest.console_main()
+
+    # Use this instead
+    exit_code = pytest.main()
+
+
+.. _pastebin-deprecated:
+
+The ``--pastebin`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+The :option:`--pastebin` option has been deprecated due to being very niche, being the only feature in core pytest relying on an external service and having low usage.
+
+The plugin which implements ``--pastebin`` has been extracted to a separate package, :pypi:`pytest-pastebin`.
+Please install ``pytest-pastebin`` if you want to keep using ``--pastebin``.
+
+
 .. _dynamic-fixture-request-during-teardown:
 
 ``request.getfixturevalue()`` during fixture teardown
@@ -136,6 +230,58 @@ You can fix it by converting generators and iterators to lists or tuples:
 Note that :class:`range` objects are ``Collection`` and are not affected by this deprecation.
 
 
+.. _class-scoped-fixture-as-instance-method:
+
+Class-scoped fixture as instance method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+Defining a class-scoped fixture as an instance method (without ``@classmethod``) is deprecated
+and will be removed in pytest 10.0.
+
+When a class-scoped fixture is defined as an instance method, any attributes set on ``self``
+will not be visible to test methods. This happens because pytest creates a new instance of the
+test class for each test method, while the fixture runs only once per class on a different instance.
+
+**Before** (deprecated):
+
+.. code-block:: python
+
+    class TestExample:
+        @pytest.fixture(scope="class")
+        def setup_data(self):
+            self.data = [1, 2, 3]  # This won't be visible to tests!
+
+        def test_something(self, setup_data):
+            assert self.data == [
+                1,
+                2,
+                3,
+            ]  # AttributeError: 'TestExample' object has no attribute 'data'
+
+**After** (recommended):
+
+.. code-block:: python
+
+    class TestExample:
+        @pytest.fixture(scope="class")
+        @classmethod
+        def setup_data(cls):
+            cls.data = [1, 2, 3]
+
+        def test_something(self, setup_data):
+            assert self.data == [1, 2, 3]  # Works correctly
+
+Using ``@classmethod`` ensures attributes are set on the class itself, making them accessible
+to all test methods.
+
+.. deprecated:: 9.2
+
+Similarly, using a scope higher than ``class`` (``module``, ``package`` or ``session``)
+without using ``@classmethod`` (or ``@staticmethod``) is deprecated and will be
+removed in pytest 10.0.
+
 .. _monkeypatch-fixup-namespace-packages:
 
 ``monkeypatch.syspath_prepend`` with legacy namespace packages
@@ -171,8 +317,12 @@ Simply remove the ``__init__.py`` file entirely.
 Python 3.3+ natively supports namespace packages without ``__init__.py``.
 
 
+.. _hook-markers:
+
 Configuring hook specs/impls using markers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.2
 
 Before pluggy, pytest's plugin library, was its own package and had a clear API,
 pytest just used ``pytest.mark`` to configure hooks.
@@ -283,12 +433,14 @@ conflicts (such as :class:`pytest.File` now taking ``path`` instead of
 deprecation warning is now raised.
 
 
+.. _yield-fixture-deprecated:
+
 The ``yield_fixture`` function/decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 6.2
 
-``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
+``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture` and will be removed in pytest 10.
 
 It has been so for a very long time, so it can be searched/replaced safely.
 

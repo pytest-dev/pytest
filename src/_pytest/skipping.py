@@ -129,7 +129,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> tuple[bool,
             msglines = [
                 f"Error evaluating {mark.name!r} condition",
                 "    " + condition,
-                *traceback.format_exception_only(type(exc), exc),
+                *traceback.format_exception_only(exc),
             ]
             fail("\n".join(msglines), pytrace=False)
 
@@ -140,7 +140,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> tuple[bool,
         except Exception as exc:
             msglines = [
                 f"Error evaluating {mark.name!r} condition as a boolean",
-                *traceback.format_exception_only(type(exc), exc),
+                *traceback.format_exception_only(exc),
             ]
             fail("\n".join(msglines), pytrace=False)
 
@@ -252,7 +252,7 @@ def pytest_runtest_setup(item: Item) -> None:
 
     item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
     if xfailed and not item.config.option.runxfail and not xfailed.run:
-        xfail("[NOTRUN] " + xfailed.reason)
+        raise xfail.Exception("[NOTRUN] " + xfailed.reason, pytrace=False)
 
 
 @hookimpl(wrapper=True)
@@ -262,7 +262,7 @@ def pytest_runtest_call(item: Item) -> Generator[None]:
         item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
 
     if xfailed and not item.config.option.runxfail and not xfailed.run:
-        xfail("[NOTRUN] " + xfailed.reason)
+        raise xfail.Exception("[NOTRUN] " + xfailed.reason, pytrace=False)
 
     try:
         return (yield)

@@ -10,6 +10,7 @@ import collections.abc
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
 import contextlib
 from fnmatch import fnmatch
@@ -367,7 +368,7 @@ class HookRecorder:
                 continue
             if when and rep.when != when:
                 continue
-            if not inamepart or inamepart in rep.nodeid.split("::"):
+            if not inamepart or inamepart in (rep.id.path, *rep.id.names):
                 values.append(rep)
         if not values:
             raise ValueError(
@@ -562,6 +563,9 @@ class RunResult:
             ======= 1 failed, 1 passed, 1 warning, 1 error in 0.13s ====
 
         Will return ``{"failed": 1, "passed": 1, "warnings": 1, "errors": 1}``.
+
+        This method parses pytest's standard terminal summary. Plugins that
+        modify or remove that summary can make the outcomes unavailable.
         """
         return self.parse_summary_nouns(self.outlines)
 
@@ -581,7 +585,13 @@ class RunResult:
                 ret = {noun: int(count) for (count, noun) in outcomes}
                 break
         else:
-            raise ValueError("Pytest terminal summary report not found")
+            raise ValueError(
+                "Pytest terminal summary report not found. "
+                "Plugins that modify pytest's terminal output can break outcome "
+                "parsing. Disable the plugin for the test run, for example with "
+                "`-p no:<plugin>`, or disable plugin autoloading with "
+                "`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`."
+            )
 
         to_plural = {
             "warning": "warnings",
@@ -605,6 +615,9 @@ class RunResult:
         numbers (0 means it didn't occur) in the text output from a test run.
 
         ``warnings`` and ``deselected`` are only checked if not None.
+
+        This method requires pytest's standard terminal summary; see
+        :meth:`parseoutcomes`.
         """
         __tracebackhide__ = True
         from _pytest.pytester_assertions import assert_outcomes
@@ -643,6 +656,9 @@ class SysPathsSnapshot:
 
     def restore(self) -> None:
         sys.path[:], sys.meta_path[:] = self.__saved
+
+
+_FileContent = tuple[str | bytes, ...] | list[str | bytes] | str | bytes
 
 
 @final
@@ -756,7 +772,7 @@ class Pytester:
         self,
         ext: str,
         lines: Sequence[Any | bytes],
-        files: dict[str, str],
+        files: Mapping[str, _FileContent],
         encoding: str = "utf-8",
     ) -> Path:
         items = list(files.items())
@@ -862,7 +878,7 @@ class Pytester:
         """
         return self.makefile(".toml", pyproject=source)
 
-    def makepyfile(self, *args, **kwargs) -> Path:
+    def makepyfile(self, *args: _FileContent, **kwargs: _FileContent) -> Path:
         r"""Shortcut for .makefile() with a .py extension.
 
         Defaults to the test name with a '.py' extension, e.g test_foobar.py, overwriting
@@ -882,7 +898,7 @@ class Pytester:
         """
         return self._makefile(".py", args, kwargs)
 
-    def maketxtfile(self, *args, **kwargs) -> Path:
+    def maketxtfile(self, *args: _FileContent, **kwargs: _FileContent) -> Path:
         r"""Shortcut for .makefile() with a .txt extension.
 
         Defaults to the test name with a '.txt' extension, e.g test_foobar.txt, overwriting
@@ -1760,9 +1776,17 @@ class LineMatcher:
     def _no_match_line(
         self, pat: str, match_func: Callable[[str, str], bool], match_nickname: str
     ) -> None:
-        """Ensure captured lines does not have a the given pattern, using ``fnmatch.fnmatch``.
+        """Underlying implementation of ``no_fnmatch_line`` and ``no_re_match_line``.
 
-        :param str pat: The pattern to match lines.
+        :param str pat:
+            The pattern to match lines.
+        :param match_func:
+            A callable ``match_func(line, pattern)`` where line is the
+            captured line from stdout/stderr and pattern is the matching
+            pattern.
+        :param match_nickname:
+            The nickname for the match function that will be logged to stdout
+            when a match occurs.
         """
         __tracebackhide__ = True
         nomatch_printed = False

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from _pytest.config import ExitCode
+from _pytest.config.exceptions import UsageError
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 import pytest
@@ -63,7 +64,8 @@ class SessionTests:
             """
             import pytest
             def test_raises_doesnt():
-                pytest.raises(ValueError, int, "3")
+                with pytest.raises(ValueError):
+                    int("3")
         """
         )
         _passed, _skipped, failed = reprec.listoutcomes()
@@ -253,7 +255,7 @@ class TestNewSession(SessionTests):
 
 
 def test_plugin_specify(pytester: Pytester) -> None:
-    with pytest.raises(ImportError):
+    with pytest.raises(UsageError):
         pytester.parseconfig("-p", "nqweotexistent")
     # pytest.raises(ImportError,
     #    "config.do_configure(config)"

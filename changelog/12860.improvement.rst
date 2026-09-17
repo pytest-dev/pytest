@@ -1,0 +1,1 @@
+Assertion diffs for ``dict.items()`` and ``dict.keys()`` comparisons (``>=``, ``<=``, ``>``, ``<``, ``==``) now show which items are missing, the same way set comparisons do.

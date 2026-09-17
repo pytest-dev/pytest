@@ -1,0 +1,3 @@
+:meth:`Node.get_closest_marker <_pytest.nodes.Node.get_closest_marker>` now also accepts a :class:`~pytest.MarkDecorator` as its ``default``, for example ``item.get_closest_marker("foo", pytest.mark.foo(1))``, and returns the wrapped :class:`~pytest.Mark`.
+
+Previously the only way to build a ``default`` was to instantiate :class:`~pytest.Mark` directly, which is private and warns.

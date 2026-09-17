@@ -16,6 +16,7 @@ import dataclasses
 import enum
 import fnmatch
 from functools import partial
+import hashlib
 import inspect
 import itertools
 import os
@@ -26,6 +27,7 @@ import types
 from typing import Any
 from typing import cast
 from typing import final
+from typing import get_args
 from typing import Literal
 from typing import NoReturn
 from typing import TYPE_CHECKING
@@ -46,15 +48,19 @@ from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.compat import NOTSET
+from _pytest.compat import NotSetType
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.config import Config
 from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import CALLSPEC2_RENAMED
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
+from _pytest.fixtures import FixtureValue
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
@@ -71,8 +77,8 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import scandir
-from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
+from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
@@ -80,6 +86,11 @@ from _pytest.warning_types import PytestReturnNotNoneWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Self
+
+LongStrIdStrategy = Literal["short", "sha256", "legacy", "disallow"]
+_LONG_STR_STRATEGIES: frozenset[LongStrIdStrategy] = frozenset(
+    get_args(LongStrIdStrategy)
+)
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -115,6 +126,16 @@ def pytest_addoption(parser: Parser) -> None:
         # None => fallback to `strict`.
         default=None,
         help="Emit an error if non-unique parameter set IDs are detected",
+    )
+    parser.addini(
+        "parametrize_long_str_id_strategy",
+        type="string",
+        default="short",
+        help="strategy for long str/bytes parameter values in auto-generated ids\n"
+        "- short (default): values over 100 chars fall back to argname+index\n"
+        "- sha256: replace value with its sha256 hex digest\n"
+        "- legacy: keep the full value (for temporary backward compatibility)\n"
+        "- disallow: raise an error requesting explicit ids",
     )
 
 
@@ -218,7 +239,7 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Module:
 @hookimpl(trylast=True)
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
-) -> None | nodes.Item | nodes.Collector | list[nodes.Item | nodes.Collector]:
+) -> nodes.Item | nodes.Collector | list[nodes.Item | nodes.Collector] | None:
     assert isinstance(collector, Class | Module), type(collector)
     # Nothing was collected elsewhere, let's do it here.
     if safe_isclass(obj):
@@ -590,11 +611,11 @@ class Module(nodes.File, PyCollector):
             if teardown_module is not None:
                 _call_with_optional_argument(teardown_module, module)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_module_fixture_{self.obj.__name__}",
             func=xunit_setup_module_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="module",
             autouse=True,
         )
@@ -626,11 +647,11 @@ class Module(nodes.File, PyCollector):
             if teardown_function is not None:
                 _call_with_optional_argument(teardown_function, function)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_function_fixture_{self.obj.__name__}",
             func=xunit_setup_function_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="function",
             autouse=True,
         )
@@ -778,7 +799,9 @@ class Class(PyCollector):
         self._register_setup_class_fixture()
         self._register_setup_method_fixture()
 
-        self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
+        self.session._fixturemanager.parsefactories(
+            holder=self.newinstance(), node=self
+        )
 
         return super().collect()
 
@@ -804,11 +827,11 @@ class Class(PyCollector):
                 func = getimfunc(teardown_class)
                 _call_with_optional_argument(func, cls)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_class_fixture_{self.obj.__qualname__}",
             func=xunit_setup_class_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="class",
             autouse=True,
         )
@@ -838,11 +861,11 @@ class Class(PyCollector):
                 func = getattr(instance, teardown_name)
                 _call_with_optional_argument(func, method)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_method_fixture_{self.obj.__qualname__}",
             func=xunit_setup_method_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="function",
             autouse=True,
         )
@@ -1000,10 +1023,54 @@ class IdMaker:
         idval = self._idval_from_hook(val, argname)
         if idval is not None:
             return idval
-        idval = self._idval_from_value(val)
-        if idval is not None:
-            return idval
+        if isinstance(val, str | bytes):
+            idval = self._apply_long_str_strategy(val, argname, idx)
+            if idval is not None:
+                return idval
+        else:
+            idval = self._idval_from_value(val)
+            if idval is not None:
+                return idval
         return self._idval_from_argname(argname, idx)
+
+    def _get_long_str_strategy(self) -> LongStrIdStrategy:
+        if not self.config:
+            return "short"
+        value = self.config.getini("parametrize_long_str_id_strategy")
+        if value not in _LONG_STR_STRATEGIES:
+            raise UsageError(
+                f"Unknown parametrize_long_str_id_strategy: {value!r}. "
+                f"Valid values: {', '.join(sorted(_LONG_STR_STRATEGIES))}"
+            )
+        return cast(LongStrIdStrategy, value)
+
+    def _apply_long_str_strategy(
+        self, val: str | bytes, argname: str, idx: int
+    ) -> str | None:
+        """Apply the configured strategy for long str/bytes parameter values.
+
+        Only used for auto-generated IDs (not explicit ids=[...] or
+        pytest.param(id=...)).
+        """
+        if len(val) <= 100:
+            return _ascii_escaped_by_config(val, self.config)
+        match self._get_long_str_strategy():
+            case "legacy":
+                return _ascii_escaped_by_config(val, self.config)
+            case "short":
+                return None
+            case "sha256":
+                encoded = val.encode("utf-8") if isinstance(val, str) else val
+                return hashlib.sha256(encoded).hexdigest()
+            case "disallow":  # pragma: no branch -- fail() raises, confuses coverage
+                prefix = self._make_error_prefix()
+                fail(
+                    f"{prefix}parametrize value for '{argname}' at index {idx} "
+                    f"is too long for an auto-generated ID ({len(val)} characters). "
+                    f"Use pytest.param(..., id=...) or parametrize(..., ids=...) "
+                    f"to set an explicit ID, or change parametrize_long_str_id_strategy.",
+                    pytrace=False,
+                )
 
     def _idval_from_function(self, val: object, argname: str, idx: int) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet using the
@@ -1034,21 +1101,22 @@ class IdMaker:
     def _idval_from_value(self, val: object) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet from its value,
         if the value type is supported."""
-        if isinstance(val, str | bytes):
-            return _ascii_escaped_by_config(val, self.config)
-        elif val is None or isinstance(val, float | int | bool | complex):
-            return str(val)
-        elif isinstance(val, re.Pattern):
-            return ascii_escaped(val.pattern)
-        elif val is NOTSET:
+        match val:
+            case str() | bytes():
+                return _ascii_escaped_by_config(val, self.config)
+            case None | float() | int() | bool() | complex():
+                return str(val)
+            case re.Pattern():
+                return ascii_escaped(val.pattern)
             # Fallback to default. Note that NOTSET is an enum.Enum.
-            pass
-        elif isinstance(val, enum.Enum):
-            return str(val)
-        elif isinstance(getattr(val, "__name__", None), str):
-            # Name of a class, function, module, etc.
-            name: str = getattr(val, "__name__")
-            return name
+            case NotSetType():
+                pass
+            case enum.Enum():
+                return str(val)
+            case _ if isinstance(getattr(val, "__name__", None), str):
+                # Name of a class, function, module, etc.
+                name: str = getattr(val, "__name__")
+                return name
         return None
 
     def _idval_from_value_required(self, val: object, idx: int) -> str:
@@ -1087,7 +1155,7 @@ class IdMaker:
 
 @final
 @dataclasses.dataclass(frozen=True)
-class CallSpec2:
+class CallSpec:
     """A planned parameterized invocation of a test function.
 
     Calculated during collection for a given test function's Metafunc.
@@ -1095,15 +1163,15 @@ class CallSpec2:
     and stored in item.callspec.
     """
 
-    # arg name -> arg value which will be passed to a fixture or pseudo-fixture
-    # of the same name. (indirect or direct parametrization respectively)
+    # arg name -> arg value which will be passed to a fixture of the same name.
     params: dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg index.
     indices: dict[str, int] = dataclasses.field(default_factory=dict)
     # arg name -> parameter scope.
     # Used for sorting parametrized resources.
     _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
-    # Parts which will be added to the item's name in `[..]` separated by "-".
+    # One entry per (possibly stacked) parametrize() call, in order. Joined
+    # with "-" they form the item's name `[..]` suffix (see NodeId.params).
     _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
     # Marks which will be applied to the item.
     marks: list[Mark] = dataclasses.field(default_factory=list)
@@ -1118,7 +1186,8 @@ class CallSpec2:
         scope: Scope,
         param_index: int,
         nodeid: str,
-    ) -> CallSpec2:
+    ) -> CallSpec:
+        argnames = tuple(argnames)
         params = self.params.copy()
         indices = self.indices.copy()
         arg2scope = dict(self._arg2scope)
@@ -1130,11 +1199,15 @@ class CallSpec2:
             params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
-        return CallSpec2(
+        if id is HIDDEN_PARAM:
+            idlist = self._idlist
+        else:
+            idlist = [*self._idlist, id]
+        return CallSpec(
             params=params,
             indices=indices,
             _arg2scope=arg2scope,
-            _idlist=self._idlist if id is HIDDEN_PARAM else [*self._idlist, id],
+            _idlist=idlist,
             marks=[*self.marks, *normalize_mark_list(marks)],
         )
 
@@ -1149,12 +1222,40 @@ class CallSpec2:
         return "-".join(self._idlist)
 
 
+if TYPE_CHECKING:
+    # Deprecated alias kept for type checkers; runtime access goes through __getattr__.
+    CallSpec2 = CallSpec
+
+
 def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
     return request.param
 
 
-# Used for storing pseudo fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[dict[str, FixtureDef[Any]]]()
+class DirectParamFixtureDef(FixtureDef[FixtureValue]):
+    """A custom FixtureDef for direct parametrization fixtures.
+
+    Each parameter in direct parametrization is desugared to a parametrized
+    fixture which returns the direct parameterization value as its param.
+    We use this custom type as a "marker" for this type of FixtureDef, but
+    usually behaves like any other FixtureDef.
+    """
+
+    def __init__(self, *, node: nodes.Node, argname: str, scope: Scope) -> None:
+        super().__init__(
+            config=node.config,
+            baseid=NOTSET,
+            argname=argname,
+            func=get_direct_param_fixture_func,
+            scope=scope,
+            params=None,
+            ids=None,
+            node=node,
+            _ispytest=True,
+        )
+
+
+# Used for storing fixturedefs for direct parametrization.
+name2directparamfixturedef_key = StashKey[dict[str, DirectParamFixtureDef[object]]]()
 
 
 @final
@@ -1199,7 +1300,7 @@ class Metafunc:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
         # Result of parametrize().
-        self._calls: list[CallSpec2] = []
+        self._calls: list[CallSpec] = []
 
         self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
 
@@ -1207,10 +1308,10 @@ class Metafunc:
         self,
         argnames: str | Sequence[str],
         argvalues: Iterable[ParameterSet | Sequence[object] | object],
+        *,
         indirect: bool | Sequence[str] = False,
         ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
-        scope: _ScopeName | None = None,
-        *,
+        scope: ScopeName | None = None,
         _param_mark: Mark | None = None,
     ) -> None:
         """Add new invocations to the underlying test function using the list
@@ -1285,6 +1386,10 @@ class Metafunc:
             The scope is used for grouping tests by parameter instances.
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
+
+        .. versionchanged:: 9.1
+
+            ``indirect``, ``ids`` and ``scope`` are now keyword-only.
         """
         nodeid = self.definition.nodeid
 
@@ -1308,7 +1413,7 @@ class Metafunc:
                 scope, descr=f"parametrize() call in {self.function.__name__}"
             )
         else:
-            scope_ = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
+            scope_ = _infer_parametrize_scope(argnames, self._arg2fixturedefs, indirect)
 
         self._validate_if_using_arg_names(argnames, indirect)
 
@@ -1333,14 +1438,14 @@ class Metafunc:
         self._params_directness.update(arg_directness)
 
         # Add direct parametrizations as fixturedefs to arg2fixturedefs by
-        # registering artificial "pseudo" FixtureDef's such that later at test
+        # registering artificial DirectParamFixtureDef's such that later at test
         # setup time we can rely on FixtureDefs to exist for all argnames.
         node = None
-        # For scopes higher than function, a "pseudo" FixtureDef might have
+        # For scopes higher than function, a DirectParamFixtureDef might have
         # already been created for the scope. We thus store and cache the
-        # FixtureDef on the node related to the scope.
+        # DirectParamFixtureDef on the node related to the scope.
         if scope_ is Scope.Function:
-            name2pseudofixturedef = None
+            name2directparamfixturedef = None
         else:
             collector = self.definition.parent
             assert collector is not None
@@ -1357,35 +1462,33 @@ class Metafunc:
                     node = collector.session
                 else:
                     assert False, f"Unhandled missing scope: {scope}"
-            default: dict[str, FixtureDef[Any]] = {}
-            name2pseudofixturedef = node.stash.setdefault(
-                name2pseudofixturedef_key, default
+            default: dict[str, DirectParamFixtureDef[object]] = {}
+            name2directparamfixturedef = node.stash.setdefault(
+                name2directparamfixturedef_key, default
             )
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
-            if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
-                fixturedef = name2pseudofixturedef[argname]
+            if (
+                name2directparamfixturedef is not None
+                and argname in name2directparamfixturedef
+            ):
+                fixturedef = name2directparamfixturedef[argname]
             else:
-                fixturedef = FixtureDef(
-                    config=self.config,
-                    baseid="",
+                fixturedef = DirectParamFixtureDef(
+                    node=self.definition.session,
                     argname=argname,
-                    func=get_direct_param_fixture_func,
                     scope=scope_,
-                    params=None,
-                    ids=None,
-                    _ispytest=True,
                 )
-                if name2pseudofixturedef is not None:
-                    name2pseudofixturedef[argname] = fixturedef
+                if name2directparamfixturedef is not None:
+                    name2directparamfixturedef[argname] = fixturedef
             self._arg2fixturedefs[argname] = [fixturedef]
 
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls.
         newcalls = []
-        for callspec in self._calls or [CallSpec2()]:
+        for callspec in self._calls or [CallSpec()]:
             for param_index, (param_id, param_set) in enumerate(
                 zip(ids, parametersets, strict=True)
             ):
@@ -1503,12 +1606,13 @@ class Metafunc:
                     callspec.indices[argname] = i
 
 
-def _find_parametrized_scope(
+def _infer_parametrize_scope(
     argnames: Sequence[str],
     arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
     indirect: bool | Sequence[str],
 ) -> Scope:
-    """Find the most appropriate scope for a parametrized call based on its arguments.
+    """Infer the most appropriate scope for a parametrize() call based on its
+    arguments, for when the scope is not explicitly specified.
 
     When there's at least one direct argument, always use "function" scope.
 
@@ -1523,13 +1627,14 @@ def _find_parametrized_scope(
         all_arguments_are_fixtures = bool(indirect)
 
     if all_arguments_are_fixtures:
-        fixturedefs = arg2fixturedefs or {}
-        used_scopes = [
-            fixturedef[-1]._scope
-            for name, fixturedef in fixturedefs.items()
-            if name in argnames
-        ]
         # Takes the most narrow scope from used fixtures.
+        used_scopes = (
+            # Higher scope can't request lower scope, so it's OK to only
+            # look at the first fixturedef in the override chain.
+            arg2fixturedefs[argname][-1]._scope
+            for argname in argnames
+            if argname in arg2fixturedefs
+        )
         return min(used_scopes, default=Scope.Function)
 
     return Scope.Function
@@ -1585,14 +1690,22 @@ class Function(PyobjMixin, nodes.Item):
         name: str,
         parent,
         config: Config | None = None,
-        callspec: CallSpec2 | None = None,
+        callspec: CallSpec | None = None,
         callobj=NOTSET,
         keywords: Mapping[str, Any] | None = None,
         session: Session | None = None,
         fixtureinfo: FuncFixtureInfo | None = None,
         originalname: str | None = None,
     ) -> None:
-        super().__init__(name, parent, config=config, session=session)
+        # Build the NodeId explicitly from callspec (when parametrized)
+        # instead of going through Node.__init__'s generic
+        # `parent.id.child(name).with_params(None)` fallback, which would
+        # only see `name` (with any "[params]" suffix already glued on) and
+        # couldn't recover the per-parametrize()-call structure from callspec.
+        base_name = originalname or name
+        params = callspec.id if callspec is not None and callspec._idlist else None
+        node_id = parent.id.child(base_name).with_params(params)
+        super().__init__(name, parent, config=config, session=session, nodeid=node_id)
 
         if callobj is not NOTSET:
             self._obj = callobj
@@ -1734,3 +1847,10 @@ class FunctionDefinition(Function):
         raise RuntimeError("function definitions are not supposed to be run as tests")
 
     setup = runtest
+
+
+def __getattr__(name: str) -> object:
+    if name == "CallSpec2":
+        warnings.warn(CALLSPEC2_RENAMED, stacklevel=2)
+        return CallSpec
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

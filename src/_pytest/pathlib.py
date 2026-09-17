@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import atexit
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -25,6 +24,7 @@ from pathlib import Path
 from pathlib import PurePath
 from posixpath import sep as posix_sep
 import shutil
+import stat
 import sys
 import types
 from types import ModuleType
@@ -70,6 +70,33 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
     return path.joinpath(".lock")
 
 
+def _chmod_rwx(p: str) -> bool:
+    """Grant owner sufficient permissions for deletion.
+
+    Directories get ``S_IRWXU`` (read+write+exec for traversal).
+    Regular files get ``S_IRUSR | S_IWUSR`` only, to avoid making
+    non-executable files executable as a side effect.
+
+    Returns True if permissions were actually changed, False if they were
+    already sufficient or couldn't be changed.
+    """
+    try:
+        old_mode = os.stat(p).st_mode
+    except OSError:
+        # Path may have been removed concurrently, or be inaccessible.
+        return False
+    perm_mode = stat.S_IMODE(old_mode)
+    bits = stat.S_IRWXU if stat.S_ISDIR(old_mode) else stat.S_IRUSR | stat.S_IWUSR
+    new_mode = perm_mode | bits
+    if perm_mode == new_mode:
+        return False
+    try:
+        os.chmod(p, new_mode)
+    except OSError:
+        return False
+    return True
+
+
 def on_rm_rf_error(
     func: Callable[..., Any] | None,
     path: str,
@@ -98,32 +125,48 @@ def on_rm_rf_error(
         )
         return False
 
+    p = Path(path)
+
+    if func in (os.open, os.scandir):
+        # Directory traversal failed (e.g. missing S_IXUSR). Fix permissions
+        # on the path and its parent (bounded by start_path), then remove it
+        # ourselves since rmtree skips entries after the error handler returns.
+        # See: https://github.com/pytest-dev/pytest/issues/7940
+        parent_changed = False
+        parent = p.parent
+        # Never chmod outside the tree rooted at start_path.
+        if parent not in (p, start_path):
+            parent_changed = _chmod_rwx(str(parent))
+        path_changed = _chmod_rwx(str(p))
+        if not (parent_changed or path_changed):
+            return False
+        if p.is_dir():
+            rm_rf(p)
+        else:
+            try:
+                os.unlink(str(p))
+            except OSError:
+                return False
+        return True
+
     if func not in (os.rmdir, os.remove, os.unlink):
-        if func not in (os.open,):
-            warnings.warn(
-                PytestWarning(
-                    f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
-                )
+        warnings.warn(
+            PytestWarning(
+                f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
             )
+        )
         return False
 
     # Chmod + retry.
-    import stat
-
-    def chmod_rw(p: str) -> None:
-        mode = os.stat(p).st_mode
-        os.chmod(p, mode | stat.S_IRUSR | stat.S_IWUSR)
-
     # For files, we need to recursively go upwards in the directories to
-    # ensure they all are also writable.
-    p = Path(path)
+    # ensure they all are also accessible and writable.
     if p.is_file():
-        for parent in p.parents:
-            chmod_rw(str(parent))
+        for parent in p.parents:  # pragma: no branch
+            _chmod_rwx(str(parent))
             # Stop when we reach the original path passed to rm_rf.
             if parent == start_path:
                 break
-    chmod_rw(str(path))
+    _chmod_rwx(str(path))
 
     func(path)
     return True
@@ -260,10 +303,8 @@ def create_cleanup_lock(p: Path) -> Path:
         return lock_path
 
 
-def register_cleanup_lock_removal(
-    lock_path: Path, register: Any = atexit.register
-) -> Any:
-    """Register a cleanup function for removing a lock, by default on atexit."""
+def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
+    """Register a cleanup function for removing a lock."""
     pid = os.getpid()
 
     def cleanup_on_exit(lock_path: Path = lock_path, original_pid: int = pid) -> None:
@@ -375,13 +416,29 @@ def cleanup_numbered_dir(
 
 
 def make_numbered_dir_with_cleanup(
+    *,
     root: Path,
     prefix: str,
+    mode: int,
     keep: int,
     lock_timeout: float,
-    mode: int,
+    register: Any,
 ) -> Path:
-    """Create a numbered dir with a cleanup lock and remove old ones."""
+    """Create a numbered dir and register its cleanup.
+
+    Similar to make_numbered_dir, but also maintains a lock file indicating that
+    the directory is currently in use, and registers the cleanup of the lock and
+    of stale numbered directories.
+
+    :param keep:
+        The number of sessions to retain the directory.
+    :param lock_timeout:
+        In case of a crash, the lock remains "stuck". The timeout is a time
+        limit after which the lock is considered stale and can be removed.
+    :param register:
+        Called as register(cleanup_func, params...). Should schedule to call
+        passed cleanup functions on session finish.
+    """
     e = None
     for i in range(10):
         try:
@@ -389,13 +446,13 @@ def make_numbered_dir_with_cleanup(
             # Only lock the current dir when keep is not 0
             if keep != 0:
                 lock_path = create_cleanup_lock(p)
-                register_cleanup_lock_removal(lock_path)
+                register_cleanup_lock_removal(lock_path, register)
         except Exception as exc:
             e = exc
         else:
             consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
             # Register a cleanup for program exit
-            atexit.register(
+            register(
                 cleanup_numbered_dir,
                 root,
                 prefix,
@@ -536,7 +593,7 @@ def import_path(
         # Try to import this module using the standard import mechanisms, but
         # without touching sys.path.
         try:
-            pkg_root, module_name = resolve_pkg_root_and_module_name(
+            _, module_name = resolve_pkg_root_and_module_name(
                 path, consider_namespace_packages=consider_namespace_packages
             )
         except CouldNotResolvePathError:
@@ -546,9 +603,7 @@ def import_path(
             with contextlib.suppress(KeyError):
                 return sys.modules[module_name]
 
-            mod = _import_module_using_spec(
-                module_name, path, pkg_root, insert_modules=False
-            )
+            mod = _import_module_using_spec(module_name, path, insert_modules=False)
             if mod is not None:
                 return mod
 
@@ -558,9 +613,7 @@ def import_path(
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
 
-        mod = _import_module_using_spec(
-            module_name, path, path.parent, insert_modules=True
-        )
+        mod = _import_module_using_spec(module_name, path, insert_modules=True)
         if mod is None:
             raise ImportError(f"Can't find module {module_name} at location {path}")
         return mod
@@ -598,8 +651,7 @@ def import_path(
 
         if module_file.endswith((".pyc", ".pyo")):
             module_file = module_file[:-1]
-        if module_file.endswith(os.sep + "__init__.py"):
-            module_file = module_file[: -(len(os.sep + "__init__.py"))]
+        module_file = module_file.removesuffix(os.sep + "__init__.py")
 
         try:
             is_same = _is_same(str(path), module_file)
@@ -613,7 +665,7 @@ def import_path(
 
 
 def _import_module_using_spec(
-    module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
+    module_name: str, module_path: Path, *, insert_modules: bool
 ) -> ModuleType | None:
     """
     Tries to import a module by its canonical name, path, and its parent location.
@@ -626,10 +678,6 @@ def _import_module_using_spec(
         If module is a package, pass the path to the  `__init__.py` of the package.
         If module is a namespace package, pass directory path.
 
-    :param module_location:
-        The parent location of the module.
-        If module is a package, pass the directory containing the `__init__.py` file.
-
     :param insert_modules:
         If True, will call `insert_missing_modules` to create empty intermediate modules
         with made-up module names (when importing test files not reachable from `sys.path`).
@@ -638,29 +686,23 @@ def _import_module_using_spec(
 
         module_name:        "a.b.c.demo"
         module_path:        Path("a/b/c/demo.py")
-        module_location:    Path("a/b/c/")
         if "a.b.c" is package ("a/b/c/__init__.py" exists), then
             parent_module_name:         "a.b.c"
             parent_module_path:         Path("a/b/c/__init__.py")
-            parent_module_location:     Path("a/b/c/")
         else:
             parent_module_name:         "a.b.c"
             parent_module_path:         Path("a/b/c")
-            parent_module_location:     Path("a/b/")
 
     Example 2 of parent_module_*:
 
         module_name:        "a.b.c"
         module_path:        Path("a/b/c/__init__.py")
-        module_location:    Path("a/b/c/")
         if  "a.b" is package ("a/b/__init__.py" exists), then
             parent_module_name:         "a.b"
             parent_module_path:         Path("a/b/__init__.py")
-            parent_module_location:     Path("a/b/")
         else:
             parent_module_name:         "a.b"
             parent_module_path:         Path("a/b/")
-            parent_module_location:     Path("a/")
     """
     # Attempt to import the parent module, seems is our responsibility:
     # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
@@ -687,21 +729,13 @@ def _import_module_using_spec(
             parent_module = _import_module_using_spec(
                 parent_module_name,
                 parent_module_path,
-                parent_module_path.parent,
                 insert_modules=insert_modules,
             )
 
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
+    find_spec_path = [str(module_path.parent)]
     for meta_importer in sys.meta_path:
-        module_name_of_meta = getattr(meta_importer.__class__, "__module__", "")
-        if module_name_of_meta == "_pytest.assertion.rewrite" and module_path.is_file():
-            # Import modules in subdirectories by module_path
-            # to ensure assertion rewrites are not missed (#12659).
-            find_spec_path = [str(module_location), str(module_path)]
-        else:
-            find_spec_path = [str(module_location)]
-
         spec = meta_importer.find_spec(module_name, find_spec_path)
 
         if spec_matches_module_path(spec, module_path):
@@ -1060,4 +1094,12 @@ def samefile_nofollow(p1: Path, p2: Path) -> bool:
 
     Unlike Path.samefile(), does not resolve symlinks.
     """
-    return os.path.samestat(p1.lstat(), p2.lstat())
+    s1, s2 = p1.lstat(), p2.lstat()
+    # On Windows st_ino is the file ID, which file systems are free to not support,
+    # in which case it is 0 for every file -- WinFsp mounts such as sshfs-win are one
+    # example. os.path.samestat() would then consider any two files on the volume to
+    # be the same (python/cpython#78116), so treat a zero file ID as "unknown" and
+    # leave the caller with plain path comparison (#14864).
+    if s1.st_ino == 0 or s2.st_ino == 0:
+        return False
+    return os.path.samestat(s1, s2)

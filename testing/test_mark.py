@@ -1,13 +1,22 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
 import os
 import sys
+from typing import cast
 from unittest import mock
 
+from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import RegisteredMarker
+from _pytest.config import UsageError
+from _pytest.mark import _validate_marker_names
 from _pytest.mark import MarkGenerator
+from _pytest.mark.expression import Expression
+from _pytest.mark.structures import _EmptyParameterSetMark
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
+from _pytest.nodeid import NodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
@@ -184,11 +193,16 @@ def test_mark_on_pseudo_function(pytester: Pytester) -> None:
 
 
 @pytest.mark.parametrize(
-    "option_name", ["--strict-markers", "--strict", "strict_markers", "strict"]
+    "option",
+    [
+        "--strict-markers",
+        "--strict",
+        "strict_markers = true",
+        "strict = true",
+        "addopts = --strict-markers",
+    ],
 )
-def test_strict_prohibits_unregistered_markers(
-    pytester: Pytester, option_name: str
-) -> None:
+def test_strict_prohibits_unregistered_markers(pytester: Pytester, option: str) -> None:
     pytester.makepyfile(
         """
         import pytest
@@ -197,20 +211,128 @@ def test_strict_prohibits_unregistered_markers(
             pass
     """
     )
-    if option_name in ("strict_markers", "strict"):
+    if option.startswith("-"):
+        result = pytester.runpytest(option)
+    else:
         pytester.makeini(
             f"""
             [pytest]
-            {option_name} = true
+            {option}
             """
         )
         result = pytester.runpytest()
-    else:
-        result = pytester.runpytest(option_name)
     assert result.ret != 0
     result.stdout.fnmatch_lines(
         ["'unregisteredmark' not found in `markers` configuration option"]
     )
+
+
+class TestValidateMarkerNames:
+    """Tests for _validate_marker_names (issue #2781)."""
+
+    class FakeConfig:
+        def __init__(
+            self,
+            markers: list[str],
+            strict_markers: bool | None = None,
+            strict: bool = False,
+        ) -> None:
+            self._ini: dict[str, list[str] | bool | None] = {
+                "markers": markers,
+                "strict_markers": strict_markers,
+                "strict": strict,
+            }
+
+        def getini(self, name: str) -> list[str] | bool | None:
+            return self._ini[name]
+
+        def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
+            yield from Config._iter_registered_markers(cast(Config, self))
+
+    def _make_config(
+        self,
+        strict_markers: bool | None = None,
+        strict: bool = False,
+    ) -> Config:
+        return cast(
+            Config,
+            self.FakeConfig(
+                markers=["registered: a registered marker"],
+                strict_markers=strict_markers,
+                strict=strict,
+            ),
+        )
+
+    def test_unknown_marker_with_strict_markers(self) -> None:
+        expr = Expression.compile("unknown_marker")
+
+        with pytest.raises(UsageError, match=r"Unknown marker.*unknown_marker"):
+            _validate_marker_names(expr, self._make_config(strict_markers=True))
+
+    def test_unknown_marker_with_strict(self) -> None:
+        expr = Expression.compile("unknown_marker")
+
+        with pytest.raises(UsageError, match=r"Unknown marker.*unknown_marker"):
+            _validate_marker_names(expr, self._make_config(strict=True))
+
+    def test_registered_marker_passes(self) -> None:
+        expr = Expression.compile("registered")
+
+        _validate_marker_names(expr, self._make_config(strict_markers=True))
+
+    def test_no_validation_without_strict(self) -> None:
+        expr = Expression.compile("any_marker")
+
+        _validate_marker_names(expr, self._make_config())
+
+
+@pytest.fixture
+def markexpr_pytester(pytester: Pytester) -> Pytester:
+    pytester.makeini(
+        """
+        [pytest]
+        markers =
+            registered: a registered marker
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.registered
+        def test_registered():
+            pass
+
+        def test_plain():
+            pass
+        """
+    )
+    return pytester
+
+
+@pytest.mark.parametrize("option", ["--strict-markers", "--strict"])
+def test_strict_prohibits_unregistered_markers_in_markexpr(
+    markexpr_pytester: Pytester, option: str
+) -> None:
+    result = markexpr_pytester.runpytest(option, "-m", "registered or unregisteredmark")
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        ["*Unknown marker(s) in '-m' expression: unregisteredmark*"]
+    )
+
+
+def test_strict_allows_registered_markers_in_markexpr(
+    markexpr_pytester: Pytester,
+) -> None:
+    result = markexpr_pytester.runpytest("--strict-markers", "-m", "registered")
+    result.assert_outcomes(passed=1, deselected=1)
+
+
+def test_unregistered_markers_in_markexpr_allowed_without_strict(
+    markexpr_pytester: Pytester,
+) -> None:
+    result = markexpr_pytester.runpytest("-m", "unregisteredmark")
+    result.assert_outcomes(deselected=2)
 
 
 @pytest.mark.parametrize(
@@ -490,6 +612,30 @@ def test_parametrized_collect_with_wrong_args(pytester: Pytester) -> None:
     )
 
 
+def test_parametrized_collect_with_non_sequence_values(pytester: Pytester) -> None:
+    """Test collect parametrized func with tuple-style argnames and scalar values."""
+    py_file = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("x,", [None])
+        def test_func(x):
+            pass
+    """
+    )
+
+    result = pytester.runpytest(py_file)
+    result.stdout.fnmatch_lines(
+        [
+            "test_parametrized_collect_with_non_sequence_values.py::test_func: "
+            'in "parametrize" expected a sequence of values, '
+            "for a single value use a one-element tuple like ('value',), "
+            "got NoneType:",
+            "  None",
+        ]
+    )
+
+
 def test_parametrized_with_kwargs(pytester: Pytester) -> None:
     """Test collect parametrized func with wrong number of args."""
     py_file = pytester.makepyfile(
@@ -651,6 +797,18 @@ class TestFunctional:
         assert has_inherited_marker.kwargs == {"location": "class"}
         assert has_own.get_closest_marker("missing") is None
 
+    def test_mark_closest_default_mark_decorator(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_without_mark():
+                pass
+        """
+        )
+        items, _rec = pytester.inline_genitems(p)
+        (item,) = items
+        default = pytest.mark.foo(location="default")
+        assert item.get_closest_marker("foo", default) is default.mark
+
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(
             """
@@ -735,8 +893,8 @@ class TestFunctional:
                 session.add_marker("mark1")
                 session.add_marker(pytest.mark.mark2)
                 session.add_marker(pytest.mark.mark3)
-                pytest.raises(ValueError, lambda:
-                        session.add_marker(10))
+                with pytest.raises(ValueError):
+                    session.add_marker(10)
         """
         )
         pytester.makepyfile(
@@ -991,9 +1149,9 @@ class TestMarkDecorator:
         assert md.kwargs == {"three": 3}
 
 
-@pytest.mark.parametrize("mark", [None, "", "skip", "xfail"])
+@pytest.mark.parametrize("mark", [None, "skip", "xfail"])
 def test_parameterset_for_parametrize_marks(
-    pytester: Pytester, mark: str | None
+    pytester: Pytester, mark: _EmptyParameterSetMark | None
 ) -> None:
     if mark is not None:
         pytester.makeini(
@@ -1009,13 +1167,30 @@ def test_parameterset_for_parametrize_marks(
 
     pytest_configure(config)
     result_mark = get_empty_parameterset_mark(config, ["a"], all)
-    if mark in (None, ""):
-        # normalize to the requested name
+    if mark is None:
+        # normalize to the default
         mark = "skip"
     assert result_mark.name == mark
     assert result_mark.kwargs["reason"].startswith("got empty parameter set ")
     if mark == "xfail":
         assert result_mark.kwargs.get("run") is False
+
+
+def test_parameterset_for_parametrize_marks_invalid(pytester: Pytester) -> None:
+    pytester.makeini(
+        f"""
+        [pytest]
+        {EMPTY_PARAMETERSET_OPTION}=dontcare
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            f"*ERROR: *: config option '{EMPTY_PARAMETERSET_OPTION}' expects one of "
+            "'skip' | 'xfail' | 'fail_at_collect', got 'dontcare'"
+        ]
+    )
 
 
 def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
@@ -1085,11 +1260,6 @@ def test_paramset_empty_no_idfunc(
     )
 
 
-def test_parameterset_for_parametrize_bad_markname(pytester: Pytester) -> None:
-    with pytest.raises(pytest.UsageError):
-        test_parameterset_for_parametrize_marks(pytester, "bad")
-
-
 def test_mark_expressions_no_smear(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
@@ -1126,10 +1296,11 @@ def test_mark_expressions_no_smear(pytester: Pytester) -> None:
 
 
 def test_addmarker_order(pytester) -> None:
-    session = mock.Mock()
+    session = mock.Mock(spec=Collector)
     session.own_markers = []
     session.parent = None
     session.nodeid = ""
+    session.id = NodeId(path="")
     session.path = pytester.path
     node = Node.from_parent(session, name="Test")
     node.add_marker("foo")
@@ -1344,3 +1515,31 @@ def test_fixture_disallowed_between_marks() -> None:
         @pytest.mark.usefixtures("tmp_path")
         def foo():
             raise NotImplementedError()
+
+
+def test_module_getattr_without_attributeerror(pytester: Pytester) -> None:
+    """
+    Test that a helpful warning is emitted when a module-level
+    __getattr__ returns None instead of raising AttributeError.
+
+    Regression test for https://github.com/pytest-dev/pytest/issues/8265
+    """
+    pytester.makepyfile(
+        """
+        def __getattr__(key):
+            # Bug: should raise AttributeError, but returns None
+            return None
+
+        def test_something():
+            assert True
+        """
+    )
+    result = pytester.runpytest("-W", "always::pytest.PytestCollectionWarning")
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestCollectionWarning*__getattr__*returns None*AttributeError*",
+        ]
+    )
+    # The module is buggy (__getattr__ returns None for all attributes),
+    # so no tests are collected, but pytest should NOT crash with a TypeError.
+    assert result.ret != ExitCode.INTERNAL_ERROR

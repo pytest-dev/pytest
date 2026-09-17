@@ -89,6 +89,7 @@ nitpick_ignore = [
     ("py:class", "_pytest.python_api.RaisesContext"),
     ("py:class", "_pytest.recwarn.WarningsChecker"),
     ("py:class", "_pytest.reports.BaseReport"),
+    ("py:class", "_pytest.nodeid.NodeId"),
     # Sphinx bugs(?)
     ("py:class", "RewriteHook"),
     # Undocumented third parties
@@ -98,10 +99,15 @@ nitpick_ignore = [
     ("py:class", "_py_warnings.WarningMessage"),
     # Undocumented type aliases
     ("py:class", "LEGACY_PATH"),
+    ("py:class", "_IniTypeArg"),
     ("py:class", "_PluggyPlugin"),
     # TypeVars
     ("py:class", "_pytest._code.code.E"),
     ("py:class", "E"),  # due to delayed annotation
+    ("py:class", "T"),
+    ("py:class", "P"),
+    ("py:class", "P.args"),
+    ("py:class", "P.kwargs"),
     ("py:class", "_pytest.fixtures.FixtureFunction"),
     ("py:class", "_pytest.nodes._NodeType"),
     ("py:class", "_NodeType"),  # due to delayed annotation
@@ -110,9 +116,11 @@ nitpick_ignore = [
     ("py:class", "_pytest.runner.TResult"),
     ("py:obj", "_pytest.fixtures.FixtureValue"),
     ("py:obj", "_pytest.stash.T"),
-    ("py:class", "_ScopeName"),
+    ("py:class", "ScopeName"),
     ("py:class", "BaseExcT_1"),
     ("py:class", "ExcT_1"),
+    # Deprecated, intentionally not added to reference docs.
+    ("py:func", "pytest.console_main"),
 ]
 
 add_module_names = False
@@ -281,13 +289,6 @@ def setup(app: sphinx.application.Sphinx) -> None:
         "fixture",
         objname="built-in fixture",
         indextemplate="pair: %s; fixture",
-    )
-
-    app.add_object_type(
-        "confval",
-        "confval",
-        objname="configuration value",
-        indextemplate="pair: %s; configuration value",
     )
 
     app.add_object_type(

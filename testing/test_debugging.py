@@ -16,6 +16,11 @@ def pdb_env(request):
         # Disable pdb++ with inner tests.
         pytester = request.getfixturevalue("pytester")
         pytester._monkeypatch.setenv("PDBPP_HIJACK_PDB", "0")
+        # Python 3.15+ defaults pdb to PyREPL, which injects ANSI colors and
+        # bracketed-paste sequences into pexpect output and breaks exact
+        # matching in these selftests. Force the classic REPL instead.
+        # https://docs.python.org/3.15/whatsnew/3.15.html#pdb
+        pytester._monkeypatch.setenv("PYTHON_BASIC_REPL", "1")
 
 
 def runpdb(pytester: Pytester, source: str):
@@ -324,12 +329,13 @@ class TestPDB:
             def globalfunc():
                 pass
             def test_1():
-                pytest.raises(ValueError, globalfunc)
+                with pytest.raises(ValueError):
+                    globalfunc()
         """
         )
         child = pytester.spawn_pytest(f"--pdb {p1}")
         child.expect(".*def test_1")
-        child.expect(".*pytest.raises.*globalfunc")
+        child.expect(r"with pytest.raises\(ValueError\)")
         child.expect("Pdb")
         child.sendline("globalfunc")
         child.expect(".*function")

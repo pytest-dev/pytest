@@ -23,7 +23,7 @@ TESTCASES = [
         >       assert result == expected
         E       assert [1, 4, 3] == [1, 2, 3]
         E         At index 1 diff: 4 != 2
-        E         Full diff:
+        E         Full diff: (-: missing in left side, +: extra in left side)
         E           [
         E               1,
         E         -     2,
@@ -46,7 +46,7 @@ TESTCASES = [
         >       assert result == expected
         E       assert [1, 2, 3] == [1, 2]
         E         Left contains one more item: 3
-        E         Full diff:
+        E         Full diff: (-: missing in left side, +: extra in left side)
         E           [
         E               1,
         E               2,
@@ -67,7 +67,7 @@ TESTCASES = [
         E       assert [1, 3] == [1, 2, 3]
         E         At index 1 diff: 3 != 2
         E         Right contains one more item: 3
-        E         Full diff:
+        E         Full diff: (-: missing in left side, +: extra in left side)
         E           [
         E               1,
         E         -     2,
@@ -87,7 +87,7 @@ TESTCASES = [
         >       assert result == expected
         E       assert (1, 4, 3) == (1, 2, 3)
         E         At index 1 diff: 4 != 2
-        E         Full diff:
+        E         Full diff: (-: missing in left side, +: extra in left side)
         E           (
         E               1,
         E         -     2,
@@ -113,7 +113,7 @@ TESTCASES = [
         E         4
         E         Extra items in the right set:
         E         2
-        E         Full diff:
+        E         Full diff: (-: missing in left side, +: extra in left side)
         E           {
         E               1,
         E         -     2,
@@ -139,7 +139,7 @@ TESTCASES = [
         E         {3: 'eggs'}
         E         Right contains 1 more item:
         E         {2: 'eggs'}
-        E         Full diff:
+        E         Full diff: (-: missing in left side, +: extra in left side)
         E           {
         E               1: 'spam',
         E         -     2: 'eggs',
@@ -164,7 +164,7 @@ TESTCASES = [
         E         {1: 'spam'}
         E         Differing items:
         E         {2: 'eggs'} != {2: 'bacon'}
-        E         Full diff:
+        E         Full diff: (-: missing in left side, +: extra in left side)
         E           {
         E               1: 'spam',
         E         -     2: 'bacon',
@@ -189,7 +189,7 @@ TESTCASES = [
         E         {2: 'eggs'}
         E         Right contains 1 more item:
         E         {3: 'bacon'}
-        E         Full diff:
+        E         Full diff: (-: missing in left side, +: extra in left side)
         E           {
         E               1: 'spam',
         E         -     3: 'bacon',
