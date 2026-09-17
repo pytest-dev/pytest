@@ -2623,6 +2623,40 @@ class TestAutouseManagement:
         result = pytester.runpytest()
         result.assert_outcomes(passed=2, errors=1)
 
+    def test_getautousenames_legacy_nodeid_autouse(self, pytester: Pytester) -> None:
+        """Autouse registered via the deprecated nodeid API is still yielded."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fm(request):
+                return request._fixturemanager
+
+            @pytest.fixture
+            def item(request):
+                return request._pyfuncitem
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+
+            def test_legacy(item, fm):
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    fm._register_fixture(
+                        name="legacy_auto",
+                        func=lambda: None,
+                        nodeid=item.nodeid,
+                        autouse=True,
+                    )
+                assert "legacy_auto" in list(fm._getautousenames(item))
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
     @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00", "p01"])
     @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10", "p11"])
     def test_ordering_dependencies_torndown_first(
