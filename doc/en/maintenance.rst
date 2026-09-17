@@ -81,20 +81,23 @@ are made to the previous feature release, containing bug fixes only. The bug fix
 usually fix regressions, but may be any change that should reach users before the
 next feature release.
 
-Suppose for example that the latest release was 1.2.3, and you want to include
-a bug fix in 1.2.4 (check https://github.com/pytest-dev/pytest/releases for the
-actual latest release). The procedure for this is:
+Bugs are fixed on ``main`` first, with a regular pull request, and reach the
+maintenance branch from there. The exception is a bug that no longer applies to
+``main``, which is fixed on the maintenance branch directly.
 
-#. First, make sure the bug is fixed in the ``main`` branch, with a regular pull
-   request, as described above. An exception to this is if the bug fix is not
-   applicable to ``main`` anymore.
+The backport itself is done by the `patchback <https://patchback.github.io/>`__ bot.
+Add a ``backport 1.2.x`` label to the pull request -- using the actual release series,
+see https://github.com/pytest-dev/pytest/releases -- and patchback cherry-picks the
+merge commit onto ``1.2.x`` and opens the backport pull request. The label works
+before or after the merge, so a backport that was not planned for can still be had by
+labelling the merged pull request.
 
-Automatic method:
 
-Add a ``backport 1.2.x`` label to the PR you want to backport. This will create
-a backport PR against the ``1.2.x`` branch.
+When patchback cannot do it
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Manual method:
+If the cherry-pick conflicts, patchback gives up and says so on the pull request.
+Only then is the backport done by hand:
 
 #. ``git checkout origin/1.2.x -b backport-XXXX`` # use the main PR number here
 
@@ -104,7 +107,7 @@ Manual method:
 
 #. ``git cherry-pick -x -m1 REVISION`` # use the revision you found above (``0f8b462``).
 
-#. Open a PR targeting ``1.2.x``:
+#. Resolve the conflict, then open a PR targeting ``1.2.x``:
 
    * Prefix the message with ``[1.2.x]``.
    * Delete the PR body, it usually contains a duplicate commit message.
@@ -113,9 +116,12 @@ Manual method:
 Who does the backporting
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-As mentioned above, bugs should first be fixed on ``main`` (except in rare occasions
-that a bug only happens in a previous release). So, who should do the backport procedure described
-above?
+Applying the label is part of merging: whoever merges a bug fix on ``main`` should
+add the ``backport x.x.x`` label, and adding it afterwards costs nothing if it was
+missed.
+
+The question of who does the work only arises when patchback fails and someone has to
+resolve the conflict:
 
 1. If the bug was fixed by a core developer, it is the main responsibility of that core developer
    to do the backport.
@@ -123,9 +129,10 @@ above?
    do the backport procedure if they have the time.
 3. For bugs submitted by non-maintainers, it is expected that a core developer will do
    the backport, normally the one that merged the PR on ``main``.
-4. If a non-maintainer notices a bug which is fixed on ``main`` but has not been backported
-   (due to maintainers forgetting to apply the *needs backport* or *backport x.x.x* labels, or just plain missing it),
-   they are also welcome to open a PR with the backport. The procedure is simple and really
+4. If anyone notices a bug which is fixed on ``main`` but has not been backported --
+   because the *needs backport* or *backport x.x.x* label was never applied, or because
+   patchback failed and nobody picked it up -- they are also welcome to open the backport
+   pull request themselves. The procedure is simple and really
    helps with the maintenance of the project.
 
 All the above are not rules, but merely some guidelines/suggestions on what we should expect
