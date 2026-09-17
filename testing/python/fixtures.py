@@ -3855,6 +3855,34 @@ class TestShowFixtures:
             ]
         )
 
+    def test_show_fixtures_collection_error(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_broken(:
+                pass
+            """
+        )
+
+        result = pytester.runpytest("--fixtures")
+
+        assert result.ret == ExitCode.INTERRUPTED
+        result.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
+
+    def test_show_fixtures_continue_on_collection_errors(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_broken(:
+                pass
+            """
+        )
+
+        result = pytester.runpytest("--fixtures", "--continue-on-collection-errors")
+
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.stdout.no_fnmatch_line("*Interrupted:*")
+
     def test_show_fixtures_verbose(self, pytester: Pytester) -> None:
         result = pytester.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines(
