@@ -64,6 +64,11 @@ Look through the `GitHub issues for enhancements <https://github.com/pytest-dev/
 `Talk to developers <https://docs.pytest.org/en/stable/contact.html>`_ to find out how you can implement specific
 features.
 
+Changes to documented behaviour are subject to our
+`backwards compatibility policy <https://docs.pytest.org/en/stable/backwards-compatibility.html>`_,
+and removals go through the
+`deprecation process <https://docs.pytest.org/en/stable/deprecations.html>`_ first.
+
 Write documentation
 -------------------
 
@@ -286,23 +291,29 @@ Preparing Pull Requests
 Short version
 ~~~~~~~~~~~~~
 
-#. Fork the repository.
-#. Fetch tags from upstream if necessary (if you cloned only main `git fetch --tags https://github.com/pytest-dev/pytest`).
-#. Enable and install `pre-commit <https://pre-commit.com>`_ to ensure style-guides and code checks are followed.
-#. Follow `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ for naming.
-#. Tests are run using ``tox``::
+#. Fork the repository and create a branch off ``main``.
 
-    tox -e linting,py313
+#. Fetch the tags from upstream, they are needed to install the checkout::
 
-   The test environments above are usually enough to cover most cases locally.
+    $ git fetch --tags https://github.com/pytest-dev/pytest
 
-#. Write a ``changelog`` entry: ``changelog/2574.bugfix.rst``, use issue id number
-   and one of ``feature``, ``improvement``, ``bugfix``, ``doc``, ``deprecation``,
-   ``breaking``, ``vendor``, ``packaging``, ``contrib``, or ``misc`` for the issue type.
+#. Set up the environment and the `pre-commit <https://pre-commit.com>`_ hook::
 
+    $ uv sync --group dev
+    $ uv run pre-commit install
 
-#. Unless your change is a trivial or a documentation fix (e.g., a typo or reword of a small section) please
-   add yourself to the ``AUTHORS`` file, in alphabetical order.
+#. Run the tests and the checks CI runs::
+
+    $ uv run pytest
+    $ uv run pre-commit run -a
+
+#. Write a ``changelog`` entry, for example ``changelog/2574.bugfix.rst`` --
+   see `changelog/README.rst <https://github.com/pytest-dev/pytest/blob/main/changelog/README.rst>`__
+   for the available types.
+
+#. Unless your change is trivial or a small documentation fix (e.g. a typo or a
+   reword of a small section), add yourself to the ``AUTHORS`` file, in
+   alphabetical order.
 
 
 Long version
@@ -336,7 +347,9 @@ Here is a simple overview, with pytest-specific bits:
    be released in micro releases whereas features will be released in
    minor releases and incompatible changes in major releases.
 
-   You will need the tags to test locally, so be sure you have the tags from the main repository. If you suspect you don't, set the main repository as upstream and fetch the tags::
+   pytest derives its version from the git tags, so a checkout without them
+   cannot be installed. If you cloned with ``--depth`` or from a fork that has
+   no tags, add the main repository as a remote and fetch them::
 
      $ git remote add upstream https://github.com/pytest-dev/pytest
      $ git fetch upstream --tags
@@ -344,70 +357,78 @@ Here is a simple overview, with pytest-specific bits:
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
 
-#. Install `pre-commit <https://pre-commit.com>`_ and its hook on the pytest repo::
+#. Create the development environment.
 
-     $ pip install --user pre-commit
-     $ pre-commit install
+   We recommend `uv <https://docs.astral.sh/uv/>`_, which resolves the pinned
+   development dependencies from ``uv.lock``::
 
-   Afterwards ``pre-commit`` will run whenever you commit.
+     $ uv sync --group dev
 
-   https://pre-commit.com/ is a framework for managing and maintaining multi-language pre-commit hooks
-   to ensure code-style and code formatting is consistent.
+   This creates ``.venv`` with pytest installed in editable mode, together with
+   the ``dev`` :pep:`735` dependency group. Prefix commands with ``uv run`` to
+   use that environment, or activate it as usual.
 
-#. Install tox
+   .. important::
 
-   Tox is used to run all the tests and will automatically setup virtualenvs
-   to run the tests in.
-   (will implicitly use https://virtualenv.pypa.io/en/latest/)::
+      Run the test suite from this environment, not from a pytest installed in
+      your user site-packages. Parts of the suite launch pytest in subprocesses
+      with a scrubbed environment, and an installation that is only visible via
+      the user site will disappear for those subprocesses -- with failures that
+      have nothing to do with your change.
 
-    $ pip install tox
+   Without ``uv``, the equivalent needs ``pip`` 25.1 or newer::
 
-#. Run all the tests
+     $ python3 -m venv .venv
+     $ source .venv/bin/activate  # Linux/macOS
+     $ .venv\Scripts\activate.bat  # Windows
+     $ pip install -e . --group dev
 
-   You need to have a supported Python version available in your system.  Now
-   running tests is as simple as issuing this command::
+#. Install the `pre-commit <https://pre-commit.com>`_ hook::
 
-    $ tox -e linting,py
+     $ uv run pre-commit install
 
-   This command will run tests via the "tox" tool against your default Python
-   version and also perform "lint" coding-style checks.
+   Afterwards ``pre-commit`` runs on every commit and re-formats files when
+   necessary -- it is what keeps formatting, typing and the smaller
+   project-specific checks consistent, so there is no separate style guide to
+   memorise. To check the whole tree the way CI does::
 
-#. You can now edit your local working copy and run the tests again as necessary. Please follow `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ for naming.
+     $ uv run pre-commit run -a
 
-   You can pass different options to ``tox``. For example, to run tests on Python 3.13 and pass options to pytest
-   (e.g. enter pdb on failure) you can do::
+   Some hooks (``pyright``, ``pylint``, ``pyupgrade``) are configured for the
+   ``manual`` stage and run neither on commit nor in CI.
 
-    $ tox -e py313 -- --pdb
+#. Run the tests::
 
-   Or to only run tests in a particular test module on Python 3.12::
+     $ uv run pytest                                # the whole suite
+     $ uv run pytest testing/test_config.py         # a single module
+     $ uv run pytest testing/test_config.py --pdb   # drop into pdb on failure
 
-    $ tox -e py312 -- testing/test_config.py
+   The suite is large; while working on a change it is usually enough to run
+   the modules that cover it and leave the rest to CI.
 
+#. Test against other interpreters and dependency combinations with
+   `tox <https://tox.wiki>`_.
 
-   When committing, ``pre-commit`` will re-format the files if necessary.
+   ``tox`` builds the environments CI uses. Install it with the ``tox-uv``
+   plugin, which makes it reuse ``uv`` for those environments::
 
-#. If instead of using ``tox`` you prefer to run the tests directly, then we suggest to create a virtual environment and
-   install the project together with the ``dev`` :pep:`735` dependency group (requires ``pip`` 25.1+)::
+     $ uv tool install tox --with tox-uv
 
-       $ python3 -m venv .venv
-       $ source .venv/bin/activate  # Linux
-       $ .venv/Scripts/activate.bat  # Windows
-       $ pip install -e . --group dev
+     $ tox -e py                             # your default interpreter
+     $ tox -e linting,py                     # plus the pre-commit checks
+     $ tox -e py313 -- testing/test_config.py
 
-   Alternatively, with ``uv``::
+   ``tox.ini`` lists the available environments, including the ones for
+   optional dependencies such as ``xdist``, ``numpy`` or ``twisted``.
 
-       $ uv sync --group dev
-
-   Afterwards, you can edit the files and run pytest normally::
-
-       $ pytest testing/test_config.py
-
-#. Create a new changelog entry in ``changelog``. The file should be named ``<issueid>.<type>.rst``,
-   where *issueid* is the number of the issue related to the change and *type* is one of
-   ``feature``, ``improvement``, ``bugfix``, ``doc``, ``deprecation``, ``breaking``, ``vendor``,
-   ``packaging``, ``contrib``, or ``misc``.
-   You may skip creating the changelog entry if the change doesn't affect the
-   documented behaviour of pytest.
+#. Create a new changelog entry in ``changelog``. The file should be named
+   ``<issueid>.<type>.rst``, where *issueid* is the number of the issue related
+   to the change; see
+   `changelog/README.rst <https://github.com/pytest-dev/pytest/blob/main/changelog/README.rst>`__
+   for the available types and how to word an entry.
+   You may skip the changelog entry if the change doesn't affect the documented
+   behaviour of pytest. If there is no issue, open the pull request first and
+   use its number.
 
 #. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
 
@@ -423,6 +444,22 @@ Here is a simple overview, with pytest-specific bits:
 
     base-fork: pytest-dev/pytest
     base: main
+
+
+Where things live
+~~~~~~~~~~~~~~~~~
+
+==========================  ====================================================
+``src/_pytest/``            the implementation, mostly one module per builtin
+                            plugin
+``src/pytest/``             the public ``pytest`` namespace, re-exporting from
+                            ``_pytest``
+``testing/``                the test suite, largely mirroring ``src/_pytest``
+``changelog/``              news fragments for the next release
+``doc/en/``                 the documentation sources
+``scripts/``                release and maintenance helpers
+``bench/``                  benchmarks used when discussing performance
+==========================  ====================================================
 
 
 Writing Tests
