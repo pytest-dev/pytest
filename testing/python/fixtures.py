@@ -2652,6 +2652,15 @@ class TestAutouseManagement:
                         autouse=True,
                     )
                 assert "legacy_auto" in list(fm._getautousenames(item))
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    fm._register_fixture(
+                        name="legacy_auto",
+                        func=lambda: None,
+                        nodeid=item.nodeid,
+                        autouse=False,
+                    )
+                assert "legacy_auto" not in list(fm._getautousenames(item))
             """
         )
         reprec = pytester.inline_run()
