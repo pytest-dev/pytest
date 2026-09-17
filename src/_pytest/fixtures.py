@@ -1947,7 +1947,7 @@ class FixtureManager:
                         yield name
             # Legacy fallback: string-based nodeid autouse names.
             nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
-            if nodeid_basenames:  # pragma: no cover
+            if nodeid_basenames:
                 for name in nodeid_basenames:
                     if self._is_autouse(name, node):
                         yield name
