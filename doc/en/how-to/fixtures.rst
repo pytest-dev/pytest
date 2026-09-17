@@ -1260,6 +1260,55 @@ If the data created by the factory requires managing, the fixture can take care 
         customer_3 = make_customer_record("Meredith")
 
 
+.. _`passing-parameters-to-fixtures`:
+
+
+Passing arguments to fixture functions
+-----------------------------------------------------------------
+
+Sometimes a test needs to configure a fixture in a specific way that
+shouldn't affect other tests using the same fixture.  For example, a
+test might need a database connection to a particular host, or a
+service to be started with specific command-line arguments.
+
+pytest provides a way to pass arguments to fixture functions from
+individual tests using :ref:`indirect parametrization
+<indirect parametrization>`.  The fixture function receives the
+argument via the built-in :py:class:`request <pytest.FixtureRequest>`
+fixture as :py:attr:`request.param`.
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture
+    def service(request):
+        # request.param carries the value passed from the test
+        return f"Service launched with {request.param!r}"
+
+
+    @pytest.mark.parametrize("service", ["--verbose"], indirect=True)
+    def test_with_service(service):
+        assert service == "Service launched with '--verbose'"
+
+The ``indirect=True`` flag tells pytest that the parametrized argument
+``service`` should be passed to the ``service`` fixture function (as
+``request.param``) rather than being injected directly into the test
+function.
+
+This is particularly useful when:
+
+* A fixture has a default configuration but a specific test needs a
+  different one.
+* The parameter value is only relevant to one test and shouldn't cause
+  other tests using the same fixture to run multiple times.
+
+For more details and examples, including how to pass parameters to
+multiple fixtures at once, see the :ref:`indirect parametrization
+<indirect parametrization>` section in the parametrize documentation.
+
+
 .. _`fixture-parametrize`:
 
 Parametrizing fixtures

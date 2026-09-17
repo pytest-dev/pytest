@@ -349,6 +349,8 @@ And then when we run the test:
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
+.. _`indirect parametrization`:
+
 Indirect parametrization
 ---------------------------------------------------
 
