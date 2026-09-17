@@ -1,1 +1,1 @@
-A non-autouse fixture overriding an autouse one no longer runs automatically.
+A non-autouse fixture overriding an autouse one no longer runs automatically, without changing explicit fixture requests.

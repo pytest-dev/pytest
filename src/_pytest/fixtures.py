@@ -1124,7 +1124,7 @@ class FixtureDef(Generic[FixtureValue]):
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         *,
         node: nodes.Node | NotSetType = NOTSET,
-        # only used in a deprecationwarning msg, can be removed in pytest9
+        # Whether the fixture is autouse; consulted during fixture closure (#3225).
         _autouse: bool = False,
         _ispytest: bool = False,
     ) -> None:
@@ -1186,7 +1186,7 @@ class FixtureDef(Generic[FixtureValue]):
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
 
-        # only used to emit a deprecationwarning, can be removed in pytest9
+        # Whether the fixture is autouse; consulted during fixture closure (#3225).
         self._autouse = _autouse
 
     @property
