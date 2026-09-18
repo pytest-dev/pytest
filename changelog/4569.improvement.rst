@@ -1,0 +1,1 @@
+:meth:`Node.add_marker <_pytest.nodes.Node.add_marker>` now stores a :class:`~pytest.Mark` in ``node.keywords``, matching what marks applied during collection store. Previously it stored a :class:`~pytest.MarkDecorator`.
