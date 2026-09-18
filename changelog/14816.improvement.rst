@@ -1,0 +1,4 @@
+Assertion failure messages now show the condition of a conditional expression::
+
+    assert 0 == 99
+     +  where 0 = (... if True else ...)
