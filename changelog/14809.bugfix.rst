@@ -1,0 +1,4 @@
+:meth:`pytest.Class.from_parent` no longer silently discards an ``obj`` argument.
+The parameter was accepted and then dropped, so the collected class was always
+looked up by name on the parent's object; a passed ``obj`` is now used as the
+collector's object.
