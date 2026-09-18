@@ -15,7 +15,7 @@ from functools import total_ordering
 from typing import Literal
 
 
-ScopeName = Literal["session", "package", "module", "class", "function"]
+ScopeName = Literal["session", "package", "module", "class", "definition", "function"]
 
 
 @total_ordering
@@ -27,13 +27,19 @@ class Scope(Enum):
 
               ->>> higher ->>>
 
-    Function < Class < Module < Package < Session
+    Function < Definition < Class < Module < Package < Session
 
               <<<- lower  <<<-
+
+    ``Definition`` is the scope of a single test *definition*, shared by all
+    the (possibly parametrized) invocations generated from it. It requires the
+    definition to be a node in the collection tree -- see
+    :confval:`collect_function_definition`.
     """
 
     # Scopes need to be listed from lower to higher.
     Function = "function"
+    Definition = "definition"
     Class = "class"
     Module = "module"
     Package = "package"
