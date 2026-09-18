@@ -114,6 +114,10 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
                 msg = terminalreporter._getfailureheadline(rep)
             file = StringIO()
             tw = create_terminal_writer(terminalreporter.config, file)
+            # The captured text is pasted as plain text, so never emit OSC 8
+            # hyperlinks (or any markup) into it — even with --hyperlinks=yes.
+            tw.hyperlinks = False
+            tw.hasmarkup = False
             rep.toterminal(tw)
             s = file.getvalue()
             assert len(s)
