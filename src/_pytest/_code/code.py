@@ -1658,18 +1658,19 @@ def _filter_tracebackexception(
     objects. It recurses into exception group sub-exceptions and into
     ``__cause__`` / ``__context__`` chains.
 
-    Frames are matched by ``(filename, lineno)``: ``TracebackEntry._rawentry.tb_lineno``
-    is 1-based absolute, matching ``FrameSummary.lineno``.
+    Frames are filtered based on the identity of their corresponding raw
+    traceback entries.
     """
     if e.__traceback__ is not None:
         excinfo = ExceptionInfo.from_exception(e)
         filtered = filter_excinfo_traceback(tbfilter, excinfo)
-        kept = {
-            (str(entry.frame.code.path), entry._rawentry.tb_lineno)
-            for entry in filtered
-        }
+        kept = {id(entry._rawentry) for entry in filtered}
         tb_exc.stack = StackSummary.from_list(
-            [fs for fs in tb_exc.stack if (fs.filename, fs.lineno) in kept]
+            [
+                fs
+                for entry, fs in zip(excinfo.traceback, tb_exc.stack, strict=False)
+                if id(entry._rawentry) in kept
+            ]
         )
     if isinstance(e, BaseExceptionGroup):
         sub_tb_excs = getattr(tb_exc, "exceptions", None) or []

@@ -2220,6 +2220,59 @@ def test_tracebackhide_in_exceptiongroup_is_respected(pytester: Pytester) -> Non
     result.stdout.no_fnmatch_line("*in g1*")
 
 
+def test_tracebackhide_in_exceptiongroup_distinguishes_same_line_frames(
+    pytester: Pytester,
+) -> None:
+    p = pytester.makepyfile(
+        """
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
+
+        def fail(number):
+            __tracebackhide__ = number == 1
+            if number == 0:
+                raise ValueError("boom")
+            fail(number - 1)
+
+        def test():
+            try:
+                fail(2)
+            except ValueError as error:
+                raise ExceptionGroup("failure", [error]) from None
+        """
+    )
+    result = pytester.runpytest(str(p), "--tb=short")
+    assert result.ret == 1
+    assert result.stdout.str().count("fail(number - 1)") == 1
+
+
+def test_tracebackhide_in_exceptiongroup_with_tracebacklimit(
+    pytester: Pytester,
+) -> None:
+    p = pytester.makepyfile(
+        """
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
+
+        def fail():
+            __tracebackhide__ = True
+            raise ValueError("boom")
+
+        def test(monkeypatch):
+            monkeypatch.setattr(sys, "tracebacklimit", 1, raising=False)
+            try:
+                fail()
+            except ValueError as error:
+                raise ExceptionGroup("failure", [error]) from None
+        """
+    )
+    result = pytester.runpytest(str(p), "--tb=short")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(["*ValueError: boom*"])
+
+
 def add_note(err: BaseException, msg: str) -> None:
     """Adds a note to an exception inplace."""
     if sys.version_info < (3, 11):
