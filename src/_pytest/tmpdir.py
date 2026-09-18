@@ -37,6 +37,8 @@ from _pytest.stash import StashKey
 
 
 tmppath_result_key = StashKey[dict[str, bool]]()
+tmppath_path_key = StashKey[Path]()
+tmppath_setup_skipped_key = StashKey[bool]()
 RetentionType = Literal["all", "failed", "none"]
 
 
@@ -293,18 +295,15 @@ def tmp_path(
     as discussed in :ref:`temporary directory location and retention`.
     """
     path = _mk_tmp(request, tmp_path_factory)
+    if tmp_path_factory._retention_policy == "failed":
+        request.node.stash[tmppath_path_key] = path
     yield path
 
-    # Remove the tmpdir if the policy is "failed" and the test passed.
-    policy = tmp_path_factory._retention_policy
-    result_dict = request.node.stash[tmppath_result_key]
-
-    if policy == "failed" and result_dict.get("call", True):
-        # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
-        # permissions, etc, in which case we ignore it.
-        rmtree(path, ignore_errors=True)
-
-    del request.node.stash[tmppath_result_key]
+    # The retention decision is made in pytest_runtest_makereport after the
+    # teardown report is available. This ensures setup and teardown errors are
+    # retained under the "failed" policy too.
+    if tmp_path_factory._retention_policy != "failed":
+        del request.node.stash[tmppath_result_key]
 
 
 def pytest_sessionfinish(session, exitstatus: int | ExitCode):
@@ -343,4 +342,29 @@ def pytest_runtest_makereport(
     assert rep.when is not None
     empty: dict[str, bool] = {}
     item.stash.setdefault(tmppath_result_key, empty)[rep.when] = rep.passed
+
+    tmp_path = item.stash.get(tmppath_path_key, None)
+    if tmp_path is None:
+        return rep
+
+    if rep.when == "setup":
+        # A skipped fixture setup is not a failed test, so preserve the
+        # behavior from #10502 and mark its temporary directory for cleanup.
+        if rep.skipped:
+            item.stash[tmppath_setup_skipped_key] = True
+    elif rep.when == "teardown":
+        result_dict = item.stash[tmppath_result_key]
+        setup_skipped = item.stash.get(tmppath_setup_skipped_key, False)
+        if (
+            setup_skipped
+            or (result_dict.get("setup", True) and result_dict.get("call", True))
+        ) and rep.passed:
+            # We do a "best effort" to remove files, but it might not be
+            # possible due to some leaked resource, permissions, etc.
+            rmtree(tmp_path, ignore_errors=True)
+        del item.stash[tmppath_path_key]
+        del item.stash[tmppath_result_key]
+        if setup_skipped:
+            del item.stash[tmppath_setup_skipped_key]
+
     return rep
