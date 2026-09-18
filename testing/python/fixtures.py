@@ -5894,6 +5894,26 @@ def test_fixture_closure_with_broken_override_chain(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
+@pytest.mark.parametrize("parametrize", [False, True])
+def test_fixture_closure_handles_deep_dependencies(
+    pytester: Pytester, parametrize: bool
+) -> None:
+    """Collection must not use a Python frame for every fixture dependency."""
+    depth = sys.getrecursionlimit() + 50
+    source = ["import pytest", "@pytest.fixture", "def fix0(): pass"]
+    for index in range(1, depth):
+        source.extend(["@pytest.fixture", f"def fix{index}(fix{index - 1}): pass"])
+    if parametrize:
+        source.append('@pytest.mark.parametrize("fix0", [0])')
+    source.append(f"def test_deep(fix{depth - 1}): pass")
+    pytester.makepyfile("\n".join(source))
+
+    items, _hookrec = pytester.inline_genitems()
+    assert len(items) == 1
+    assert isinstance(items[0], Function)
+    assert items[0].fixturenames == [f"fix{i}" for i in reversed(range(depth))]
+
+
 def test_fixture_closure_handles_circular_dependencies(pytester: Pytester) -> None:
     """Test that getfixtureclosure properly handles circular dependencies.
 
