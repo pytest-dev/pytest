@@ -1,0 +1,4 @@
+Moved the parametrization core out of ``_pytest.python`` into the new
+``_pytest.parametrize`` module: ``CallSpec``, ``IdMaker`` and the id strategy
+literals. ``_pytest.python`` re-exports them, so ``_pytest.python.CallSpec`` and
+the deprecated ``CallSpec2`` alias keep working.
