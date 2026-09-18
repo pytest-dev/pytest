@@ -3,6 +3,7 @@ from __future__ import annotations
 from _pytest.mark import MarkMatcher
 from _pytest.mark.expression import Expression
 from _pytest.mark.expression import ExpressionMatcher
+from _pytest.mark.expression import is_safe_identifier_part
 import pytest
 
 
@@ -191,6 +192,32 @@ def test_valid_idents(ident: str) -> None:
         return name == ident
 
     assert evaluate(ident, matcher)
+
+
+@pytest.mark.parametrize(
+    ("ident", "expected"),
+    (
+        ("foo", True),
+        ("foo-bar", True),
+        ("foo[bar]", True),
+        ("foo/bar", True),
+        ("foo+bar", True),
+        ("foo:bar", True),
+        ("foo.bar", True),
+        ("foo(bar)", False),
+        ("(foo)", False),
+        ("foo,bar", False),
+        ("foo bar", False),
+        ("foo=bar", False),
+        ("<=", False),
+        ("and", True),
+        ("or", True),
+        ("not", True),
+        ("", True),
+    ),
+)
+def test_is_safe_identifier_part(ident: str, expected: bool) -> None:
+    assert is_safe_identifier_part(ident) is expected
 
 
 @pytest.mark.parametrize(
