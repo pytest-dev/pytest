@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 import dataclasses
+import importlib
 import importlib.metadata
 import os
 from pathlib import Path
@@ -10,12 +11,15 @@ import re
 import sys
 import textwrap
 from typing import Any
+from typing import cast
 from typing import Literal
 
 import _pytest._code
+from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _get_prog_name
 from _pytest.config import _iter_rewritable_modules
+from _pytest.config import _plugin_rewrite_name
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
@@ -1668,6 +1672,86 @@ class TestConfigAPI:
     )
     def test_iter_rewritable_modules(self, names, expected) -> None:
         assert list(_iter_rewritable_modules(names)) == expected
+
+    def test_plugin_rewrite_name_skips_namespace_packages(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A namespace package can be shared with unrelated distributions, so
+        the plugin's own package is marked instead of the whole namespace."""
+        (tmp_path / "myns" / "plug").mkdir(parents=True)
+        (tmp_path / "myns" / "plug" / "__init__.py").touch()
+        (tmp_path / "myns" / "other").mkdir(parents=True)
+        (tmp_path / "myns" / "other" / "__init__.py").touch()
+        (tmp_path / "myplug").mkdir()
+        (tmp_path / "myplug" / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        importlib.invalidate_caches()
+
+        # "myns" is a namespace package, so descend into the plugin's package.
+        assert _plugin_rewrite_name("myns.plug.plugin") == "myns.plug"
+        # A regular package is marked as a whole, so its helpers are rewritten.
+        assert _plugin_rewrite_name("myplug.plugin") == "myplug"
+        assert _plugin_rewrite_name("does_not_exist.plugin") is None
+        # Nothing to mark when the entry point points at the namespace itself.
+        assert _plugin_rewrite_name("myns") is None
+
+    @pytest.mark.parametrize(
+        "direct_url, expected",
+        [
+            # PEP 660 editable install: no Python files are recorded, so the
+            # entry point is the only way to find the package (#11783).
+            ('{"dir_info": {"editable": true}, "url": "file:///src"}', ["myplug"]),
+            # A regular install of a local directory is not editable.
+            ('{"dir_info": {}, "url": "file:///src"}', []),
+            # Installed from an index: no direct_url.json at all.
+            (None, []),
+            # Unreadable metadata is treated as a non-editable install.
+            ("not json", []),
+        ],
+    )
+    def test_mark_plugins_for_rewrite_editable_install(
+        self,
+        pytester: Pytester,
+        tmp_path: Path,
+        monkeypatch: MonkeyPatch,
+        direct_url,
+        expected,
+    ) -> None:
+        """Plugins installed in editable mode are still marked for rewrite."""
+        (tmp_path / "myplug").mkdir()
+        (tmp_path / "myplug" / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        importlib.invalidate_caches()
+
+        class DummyEntryPoint:
+            name = "myplug"
+            group = "pytest11"
+            value = "myplug.plugin"
+
+        class DummyDistribution:
+            metadata = {"name": "myplug"}
+            entry_points = (DummyEntryPoint(),)
+            files = ()
+
+            def read_text(self, filename):
+                return direct_url if filename == "direct_url.json" else None
+
+        class DummyHook:
+            def __init__(self):
+                self.marked: list[str] = []
+
+            def mark_rewrite(self, *names: str) -> None:
+                self.marked.extend(names)
+
+        monkeypatch.setattr(
+            importlib.metadata, "distributions", lambda: (DummyDistribution(),)
+        )
+        hook = DummyHook()
+        config = pytester.parseconfig()
+        config._mark_plugins_for_rewrite(
+            cast(AssertionRewritingHook, hook), disable_autoload=False
+        )
+        assert hook.marked == expected
 
     def test_add_cleanup(self, pytester: Pytester) -> None:
         config = Config.fromdictargs({}, [])

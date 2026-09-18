@@ -1,0 +1,3 @@
+Plugins installed in editable mode (:pep:`660`) are marked for assertion rewriting again.
+
+Such installs do not record the package's Python files in the distribution metadata, so pytest found nothing to rewrite and assertions inside the plugin lost their introspection. The plugin's entry point is now used to locate the package in that case.
