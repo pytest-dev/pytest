@@ -240,8 +240,7 @@ class Cache:
             return
         data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
-            with path.open("w", encoding="UTF-8") as f:
-                f.write(data)
+            path.write_text(data, encoding="UTF-8")
         except OSError as exc:
             self.warn(
                 f"cache could not write path {path}: {exc}",
