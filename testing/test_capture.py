@@ -143,9 +143,9 @@ def test_capture_replacement_reports_original_encoding(
 
             assert sys.stdout.encoding == sys.__stdout__.encoding
             assert sys.stderr.encoding == sys.__stderr__.encoding
-            print("hx\\u0107 caf\\u00e9 \\u65e5\\u672c\\u8a9e")
+            print("hx\\u0107 calf\\u00e9 \\u65e5\\u672c\\u8a9e")
             out, _ = capsys.readouterr()
-            assert out == "hx\\u0107 caf\\u00e9 \\u65e5\\u672c\\u8a9e\\n"
+            assert out == "hx\\u0107 calf\\u00e9 \\u65e5\\u672c\\u8a9e\\n"
         """
     )
     monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
