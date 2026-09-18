@@ -443,6 +443,26 @@ def test_issue156_undo_staticmethod(Sample: type[Sample]) -> None:
     assert Sample.hello()
 
 
+def test_issue1938_patch_class_bases() -> None:
+    class Loud:
+        def thing(self):
+            return "!!!!"
+
+    class Quiet:
+        def thing(self):
+            return "sssh..."
+
+    class ThingToTest(Loud):
+        pass
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(ThingToTest, "__bases__", (Quiet,))
+    assert ThingToTest().thing() == "sssh..."
+    monkeypatch.undo()
+    assert ThingToTest.__bases__ == (Loud,)
+    assert ThingToTest().thing() == "!!!!"
+
+
 def test_undo_class_descriptors_delattr() -> None:
     class SampleParent:
         @classmethod
