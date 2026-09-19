@@ -8,9 +8,11 @@ import errno
 import os
 from pathlib import Path
 import shutil
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import mock_open
 
+from _pytest.cacheprovider import LFPlugin
 from _pytest.compat import assert_never
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
@@ -453,6 +455,51 @@ class TestLastFailed:
         result = pytester.runpytest_inprocess("-q", "--lf")
         assert result.ret == 1
         result.stdout.fnmatch_lines(["FAILED test_cases.json::a_bad[[]one[]]*"])
+
+    def test_lastfailed_stores_string_nodeids(self, pytester: Pytester) -> None:
+        config = pytester.parseconfigure("--lf")
+        plugin = config.pluginmanager.getplugin("lfplugin")
+        assert isinstance(plugin, LFPlugin)
+
+        failed_report = SimpleNamespace(
+            id="test_file.py::test_case[one]",
+            when="call",
+            passed=False,
+            skipped=False,
+            failed=True,
+        )
+        plugin.pytest_runtest_logreport(failed_report)
+        assert plugin.lastfailed == {"test_file.py::test_case[one]": True}
+
+        passed_report = SimpleNamespace(
+            id="test_file.py::test_case[one]",
+            when="call",
+            passed=True,
+            skipped=False,
+            failed=False,
+        )
+        plugin.pytest_runtest_logreport(passed_report)
+        assert plugin.lastfailed == {}
+
+        plugin.lastfailed["test_file.py::test_group"] = True
+        plugin.pytest_collectreport(
+            SimpleNamespace(
+                id="test_file.py::test_group",
+                outcome="passed",
+                result=[SimpleNamespace(id="test_file.py::test_case[one]")],
+            )
+        )
+        assert plugin.lastfailed == {"test_file.py::test_case[one]": True}
+
+        plugin.pytest_collectreport(
+            SimpleNamespace(
+                id="test_file.py::test_broken_group",
+                outcome="failed",
+                result=[],
+            )
+        )
+        assert plugin.lastfailed["test_file.py::test_broken_group"] is True
+        plugin.pytest_sessionfinish(SimpleNamespace())
 
     def test_failedfirst_order(self, pytester: Pytester) -> None:
         pytester.makepyfile(
