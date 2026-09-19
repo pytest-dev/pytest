@@ -209,6 +209,47 @@ This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``,
 ``x=0/y=3``, and ``x=1/y=3`` exhausting parameters in the order of the decorators.
 
 
+.. _parametrize-xdist:
+
+Parametrization with pytest-xdist
+---------------------------------
+
+When running tests in parallel with :pypi:`pytest-xdist`, each worker collects
+its own tests. All workers must collect the same test IDs in the same order.
+Otherwise, pytest-xdist stops with an error such as
+``Different tests were collected between gw0 and gw1``.
+
+Unordered parameter values can cause workers to collect tests in different
+orders. For example, avoid passing a set directly to ``parametrize``. Use a
+list with a fixed order, or sort the values when they support ordering:
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.mark.parametrize("value", sorted({"alpha", "beta"}))
+    def test_value(value):
+        assert value.isalpha()
+
+Converting a set to a list without sorting does not make its order consistent
+across workers.
+
+Values generated during collection can also differ between workers. For
+example, a timestamp from ``datetime.now().isoformat()`` used as a parameter
+will usually produce different test IDs in different processes. Prefer fixed
+parameter values. If a test needs the current time, obtain it in a fixture or
+in the test body instead of using it to generate parameters during collection.
+
+Explicit parameter IDs can make IDs stable, but do not ensure that workers
+use the same parameter values or order. Keep the association between each ID
+and its test case consistent across workers as well.
+
+See the `pytest-xdist collection limitations
+<https://pytest-xdist.readthedocs.io/en/stable/known-limitations.html#order-and-amount-of-test-must-be-consistent>`_
+for more information.
+
+
 .. _`pytest_generate_tests`:
 
 Basic ``pytest_generate_tests`` example
