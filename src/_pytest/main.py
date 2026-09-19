@@ -55,6 +55,23 @@ if TYPE_CHECKING:
     from _pytest.fixtures import FixtureManager
 
 
+def _warnings_collapse_threshold_type(value: str) -> str:
+    """Argparse type for --warnings-collapse-threshold: positive int or 'none'."""
+    if value.lower() == "none":
+        return value
+    try:
+        int_val = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"warnings_collapse_threshold must be a positive integer or 'none', got {value!r}"
+        )
+    if int_val <= 0:
+        raise argparse.ArgumentTypeError(
+            f"warnings_collapse_threshold must be a positive integer or 'none', got {int_val}"
+        )
+    return value
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(  # private to use reserved lower-case short option
@@ -145,6 +162,29 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "max_warnings",
         help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
+        type=int | str,
+        default=None,
+    )
+    group.addoption(
+        "--warnings-collapse-threshold",
+        action="store",
+        type=_warnings_collapse_threshold_type,
+        default=None,
+        metavar="num|none",
+        dest="warnings_collapse_threshold",
+        help=(
+            "Number of locations at which to start collapsing warnings to filenames only "
+            "(default: 10, 'none' to never collapse; "
+            "threshold=1 collapses all warnings including single-location ones)"
+        ),
+    )
+    parser.addini(
+        "warnings_collapse_threshold",
+        help=(
+            "Number of locations at which to start collapsing warnings to filenames only "
+            "(default: 10, 'none' to never collapse; "
+            "threshold=1 collapses all warnings including single-location ones)"
+        ),
         type=int | str,
         default=None,
     )
