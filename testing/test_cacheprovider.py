@@ -429,7 +429,9 @@ class TestLastFailed:
 
             class Cases(pytest.File):
                 def collect(self):
-                    for name, passed in json.loads(self.path.read_text()).items():
+                    for name, passed in json.loads(
+                        self.path.read_text(encoding="utf-8")
+                    ).items():
                         yield Case.from_parent(self, name=name, passed=passed)
 
             class Case(pytest.Item):
