@@ -284,7 +284,7 @@ class LFPluginCollWrapper:
 
                 # Only filter with known failures.
                 if not self._collected_at_least_one_failure:
-                    if not any(x.id in lastfailed for x in result):
+                    if not any(str(x.id) in lastfailed for x in result):
                         return res
                     self.lfplugin.config.pluginmanager.register(
                         LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
@@ -295,7 +295,7 @@ class LFPluginCollWrapper:
                 result[:] = [
                     x
                     for x in result
-                    if x.id in lastfailed
+                    if str(x.id) in lastfailed
                     # Include any passed arguments (not trivial to filter).
                     or session.isinitpath(x.path)
                     # Keep all sub-collectors.
@@ -329,9 +329,8 @@ class LFPlugin:
         active_keys = "lf", "failedfirst"
         self.active = any(config.getoption(key) for key in active_keys)
         assert config.cache
-        self.lastfailed: dict[NodeId, bool] = {
-            NodeId.parse(k): v
-            for k, v in config.cache.get("cache/lastfailed", {}).items()
+        self.lastfailed: dict[str, bool] = {
+            str(k): v for k, v in config.cache.get("cache/lastfailed", {}).items()
         }
         self._previously_failed_count: int | None = None
         self._report_status: str | None = None
@@ -349,7 +348,7 @@ class LFPlugin:
         rootpath = self.config.rootpath
         result = set()
         for nodeid in self.lastfailed:
-            path = rootpath / nodeid.path
+            path = rootpath / NodeId.parse(nodeid).path
             result.add(path)
             result.update(path.parents)
         return {x for x in result if x.exists()}
@@ -360,20 +359,21 @@ class LFPlugin:
         return None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
+        report_id = str(report.id)
         if (report.when == "call" and report.passed) or report.skipped:
-            self.lastfailed.pop(report.id, None)
+            self.lastfailed.pop(report_id, None)
         elif report.failed:
-            self.lastfailed[report.id] = True
+            self.lastfailed[report_id] = True
 
     def pytest_collectreport(self, report: CollectReport) -> None:
         passed = report.outcome in ("passed", "skipped")
         if passed:
-            report_id = report.id
+            report_id = str(report.id)
             if report_id in self.lastfailed:
                 self.lastfailed.pop(report_id)
-                self.lastfailed.update((item.id, True) for item in report.result)
+                self.lastfailed.update((str(item.id), True) for item in report.result)
         else:
-            self.lastfailed[report.id] = True
+            self.lastfailed[str(report.id)] = True
 
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
@@ -388,7 +388,7 @@ class LFPlugin:
             previously_failed = []
             previously_passed = []
             for item in items:
-                if item.id in self.lastfailed:
+                if str(item.id) in self.lastfailed:
                     previously_failed.append(item)
                 else:
                     previously_passed.append(item)
@@ -433,7 +433,7 @@ class LFPlugin:
             return
 
         assert config.cache is not None
-        current_lastfailed = {str(k): v for k, v in self.lastfailed.items()}
+        current_lastfailed = self.lastfailed
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
         if saved_lastfailed != current_lastfailed:
             config.cache.set("cache/lastfailed", current_lastfailed)
