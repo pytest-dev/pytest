@@ -1041,7 +1041,7 @@ def test_exit_on_collection_error(pytester: Pytester) -> None:
     pytester.makepyfile(**COLLECTION_ERROR_PY_FILES)
 
     res = pytester.runpytest()
-    assert res.ret == 2
+    assert res.ret == ExitCode.COLLECTION_ERROR
 
     res.stdout.fnmatch_lines(
         [
@@ -1052,6 +1052,19 @@ def test_exit_on_collection_error(pytester: Pytester) -> None:
             "*No module named *asdfa*",
         ]
     )
+
+
+def test_collection_error_exit_code(pytester: Pytester) -> None:
+    """Collection errors exit with COLLECTION_ERROR, not INTERRUPTED."""
+    pytester.makepyfile(
+        """
+        def x:
+            pass
+        """
+    )
+    res = pytester.runpytest()
+    assert res.ret == ExitCode.COLLECTION_ERROR
+    res.stdout.fnmatch_lines(["*! CollectionInterrupted: 1 error during collection !*"])
 
 
 def test_exit_on_collection_with_maxfail_smaller_than_n_errors(
@@ -1087,7 +1100,7 @@ def test_exit_on_collection_with_maxfail_bigger_than_n_errors(
     pytester.makepyfile(**COLLECTION_ERROR_PY_FILES)
 
     res = pytester.runpytest("--maxfail=4")
-    assert res.ret == 2
+    assert res.ret == ExitCode.COLLECTION_ERROR
     res.stdout.fnmatch_lines(
         [
             "collected 2 items / 2 errors",
@@ -1095,7 +1108,7 @@ def test_exit_on_collection_with_maxfail_bigger_than_n_errors(
             "*No module named *asdfa*",
             "*ERROR collecting test_03_import_error.py*",
             "*No module named *asdfa*",
-            "*! Interrupted: 2 errors during collection !*",
+            "*! CollectionInterrupted: 2 errors during collection !*",
             "*= 2 errors in *",
         ]
     )
@@ -1553,7 +1566,7 @@ def test_collect_sub_with_symlinks(use_pkg: bool, pytester: Pytester) -> None:
 def test_collector_respects_tbstyle(pytester: Pytester) -> None:
     p1 = pytester.makepyfile("assert 0")
     result = pytester.runpytest(p1, "--tb=native")
-    assert result.ret == ExitCode.INTERRUPTED
+    assert result.ret == ExitCode.COLLECTION_ERROR
     result.stdout.fnmatch_lines(
         [
             "*_ ERROR collecting test_collector_respects_tbstyle.py _*",
@@ -1561,7 +1574,7 @@ def test_collector_respects_tbstyle(pytester: Pytester) -> None:
             '  File "*/test_collector_respects_tbstyle.py", line 1, in <module>',
             "    assert 0",
             "AssertionError: assert 0",
-            "*! Interrupted: 1 error during collection !*",
+            "*! CollectionInterrupted: 1 error during collection !*",
             "*= 1 error in *",
         ]
     )
@@ -1739,7 +1752,7 @@ def test_does_not_crash_on_error_from_decorated_function(pytester: Pytester) -> 
     )
     result = pytester.runpytest()
     # Not INTERNAL_ERROR
-    assert result.ret == ExitCode.INTERRUPTED
+    assert result.ret == ExitCode.COLLECTION_ERROR
 
 
 def test_does_not_crash_on_recursive_symlink(pytester: Pytester) -> None:
@@ -1927,7 +1940,7 @@ def test_yield_disallowed_in_tests(pytester: Pytester):
         """
     )
     result = pytester.runpytest()
-    assert result.ret == 2
+    assert result.ret == ExitCode.COLLECTION_ERROR
     result.stdout.fnmatch_lines(
         ["*'yield' keyword is allowed in fixtures, but not in tests (test_with_yield)*"]
     )
@@ -2752,7 +2765,7 @@ def test_strict_parametrization_ids(
 
     result = pytester.runpytest()
 
-    assert result.ret == ExitCode.INTERRUPTED
+    assert result.ret == ExitCode.COLLECTION_ERROR
     expected_parametersets = ", ".join(str(list(p)) for p in x_y)
     expected_ids = ", ".join(f"{x}-{y}" for x, y in x_y)
     result.stdout.fnmatch_lines(
@@ -2789,7 +2802,7 @@ def test_strict_parametrization_ids_with_hidden_param(pytester: Pytester) -> Non
 
     result = pytester.runpytest()
 
-    assert result.ret == ExitCode.INTERRUPTED
+    assert result.ret == ExitCode.COLLECTION_ERROR
     result.stdout.fnmatch_lines(
         [
             "Duplicate parametrization IDs detected*",
