@@ -414,6 +414,44 @@ class TestLastFailed:
         result = pytester.runpytest("--lf", "--cache-clear")
         result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
 
+    def test_lastfailed_custom_item_name_with_brackets(
+        self, pytester: Pytester
+    ) -> None:
+        """Keep custom item names containing brackets intact for --last-failed."""
+        pytester.makeconftest(
+            """
+            import json
+            import pytest
+
+            def pytest_collect_file(parent, file_path):
+                if file_path.name == "test_cases.json":
+                    return Cases.from_parent(parent, path=file_path)
+
+            class Cases(pytest.File):
+                def collect(self):
+                    for name, passed in json.loads(self.path.read_text()).items():
+                        yield Case.from_parent(self, name=name, passed=passed)
+
+            class Case(pytest.Item):
+                def __init__(self, *, passed, **kwargs):
+                    super().__init__(**kwargs)
+                    self.passed = passed
+
+                def runtest(self):
+                    assert self.passed
+            """
+        )
+        cases = pytester.path / "test_cases.json"
+        cases.write_text('{"a_bad[one]": false, "b_fixed": false}')
+
+        result = pytester.runpytest("-q")
+        assert result.ret == 1
+
+        cases.write_text('{"a_bad[one]": false, "b_fixed": true}')
+        result = pytester.runpytest("-q", "--lf")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["FAILED test_cases.json::a_bad[[]one[]]*"])
+
     def test_failedfirst_order(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             test_a="def test_always_passes(): pass",
