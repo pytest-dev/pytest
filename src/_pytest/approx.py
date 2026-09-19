@@ -352,7 +352,12 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
                                     / approx_value.expected
                                 ),
                             )
-                    except ZeroDivisionError:
+                    # decimal.FloatOperation subclasses TypeError, so it would be
+                    # caught below and reported as a missing difference.
+                    except FloatOperation:
+                        raise
+                    # Ignore non-numbers for the diff calculations (#15009).
+                    except (ZeroDivisionError, TypeError):
                         pass
                 different_ids.append(approx_key)
 
