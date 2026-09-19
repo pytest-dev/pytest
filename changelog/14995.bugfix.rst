@@ -1,0 +1,9 @@
+Suspending capture no longer discards a stream installed after capturing started.
+
+``SysCaptureBase.resume`` reinstated the stream capture installed at ``start``, so anything
+that replaced ``sys.stdout`` afterwards -- ``contextlib.redirect_stdout``,
+``click.testing.CliRunner.isolation``, a fixture of one's own -- lost that stream on the first
+suspend/resume cycle, and subsequent writes went to pytest's buffer instead. Under
+``log_cli = true`` the live-log handler suspends capturing around every record, so a single
+log record was enough. ``suspend`` now records the stream that is in place and ``resume``
+returns it; teardown is unchanged.

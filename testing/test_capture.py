@@ -1125,8 +1125,96 @@ class TestFDCapture:
                 f"<SysCapture stdout _old=<UNSET> _state='done' tmpfile={cap.syscapture.tmpfile!r}>"
             )
 
+    def test_resume_gives_back_a_stream_swapped_in_after_start(self) -> None:
+        """`resume` owes back whatever was installed when `suspend` ran.
+
+        Anything may swap the stream once capturing has started -- a test using
+        `contextlib.redirect_stdout`, `click.testing.CliRunner.isolation`, a
+        fixture of its own. Handing `tmpfile` back instead drops that swap, and
+        everything written afterwards goes to the capture buffer rather than to
+        the caller that installed it.
+        """
+        cap = capture.SysCapture(1)
+        cap.start()
+        try:
+            swapped_in = io.StringIO()
+            sys.stdout = swapped_in
+
+            cap.suspend()
+            cap.resume()
+
+            assert sys.stdout is swapped_in
+        finally:
+            cap.done()
+
+    def test_resume_gives_back_tmpfile_when_nothing_swapped_it(self) -> None:
+        cap = capture.SysCapture(1)
+        cap.start()
+        try:
+            cap.suspend()
+            cap.resume()
+
+            assert sys.stdout is cap.tmpfile
+        finally:
+            cap.done()
+
+    def test_suspending_twice_keeps_the_swapped_stream(self) -> None:
+        cap = capture.SysCapture(1)
+        cap.start()
+        try:
+            swapped_in = io.StringIO()
+            sys.stdout = swapped_in
+
+            cap.suspend()
+            cap.suspend()
+            cap.resume()
+
+            assert sys.stdout is swapped_in
+        finally:
+            cap.done()
+
+    def test_done_restores_the_stream_capture_replaced(self) -> None:
+        """A swap left behind by a test does not outlive the capture."""
+        original = sys.stdout
+        cap = capture.SysCapture(1)
+        cap.start()
+        sys.stdout = io.StringIO()
+
+        cap.done()
+
+        assert sys.stdout is original
+
     def test_capfd_sys_stdout_mode(self, capfd) -> None:
         assert "b" not in sys.stdout.mode
+
+
+def test_live_logging_does_not_cost_a_test_its_redirected_stream(
+    pytester: Pytester,
+) -> None:
+    """`--log-cli` suspends capturing around every record it writes.
+
+    The handler sits on the root logger, so a record written from anywhere
+    inside a redirect passes through `suspend`/`resume`; the redirect has to
+    survive it.
+    """
+    pytester.makepyfile(
+        """
+        import contextlib
+        import io
+        import logging
+
+        def test_redirect_stdout_survives_a_log_record():
+            captured = io.StringIO()
+            with contextlib.redirect_stdout(captured):
+                logging.getLogger("some.library").warning("reaches the root logger")
+                print("inside the redirect")
+            assert captured.getvalue() == "inside the redirect\\n"
+        """
+    )
+
+    result = pytester.runpytest_subprocess("-o", "log_cli=true")
+
+    result.assert_outcomes(passed=1)
 
 
 @contextlib.contextmanager

@@ -415,6 +415,12 @@ class SysCaptureBase(CaptureBase[AnyStr]):
 
     def suspend(self) -> None:
         self._assert_state("suspend", ("started", "suspended"))
+        # Give back whatever is installed now, not `tmpfile`: something may have
+        # swapped the stream after `start`, and `resume` owes it that stream
+        # back. Suspending while suspended is legal, and what sits there then is
+        # what `suspend` itself installed rather than a swap to remember.
+        if self._state == "started":
+            self._swapped_in = getattr(sys, self.name)
         setattr(sys, self.name, self._old)
         self._state = "suspended"
 
@@ -422,7 +428,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         self._assert_state("resume", ("started", "suspended"))
         if self._state == "started":
             return
-        setattr(sys, self.name, self.tmpfile)
+        setattr(sys, self.name, getattr(self, "_swapped_in", self.tmpfile))
         self._state = "started"
 
 
