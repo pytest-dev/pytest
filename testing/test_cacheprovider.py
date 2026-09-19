@@ -442,12 +442,12 @@ class TestLastFailed:
             """
         )
         cases = pytester.path / "test_cases.json"
-        cases.write_text('{"a_bad[one]": false, "b_fixed": false}')
+        cases.write_text('{"a_bad[one]": false, "b_fixed": false}', encoding="utf-8")
 
         result = pytester.runpytest("-q")
         assert result.ret == 1
 
-        cases.write_text('{"a_bad[one]": false, "b_fixed": true}')
+        cases.write_text('{"a_bad[one]": false, "b_fixed": true}', encoding="utf-8")
         result = pytester.runpytest("-q", "--lf")
         assert result.ret == 1
         result.stdout.fnmatch_lines(["FAILED test_cases.json::a_bad[[]one[]]*"])
