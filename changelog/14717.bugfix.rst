@@ -1,0 +1,1 @@
+Fixed assertion explanation erroring with "representation of details failed" when comparing :meth:`dict.items` views containing unhashable values.
