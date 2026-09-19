@@ -2560,6 +2560,112 @@ class TestAutouseManagement:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_autouse_cancelled_by_non_autouse_override(
+        self, pytester: Pytester
+    ) -> None:
+        """A non-autouse override cancels the autouse fixture it shadows (#3225)."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def foo():
+                pass
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture()
+            def foo():
+                assert False
+
+            def test_bar(foo):
+                pass
+
+            def test_baz():
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, errors=1)
+        result = pytester.runpytest("-o", "usefixtures=foo")
+        result.assert_outcomes(errors=2)
+
+    def test_autouse_cancelled_by_non_autouse_class_override(
+        self, pytester: Pytester
+    ) -> None:
+        """A non-autouse class-level override cancels the autouse fixture (#3225)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def foo():
+                pass
+
+            class TestClass:
+                @pytest.fixture()
+                def foo(self):
+                    assert False
+
+                def test_with_request(self, foo):
+                    pass
+
+                def test_no_request(self):
+                    pass
+
+            def test_module_level():
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, errors=1)
+
+    def test_getautousenames_legacy_nodeid_autouse(self, pytester: Pytester) -> None:
+        """Autouse registered via the deprecated nodeid API is still yielded."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fm(request):
+                return request._fixturemanager
+
+            @pytest.fixture
+            def item(request):
+                return request._pyfuncitem
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+
+            def test_legacy(item, fm):
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    fm._register_fixture(
+                        name="legacy_auto",
+                        func=lambda: None,
+                        nodeid=item.nodeid,
+                        autouse=True,
+                    )
+                assert "legacy_auto" in list(fm._getautousenames(item))
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    fm._register_fixture(
+                        name="legacy_auto",
+                        func=lambda: None,
+                        nodeid=item.nodeid,
+                        autouse=False,
+                    )
+                assert "legacy_auto" not in list(fm._getautousenames(item))
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
     @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00", "p01"])
     @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10", "p11"])
     def test_ordering_dependencies_torndown_first(
