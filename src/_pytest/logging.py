@@ -359,7 +359,7 @@ class _SuppressPropagatedDuplicateFilter(logging.Filter):
 class catching_logs(Generic[_HandlerType]):
     """Context manager that prepares the whole logging machinery properly."""
 
-    __slots__ = ("attached_loggers", "handler", "level", "orig_level", "_dedupe_filter")
+    __slots__ = ("_dedupe_filter", "attached_loggers", "handler", "level", "orig_level")
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
         self.handler = handler
