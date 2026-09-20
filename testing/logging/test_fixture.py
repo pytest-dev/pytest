@@ -542,3 +542,25 @@ def test_log_report_captures_according_to_config_option_upon_failure(
         ["*Print message*", "*INFO log message*", "*WARNING log message*"]
     )
     assert result.ret == 1
+
+
+@pytest.fixture
+def non_propagating_example_logger() -> Iterator[logging.Logger]:
+    """Logger that is non-propagating before the call-phase capture starts."""
+    example = logging.getLogger("test_caplog_propagate_enable")
+    example.propagate = False
+    example.handlers.clear()
+    yield example
+    example.propagate = False
+    example.handlers.clear()
+
+
+def test_caplog_no_duplicate_when_logger_enables_propagate(
+    caplog: pytest.LogCaptureFixture,
+    non_propagating_example_logger: logging.Logger,
+) -> None:
+    """Handlers on a non-propagating logger must not double-capture after
+    that logger enables propagation (issue #15064)."""
+    non_propagating_example_logger.propagate = True
+    non_propagating_example_logger.warning("only once")
+    assert caplog.messages == ["only once"]

@@ -334,22 +334,45 @@ def pytest_addoption(parser: Parser) -> None:
 _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 
 
+class _SuppressPropagatedDuplicateFilter(logging.Filter):
+    """Drop a LogRecord the second time the same handler sees it.
+
+    ``catching_logs`` attaches one handler instance to the root logger and to
+    every logger that is non-propagating at enter time. If such a logger later
+    enables ``propagate``, ``Logger.callHandlers`` invokes that handler on the
+    logger and again on an ancestor with the *same* ``LogRecord`` object,
+    producing duplicate caplog / log-cli / log-file output.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._last_record: logging.LogRecord | None = None
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record is self._last_record:
+            return False
+        self._last_record = record
+        return True
+
+
 # Not using @contextmanager for performance reasons.
 class catching_logs(Generic[_HandlerType]):
     """Context manager that prepares the whole logging machinery properly."""
 
-    __slots__ = ("attached_loggers", "handler", "level", "orig_level")
+    __slots__ = ("attached_loggers", "handler", "level", "orig_level", "_dedupe_filter")
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
         self.handler = handler
         self.level = level
         self.attached_loggers: list[logging.Logger] = []
+        self._dedupe_filter = _SuppressPropagatedDuplicateFilter()
 
     def __enter__(self) -> _HandlerType:
         root_logger = logging.getLogger()
         if self.level is not None:
             self.handler.setLevel(self.level)
         # Attach to root logger.
+        self.handler.addFilter(self._dedupe_filter)
         root_logger.addHandler(self.handler)
         self.attached_loggers.append(root_logger)
         # Attach to all non-propagating loggers (won't reach root).
@@ -382,6 +405,8 @@ class catching_logs(Generic[_HandlerType]):
         for logger in self.attached_loggers:
             logger.removeHandler(self.handler)
         self.attached_loggers.clear()
+        self.handler.removeFilter(self._dedupe_filter)
+        self._dedupe_filter._last_record = None
 
 
 class LogCaptureHandler(logging_StreamHandler):
