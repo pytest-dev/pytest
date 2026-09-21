@@ -958,6 +958,10 @@ class SubRequest(FixtureRequest):
         self._fixturedef.addfinalizer(finalizer)
 
 
+#: Definitions listed in a fixture-not-found hint before it collapses to a count.
+_MAX_HINTED_DEFINITIONS = 5
+
+
 @final
 class FixtureLookupError(LookupError):
     """Could not return a requested fixture (missing or invalid)."""
@@ -1008,10 +1012,51 @@ class FixtureLookupError(LookupError):
                 )
             else:
                 msg = f"fixture '{self.argname}' not found"
+                hint = self._out_of_scope_definitions_hint()
+                if hint is not None:
+                    msg += f"\n {hint}"
             msg += "\n available fixtures: {}".format(", ".join(sorted(available)))
             msg += "\n use 'pytest --fixtures [testpath]' for help on them."
 
         return FixtureLookupErrorRepr(fspath, lineno, tblines, msg, self.argname)
+
+    def _out_of_scope_definitions_hint(self) -> str | None:
+        """Describe definitions of the missing name that exist but are out of scope.
+
+        A fixture that was moved to a sibling conftest is still registered, just
+        not visible from here, and a bare "not found" sends the reader looking
+        for a name that is in front of them. See #10151.
+
+        Only called once the name is known to be invisible to the requesting
+        node, so every definition found here is by construction out of scope.
+        """
+        assert self.argname is not None
+        fm = self.request._fixturemanager
+        invocation_dir = self.request._pyfuncitem.config.invocation_params.dir
+        locations = set()
+        for fixturedef in fm._get_all_fixture_defs_for_name(self.argname):
+            try:
+                locations.add(_pretty_fixture_path(invocation_dir, fixturedef.func))
+            except (AttributeError, TypeError):
+                # inspect.getfile() and __code__ are what can fail here. A
+                # fixture with no locatable source is worse than no hint, so
+                # drop that one rather than the whole hint.
+                continue
+        if not locations:
+            return None
+        shown = sorted(locations)[:_MAX_HINTED_DEFINITIONS]
+        hidden = len(locations) - len(shown)
+        places = ", ".join(shown)
+        if hidden:
+            places += f", and {hidden} more"
+        if len(locations) == 1:
+            return (
+                f"hint: '{self.argname}' is defined in {places}, but not visible here"
+            )
+        return (
+            f"hint: '{self.argname}' is defined in {len(locations)} places, "
+            f"none visible here: {places}"
+        )
 
 
 class FixtureLookupErrorRepr(TerminalRepr):
@@ -2351,6 +2396,16 @@ class FixtureManager:
         for nodeid2fixturedefs in self._arg2nodeid2fixturedefs.values():
             for fixturedefs in nodeid2fixturedefs.values():
                 yield from fixturedefs
+
+    def _get_all_fixture_defs_for_name(self, argname: str) -> Iterable[FixtureDef[Any]]:
+        """Get all FixtureDefs registered under a name, whatever their visibility.
+
+        The order is not guaranteed.
+        """
+        for fixturedefs in self._arg2node2fixturedefs.get(argname, {}).values():
+            yield from fixturedefs
+        for fixturedefs in self._arg2nodeid2fixturedefs.get(argname, {}).values():
+            yield from fixturedefs
 
     def _get_all_fixture_defs_for_node(
         self, node: nodes.Node

@@ -718,6 +718,132 @@ class TestFillFixtures:
         )
         result.stdout.no_fnmatch_line("*INTERNAL*")
 
+    def test_funcarg_lookup_error_hints_at_out_of_scope_definition(
+        self, pytester: Pytester
+    ) -> None:
+        """A fixture moved into a sibling conftest is registered, just not here.
+
+        The bare "not found" sends the reader hunting for a name that is
+        already in the tree, one directory over. See #10151.
+        """
+        pytester.makepyfile(
+            **{
+                "pkg/tests/conftest.py": """
+                    import pytest
+
+                    @pytest.fixture
+                    def myfixture(): pass
+                """,
+                "pkg/tests/test_near.py": "def test_near(myfixture): pass",
+                "pkg/utils/tests/test_far.py": "def test_far(myfixture): pass",
+            }
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "E       fixture 'myfixture' not found",
+                ">       hint: 'myfixture' is defined in pkg?tests?conftest.py:*,"
+                " but not visible here",
+            ]
+        )
+        result.assert_outcomes(passed=1, errors=1)
+
+    def test_funcarg_lookup_error_hint_collapses_many_definitions(
+        self, pytester: Pytester
+    ) -> None:
+        """Past a handful of locations a count beats a wall of paths."""
+        files = {"test_top.py": "def test_top(shared): pass"}
+        for name in "abcdefg":
+            files[f"{name}/conftest.py"] = """
+                import pytest
+
+                @pytest.fixture
+                def shared(): pass
+            """
+            # Unique basenames: rootdir has no __init__.py, so equal ones collide.
+            files[f"{name}/test_use_{name}.py"] = f"def test_use_{name}(shared): pass"
+        pytester.makepyfile(**files)
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "E       fixture 'shared' not found",
+                ">       hint: 'shared' is defined in 7 places, none visible here:"
+                " a?conftest.py:*, and 2 more",
+            ]
+        )
+        result.assert_outcomes(passed=7, errors=1)
+
+    def test_funcarg_lookup_error_hints_at_a_legacy_nodeid_definition(
+        self, pytester: Pytester
+    ) -> None:
+        """Fixtures registered by the deprecated nodeid API are hinted at too.
+
+        They live in a separate mapping, so the hint has to read both.
+        This test can be deleted with FIXTURE_NODEID_DEPRECATED deprecation.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_finish(session):
+                session._fixturemanager._register_fixture(
+                    name="legacy",
+                    func=lambda: 0,
+                    nodeid="somewhere/else",
+                )
+            """
+        )
+        pytester.makepyfile("def test_it(legacy): pass")
+        result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn10Warning")
+        result.stdout.fnmatch_lines(
+            [
+                "E       fixture 'legacy' not found",
+                ">       hint: 'legacy' is defined in conftest.py:*,"
+                " but not visible here",
+            ]
+        )
+
+    def test_funcarg_lookup_error_hint_skips_a_fixture_with_no_source(
+        self, pytester: Pytester
+    ) -> None:
+        """One unlocatable definition must not cost the whole hint.
+
+        A plugin may register a builtin or a C callable, which has no file to
+        point at; the remaining definitions are still worth naming.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_finish(session):
+                fm = session._fixturemanager
+                fm._register_fixture(name="mixed", func=len, nodeid="no/source")
+                fm._register_fixture(
+                    name="mixed", func=lambda: 0, nodeid="somewhere/else"
+                )
+            """
+        )
+        pytester.makepyfile("def test_it(mixed): pass")
+        result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn10Warning")
+        result.stdout.fnmatch_lines(
+            [
+                "E       fixture 'mixed' not found",
+                ">       hint: 'mixed' is defined in conftest.py:*,"
+                " but not visible here",
+            ]
+        )
+
+    def test_funcarg_lookup_error_has_no_hint_for_an_unknown_name(
+        self, pytester: Pytester
+    ) -> None:
+        """The hint speaks about definitions that exist; this name has none."""
+        pytester.makepyfile("def test_it(never_defined_anywhere): pass")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            ["E       fixture 'never_defined_anywhere' not found"]
+        )
+        result.stdout.no_fnmatch_line("*hint:*")
+
     def test_fixture_excinfo_leak(self, pytester: Pytester) -> None:
         # on python2 sys.excinfo would leak into fixture executions
         pytester.makepyfile(
