@@ -1287,6 +1287,37 @@ def test_log_propagation_false(pytester: Pytester) -> None:
     assert not list(report.get_sections("Captured stderr call"))
 
 
+def test_log_propagation_enabled_during_test_captured_once(
+    pytester: Pytester,
+) -> None:
+    """Records from a logger which enables propagation during the test appear
+    exactly once in the report's captured-log sections (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logging.getLogger('foo').propagate = False
+
+        def test_log_once():
+            logging.getLogger('foo').warning("before enabling propagation")
+            logging.getLogger('foo').propagate = True
+            logging.getLogger('foo').warning("after enabling propagation")
+            assert False, "intentionally fail to trigger report logging output"
+    """
+    )
+
+    reprec = pytester.inline_run()
+    reports = reprec.getfailures()
+    assert len(reports) == 1
+    report = reports[0]
+    sections = list(report.get_sections("Captured log call"))
+    assert len(sections) == 1
+    log_text = sections[0][1]
+    assert log_text.count("before enabling propagation") == 1
+    assert log_text.count("after enabling propagation") == 1
+    assert log_text.count("WARNING") == 2
+
+
 def test_colored_ansi_esc_caplogtext(pytester: Pytester) -> None:
     """Make sure that caplog.text does not contain ANSI escape sequences."""
     pytester.makepyfile(

@@ -334,16 +334,58 @@ def pytest_addoption(parser: Parser) -> None:
 _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 
 
+class _BoundProxyHandler(logging.Handler):
+    """A proxy for a pytest capture handler, bound to one logger.
+
+    The proxy forwards records to the real handler only while its logger
+    currently does not propagate. This is attached (instead of the real
+    handler) to loggers which were non-propagating when capture started, and
+    to their ancestors, so that flipping ``Logger.propagate`` during a test
+    neither duplicates the record (direct handler plus root handler) nor
+    misses it (#15064, #3697).
+    """
+
+    __slots__ = ("logger", "real_handler")
+
+    def __init__(self, logger: logging.Logger, real_handler: logging.Handler) -> None:
+        self.logger = logger
+        self.real_handler = real_handler
+        super().__init__()
+
+    @property
+    def level(self) -> int:
+        # Always defer to the real handler, whose level may change after
+        # attachment (e.g. via caplog.set_level()).
+        return self.real_handler.level
+
+    @level.setter
+    def level(self, value: int) -> None:
+        # Only assigned by logging.Handler.__init__(); the level is tracked
+        # through the real handler instead.
+        pass
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if not self.logger.propagate:
+            self.real_handler.handle(record)
+
+
 # Not using @contextmanager for performance reasons.
 class catching_logs(Generic[_HandlerType]):
     """Context manager that prepares the whole logging machinery properly."""
 
-    __slots__ = ("attached_loggers", "handler", "level", "orig_level")
+    __slots__ = (
+        "attached_loggers",
+        "attached_proxies",
+        "handler",
+        "level",
+        "orig_level",
+    )
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
         self.handler = handler
         self.level = level
         self.attached_loggers: list[logging.Logger] = []
+        self.attached_proxies: list[tuple[logging.Logger, _BoundProxyHandler]] = []
 
     def __enter__(self) -> _HandlerType:
         root_logger = logging.getLogger()
@@ -352,17 +394,30 @@ class catching_logs(Generic[_HandlerType]):
         # Attach to root logger.
         root_logger.addHandler(self.handler)
         self.attached_loggers.append(root_logger)
-        # Attach to all non-propagating loggers (won't reach root).
-        # Note that will miss loggers that *become* non-propagating
-        # after the `__enter__`. Not worth the trouble for now.
+        # Attach bound proxy handlers to all non-propagating loggers
+        # (their records won't reach root) and to their ancestors, so that
+        # records which *do* reach root after a `propagate` change are only
+        # handled once. The proxies consult the live `propagate` value per
+        # record (#15064).
+        # Note that this still misses loggers (outside those ancestor
+        # chains) which *become* non-propagating after the `__enter__`.
+        # Not worth the trouble for now.
+        proxy_targets: dict[logging.Logger, None] = {}
         for logger in root_logger.manager.loggerDict.values():
             if (
                 isinstance(logger, logging.Logger)
                 and not logger.propagate
                 and logger is not root_logger
             ):
-                logger.addHandler(self.handler)
-                self.attached_loggers.append(logger)
+                proxy_targets[logger] = None
+                parent = logger.parent
+                while parent is not None and parent is not root_logger:
+                    proxy_targets.setdefault(parent)
+                    parent = parent.parent
+        for logger in proxy_targets:
+            proxy = _BoundProxyHandler(logger, self.handler)
+            logger.addHandler(proxy)
+            self.attached_proxies.append((logger, proxy))
         if self.level is not None:
             # Non-propagating loggers still inherit the level (unless a logger
             # explicitly set level), so only do this on the root logger.
@@ -382,6 +437,9 @@ class catching_logs(Generic[_HandlerType]):
         for logger in self.attached_loggers:
             logger.removeHandler(self.handler)
         self.attached_loggers.clear()
+        for logger, proxy in self.attached_proxies:
+            logger.removeHandler(proxy)
+        self.attached_proxies.clear()
 
 
 class LogCaptureHandler(logging_StreamHandler):

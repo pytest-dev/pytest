@@ -472,6 +472,62 @@ def test_can_capture_non_propagating_logger(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_capture_once_when_propagation_enabled_during_test(
+    pytester: Pytester,
+) -> None:
+    """A logger which is non-propagating at capture start but enables
+    propagation during the test must not have its records captured twice
+    (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("example")
+        logger.propagate = False
+        child_logger = logging.getLogger("example.child")
+
+        def test_log_is_captured_once(caplog):
+            logger.propagate = True
+
+            logger.warning("only once")
+            child_logger.warning("child only once")
+
+            assert caplog.messages == ["only once", "child only once"]
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_capture_once_when_propagation_barrier_moves_to_ancestor(
+    pytester: Pytester,
+) -> None:
+    """A child which was non-propagating at capture start and propagates to an
+    ancestor which becomes the new barrier mid-test is captured exactly once
+    (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        parent = logging.getLogger("mixed.parent")
+        child = logging.getLogger("mixed.parent.child")
+        child.propagate = False
+
+        def test_barrier_moves(caplog):
+            child.propagate = True
+            parent.propagate = False
+
+            child.warning("once at new barrier")
+
+            assert caplog.messages == ["once at new barrier"]
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_captures_despite_exception(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
