@@ -75,6 +75,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
+from _pytest.warning_types import PytestImportedFixtureWarning
 from _pytest.warning_types import PytestWarning
 from _pytest.warning_types import warn_explicit_for
 
@@ -1797,6 +1798,40 @@ def deduplicate_names(*seqs: Iterable[str]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(name for seq in seqs for name in seq))
 
 
+def _warn_duplicate_fixture(
+    holderobj: types.ModuleType,
+    fixture_name: str,
+    func: Callable[..., object],
+    first: types.ModuleType,
+) -> None:
+    origin = getattr(func, "__module__", None) or "another module"
+    message = PytestImportedFixtureWarning(
+        f"fixture '{fixture_name}', defined in '{origin}', is registered twice: "
+        f"by '{first.__name__}' and by '{holderobj.__name__}'.\n"
+        f"Importing a fixture registers another copy of it, so it can run more "
+        f"than once and shadow other definitions of the same name.\n"
+        f"Drop the import and reach it through a conftest.py, or list "
+        f"'{origin}' in 'pytest_plugins'."
+    )
+    # Nothing records which line bound the name -- that is lost once the module
+    # is imported -- and the message already names both modules, so the file is
+    # the anchor. A module synthesised at runtime has no __file__; name it
+    # rather than drop the anchor entirely.
+    filename = getattr(holderobj, "__file__", None) or f"<{holderobj.__name__}>"
+    try:
+        warnings.warn_explicit(
+            message,
+            PytestImportedFixtureWarning,
+            filename=filename,
+            module=holderobj.__name__,
+            registry=holderobj.__dict__.setdefault("__warningregistry__", {}),
+            lineno=1,
+        )
+    except Warning as w:
+        # Under -W error the location is dropped, so carry it in the message.
+        raise type(w)(f"{w}\n at {filename}") from None
+
+
 class FixtureManager:
     """pytest fixture definitions and information is stored and managed
     from this class.
@@ -1845,6 +1880,13 @@ class FixtureManager:
         # Part of FIXTURE_NODEID_DEPRECATED deprecation.
         self._arg2nodeid2fixturedefs: Final[
             dict[str, dict[str, list[FixtureDef[Any]]]]
+        ] = {}
+        # The first module holder each fixture function was registered from,
+        # keyed by id() and holding the function to keep that id valid.
+        # A second module registering the same function is importing it, which
+        # registers a duplicate -- see #1511.
+        self._fixturefunc2module: Final[
+            dict[int, tuple[types.ModuleType, Callable[..., object]]]
         ] = {}
         # A mapping from a node to a list of autouse fixture names it defines.
         # The Session entry holds global usefixtures from config.
@@ -2373,6 +2415,16 @@ class FixtureManager:
                     obj = obj_ub
 
                 func = obj._get_wrapped_function()
+
+                # Only module holders: a class legitimately inherits fixtures
+                # from a base in another module, registering the same function
+                # once per subclass, and that is not a duplicate.
+                if isinstance(holderobj, types.ModuleType):
+                    first = self._fixturefunc2module.setdefault(
+                        id(func), (holderobj, func)
+                    )[0]
+                    if first is not holderobj:
+                        _warn_duplicate_fixture(holderobj, fixture_name, func, first)
 
                 self._register_fixture(
                     name=fixture_name,
