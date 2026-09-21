@@ -843,6 +843,73 @@ class TestXFailwithSetupTeardown:
             ]
         )
 
+    def test_xfail_session_teardown_error_is_error(self, pytester: Pytester) -> None:
+        """Session teardown errors are errors even for xfail tests (#8375)."""
+        pytester.makepyfile(
+            test_case="""
+            import pytest
+
+            @pytest.fixture(autouse=True, scope="session")
+            def failme():
+                yield
+                raise RuntimeError("cleanup fails for some reason")
+
+            def test_ok():
+                assert 1 == 1
+
+            @pytest.mark.xfail()
+            def test_xfail():
+                assert 0 == 1
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, xfailed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR at teardown of test_xfail*",
+                "*RuntimeError: cleanup fails for some reason*",
+            ]
+        )
+
+    def test_xfail_non_session_teardown_stays_xfail(self, pytester: Pytester) -> None:
+        """Non-session teardown failures on xfail tests stay XFAIL (#8375)."""
+        pytester.makepyfile(
+            test_case="""
+            import pytest
+
+            @pytest.fixture()
+            def fail_func():
+                yield
+                raise RuntimeError("func teardown fails")
+
+            @pytest.fixture(scope="module")
+            def fail_mod():
+                yield
+                raise RuntimeError("module teardown fails")
+
+            class TestClass:
+                @pytest.fixture(scope="class", autouse=True)
+                @classmethod
+                def fail_cls(cls):
+                    yield
+                    raise RuntimeError("class teardown fails")
+
+                @pytest.mark.xfail()
+                def test_cls(self):
+                    assert 0 == 1
+
+            @pytest.mark.xfail()
+            def test_func(fail_func):
+                assert 0 == 1
+
+            @pytest.mark.xfail()
+            def test_mod(fail_mod):
+                assert 0 == 1
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(xfailed=6)
+
 
 class TestSkip:
     def test_skip_class(self, pytester: Pytester) -> None:

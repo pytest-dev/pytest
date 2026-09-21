@@ -23,6 +23,7 @@ from _pytest.raises import AbstractRaises
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
+from _pytest.runner import is_session_teardown_error
 from _pytest.stash import StashKey
 
 
@@ -286,7 +287,7 @@ def pytest_runtest_makereport(
         rep.wasxfail = call.excinfo.value.msg
         rep.outcome = "skipped"
     elif not rep.skipped and xfailed:
-        if call.excinfo:
+        if call.excinfo and not is_session_teardown_error(call.excinfo.value):
             raises = xfailed.raises
             if raises is None or (
                 (

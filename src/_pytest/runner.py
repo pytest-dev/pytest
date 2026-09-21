@@ -436,6 +436,21 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     return rep
 
 
+def _mark_session_teardown_error(exc: BaseException) -> None:
+    """Record that exc was raised while tearing down the session, if it accepts attributes."""
+    if hasattr(exc, "__dict__"):
+        exc._pytest_session_teardown_error = True  # type: ignore[attr-defined]
+
+
+def is_session_teardown_error(exc: BaseException) -> bool:
+    """Whether exc is (or contains) a session teardown error (#8375)."""
+    if getattr(exc, "_pytest_session_teardown_error", False):
+        return True
+    if isinstance(exc, BaseExceptionGroup):
+        return any(is_session_teardown_error(e) for e in exc.exceptions)
+    return False
+
+
 class SetupState:
     """Shared state for setting up/tearing down test items or collectors
     in a session.
@@ -561,12 +576,15 @@ class SetupState:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
             node, (finalizers, _) = self.stack.popitem()
+            is_session_teardown = node.parent is None
             these_exceptions = []
             while finalizers:
                 fin = finalizers.pop()
                 try:
                     fin()
                 except TEST_OUTCOME as e:
+                    if is_session_teardown:
+                        _mark_session_teardown_error(e)
                     these_exceptions.append(e)
 
             if len(these_exceptions) == 1:

@@ -1,0 +1,1 @@
+Session fixture teardown errors now surface as errors instead of being converted to expected failures when the last test is marked ``xfail``.

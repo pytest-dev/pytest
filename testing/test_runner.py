@@ -22,6 +22,7 @@ import pytest
 
 
 if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
 
 
@@ -139,6 +140,26 @@ class TestSetupState:
         assert isinstance(mod, KeyError)
         assert isinstance(func.exceptions[0], TypeError)
         assert isinstance(func.exceptions[1], ValueError)
+
+    def test_teardown_exact_marks_session_errors(self, pytester) -> None:
+        """Only errors from session teardown carry session attribution (#8375)."""
+
+        def raiser(exc):
+            raise exc
+
+        item = pytester.getitem("def test_func(): pass")
+        ss = item.session._setupstate
+        ss.setup(item)
+        session_err = RuntimeError("from session scope")
+        item_err = ValueError("from function scope")
+        ss.addfinalizer(partial(raiser, session_err), item.session)
+        ss.addfinalizer(partial(raiser, item_err), item)
+        with pytest.raises(BaseExceptionGroup, match="errors during test teardown"):
+            ss.teardown_exact(None)
+        assert getattr(session_err, "_pytest_session_teardown_error", False)
+        assert not getattr(item_err, "_pytest_session_teardown_error", False)
+        assert runner.is_session_teardown_error(session_err)
+        assert not runner.is_session_teardown_error(item_err)
 
     def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
         """Regression test for #12204 (the "BTW" case)."""
