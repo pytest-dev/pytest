@@ -280,6 +280,7 @@ def pytest_runtest_makereport(
 ) -> Generator[None, TestReport, TestReport]:
     rep = yield
     xfailed = item.stash.get(xfailed_key, None)
+    session_teardown_error = consume_session_teardown_error(item, call)
     if item.config.option.runxfail:
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):
@@ -287,7 +288,7 @@ def pytest_runtest_makereport(
         rep.wasxfail = call.excinfo.value.msg
         rep.outcome = "skipped"
     elif not rep.skipped and xfailed:
-        if call.excinfo and not consume_session_teardown_error(item, call):
+        if call.excinfo and not session_teardown_error:
             raises = xfailed.raises
             if raises is None or (
                 (
