@@ -171,6 +171,16 @@ class TestSetupState:
             ss.teardown_exact(None)
         assert runner.session_teardown_error_key not in item.session.stash
 
+    def test_consume_session_teardown_error_one_shot(self, pytester) -> None:
+        """Consuming the session flag deletes it; second consume is False (#8375)."""
+        item = pytester.getitem("def test_func(): pass")
+        call = runner.CallInfo.from_call(lambda: None, when="teardown")
+        key = runner.session_teardown_error_key
+        assert runner.consume_session_teardown_error(item, call) is False
+        item.session.stash[key] = True
+        assert runner.consume_session_teardown_error(item, call) is True
+        assert runner.consume_session_teardown_error(item, call) is False
+
     def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
         """Regression test for #12204 (the "BTW" case)."""
         pytester.makepyfile(test="")

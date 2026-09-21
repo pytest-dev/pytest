@@ -935,7 +935,13 @@ class TestXFailwithSetupTeardown:
         )
         result = pytester.runpytest()
         result.assert_outcomes(xfailed=1, errors=1)
-        result.stdout.fnmatch_lines(["*ERROR at teardown of test_mixed*"])
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR at teardown of test_mixed*",
+                "*RuntimeError: session teardown fails*",
+                "*RuntimeError: item teardown fails*",
+            ]
+        )
 
 
 class TestSkip:
