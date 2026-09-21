@@ -141,8 +141,8 @@ class TestSetupState:
         assert isinstance(func.exceptions[0], TypeError)
         assert isinstance(func.exceptions[1], ValueError)
 
-    def test_teardown_exact_marks_session_errors(self, pytester) -> None:
-        """Only errors from session teardown carry session attribution (#8375)."""
+    def test_teardown_exact_records_session_errors(self, pytester) -> None:
+        """Session teardown errors are recorded out-of-band, others are not (#8375)."""
 
         def raiser(exc):
             raise exc
@@ -150,16 +150,26 @@ class TestSetupState:
         item = pytester.getitem("def test_func(): pass")
         ss = item.session._setupstate
         ss.setup(item)
-        session_err = RuntimeError("from session scope")
-        item_err = ValueError("from function scope")
-        ss.addfinalizer(partial(raiser, session_err), item.session)
-        ss.addfinalizer(partial(raiser, item_err), item)
+        ss.addfinalizer(partial(raiser, RuntimeError("session")), item.session)
+        ss.addfinalizer(partial(raiser, ValueError("item")), item)
         with pytest.raises(BaseExceptionGroup, match="errors during test teardown"):
             ss.teardown_exact(None)
-        assert getattr(session_err, "_pytest_session_teardown_error", False)
-        assert not getattr(item_err, "_pytest_session_teardown_error", False)
-        assert runner.is_session_teardown_error(session_err)
-        assert not runner.is_session_teardown_error(item_err)
+        key = runner.session_teardown_error_key
+        assert item.session.stash.get(key, False) is True
+
+    def test_teardown_exact_no_flag_for_item_errors(self, pytester) -> None:
+        """Item-only teardown errors leave no session attribution (#8375)."""
+
+        def raiser(exc):
+            raise exc
+
+        item = pytester.getitem("def test_func(): pass")
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.addfinalizer(partial(raiser, ValueError("item")), item)
+        with pytest.raises(ValueError, match="item"):
+            ss.teardown_exact(None)
+        assert runner.session_teardown_error_key not in item.session.stash
 
     def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
         """Regression test for #12204 (the "BTW" case)."""

@@ -910,6 +910,33 @@ class TestXFailwithSetupTeardown:
         result = pytester.runpytest()
         result.assert_outcomes(xfailed=6)
 
+    def test_xfail_mixed_session_and_item_teardown_stays_error(
+        self, pytester: Pytester
+    ) -> None:
+        """A session error grouped with an item error is still an error (#8375)."""
+        pytester.makepyfile(
+            test_case="""
+            import pytest
+
+            @pytest.fixture(autouse=True, scope="session")
+            def fail_session():
+                yield
+                raise RuntimeError("session teardown fails")
+
+            @pytest.fixture()
+            def fail_item():
+                yield
+                raise RuntimeError("item teardown fails")
+
+            @pytest.mark.xfail()
+            def test_mixed(fail_item):
+                assert 0 == 1
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(xfailed=1, errors=1)
+        result.stdout.fnmatch_lines(["*ERROR at teardown of test_mixed*"])
+
 
 class TestSkip:
     def test_skip_class(self, pytester: Pytester) -> None:

@@ -35,6 +35,7 @@ from _pytest.outcomes import Exit
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
+from _pytest.stash import StashKey
 
 
 if sys.version_info < (3, 11):
@@ -436,19 +437,22 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     return rep
 
 
-def _mark_session_teardown_error(exc: BaseException) -> None:
-    """Record that exc was raised while tearing down the session, if it accepts attributes."""
-    if hasattr(exc, "__dict__"):
-        exc._pytest_session_teardown_error = True  # type: ignore[attr-defined]
+# Set when session teardown raises; consumed once by the teardown report (#8375).
+session_teardown_error_key = StashKey[bool]()
 
 
-def is_session_teardown_error(exc: BaseException) -> bool:
-    """Whether exc is (or contains) a session teardown error (#8375)."""
-    if getattr(exc, "_pytest_session_teardown_error", False):
-        return True
-    if isinstance(exc, BaseExceptionGroup):
-        return any(is_session_teardown_error(e) for e in exc.exceptions)
-    return False
+def consume_session_teardown_error(item: Item, call: CallInfo[None]) -> bool:
+    """Consume a recorded session teardown error for a teardown report.
+
+    Returns True once if session teardown raised, else False (#8375).
+    """
+    if call.when != "teardown":
+        return False
+    stash = item.session.stash
+    if session_teardown_error_key not in stash:
+        return False
+    del stash[session_teardown_error_key]
+    return True
 
 
 class SetupState:
@@ -576,15 +580,12 @@ class SetupState:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
             node, (finalizers, _) = self.stack.popitem()
-            is_session_teardown = node.parent is None
             these_exceptions = []
             while finalizers:
                 fin = finalizers.pop()
                 try:
                     fin()
                 except TEST_OUTCOME as e:
-                    if is_session_teardown:
-                        _mark_session_teardown_error(e)
                     these_exceptions.append(e)
 
             if len(these_exceptions) == 1:
@@ -592,6 +593,9 @@ class SetupState:
             elif these_exceptions:
                 msg = f"errors while tearing down {node!r}"
                 exceptions.append(BaseExceptionGroup(msg, these_exceptions[::-1]))
+
+            if node.parent is None and these_exceptions:
+                node.session.stash[session_teardown_error_key] = True
 
         if len(exceptions) == 1:
             raise exceptions[0]
