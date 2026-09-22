@@ -3,6 +3,10 @@
 
 from __future__ import annotations
 
+# This plugin defines no fixtures: opt out of the fixture-discovery scan in
+# FixtureManager.parsefactories (#14877).
+__pytest_no_fixtures__ = True
+
 from io import StringIO
 import tempfile
 from typing import IO

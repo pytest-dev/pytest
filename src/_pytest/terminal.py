@@ -6,6 +6,10 @@ This is a good source for looking at the various reporting hooks.
 
 from __future__ import annotations
 
+# This plugin defines no fixtures: opt out of the fixture-discovery scan in
+# FixtureManager.parsefactories (#14877).
+__pytest_no_fixtures__ = True
+
 import argparse
 from collections import Counter
 from collections.abc import Callable
@@ -385,6 +389,10 @@ class WarningReport:
 
 @final
 class TerminalReporter:
+    # This plugin defines no fixtures: opt out of the fixture-discovery scan
+    # in FixtureManager.parsefactories (#14877).
+    __pytest_no_fixtures__ = True
+
     def __init__(self, config: Config, file: TextIO | None = None) -> None:
         import _pytest.config
 

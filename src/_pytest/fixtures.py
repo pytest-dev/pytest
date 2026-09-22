@@ -2296,6 +2296,14 @@ class FixtureManager:
         else:
             holderobj_tp = cast("type | types.ModuleType", holderobj)
 
+        # Skip the scan entirely for holders which declare that they define
+        # no fixtures. Walking dir() and validating every attribute of every
+        # registered plugin on each Config build is pure overhead for
+        # fixture-less plugins (#14877). The lookup is done safely, like the
+        # loop below, because the holder may be an arbitrary user object.
+        if safe_getattr(holderobj, "__pytest_no_fixtures__", False):
+            return
+
         for name in dir(holderobj):
             # Read the raw __dict__ entry first so staticmethod/classmethod
             # wrappers are not hidden by descriptor binding.

@@ -497,6 +497,10 @@ class PytestPluginManager(PluginManager):
     * ``conftest.py`` loading during start-up.
     """
 
+    # This plugin defines no fixtures: opt out of the fixture-discovery scan
+    # in FixtureManager.parsefactories (#14877).
+    __pytest_no_fixtures__ = True
+
     def __init__(self) -> None:
         from _pytest.assertion import DummyRewriteHook
         from _pytest.assertion import RewriteHook
@@ -1117,6 +1121,10 @@ class Config:
         Object containing parameters regarding the :func:`pytest.main`
         invocation.
     """
+
+    # This object defines no fixtures: opt out of the fixture-discovery scan
+    # in FixtureManager.parsefactories (#14877).
+    __pytest_no_fixtures__ = True
 
     @final
     @dataclasses.dataclass(frozen=True)

@@ -3,6 +3,10 @@
 
 from __future__ import annotations
 
+# This plugin defines no fixtures: opt out of the fixture-discovery scan in
+# FixtureManager.parsefactories (#14877).
+__pytest_no_fixtures__ = True
+
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable

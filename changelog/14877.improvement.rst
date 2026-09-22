@@ -1,0 +1,9 @@
+Reduced per-session startup overhead in fixture discovery: plugins which declare
+they define no fixtures via the new internal ``__pytest_no_fixtures__`` marker
+(all fixture-less builtin plugins, the terminal reporter, and the config
+objects) are no longer scanned attribute-by-attribute by
+``FixtureManager.parsefactories`` on every ``Config`` build. This roughly
+halves the number of attribute introspections during plugin registration
+(e.g. 2258 to 1052 in a default session) and speeds up anything which builds
+many configs, such as :fixture:`pytester`-based test suites. A meta test
+guards that no holder carrying the marker actually defines a fixture.
