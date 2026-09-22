@@ -3541,7 +3541,7 @@ class TestFixtureMarker:
 
             @pytest.fixture
             def resource(request):
-                request.addfinalizer(lambda: Path(marker).write_text("ran"))
+                request.addfinalizer(lambda: Path(marker).write_text("ran", encoding="utf-8"))
                 raise KeyboardInterrupt
 
             def test_func(resource):
@@ -3557,7 +3557,7 @@ class TestFixtureMarker:
             pass
         else:
             pytest.fail("did not raise")
-        assert Path(marker).read_text() == "ran"
+        assert Path(marker).read_text(encoding="utf-8") == "ran"
 
     def test_class_scope_parametrization_ordering(self, pytester: Pytester) -> None:
         """#396"""
