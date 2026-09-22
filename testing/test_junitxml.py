@@ -1860,6 +1860,27 @@ def test_no_message_quiet(pytester: Pytester) -> None:
     result.stdout.no_fnmatch_line("* generated xml file: *")
 
 
+def test_junitxml_strips_ansi_from_failure_details(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """ANSI escapes from Pygments-highlighted diffs must not appear in junitxml (#12365)."""
+    pytest.importorskip("pygments")
+    monkeypatch.setenv("PY_COLORS", "1")
+    pytester.makepyfile(
+        """
+        def test_foo():
+            assert [1, 2, 3] == [3, 2, 1]
+        """
+    )
+    xml_path = pytester.path.joinpath("junit.xml")
+    result = pytester.runpytest(f"--junitxml={xml_path}", "-vv")
+    assert result.ret == 1
+    xml_text = xml_path.read_text(encoding="utf-8")
+    assert "\x1b[" not in xml_text
+    assert "#x1B" not in xml_text
+    assert "assert [1, 2, 3] == [3, 2, 1]" in xml_text
+
+
 @pytest.mark.parametrize(
     ("name", "value"),
     [
