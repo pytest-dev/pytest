@@ -247,7 +247,9 @@ class _NodeReporter:
             msg = f'failed on teardown with "{reason}"'
         else:
             msg = f'failed on setup with "{reason}"'
-        self._add_simple("error", bin_xml_escape(strip_ansi_escapes(msg)), str(report.longrepr))
+        self._add_simple(
+            "error", bin_xml_escape(strip_ansi_escapes(msg)), str(report.longrepr)
+        )
 
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):
