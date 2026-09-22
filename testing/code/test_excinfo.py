@@ -1280,6 +1280,37 @@ raise ValueError()
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*.py:3:*: IndentationError*"])
 
+    def test_get_exconly_syntax_error_strips_file_block(self) -> None:
+        # The File/source/caret block is redundant when the crash line already
+        # carries the error's own file:line:column (#14994).
+        with pytest.raises(SyntaxError) as excinfo:
+            raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+        lines = ExceptionInfoFormatter().get_exconly(excinfo)
+        assert lines == ["E   SyntaxError: bad syntax"]
+
+    def test_get_exconly_syntax_error_keeps_file_block_on_fallback(self) -> None:
+        # Without column info the crash line falls back to the traceback entry,
+        # so the File block must be kept to not lose the location (#14994).
+        with pytest.raises(SyntaxError) as excinfo:
+            raise SyntaxError("bad syntax", ("file.py", 1, None, "def foo(:", 1, None))
+        lines = ExceptionInfoFormatter().get_exconly(excinfo)
+        assert lines == [
+            'E     File "file.py", line 1',
+            "        def foo(:",
+            "    SyntaxError: bad syntax",
+        ]
+
+    def test_syntax_error_collection_omits_redundant_file_block(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile("def broken(:\n    pass\n")
+        result = pytester.runpytest()
+        # The crash line carries file:line:column ...
+        result.stdout.fnmatch_lines(["*.py:1:*: SyntaxError: invalid syntax"])
+        # ... so the redundant File/source/caret E-block is omitted (#14994).
+        result.stdout.no_fnmatch_line('E*File "*", line *')
+        result.stdout.fnmatch_lines(["E   SyntaxError: invalid syntax"])
+
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(
             """

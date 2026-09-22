@@ -513,6 +513,28 @@ def _syntax_error_location(exc: BaseException) -> tuple[str, int, int, str] | No
     return None
 
 
+def _strip_syntax_error_file_block(exlines: list[str], exc: BaseException) -> list[str]:
+    """Drop the leading ``File "...", line N`` / source / caret lines from
+    :func:`traceback.format_exception_only` output for :class:`SyntaxError`.
+
+    The exception line itself (and any lines after it, such as notes) is kept
+    verbatim. If the exception line cannot be found, the lines are returned
+    unchanged.
+    """
+    # Mirror the exception type name computation of
+    # traceback.format_exception_only().
+    stype = type(exc).__qualname__
+    smod = type(exc).__module__
+    if smod not in ("__main__", "builtins"):
+        stype = f"{smod}.{stype}"
+    for i, line in enumerate(exlines):
+        # The location block lines are always indented; the exception line
+        # starts at column 0 with the exception type name.
+        if line.startswith(stype):
+            return exlines[i:]
+    return exlines
+
+
 @final
 @dataclasses.dataclass
 class ExceptionInfo(Generic[E]):
@@ -1059,6 +1081,12 @@ class ExceptionInfoFormatter:
         indentstr = " " * indent
         # Get the real exception information out.
         exlines = excinfo.exconly(tryshort=True).split("\n")
+        if _syntax_error_location(excinfo.value) is not None:
+            # The crash line already reports the error's own file:line:column
+            # location (see ExceptionInfo._getreprcrash), so the File/source/
+            # caret block emitted by format_exception_only() would only
+            # repeat it (#14994).
+            exlines = _strip_syntax_error_file_block(exlines, excinfo.value)
         failindent = self.fail_marker + indentstr[1:]
         for line in exlines:
             lines.append(failindent + line)

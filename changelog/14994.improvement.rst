@@ -1,0 +1,4 @@
+The redundant ``File "...", line N`` / source / caret block is no longer shown
+in ``SyntaxError`` output when the crash line already reports the error's own
+``FILE:LINE:COLUMN`` location. The block is still shown as a fallback when the
+error does not carry its own location, so no information is lost.
