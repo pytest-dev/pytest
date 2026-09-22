@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from types import TracebackType
+
 from _pytest import deprecated
 from _pytest.pytester import Pytester
 from _pytest.scope import Scope
@@ -380,7 +382,7 @@ def test_deprecation_warning_instance_not_shared_across_raises() -> None:
         def __init__(self) -> None:
             deprecated.check_ispytest(False)
 
-    def count_frames(tb: object) -> int:
+    def count_frames(tb: TracebackType | None) -> int:
         n = 0
         while tb is not None:
             n += 1
