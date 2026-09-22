@@ -227,6 +227,52 @@ def pytest_collect_file(file_path: Path, parent: nodes.Collector) -> Module | No
     return None
 
 
+def _warn_if_abstract_tests_go_dark(
+    collector: Module | Class, name: str, obj: object
+) -> None:
+    """Warn if an abstract class silently swallows tests that look collectible.
+
+    Abstract classes are not collected (#12275), which is right for a base class
+    written to be subclassed, but indistinguishable from a leaf class that failed
+    to implement a blank -- for instance because a base class grew a new abstract
+    method. In that case the tests stop running and nothing says so (#13546).
+
+    A class that declares abstract methods of its own is taken to mean it; one
+    that only inherits unimplemented ones, yet carries tests, is warned about.
+    ``__test__`` in the class body opts out, deliberately read off the class
+    itself, since an inherited ``__test__`` would silence every subclass too.
+    """
+    assert isinstance(obj, type)
+    missing: frozenset[str] = getattr(obj, "__abstractmethods__", frozenset())
+    if not missing or "__test__" in obj.__dict__:
+        return
+    if any(attr in obj.__dict__ for attr in missing):
+        # Declares blanks of its own, so it is meant as a base class.
+        return
+    if not any(
+        collector.istestfunction(value, attr)
+        for klass in obj.__mro__
+        for attr, value in klass.__dict__.items()
+    ):
+        return
+
+    def declared_in(attr: str) -> str:
+        return next(k.__name__ for k in obj.__mro__ if attr in k.__dict__)
+
+    unimplemented = ", ".join(
+        f"{attr!r} (declared abstract in {declared_in(attr)!r})"
+        for attr in sorted(missing)
+    )
+    collector.warn(
+        PytestCollectionWarning(
+            f"cannot collect test class {name!r} because it is abstract: "
+            f"it does not implement {unimplemented}. Set '__test__ = False' in "
+            f"its body if it is meant to be a base class "
+            f"(from: {collector.nodeid})"
+        )
+    )
+
+
 def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
     """Return whether path matches any of the patterns in the list of globs given."""
     return any(fnmatch_ex(pattern, path) for pattern in patterns)
@@ -245,6 +291,8 @@ def pytest_pycollect_makeitem(
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
             return Class.from_parent(collector, name=name, obj=obj)
+        if collector.classnamefilter(name) or collector.isnosetest(obj):
+            _warn_if_abstract_tests_go_dark(collector, name, obj)
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it.
         obj = getattr(obj, "__func__", obj)
