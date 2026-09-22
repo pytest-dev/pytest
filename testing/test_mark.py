@@ -29,6 +29,10 @@ class TestMark:
         module = sys.modules["pytest"]
         assert attr in module.__all__
 
+    def test_fixture_function_definition_is_public(self) -> None:
+        assert pytest.FixtureFunctionDefinition is not None
+        assert "FixtureFunctionDefinition" in pytest.__all__
+
     def test_pytest_mark_notcallable(self) -> None:
         mark = MarkGenerator(_ispytest=True)
         with pytest.raises(TypeError):
