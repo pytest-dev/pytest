@@ -13,14 +13,13 @@ import sys
 import types
 
 import _pytest
-import pytest
-
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.config import Config
 from _pytest.config import PytestPluginManager
 from _pytest.fixtures import FixtureFunctionDefinition
 from _pytest.terminal import TerminalReporter
+import pytest
 
 
 def _modules() -> list[str]:
