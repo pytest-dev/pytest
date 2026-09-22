@@ -1,0 +1,1 @@
+Added `pytest.FixtureFunctionDefinition` to the public API.
