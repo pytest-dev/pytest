@@ -78,7 +78,12 @@ class SessionTests:
         values = reprec.getfailedcollections()
         assert len(values) == 1
         out = str(values[0].longrepr)
-        assert out.find("not python") != -1
+        # The crash line carries the SyntaxError's own file:line:column
+        # location (#2388); the redundant File/source/caret block is
+        # omitted (#14994).
+        assert "test_syntax_error_module.py:1:" in out
+        assert "SyntaxError: invalid syntax" in out
+        assert 'File "' not in out
 
     def test_exit_first_problem(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(
