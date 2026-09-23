@@ -1,0 +1,1 @@
+``__tracebackhide__`` is now applied per traceback occurrence rather than per source location in ``ExceptionGroup`` tracebacks. Previously, when distinct traceback entries shared the same ``(filename, lineno)`` but had different ``__tracebackhide__`` values (for example via recursion), a hidden frame could be retained because a visible frame from the same location was kept.

@@ -2220,6 +2220,37 @@ def test_tracebackhide_in_exceptiongroup_is_respected(pytester: Pytester) -> Non
     result.stdout.no_fnmatch_line("*in g1*")
 
 
+def test_tracebackhide_in_exceptiongroup_shared_source_location(
+    pytester: Pytester,
+) -> None:
+    """__tracebackhide__ is applied per traceback occurrence, not per source location (#14940)."""
+    p = pytester.makepyfile(
+        """
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
+
+        def fail(number):
+            __tracebackhide__ = number == 1
+            if number == 0:
+                raise ValueError("boom")
+            fail(number - 1)
+
+        def test_failure():
+            try:
+                fail(2)
+            except ValueError as error:
+                raise ExceptionGroup("failure", [error]) from None
+        """
+    )
+    result = pytester.runpytest(str(p), "--tb=short")
+    assert result.ret == 1
+    # The hidden fail(1) frame shares its source location with the visible
+    # fail(2) frame; it must be filtered out so the recursive call appears only once.
+    assert str(result.stdout).count("fail(number - 1)") == 1
+    result.stdout.fnmatch_lines(["*ValueError: boom*"])
+
+
 def add_note(err: BaseException, msg: str) -> None:
     """Adds a note to an exception inplace."""
     if sys.version_info < (3, 11):

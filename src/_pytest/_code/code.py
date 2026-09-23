@@ -1658,19 +1658,27 @@ def _filter_tracebackexception(
     objects. It recurses into exception group sub-exceptions and into
     ``__cause__`` / ``__context__`` chains.
 
-    Frames are matched by ``(filename, lineno)``: ``TracebackEntry._rawentry.tb_lineno``
-    is 1-based absolute, matching ``FrameSummary.lineno``.
+    Frames are matched by identity (not by ``(filename, lineno)``): distinct
+    traceback entries may share the same source location while having
+    different ``__tracebackhide__`` values (e.g. via recursion), so a
+    ``(filename, lineno)`` key cannot identify an individual occurrence.
     """
     if e.__traceback__ is not None:
         excinfo = ExceptionInfo.from_exception(e)
         filtered = filter_excinfo_traceback(tbfilter, excinfo)
-        kept = {
-            (str(entry.frame.code.path), entry._rawentry.tb_lineno)
-            for entry in filtered
-        }
-        tb_exc.stack = StackSummary.from_list(
-            [fs for fs in tb_exc.stack if (fs.filename, fs.lineno) in kept]
-        )
+        kept_ids = {id(entry._rawentry) for entry in filtered}
+        # tb_exc.stack holds one FrameSummary per raw traceback frame, in the
+        # same (outermost-first) order, so walk both in parallel and keep a
+        # FrameSummary only when its own traceback entry was kept.
+        raw_tb: TracebackType | None = e.__traceback__
+        kept_frames: list[FrameSummary] = []
+        for fs in tb_exc.stack:
+            if raw_tb is None:
+                break
+            if id(raw_tb) in kept_ids:
+                kept_frames.append(fs)
+            raw_tb = raw_tb.tb_next
+        tb_exc.stack = StackSummary.from_list(kept_frames)
     if isinstance(e, BaseExceptionGroup):
         sub_tb_excs = getattr(tb_exc, "exceptions", None) or []
         for sub_tb_exc, sub_e in zip(sub_tb_excs, e.exceptions, strict=True):
