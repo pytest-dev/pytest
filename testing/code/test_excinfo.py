@@ -376,6 +376,23 @@ def test_excinfo_for_later() -> None:
     assert "for raises" in str(e)
 
 
+def test_excinfo_fill_unfilled_computes_striptext() -> None:
+    # Regression test for #12175: fill_unfilled() must compute _striptext
+    # the same way from_exc_info() does.
+    def raises() -> None:
+        raise AssertionError("assert 1 == 2")
+
+    try:
+        raises()
+    except AssertionError:
+        exc_info = sys.exc_info()
+        filled = ExceptionInfo[BaseException].for_later()
+        filled.fill_unfilled(exc_info)
+        direct = ExceptionInfo[BaseException].from_exc_info(exc_info)
+        assert filled._striptext == "AssertionError: "
+        assert filled._striptext == direct._striptext
+
+
 def test_excinfo_errisinstance():
     with pytest.raises(ValueError) as excinfo:
         h()

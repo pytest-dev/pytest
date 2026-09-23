@@ -1,0 +1,4 @@
+Fixed ``ExceptionInfo.fill_unfilled()`` not computing ``_striptext``, so
+``excinfo.exconly(tryshort=True)`` now strips the ``AssertionError: `` prefix
+for ``ExceptionInfo`` objects created with ``ExceptionInfo.for_later()``,
+matching the behavior of ``ExceptionInfo.from_exc_info()``.

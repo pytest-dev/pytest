@@ -551,12 +551,12 @@ class ExceptionInfo(Generic[E]):
         return cls.from_exc_info(exc_info, exprinfo)
 
     @classmethod
-    def from_exc_info(
+    def _get_assertion_striptext(
         cls,
         exc_info: tuple[type[E], E, TracebackType],
-        exprinfo: str | None = None,
-    ) -> ExceptionInfo[E]:
-        """Like :func:`from_exception`, but using old-style exc_info tuple."""
+        exprinfo: str | None,
+    ) -> str:
+        """Return the text to strip from assertion exception output, if any."""
         _striptext = ""
         if exprinfo is None and isinstance(exc_info[1], AssertionError):
             exprinfo = getattr(exc_info[1], "msg", None)
@@ -564,8 +564,20 @@ class ExceptionInfo(Generic[E]):
                 exprinfo = saferepr(exc_info[1])
             if exprinfo and exprinfo.startswith(cls._assert_start_repr):
                 _striptext = "AssertionError: "
+        return _striptext
 
-        return cls(exc_info, _striptext, _ispytest=True)
+    @classmethod
+    def from_exc_info(
+        cls,
+        exc_info: tuple[type[E], E, TracebackType],
+        exprinfo: str | None = None,
+    ) -> ExceptionInfo[E]:
+        """Like :func:`from_exception`, but using old-style exc_info tuple."""
+        return cls(
+            exc_info,
+            cls._get_assertion_striptext(exc_info, exprinfo),
+            _ispytest=True,
+        )
 
     @classmethod
     def from_current(cls, exprinfo: str | None = None) -> ExceptionInfo[BaseException]:
@@ -596,6 +608,7 @@ class ExceptionInfo(Generic[E]):
         """Fill an unfilled ExceptionInfo created with ``for_later()``."""
         assert self._excinfo is None, "ExceptionInfo was already filled"
         self._excinfo = exc_info
+        self._striptext = self._get_assertion_striptext(exc_info, None)
 
     @property
     def type(self) -> type[E]:
