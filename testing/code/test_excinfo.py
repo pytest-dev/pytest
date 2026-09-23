@@ -18,6 +18,7 @@ import _pytest._code
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ExceptionInfoFormatter
+from _pytest._code.code import _strip_syntax_error_file_block
 from _pytest._io import TerminalWriter
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
@@ -1299,6 +1300,31 @@ raise ValueError()
             "        def foo(:",
             "    SyntaxError: bad syntax",
         ]
+
+    def test_strip_syntax_error_file_block_module_prefixed_type(self) -> None:
+        # Mirrors traceback.format_exception_only(): the exception type name
+        # is module-prefixed for non-builtin exception types.
+        class PluginSyntaxError(SyntaxError):
+            pass
+
+        PluginSyntaxError.__module__ = "some_plugin"
+        exc = PluginSyntaxError("bad", ("file.py", 1, 1, "def foo(:", 1, 2))
+        type_name = f"{type(exc).__module__}.{type(exc).__qualname__}"
+        lines = [
+            '  File "file.py", line 1',
+            "    def foo(:",
+            "        ^",
+            f"{type_name}: bad",
+        ]
+        assert _strip_syntax_error_file_block(lines, exc) == [f"{type_name}: bad"]
+
+    def test_strip_syntax_error_file_block_returns_unchanged_without_match(
+        self,
+    ) -> None:
+        # If the exception line cannot be found, the lines are kept verbatim.
+        exc = SyntaxError("bad", ("file.py", 1, 1, "def foo(:", 1, 2))
+        lines = ["something unexpected"]
+        assert _strip_syntax_error_file_block(lines, exc) == lines
 
     def test_syntax_error_collection_omits_redundant_file_block(
         self, pytester: Pytester
