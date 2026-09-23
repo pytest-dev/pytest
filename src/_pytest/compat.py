@@ -94,6 +94,31 @@ class CodeLocation(NamedTuple):
         return f"{self.path}:{self.lineno}"
 
 
+class ItemLocation(NamedTuple):
+    """Location of a test item: relative path, line index, and test name.
+
+    Returned by :attr:`Item.location <pytest.Item.location>` and stored
+    on :class:`TestReport <pytest.TestReport>`.
+
+    The stored ``lineindex`` is 0-based (matching ``reportinfo()``);
+    use the ``lineno`` property for the conventional 1-based number.
+    """
+
+    path: str
+    lineindex: int | None
+    testname: str
+
+    @property
+    def lineno(self) -> int | None:
+        """1-based line number for display, or *None*."""
+        return self.lineindex + 1 if self.lineindex is not None else None
+
+    def __str__(self) -> str:
+        if self.lineno is not None:
+            return f"{self.path}:{self.lineno}"
+        return self.path
+
+
 def getlocation(
     function,
     relative_to: Path | None,
