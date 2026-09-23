@@ -15,10 +15,10 @@ from typing import cast
 from typing import TYPE_CHECKING
 
 import _pytest._code
+from _pytest._code.code import _strip_syntax_error_file_block
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ExceptionInfoFormatter
-from _pytest._code.code import _strip_syntax_error_file_block
 from _pytest._io import TerminalWriter
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
