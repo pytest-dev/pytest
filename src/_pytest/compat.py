@@ -14,6 +14,7 @@ from pathlib import Path
 import sys
 from typing import Any
 from typing import Final
+from typing import NamedTuple
 from typing import NoReturn
 from typing import TYPE_CHECKING
 
@@ -72,18 +73,52 @@ def signature(obj: Callable[..., Any]) -> Signature:
     return inspect.signature(obj)
 
 
-def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
+class CodeLocation(NamedTuple):
+    """A source code location: file path and line number.
+
+    Converts to a ``path:lineno`` string representation.
+
+    The stored ``lineindex`` is 0-based; use the ``lineno`` property
+    for the conventional 1-based line number.
+    """
+
+    path: Path
+    lineindex: int
+
+    @property
+    def lineno(self) -> int:
+        """1-based line number for display."""
+        return self.lineindex + 1
+
+    def __str__(self) -> str:
+        return f"{self.path}:{self.lineno}"
+
+
+def getlocation(
+    function,
+    relative_to: Path | None,
+) -> CodeLocation:
+    """Return the source location (file path, line number) of *function*.
+
+    :param function:
+        The function (or wrapped function) to locate.
+    :param relative_to:
+        If given, the returned path is made relative to this directory.
+        Only strict sub-paths are relativised; everything else keeps
+        its absolute path.
+    """
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
-    lineno = function.__code__.co_firstlineno
-    if curdir is not None:
+    lineindex = function.__code__.co_firstlineno - 1
+
+    if relative_to is not None:
         try:
-            relfn = fn.relative_to(curdir)
+            relfn = fn.relative_to(relative_to)
         except ValueError:
             pass
         else:
-            return f"{relfn}:{lineno}"
-    return f"{fn}:{lineno}"
+            return CodeLocation(relfn, lineindex)
+    return CodeLocation(fn, lineindex)
 
 
 def num_mock_patch_args(function) -> int:
