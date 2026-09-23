@@ -1091,6 +1091,60 @@ class TestRequestBasic:
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(failed=1, passed=1)
 
+    def test_request_addfinalizer_interrupted_setup(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            from pathlib import Path
+            import pytest
+
+            @pytest.fixture
+            def resource(request):
+                request.addfinalizer(
+                    lambda: Path("finalizer-ran").write_text("ran", encoding="utf-8")
+                )
+                raise KeyboardInterrupt
+
+            def test_setup(resource):
+                pass
+            """
+        )
+
+        result = pytester.runpytest_subprocess("-q")
+        assert result.ret == ExitCode.INTERRUPTED
+        assert (pytester.path / "finalizer-ran").read_text(encoding="utf-8") == "ran"
+
+    def test_request_addfinalizer_interrupted_setup_hook(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            from pathlib import Path
+
+            def pytest_fixture_setup(fixturedef, request):
+                if fixturedef.argname == "resource":
+                    request.addfinalizer(
+                        lambda: Path("finalizer-ran").write_text("ran", encoding="utf-8")
+                    )
+                    raise KeyboardInterrupt
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def resource():
+                pass
+
+            def test_setup(resource):
+                pass
+            """
+        )
+
+        result = pytester.runpytest_subprocess("-q")
+        assert result.ret == ExitCode.INTERRUPTED
+        assert (pytester.path / "finalizer-ran").read_text(encoding="utf-8") == "ran"
+
     def test_request_addfinalizer_failing_setup_module(
         self, pytester: Pytester
     ) -> None:
