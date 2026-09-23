@@ -1111,7 +1111,9 @@ class TestRequestBasic:
         mod = reprec.getcalls("pytest_runtest_setup")[0].item.module
         assert not mod.values
 
-    def test_request_addfinalizer_interrupted_setup(self, pytester: Pytester) -> None:
+    def test_request_addfinalizer_interrupted_setup(
+        self, pytester: Pytester
+    ) -> None:
         """Ensure finalizers registered before fixture setup is interrupted
         (e.g. by KeyboardInterrupt) still run during teardown (#15067)."""
         pytester.makeconftest(
@@ -1140,6 +1142,41 @@ class TestRequestBasic:
         result = pytester.runpytest_subprocess()
         assert result.ret == ExitCode.INTERRUPTED
         assert pytester.path.joinpath("finalizer-ran").exists()
+
+    def test_request_addfinalizer_interrupted_setup_inprocess(
+        self, pytester: Pytester
+    ) -> None:
+        """In-process variant of test_request_addfinalizer_interrupted_setup.
+
+        Runs the interrupted setup in-process so coverage observes the
+        ``except BaseException`` branch in ``pytest_fixture_setup`` (#15067).
+        """
+        pytester.makeconftest(
+            """
+            from pathlib import Path
+
+            import pytest
+
+            marker = Path(__file__).with_name("finalizer-ran-inprocess")
+
+
+            @pytest.fixture
+            def resource(request):
+                request.addfinalizer(
+                    lambda: marker.write_text("ran", encoding="utf-8")
+                )
+                raise KeyboardInterrupt
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_setup(resource):
+                pass
+            """
+        )
+        result = pytester.runpytest_inprocess(no_reraise_ctrlc=True)
+        assert result.ret == ExitCode.INTERRUPTED
+        assert pytester.path.joinpath("finalizer-ran-inprocess").exists()
 
     def test_request_addfinalizer_partial_setup_failure(
         self, pytester: Pytester
