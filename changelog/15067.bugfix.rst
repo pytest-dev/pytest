@@ -1,0 +1,4 @@
+Fixed fixture finalizers registered via ``request.addfinalizer()`` being skipped
+when fixture setup was interrupted (for example by ``KeyboardInterrupt`` or a
+fail-fast plugin) before the fixture value was cached. The interruption is now
+recorded so the registered finalizers still run during teardown, as documented.

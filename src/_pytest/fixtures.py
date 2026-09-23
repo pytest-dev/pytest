@@ -1404,6 +1404,12 @@ def pytest_fixture_setup(
             e._use_item_location = True
         fixturedef.cached_result = (None, my_cache_key, (e, e.__traceback__))
         raise
+    except BaseException as e:
+        # Fixture setup was interrupted (e.g. by KeyboardInterrupt or a
+        # fail-fast plugin). Record the failure so that finalizers already
+        # registered via addfinalizer() still run during teardown (#15067).
+        fixturedef.cached_result = (None, my_cache_key, (e, e.__traceback__))
+        raise
     fixturedef.cached_result = (result, my_cache_key, None)
     return result
 
