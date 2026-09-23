@@ -292,6 +292,61 @@ class TestConfigTmpPath:
             )
             assert len(test_dir) == 1
 
+    # issue #14998
+    def test_policy_failed_keeps_dir_on_setup_and_teardown_errors(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def broken_during_setup(tmp_path):
+                raise RuntimeError("setup failed")
+
+            def test_setup_error(broken_during_setup):
+                pass
+
+            def test_call_failure(tmp_path):
+                assert False
+
+            @pytest.fixture
+            def broken_during_teardown(tmp_path):
+                yield
+                raise RuntimeError("teardown failed")
+
+            def test_teardown_error(broken_during_teardown):
+                pass
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "failed"
+        """
+        )
+
+        result = pytester.inline_run(p)
+        # 1 failed (call), 1 passed (call of the teardown-error test),
+        # 3 failed reports overall (setup error, call failure, teardown error).
+        result.assertoutcome(passed=1, failed=3)
+
+        root = pytester._test_tmproot
+        kept = set()
+        for child in root.iterdir():
+            for base_dir in child.iterdir():
+                if base_dir.is_dir() and not base_dir.is_symlink():
+                    for test_dir in base_dir.iterdir():
+                        if test_dir.is_dir() and not test_dir.is_symlink():
+                            kept.add(test_dir.name)
+        # The directories for the setup and teardown errors must be retained,
+        # just like the one for the call failure.
+        assert kept == {
+            "test_setup_error0",
+            "test_call_failure0",
+            "test_teardown_error0",
+        }
+
 
 testdata = [
     ("mypath", True),

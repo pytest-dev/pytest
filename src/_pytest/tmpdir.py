@@ -36,7 +36,8 @@ from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 
 
-tmppath_result_key = StashKey[dict[str, bool]]()
+tmppath_result_key = StashKey[dict[str, str]]()
+tmppath_pending_key = StashKey[list[Path]]()
 RetentionType = Literal["all", "failed", "none"]
 
 
@@ -295,16 +296,35 @@ def tmp_path(
     path = _mk_tmp(request, tmp_path_factory)
     yield path
 
-    # Remove the tmpdir if the policy is "failed" and the test passed.
-    policy = tmp_path_factory._retention_policy
-    result_dict = request.node.stash[tmppath_result_key]
+    # Defer the retention decision until the teardown report is available:
+    # the teardown outcome is not known yet at this point, so a teardown
+    # error could not be taken into account here. See
+    # pytest_runtest_makereport below.
+    request.node.stash.setdefault(tmppath_pending_key, []).append(path)
 
-    if policy == "failed" and result_dict.get("call", True):
-        # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
-        # permissions, etc, in which case we ignore it.
-        rmtree(path, ignore_errors=True)
 
-    del request.node.stash[tmppath_result_key]
+def _maybe_remove_tmp_paths(item: Item, results: dict[str, str]) -> None:
+    """Remove pending tmp_path directories if the test fully passed.
+
+    Called once the teardown report is available, so setup, call and
+    teardown outcomes can all be taken into account.
+    """
+    policy: RetentionType = item.config._tmp_path_factory._retention_policy
+    paths = item.stash.get(tmppath_pending_key, [])
+    # Only remove the directory when the test fully passed: any failure or
+    # error in setup, call or teardown keeps the directory around.
+    # A skip during setup (without an error) still removes it (#10502).
+    if (
+        policy == "failed"
+        and paths
+        and results.get("setup", "passed") in ("passed", "skipped")
+        and results.get("call", "passed") == "passed"
+        and results.get("teardown", "passed") in ("passed", "skipped")
+    ):
+        for path in paths:
+            # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
+            # permissions, etc, in which case we ignore it.
+            rmtree(path, ignore_errors=True)
 
 
 def pytest_sessionfinish(session, exitstatus: int | ExitCode):
@@ -341,6 +361,12 @@ def pytest_runtest_makereport(
 ) -> Generator[None, TestReport, TestReport]:
     rep = yield
     assert rep.when is not None
-    empty: dict[str, bool] = {}
-    item.stash.setdefault(tmppath_result_key, empty)[rep.when] = rep.passed
+    empty: dict[str, str] = {}
+    results = item.stash.setdefault(tmppath_result_key, empty)
+    results[rep.when] = rep.outcome
+    if rep.when == "teardown":
+        _maybe_remove_tmp_paths(item, results)
+        del item.stash[tmppath_result_key]
+        if tmppath_pending_key in item.stash:
+            del item.stash[tmppath_pending_key]
     return rep

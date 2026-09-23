@@ -1,0 +1,4 @@
+Fixed ``tmp_path_retention_policy="failed"`` removing ``tmp_path`` directories when an
+error occurred during fixture setup or teardown. The directories are now retained
+for setup and teardown errors, just like for call-phase failures. A skip during
+fixture setup (without an error) still removes the directory.
