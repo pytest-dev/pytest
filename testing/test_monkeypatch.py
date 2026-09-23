@@ -707,6 +707,14 @@ def test_non_raising_class_descriptor(operation: str, raises: bool) -> None:
     class Target:
         value = descriptor
 
+    if raises:
+        with pytest.raises(RuntimeError, match="descriptor should not execute"):
+            _ = Target.value
+    else:
+        assert Target.value == 42
+    assert calls == [True]
+    calls.clear()
+
     with MonkeyPatch.context() as mp:
         if operation == "setattr":
             mp.setattr(Target, "value", 99, raising=False)
@@ -728,6 +736,8 @@ def test_non_raising_instance_non_data_descriptor() -> None:
         value = Descriptor()
 
     obj = Target()
+    with pytest.raises(RuntimeError, match="descriptor should not execute"):
+        _ = obj.value
     with MonkeyPatch.context() as mp:
         mp.setattr(obj, "value", 99, raising=False)
         assert obj.value == 99
@@ -798,6 +808,8 @@ def test_non_raising_dynamic_attribute() -> None:
         assert obj.value == 99
     assert "value" not in vars(obj)
     assert obj.value == 42
+    with pytest.raises(AttributeError, match="missing"):
+        _ = obj.missing
 
 
 @pytest.mark.parametrize("operation", ["setattr", "delattr"])
