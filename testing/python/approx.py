@@ -1105,17 +1105,40 @@ class TestApprox:
         # only the comparison above is what let #15006 slip through.
         assert repr(approx_obj) == "2.60 ± 2.6e-6"
 
+    def test_decimal_repr_human_readable_in_range(self) -> None:
+        """Decimal tolerances in [1e-3, 1e3) display like floats do (#15010)."""
+        assert (
+            repr(pytest.approx(Decimal("100"), rel=Decimal("0.01"))) == "100 ± 1.00"
+        )
+        assert (
+            repr(
+                pytest.approx(
+                    Decimal("100"), rel=Decimal("0.01"), abs=Decimal("2")
+                )
+            )
+            == "100 ± 2"
+        )
+
     def test_decimal_approx_float_rel(self) -> None:
         with pytest.warns(pytest.PytestApproxDecimalToleranceWarning):
             approx_obj = pytest.approx(decimal.Decimal("2.60"), rel=0.01)
         assert decimal.Decimal("2.600001") == approx_obj
-        assert repr(approx_obj) == "2.60 ± 2.6e-2"
+        # The displayed tolerance is the widened one from #15006, now in
+        # human-readable form because it falls in [1e-3, 1e3) (#15010).
+        assert (
+            repr(approx_obj) == "2.60 ± 0.02600000000000000054123372450"
+        )
 
     def test_decimal_approx_float_abs(self) -> None:
         with pytest.warns(pytest.PytestApproxDecimalToleranceWarning):
             approx_obj = pytest.approx(decimal.Decimal("2.60"), abs=0.01)
         assert decimal.Decimal("2.600001") == approx_obj
-        assert repr(approx_obj) == "2.60 ± 1.0e-2"
+        # The displayed tolerance is the widened one from #15006, now in
+        # human-readable form because it falls in [1e-3, 1e3) (#15010).
+        assert (
+            repr(approx_obj)
+            == "2.60 ± 0.01000000000000000020816681711721685132943093776702880859375"
+        )
 
     @pytest.mark.parametrize(
         ("expected", "kwargs"),
@@ -1179,9 +1202,9 @@ class TestApprox:
         (
             ({}, "2.60 ± 2.6e-6"),
             ({"rel": Decimal("1e-6")}, "2.60 ± 2.6e-6"),
-            ({"rel": Decimal("0.01")}, "2.60 ± 2.6e-2"),
-            ({"abs": Decimal("0.01")}, "2.60 ± 1.0e-2"),
-            ({"rel": Decimal("0.01"), "abs": Decimal(1)}, "2.60 ± 1.0e+0"),
+            ({"rel": Decimal("0.01")}, "2.60 ± 0.0260"),
+            ({"abs": Decimal("0.01")}, "2.60 ± 0.01"),
+            ({"rel": Decimal("0.01"), "abs": Decimal(1)}, "2.60 ± 1"),
         ),
     )
     def test_decimal_repr_shows_effective_tolerance(

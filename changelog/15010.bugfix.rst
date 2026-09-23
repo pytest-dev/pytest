@@ -1,0 +1,5 @@
+Fixed ``repr()`` of ``pytest.approx`` with ``Decimal`` expected values always
+using scientific notation for the tolerance: tolerances in the range
+``[1e-3, 1e3)`` now display in human-readable form, like floats already did.
+For example, ``repr(pytest.approx(Decimal("100"), rel=Decimal("0.01")))`` is
+now ``"100 ± 1.00"`` instead of ``"100 ± 1.0e+0"``.

@@ -538,11 +538,12 @@ class ApproxScalar(Approx[ExpectedT]):
             if isinstance(self.tolerance, Decimal):
                 # Never let a Decimal meet a float literal: comparing against
                 # 1e-3/1e3 signals decimal.FloatOperation when that trap is set
-                # (#13530). Scientific notation is also the only readable choice
-                # here, because a tolerance derived from a float carries its
-                # full exact binary expansion (dozens of digits).
-                vetted_tolerance = f"{self.tolerance:.1e}"
-            elif 1e-3 <= self.tolerance < 1e3:
+                # (#13530), so compare against Decimal bounds instead.
+                in_human_range = Decimal("1e-3") <= self.tolerance < Decimal("1e3")
+            else:
+                in_human_range = 1e-3 <= self.tolerance < 1e3
+
+            if in_human_range:
                 vetted_tolerance = f"{self.tolerance:n}"
             else:
                 vetted_tolerance = f"{self.tolerance:.1e}"
