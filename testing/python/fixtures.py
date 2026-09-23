@@ -1111,9 +1111,7 @@ class TestRequestBasic:
         mod = reprec.getcalls("pytest_runtest_setup")[0].item.module
         assert not mod.values
 
-    def test_request_addfinalizer_interrupted_setup(
-        self, pytester: Pytester
-    ) -> None:
+    def test_request_addfinalizer_interrupted_setup(self, pytester: Pytester) -> None:
         """Ensure finalizers registered before fixture setup is interrupted
         (e.g. by KeyboardInterrupt) still run during teardown (#15067)."""
         pytester.makeconftest(
