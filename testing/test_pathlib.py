@@ -628,6 +628,20 @@ def test_scandir_handles_os_error() -> None:
         mock_entry.is_file.assert_called_once()
 
 
+def test_scandir_skips_permission_denied_entry() -> None:
+    inaccessible_entry = unittest.mock.MagicMock()
+    inaccessible_entry.is_file.side_effect = PermissionError("permission denied")
+    accessible_entry = unittest.mock.MagicMock()
+    accessible_entry.name = "test_ok.py"
+
+    with unittest.mock.patch("os.scandir") as mock_scandir:
+        mock_scandir.return_value.__enter__.return_value = [
+            inaccessible_entry,
+            accessible_entry,
+        ]
+        assert scandir("/fake/path") == [accessible_entry]
+
+
 class TestImportLibMode:
     def test_importmode_importlib_with_dataclass(
         self, tmp_path: Path, ns_param: bool

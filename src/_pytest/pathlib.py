@@ -1004,7 +1004,8 @@ def scandir(
             try:
                 entry.is_file()
             except OSError as err:
-                if _ignore_error(err):
+                # Inaccessible entries should not prevent collecting accessible files.
+                if _ignore_error(err) or isinstance(err, PermissionError):
                     continue
                 # Reraise non-ignorable errors to avoid hiding issues.
                 raise
