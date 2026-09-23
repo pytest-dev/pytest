@@ -1,0 +1,6 @@
+Fixed :class:`pytest.PytestWarning` deprecation constants in :mod:`_pytest.deprecated`
+being shared instances reused across ``warnings.warn()`` calls: under ``-W error``
+each raise appended to the instance's existing ``__traceback__``, corrupting
+failure reports with stale frames from previous raises. All constants are now
+:class:`~_pytest.warning_types.UnformattedWarning`, formatted into a fresh
+instance at each warn site.

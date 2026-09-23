@@ -365,3 +365,48 @@ def test_callspec2_renamed() -> None:
 
     with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
         assert python_mod.CallSpec2 is CallSpec
+
+
+def test_deprecation_constants_are_not_shared_instances() -> None:
+    """All deprecation constants must be UnformattedWarning, not shared Warning instances (#14912).
+
+    Reusing a module-level Warning instance across warn() calls makes CPython
+    append to the instance's existing __traceback__ on every raise under
+    -W error, corrupting failure reports with stale frames from previous
+    raises. UnformattedWarning.format() returns a fresh instance per call.
+    """
+    for name in dir(deprecated):
+        if name.isupper():
+            value = getattr(deprecated, name)
+            assert not isinstance(value, Warning), (
+                f"{name} is a shared Warning instance; "
+                "use UnformattedWarning and call .format() at the warn site"
+            )
+
+
+def test_deprecation_warning_traceback_does_not_accumulate_under_error() -> None:
+    """Repeated -W error raises of the same deprecation must not accumulate
+    __traceback__ frames (#14912)."""
+    import warnings
+
+    def count_frames(exc: BaseException) -> int:
+        n = 0
+        tb = exc.__traceback__
+        while tb is not None:
+            n += 1
+            tb = tb.tb_next
+        return n
+
+    counts = []
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        for _ in range(3):
+            with pytest.raises(PytestRemovedIn10Warning) as excinfo:
+
+                @pytest.yield_fixture  # type: ignore[deprecated]
+                def fix():
+                    pass
+
+            counts.append(count_frames(excinfo.value))
+
+    assert counts[0] == counts[1] == counts[2], counts
