@@ -88,3 +88,11 @@ def test_no_fixtures_opt_out_holders_define_no_fixtures() -> None:
         "holders marked __pytest_no_fixtures__ define fixtures which "
         f"parsefactories would silently skip: {offenders}"
     )
+
+
+def test_discoverable_fixture_names_supports_instance_holders() -> None:
+    """Instance holders resolve to their class, mirroring parsefactories."""
+    holder_cls = type("Plugin", (), {"my_fixture": pytest.fixture(lambda: 1)})
+
+    assert _discoverable_fixture_names(holder_cls()) == ["my_fixture"]
+    assert _discoverable_fixture_names(holder_cls) == ["my_fixture"]
