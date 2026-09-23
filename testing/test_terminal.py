@@ -470,6 +470,32 @@ class TestTerminal:
             ]
         )
 
+    def test_skip_reason_narrow_terminal(self, pytester: Pytester, monkeypatch) -> None:
+        """A skip reason that does not fit on the line is shown on a new line (#11146).
+
+        Regression: pytest 7.4.0 (PR #10958) silently dropped the skip reason when
+        the terminal was too narrow to fit even an ellipsis. It should instead be
+        written on a new line.
+        """
+        monkeypatch.setenv("COLUMNS", "30")
+        # Long test name so the inline skip reason cannot fit at all; short reason
+        # that does fit on its own line, so the full reason must be present.
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skip(reason="no room")
+            def test_skip_with_a_very_long_name_here():
+                pass
+        """
+        )
+        result = pytester.runpytest("-v")
+        # The full skip reason must be present in the output (on its own line),
+        # not silently dropped due to the narrow terminal.
+        result.stdout.fnmatch_lines(["*no room*"])
+        # The test must still be reported as SKIPPED.
+        result.stdout.fnmatch_lines(["*test_skip_with_a_very_long_name_here*SKIPPED*"])
+
     @pytest.mark.parametrize("isatty", [True, False])
     def test_isatty(self, pytester: Pytester, monkeypatch, isatty: bool) -> None:
         config = pytester.parseconfig()
