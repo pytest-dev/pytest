@@ -1,2 +1,3 @@
 The ``--junitxml`` report no longer includes ANSI escape codes from
-Pygments-highlighted assertion diffs in failure messages or details.
+Pygments-highlighted assertion diffs in failure messages or details, or from
+captured output written to ``<system-out>`` and ``<system-err>``.

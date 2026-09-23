@@ -205,7 +205,7 @@ class _NodeReporter:
 
     def _write_content(self, report: TestReport, content: str, jheader: str) -> None:
         tag = ET.Element(jheader)
-        tag.text = bin_xml_escape(content)
+        tag.text = bin_xml_escape(strip_ansi_escapes(content))
         self.append(tag)
 
     def append_pass(self, report: TestReport) -> None:
