@@ -448,6 +448,9 @@ norecursedirs = [
 strict = true
 filterwarnings = [
     'error',
+    # NumPy 2.4.6 emits this Cython warning when importing random on PyPy.
+    # Keep it visible without failing unrelated Hypothesis tests on import.
+    'default:cython\.collection_type only works on PyPy with the C flag CYTHON_USE_TYPE_SPECS=1:RuntimeWarning:numpy\.random\._generator',
     'default:Using or importing the ABCs:DeprecationWarning:unittest2.*',
     # produced by older pyparsing<=2.2.0.
     'default:Using or importing the ABCs:DeprecationWarning:pyparsing.*',
