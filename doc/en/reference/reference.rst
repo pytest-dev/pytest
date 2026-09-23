@@ -2870,19 +2870,26 @@ Test Selection
 
 .. option:: -k EXPRESSION
 
-    Only run tests which match the given substring expression.
-    An expression is a Python evaluable expression where all names are substring-matched against test names and their parent classes.
+    Only run tests which match the given keyword expression.
+    An expression is made of names combined with ``and``, ``or``, ``not`` and parentheses.
+    Each name is matched case-insensitively as a substring of any of the test's keywords.
 
     Examples::
 
-        pytest -k "test_method or test_other"  # matches names containing 'test_method' OR 'test_other'
-        pytest -k "not test_method"            # matches names NOT containing 'test_method'
+        pytest -k "test_method or test_other"  # matches keywords containing 'test_method' OR 'test_other'
+        pytest -k "not test_method"            # matches keywords NOT containing 'test_method'
         pytest -k "not test_method and not test_other"  # excludes both
 
-    The matching is case-insensitive.
-    Keywords are also matched to classes and functions containing extra names in their ``extra_keyword_matches`` set.
+    The keywords of a test are:
 
-    See :ref:`select-tests` for more information and examples.
+    * its own name, including any parametrization id;
+    * the names of its parent class, module and directories;
+    * the names of the markers applied to it or to any of its parents, as bare names:
+      unlike :option:`-m`, ``-k`` matches them as substrings and cannot match their arguments;
+    * attributes assigned directly to the test function, as in the legacy ``test_func.slow = True`` style;
+    * any names added to the :attr:`~_pytest.nodes.Node.extra_keyword_matches` set of it or of a parent.
+
+    See :ref:`keyword expressions` for more information and examples.
 
 .. option:: -m MARKEXPR
 
@@ -2891,9 +2898,12 @@ Test Selection
 
     Examples::
 
-        pytest -m slow                  # run tests marked with @pytest.mark.slow
-        pytest -m "not slow"            # run tests NOT marked slow
-        pytest -m "mark1 and not mark2" # run tests marked mark1 but not mark2
+        pytest -m slow                   # run tests marked with @pytest.mark.slow
+        pytest -m "not slow"             # run tests NOT marked slow
+        pytest -m "mark1 and not mark2"  # run tests marked mark1 but not mark2
+        pytest -m "device(serial='123')" # run tests marked device with that argument
+
+    Marker names are matched exactly and case-sensitively.
 
     See :ref:`mark` for more information on markers.
 
@@ -3441,21 +3451,19 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       file_or_dir
 
     general:
-      -k EXPRESSION         Only run tests which match the given substring
-                            expression. An expression is a Python evaluable
-                            expression where all names are substring-matched
-                            against test names and their parent classes.
-                            Example: -k 'test_method or test_other' matches all
-                            test functions and classes whose name contains
-                            'test_method' or 'test_other', while -k 'not
-                            test_method' matches those that don't contain
-                            'test_method' in their names. -k 'not test_method
-                            and not test_other' will eliminate the matches.
-                            Additionally keywords are matched to classes and
-                            functions containing extra names in their
-                            'extra_keyword_matches' set, as well as functions
-                            which have names assigned directly to them. The
-                            matching is case-insensitive.
+      -k EXPRESSION         Only run tests matching the given keyword expression,
+                            e.g. -k 'test_method or test_other', -k 'not (slow or
+                            network)'.
+                            Names in the expression are matched case-insensitively
+                            as substrings of the test's keywords, which are:
+                            - its own name, including any parametrization id
+                            - the names of its class, module and directories
+                            - the names of the markers applied to it or to its
+                              parents
+                            - attributes assigned directly to the test function
+                            - any names in its 'extra_keyword_matches' set
+                            Use -m to match marker names exactly, including their
+                            arguments.
       -m MARKEXPR           Only run tests matching given mark expression. For
                             example: -m 'mark1 and not mark2'.
       --markers             show markers (builtin, plugin and per-project ones).
