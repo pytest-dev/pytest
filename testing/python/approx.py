@@ -1107,15 +1107,9 @@ class TestApprox:
 
     def test_decimal_repr_human_readable_in_range(self) -> None:
         """Decimal tolerances in [1e-3, 1e3) display like floats do (#15010)."""
+        assert repr(pytest.approx(Decimal(100), rel=Decimal("0.01"))) == "100 ± 1.00"
         assert (
-            repr(pytest.approx(Decimal("100"), rel=Decimal("0.01"))) == "100 ± 1.00"
-        )
-        assert (
-            repr(
-                pytest.approx(
-                    Decimal("100"), rel=Decimal("0.01"), abs=Decimal("2")
-                )
-            )
+            repr(pytest.approx(Decimal(100), rel=Decimal("0.01"), abs=Decimal(2)))
             == "100 ± 2"
         )
 
@@ -1125,9 +1119,7 @@ class TestApprox:
         assert decimal.Decimal("2.600001") == approx_obj
         # The displayed tolerance is the widened one from #15006, now in
         # human-readable form because it falls in [1e-3, 1e3) (#15010).
-        assert (
-            repr(approx_obj) == "2.60 ± 0.02600000000000000054123372450"
-        )
+        assert repr(approx_obj) == "2.60 ± 0.02600000000000000054123372450"
 
     def test_decimal_approx_float_abs(self) -> None:
         with pytest.warns(pytest.PytestApproxDecimalToleranceWarning):
