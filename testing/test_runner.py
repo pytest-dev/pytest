@@ -526,6 +526,37 @@ class TestExecutionNonForked(BaseFunctionalTests):
         assert not cast(object, item._request)
         assert not item.funcargs
 
+    def test_keyboardinterrupt_during_teardown_clears_request(
+        self, pytester: Pytester
+    ) -> None:
+        """Interrupting teardown must not skip clearing the item's request and
+        funcargs (#15067)."""
+        item = pytester.getitem(
+            """
+            import pytest
+
+            @pytest.fixture
+            def resource(request):
+                yield
+                raise KeyboardInterrupt("fake")
+
+            def test_func(resource):
+                pass
+        """
+        )
+        assert isinstance(item, pytest.Function)
+        assert item._request
+
+        try:
+            runner.runtestprotocol(item, log=False)
+        except KeyboardInterrupt:
+            pass
+        else:
+            assert False, "did not raise"
+
+        assert not cast(object, item._request)
+        assert not item.funcargs
+
 
 class TestSessionReports:
     def test_collect_result(self, pytester: Pytester) -> None:

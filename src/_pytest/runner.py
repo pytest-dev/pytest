@@ -145,13 +145,16 @@ def runtestprotocol(
             nextitem = None
         # Teardown must run even when setup (or call) re-raised an interruptible
         # exception such as KeyboardInterrupt, so that finalizers registered
-        # before the interruption are still executed (see #15067).
-        reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
-        # After all teardown hooks have been called (or an exception was reraised)
-        # want funcargs and request info to go away.
-        if hasrequest:
-            item._request = False  # type: ignore[attr-defined]
-            item.funcargs = None  # type: ignore[attr-defined]
+        # before the interruption are still executed (see #15067). The request
+        # cleanup must run regardless of whether teardown itself re-raises.
+        try:
+            reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
+        finally:
+            # After all teardown hooks have been called (or an exception was reraised)
+            # want funcargs and request info to go away.
+            if hasrequest:
+                item._request = False  # type: ignore[attr-defined]
+                item.funcargs = None  # type: ignore[attr-defined]
     return reports
 
 

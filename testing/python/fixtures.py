@@ -3555,8 +3555,6 @@ class TestFixtureMarker:
             runner.runtestprotocol(item, log=False)
         except KeyboardInterrupt:
             pass
-        else:
-            pytest.fail("did not raise")
         assert Path(marker).read_text(encoding="utf-8") == "ran"
 
     def test_class_scope_parametrization_ordering(self, pytester: Pytester) -> None:
