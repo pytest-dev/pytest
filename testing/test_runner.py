@@ -22,6 +22,7 @@ import pytest
 
 
 if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
 
 
@@ -139,6 +140,46 @@ class TestSetupState:
         assert isinstance(mod, KeyError)
         assert isinstance(func.exceptions[0], TypeError)
         assert isinstance(func.exceptions[1], ValueError)
+
+    def test_teardown_exact_records_session_errors(self, pytester) -> None:
+        """Session teardown errors are recorded out-of-band, others are not (#8375)."""
+
+        def raiser(exc):
+            raise exc
+
+        item = pytester.getitem("def test_func(): pass")
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.addfinalizer(partial(raiser, RuntimeError("session")), item.session)
+        ss.addfinalizer(partial(raiser, ValueError("item")), item)
+        with pytest.raises(BaseExceptionGroup, match="errors during test teardown"):
+            ss.teardown_exact(None)
+        key = runner.session_teardown_error_key
+        assert item.session.stash.get(key, False) is True
+
+    def test_teardown_exact_no_flag_for_item_errors(self, pytester) -> None:
+        """Item-only teardown errors leave no session attribution (#8375)."""
+
+        def raiser(exc):
+            raise exc
+
+        item = pytester.getitem("def test_func(): pass")
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.addfinalizer(partial(raiser, ValueError("item")), item)
+        with pytest.raises(ValueError, match="item"):
+            ss.teardown_exact(None)
+        assert runner.session_teardown_error_key not in item.session.stash
+
+    def test_consume_session_teardown_error_one_shot(self, pytester) -> None:
+        """Consuming the session flag deletes it; second consume is False (#8375)."""
+        item = pytester.getitem("def test_func(): pass")
+        call = runner.CallInfo.from_call(lambda: None, when="teardown")
+        key = runner.session_teardown_error_key
+        assert runner.consume_session_teardown_error(item, call) is False
+        item.session.stash[key] = True
+        assert runner.consume_session_teardown_error(item, call) is True
+        assert runner.consume_session_teardown_error(item, call) is False
 
     def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
         """Regression test for #12204 (the "BTW" case)."""
