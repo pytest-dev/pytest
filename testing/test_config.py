@@ -11,6 +11,7 @@ import sys
 import textwrap
 from typing import Any
 from typing import Literal
+import warnings
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list
@@ -30,10 +31,12 @@ from _pytest.config.findpaths import ConfigValue
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import locate_config
+from _pytest.config.settings import Source
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestDeprecationWarning
+from _pytest.warning_types import PytestRemovedIn11Warning
 import pytest
 
 
@@ -1414,6 +1417,312 @@ class TestConfigAPI:
         assert len(values) == 2
         assert values == ["456", "123"]
 
+    def test_addconfig_ini_only(self, pytester: Pytester) -> None:
+        """Without `cli`, `addconfig` is just `addini`."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi")
+        """
+        )
+        assert pytester.parseconfig().getini("greeting") == "hi"
+        assert pytester.parseconfig("-o", "greeting=yo").getini("greeting") == "yo"
+
+    def test_addconfig_cli_sets_the_config_option(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting", metavar="WORD")
+        """
+        )
+        config = pytester.parseconfig("--greeting=hello")
+        assert config.getini("greeting") == "hello"
+        with pytest.warns(
+            PytestRemovedIn11Warning, match=r"Reading config\.option\.greeting"
+        ):
+            assert config.option.greeting == "hello"
+
+    def test_addconfig_cli_and_ini_agree(self, pytester: Pytester) -> None:
+        """The flag and the config file are the same setting, read the same way."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("count", "count", type=int, default=0,
+                                 cli=("--count", "--the-count"))
+        """
+        )
+        pytester.makeini("[pytest]\ncount = 3\n")
+        assert pytester.parseconfig().getini("count") == 3
+        assert pytester.parseconfig("--count=5").getini("count") == 5
+        assert pytester.parseconfig("--the-count=5").getini("count") == 5
+
+    def test_addconfig_bool_is_a_flag(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("loud", "be loud", type=bool, default=False,
+                                 cli="--loud")
+        """
+        )
+        assert pytester.parseconfig().getini("loud") is False
+        assert pytester.parseconfig("--loud").getini("loud") is True
+
+    def test_addconfig_cli_value_makes_a_flag(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("mode", "mode", type=str, default="off",
+                                 cli="--turbo", cli_value="turbo")
+        """
+        )
+        assert pytester.parseconfig().getini("mode") == "off"
+        assert pytester.parseconfig("--turbo").getini("mode") == "turbo"
+
+    def test_addconfig_cli_validated_against_the_type(self, pytester: Pytester) -> None:
+        """A bad value on the command line fails like a bad value in a file."""
+        pytester.makeconftest(
+            """
+            from typing import Literal
+
+            def pytest_addoption(parser):
+                parser.addconfig("mode", "mode", type=Literal["on", "off"],
+                                 default="off", cli="--mode")
+
+            def pytest_configure(config):
+                config.getini("mode")
+        """
+        )
+        assert pytester.parseconfig("--mode=on").getini("mode") == "on"
+        result = pytester.runpytest("--mode=sideways")
+        result.stderr.fnmatch_lines(["*config option 'mode' expects one of*"])
+
+    def test_addconfig_with_fallback(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("fmt", "format", type=str, default="plain",
+                                 cli="--fmt")
+                parser.addconfig("cli_fmt", "live format", type=str,
+                                 default="plain", cli="--cli-fmt", fallback="fmt")
+        """
+        )
+        assert pytester.parseconfig("--fmt=fancy").getini("cli_fmt") == "fancy"
+        assert (
+            pytester.parseconfig("--fmt=fancy", "--cli-fmt=live").getini("cli_fmt")
+            == "live"
+        )
+
+    def test_addconfig_group(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "say a greeting", type=str,
+                                 default="hi", cli="--greeting", group="mygroup")
+        """
+        )
+        result = pytester.runpytest("--help")
+        result.stdout.fnmatch_lines(["mygroup:", "*--greeting*say a greeting*"])
+
+    def test_addconfig_rejects_cli_args_without_cli(self, pytester: Pytester) -> None:
+        parser = pytester.parseconfig()._parser
+        with pytest.raises(ValueError, match="has no `cli` option strings"):
+            parser.addconfig(
+                "greeting", "greeting", type=str, default="hi", cli_value="x"
+            )
+
+    def test_option_namespace_shows_the_resolved_value(
+        self, pytester: Pytester
+    ) -> None:
+        """`config.option.<name>` follows the config file, not just the flag.
+
+        It used to be `None` whenever the flag was absent, even for a setting
+        the configuration file set.
+        """
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting")
+        """
+        )
+        pytester.makeini("[pytest]\ngreeting = hello\n")
+        config = pytester.parseconfig()
+        with pytest.warns(PytestRemovedIn11Warning):
+            assert config.option.greeting == "hello"
+
+    def test_option_namespace_write_warns_and_does_not_set(
+        self, pytester: Pytester
+    ) -> None:
+        """Writing the mirror does not change what the store resolves."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting")
+        """
+        )
+        config = pytester.parseconfig()
+        with pytest.warns(
+            PytestRemovedIn11Warning, match=r"Writing config\.option\.greeting"
+        ):
+            config.option.greeting = "bye"
+        assert config.getini("greeting") == "hi"
+
+    def test_option_namespace_only_warns_for_settings(self, pytester: Pytester) -> None:
+        """A plain `addoption` option is not a setting and keeps quiet."""
+        config = pytester.parseconfig()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            assert config.option.verbose == 0
+            config.option.verbose = 1
+        assert config.option.verbose == 1
+
+    def test_settings_registry_name_collisions(self, pytester: Pytester) -> None:
+        """Every command line option is registered under a name of its own.
+
+        A setting name and an argparse dest can collide -- pytest's own
+        `markers` linelist and `--markers` flag do -- and the option then
+        needs an explicit `_setting_name`. Without one it would be reachable
+        only by its dest, so pin the list of options in that state: a new
+        collision should be a deliberate rename, not a silent disappearance.
+        """
+        registry = pytester.parseconfig()._parser._settings
+        renamed = {
+            dest: setting.name
+            for dest, setting in registry._by_dest.items()
+            if setting.name != dest and Source.ARGPARSE in setting.settable_by
+        }
+        assert renamed == {"markers": "show_markers"}
+        unnamed = [
+            dest
+            for dest, setting in registry._by_dest.items()
+            if registry.get(setting.name) is not setting
+        ]
+        assert unnamed == []
+
+    def test_addini_fallback(self, pytester: Pytester) -> None:
+        """An unset option takes its value from its fallback, if that is set."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="string", default="base-default")
+                parser.addini("derived", "derived", type="string",
+                              default="derived-default", fallback="base")
+        """
+        )
+        pytester.makeini("[pytest]\nbase = from-file\n")
+        config = pytester.parseconfig()
+        assert config.getini("base") == "from-file"
+        assert config.getini("derived") == "from-file"
+
+    def test_addini_fallback_not_used_when_set(self, pytester: Pytester) -> None:
+        """A configured value wins over the fallback, even when it is falsy."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="string", default="base-default")
+                parser.addini("derived", "derived", type="string",
+                              default="derived-default", fallback="base")
+        """
+        )
+        pytester.makeini("[pytest]\nbase = from-file\nderived =\n")
+        config = pytester.parseconfig()
+        assert config.getini("derived") == ""
+
+    def test_addini_fallback_default_when_neither_set(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="string", default="base-default")
+                parser.addini("derived", "derived", type="string",
+                              default="derived-default", fallback="base")
+        """
+        )
+        config = pytester.parseconfig()
+        assert config.getini("derived") == "derived-default"
+
+    def test_addini_fallback_from_override(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="string", default="base-default")
+                parser.addini("derived", "derived", type="string",
+                              default="derived-default", fallback="base")
+        """
+        )
+        config = pytester.parseconfig("-o", "base=from-override")
+        assert config.getini("derived") == "from-override"
+
+    def test_addini_fallback_chain(self, pytester: Pytester) -> None:
+        """Fallbacks are transitive: an unset middle link does not stop the walk."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("a", "a", type="string", default="a-default")
+                parser.addini("b", "b", type="string", default="b-default",
+                              fallback="a")
+                parser.addini("c", "c", type="string", default="c-default",
+                              fallback="b")
+        """
+        )
+        pytester.makeini("[pytest]\na = from-a\n")
+        config = pytester.parseconfig()
+        assert config.getini("c") == "from-a"
+
+    def test_addini_fallback_multiple_first_configured_wins(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("first", "first", type="string", default="")
+                parser.addini("second", "second", type="string", default="")
+                parser.addini("derived", "derived", type="string", default="d",
+                              fallback=["first", "second"])
+        """
+        )
+        pytester.makeini("[pytest]\nsecond = from-second\n")
+        assert pytester.parseconfig().getini("derived") == "from-second"
+
+        pytester.makeini("[pytest]\nfirst = from-first\nsecond = from-second\n")
+        assert pytester.parseconfig().getini("derived") == "from-first"
+
+    def test_addini_fallback_list_value_is_not_shared(self, pytester: Pytester) -> None:
+        """`addinivalue_line` on a fallen-back option must not mutate the target."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("base", "base", type="linelist", default=[])
+                parser.addini("derived", "derived", type="linelist", default=[],
+                              fallback="base")
+        """
+        )
+        pytester.makeini("[pytest]\nbase = one\n")
+        config = pytester.parseconfig()
+        assert config.getini("derived") == ["one"]
+        config.addinivalue_line("derived", "two")
+        assert config.getini("derived") == ["one", "two"]
+        assert config.getini("base") == ["one"]
+
+    def test_addini_fallback_unregistered(self, pytester: Pytester) -> None:
+        parser = pytester.parseconfig()._parser
+        with pytest.raises(
+            ValueError,
+            match="fallback 'nope' of ini option 'derived' is not registered",
+        ):
+            parser.addini("derived", "derived", type="string", fallback="nope")
+
+    def test_addini_fallback_type_mismatch(self, pytester: Pytester) -> None:
+        parser = pytester.parseconfig()._parser
+        parser.addini("base", "base", type="bool", default=False)
+        with pytest.raises(
+            ValueError,
+            match="fallback 'base' of ini option 'derived' has type bool, "
+            "expected string",
+        ):
+            parser.addini("derived", "derived", type="string", fallback="base")
+
     def test_addini_default_values(self, pytester: Pytester) -> None:
         """Tests the default values for configuration based on
         config type
@@ -1699,6 +2008,140 @@ class TestConfigAPI:
             config._ensure_unconfigure()
 
         assert report == ["cleanup_first", "raise_1", "raise_2", "cleanup_last"]
+
+
+class TestDeclarationDiagnostics:
+    """Problems found while settings are being declared."""
+
+    def test_conflicting_redeclaration_warns(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            other_plugin="""
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type=int, default=0)
+            """
+        )
+        pytester.makeconftest(
+            """
+            pytest_plugins = ["other_plugin"]
+
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type=str, default="hi")
+            """
+        )
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest("-W", "default")
+        # Blamed on the later declaration, and naming the earlier one.
+        result.stdout.fnmatch_lines(
+            ["*other_plugin.py:2:*greeting*registered twice*conftest.py:4*"]
+        )
+        assert result.ret == ExitCode.OK
+
+    def test_identical_redeclaration_is_quiet(self, pytester: Pytester) -> None:
+        """A plugin loaded twice is not a conflict."""
+        pytester.makepyfile(
+            other_plugin="""
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type=str, default="hi")
+            """
+        )
+        pytester.makeconftest(
+            """
+            pytest_plugins = ["other_plugin"]
+
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type=str, default="hi")
+            """
+        )
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest("-W", "error")
+        assert result.ret == ExitCode.OK
+
+    def test_getini_points_at_getoption(self, pytester: Pytester) -> None:
+        config = pytester.parseconfig()
+        with pytest.raises(ValueError, match=r"config\.getoption\('verbose'\)"):
+            config.getini("verbose")
+
+    def test_getoption_points_at_getini(self, pytester: Pytester) -> None:
+        config = pytester.parseconfig()
+        with pytest.raises(ValueError, match=r"config\.getini\('minversion'\)"):
+            config.getoption("minversion")
+
+
+class TestSettings:
+    """The public `config.settings` mapping."""
+
+    @pytest.fixture
+    def config(self, pytester: Pytester) -> Config:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting", aliases=["salute"])
+                parser.addconfig("shout_greeting", "shouted greeting", type=str,
+                                 default="HI", fallback="greeting")
+        """
+        )
+        pytester.makeini("[pytest]\nsalute = hello\n")
+        return pytester.parseconfig()
+
+    def test_mapping(self, config: Config) -> None:
+        assert config.settings["greeting"] == "hello"
+        assert config.settings.get("greeting") == "hello"
+        assert config.settings.get("nope", "fallback") == "fallback"
+        assert "greeting" in config.settings
+        assert "nope" not in config.settings
+        with pytest.raises(KeyError):
+            config.settings["nope"]
+
+    def test_aliases_resolve_but_are_not_listed(self, config: Config) -> None:
+        assert config.settings["salute"] == "hello"
+        assert "salute" in config.settings
+        assert "salute" not in list(config.settings)
+        assert config.settings.aliases["salute"] == "greeting"
+
+    def test_agrees_with_getini(self, config: Config) -> None:
+        for name in config.settings:
+            assert config.settings[name] == config.getini(name)
+
+    def test_source_of(self, config: Config) -> None:
+        assert config.settings.source_of("greeting") is Source.FILE
+        assert config.settings.source_of("shout_greeting") is Source.FALLBACK
+        assert config.settings.source_of("minversion") is Source.DEFAULT
+
+    def test_source_of_command_line(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig("greeting", "greeting", type=str, default="hi",
+                                 cli="--greeting")
+        """
+        )
+        config = pytester.parseconfig("--greeting=hey")
+        assert config.settings.source_of("greeting") is Source.CLI
+        config = pytester.parseconfig("-o", "greeting=hey")
+        assert config.settings.source_of("greeting") is Source.OVERRIDE
+
+    def test_resolved_from(self, config: Config) -> None:
+        assert config.settings.resolved_from("shout_greeting") == "greeting"
+        assert config.settings.resolved_from("greeting") == "greeting"
+
+    def test_spec(self, config: Config) -> None:
+        spec = config.settings.spec("greeting")
+        assert spec.name == "greeting"
+        assert spec.type == "string"
+        assert spec.default == "hi"
+        assert spec.aliases == ("salute",)
+        assert spec.dest == "greeting"
+
+    def test_options_view(self, config: Config) -> None:
+        """Command line only options live in their own namespace."""
+        assert config.settings.options["markers"] is False
+        assert "markers" in config.settings.options
+        # The linelist of the same name is a setting, not an option.
+        assert config.settings["markers"] == []
+        assert "greeting" not in config.settings.options
+        with pytest.raises(KeyError):
+            config.settings.options["greeting"]
 
 
 class TestConfigFromdictargs:
@@ -2623,6 +3066,148 @@ class TestOverrideIniArgs:
                 "ini4:False",
             ]
         )
+
+    @pytest.mark.parametrize("registered_by", ["plugin", "conftest"])
+    @pytest.mark.parametrize("passed_via", ["cmdline", "addopts"])
+    def test_override_ini_action_from_late_registered_option(
+        self, pytester: Pytester, registered_by: str, passed_via: str
+    ) -> None:
+        """An `OverrideIniAction` flag must take effect no matter which round
+        registered it.
+
+        Options are registered in several rounds (core plugins, then
+        third-party plugins, then conftests), each followed by its own parse.
+        Overrides used to be collected only after the earliest rounds, so a
+        flag declared by a plugin or a conftest set `config.option` but never
+        reached `config.getini`.
+        """
+        source = """
+            from _pytest.config.argparsing import OverrideIniAction
+
+            def pytest_addoption(parser):
+                parser.addini("myflag", "my flag", type="bool", default=False)
+                parser.getgroup("myplug").addoption(
+                    "--myflag",
+                    action=OverrideIniAction,
+                    ini_option="myflag",
+                    ini_value="true",
+                    help="enable myflag",
+                )
+
+            def pytest_configure(config):
+                assert config.getini("myflag") is True
+        """
+        args = []
+        if registered_by == "plugin":
+            pytester.makepyfile(myplug=source)
+            pytester.syspathinsert()
+            args += ["-p", "myplug"]
+        else:
+            pytester.makeconftest(source)
+
+        if passed_via == "cmdline":
+            args.append("--myflag")
+        else:
+            pytester.makeini("[pytest]\naddopts = --myflag\n")
+
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest(*args)
+        result.assert_outcomes(passed=1)
+
+    def test_override_ini_action_with_value(self, pytester: Pytester) -> None:
+        """An `OverrideIniAction` option taking an argument sets the config option."""
+        pytester.makeconftest(
+            """
+            from _pytest.config.argparsing import OverrideIniAction
+
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type="string", default="hi")
+                parser.getgroup("g").addoption(
+                    "--greeting", action=OverrideIniAction,
+                    ini_option="greeting", help="set greeting",
+                )
+        """
+        )
+        config = pytester.parseconfig("--greeting=hello")
+        assert config.getini("greeting") == "hello"
+        # Still reflected on the option namespace, deprecated as that is.
+        with pytest.warns(
+            PytestRemovedIn11Warning, match=r"Reading config\.option\.greeting"
+        ):
+            assert config.option.greeting == "hello"
+
+    def test_override_ini_action_with_value_typed(self, pytester: Pytester) -> None:
+        """The value goes through the same coercion as one from a config file."""
+        pytester.makeconftest(
+            """
+            from _pytest.config.argparsing import OverrideIniAction
+
+            def pytest_addoption(parser):
+                parser.addini("count", "count", type="int", default=0)
+                parser.getgroup("g").addoption(
+                    "--count", action=OverrideIniAction,
+                    ini_option="count", help="set count",
+                )
+        """
+        )
+        assert pytester.parseconfig("--count=7").getini("count") == 7
+
+    def test_override_ini_action_value_with_equals_sign(
+        self, pytester: Pytester
+    ) -> None:
+        """A command line value is not round-tripped through `option=value`."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig(
+                    "greeting", "greeting", type=str, default="hi",
+                    cli="--greeting",
+                )
+
+            def pytest_report_header(config):
+                return "greeting=" + config.getini("greeting")
+            """
+        )
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest("--greeting=a=b=c")
+        result.stdout.fnmatch_lines(["greeting=a=b=c"])
+
+    def test_dash_o_beats_earlier_action(self, pytester: Pytester) -> None:
+        """Between the two channels the last one on the command line wins."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addconfig(
+                    "greeting", "greeting", type=str, default="hi",
+                    cli="--greeting",
+                )
+
+            def pytest_report_header(config):
+                return "greeting=" + config.getini("greeting")
+            """
+        )
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest("--greeting=second", "-o", "greeting=first")
+        result.stdout.fnmatch_lines(["greeting=first"])
+
+    def test_override_ini_action_composes_with_dash_o(self, pytester: Pytester) -> None:
+        """`-o` and the flag write to the same channel, so command line order wins."""
+        pytester.makeconftest(
+            """
+            from _pytest.config.argparsing import OverrideIniAction
+
+            def pytest_addoption(parser):
+                parser.addini("greeting", "greeting", type="string", default="hi")
+                parser.getgroup("g").addoption(
+                    "--greeting", action=OverrideIniAction,
+                    ini_option="greeting", help="set greeting",
+                )
+        """
+        )
+        config = pytester.parseconfig("-o", "greeting=a", "--greeting=b")
+        assert config.getini("greeting") == "b"
+        config = pytester.parseconfig("--greeting=b", "-o", "greeting=a")
+        assert config.getini("greeting") == "a"
 
     def test_override_ini_usage_error_bad_style(self, pytester: Pytester) -> None:
         pytester.makeini(

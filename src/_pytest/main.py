@@ -74,6 +74,27 @@ def pytest_addoption(parser: Parser) -> None:
         default=0,
         help="Exit after first num failures or errors",
     )
+    parser.addini(
+        "strict",
+        "Enables all strictness options, currently: "
+        "strict_config, strict_markers, strict_xfail, strict_parametrization_ids",
+        type="bool",
+        default=False,
+    )
+    parser.addini(
+        "strict_config",
+        "Any warnings encountered while parsing the `pytest` section of the "
+        "configuration file raise errors",
+        type="bool",
+        fallback="strict",
+    )
+    parser.addini(
+        "strict_markers",
+        "Markers not registered in the `markers` section of the configuration "
+        "file raise errors",
+        type="bool",
+        fallback="strict",
+    )
     group.addoption(
         "--strict-config",
         action=OverrideIniAction,
@@ -95,29 +116,6 @@ def pytest_addoption(parser: Parser) -> None:
         ini_value="true",
         help="Enables the strict option",
     )
-    parser.addini(
-        "strict_config",
-        "Any warnings encountered while parsing the `pytest` section of the "
-        "configuration file raise errors",
-        type="bool",
-        # None => fallback to `strict`.
-        default=None,
-    )
-    parser.addini(
-        "strict_markers",
-        "Markers not registered in the `markers` section of the configuration "
-        "file raise errors",
-        type="bool",
-        # None => fallback to `strict`.
-        default=None,
-    )
-    parser.addini(
-        "strict",
-        "Enables all strictness options, currently: "
-        "strict_config, strict_markers, strict_xfail, strict_parametrization_ids",
-        type="bool",
-        default=False,
-    )
 
     group = parser.getgroup("pytest-warnings")
     group.addoption(
@@ -126,15 +124,6 @@ def pytest_addoption(parser: Parser) -> None:
         action="append",
         help="Set which warnings to report, see -W option of Python itself",
     )
-    group.addoption(
-        "--max-warnings",
-        action="store",
-        type=int,
-        default=None,
-        metavar="num",
-        dest="max_warnings",
-        help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
-    )
     parser.addini(
         "filterwarnings",
         type="linelist",
@@ -142,11 +131,15 @@ def pytest_addoption(parser: Parser) -> None:
         "warnings.filterwarnings. "
         "Processed after -W/--pythonwarnings.",
     )
-    parser.addini(
+    parser.addconfig(
         "max_warnings",
-        help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
-        type=int | str,
+        "Exit with error if all tests pass but the number of warnings exceeds "
+        "this threshold",
+        type=int,
         default=None,
+        cli="--max-warnings",
+        metavar="num",
+        group="pytest-warnings",
     )
 
     group = parser.getgroup("collect", "collection")
