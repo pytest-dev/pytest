@@ -607,6 +607,37 @@ def test_undo_slot_attribute_on_instance() -> None:
     assert obj.x == 1
 
 
+def test_undo_custom_setattr_on_instance() -> None:
+    """An object with custom __setattr__ must restore its old value on undo.
+
+    See #15099.
+    """
+
+    class Config:
+        """Stores attributes in a private dict instead of __dict__."""
+
+        def __init__(self) -> None:
+            object.__setattr__(self, "_data", {"debug": False})
+
+        def __getattr__(self, name: str) -> object:
+            try:
+                return self._data[name]  # type: ignore[attr-defined]
+            except KeyError:
+                raise AttributeError(name) from None
+
+        def __setattr__(self, name: str, value: object) -> None:
+            self._data[name] = value  # type: ignore[attr-defined]
+
+    cfg = Config()
+    monkeypatch = MonkeyPatch()
+
+    monkeypatch.setattr(cfg, "debug", True)
+    assert cfg.debug is True
+
+    monkeypatch.undo()
+    assert cfg.debug is False
+
+
 def test_issue1338_name_resolving() -> None:
     pytest.importorskip("requests")
     monkeypatch = MonkeyPatch()
