@@ -1738,6 +1738,42 @@ def test_abstract_testcase_is_not_collected(pytester: Pytester) -> None:
             def abstract2(self): pass
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wignore::pytest.PytestCollectionWarning")
     assert result.ret == ExitCode.OK
     result.assert_outcomes(passed=1)
+
+
+def test_abstract_testcase_missing_implementation_warns(pytester: Pytester) -> None:
+    """A TestCase that inherits tests but no longer instantiates says so (#13546).
+
+    The class name deliberately does not match ``python_classes``: unittest
+    classes are collected regardless of it.
+    """
+    pytester.makepyfile(
+        """
+        import abc
+        import unittest
+
+        class BaseTestCase(unittest.TestCase, abc.ABC):
+            @abc.abstractmethod
+            def get_application(self): pass
+
+            def test_it(self):
+                assert self.get_application() == 1
+
+        class InvalidTestCase(BaseTestCase):
+            pass
+
+        class ValidTestCase(BaseTestCase):
+            def get_application(self):
+                return 1
+        """
+    )
+    result = pytester.runpytest("-Wdefault::pytest.PytestCollectionWarning")
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestCollectionWarning: cannot collect test class 'InvalidTestCase'"
+            " because it is abstract: it does not implement 'get_application'*"
+        ]
+    )
