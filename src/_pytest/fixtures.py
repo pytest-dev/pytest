@@ -416,35 +416,44 @@ def traverse_fixture_closure(
     # last, etc.
     current_indices: dict[str, int] = {}
 
-    def process_argname(argname: str) -> Iterator[str]:
-        index = current_indices.get(argname)
+    # Save the iterator and override index when descending into dependencies.
+    # An explicit stack avoids a recursive generator for each dependency and
+    # the reference cycle created by a recursive nested function.
+    stack: list[tuple[str, int, Iterator[str]]] = []
+    pending = iter(initialnames)
+    while True:
+        for argname in pending:
+            index = current_indices.get(argname)
 
-        # Optimization: already processed this argname.
-        if index == -1:
-            return
+            # Already processed this argname outside the active override chain.
+            if index == -1:
+                continue
 
-        # Only yield each argname once.
-        if index is None:
-            yield argname
-            current_indices[argname] = -1
+            if index is None:
+                yield argname
+                current_indices[argname] = -1
 
-        fixturedefs = getfixturedefs(argname)
-        if not fixturedefs:
-            return
+            fixturedefs = getfixturedefs(argname)
+            if not fixturedefs:
+                continue
 
-        index = current_indices.get(argname, -1)
-        if -index > len(fixturedefs):
-            # Exhausted the override chain (will error during runtest).
-            return
-        fixturedef = fixturedefs[index]
+            index = current_indices.get(argname, -1)
+            if -index > len(fixturedefs):
+                # Exhausted the override chain (will error during runtest).
+                continue
+            fixturedef = fixturedefs[index]
+            if not fixturedef.argnames:
+                continue
 
-        current_indices[argname] = index - 1
-        for dep in fixturedef.argnames:
-            yield from process_argname(dep)
-        current_indices[argname] = index
-
-    for argname in initialnames:
-        yield from process_argname(argname)
+            current_indices[argname] = index - 1
+            stack.append((argname, index, pending))
+            pending = iter(fixturedef.argnames)
+            break
+        else:
+            if not stack:
+                return
+            argname, index, pending = stack.pop()
+            current_indices[argname] = index
 
 
 @dataclasses.dataclass(frozen=True)
@@ -1944,9 +1953,10 @@ class FixtureManager:
             if basenames:
                 yield from basenames
             # Legacy fallback: check string-based nodeid autouse names.
-            nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
-            if nodeid_basenames:
-                yield from nodeid_basenames
+            if self._nodeid_autousenames:
+                nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
+                if nodeid_basenames:
+                    yield from nodeid_basenames
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures visible to node."""
@@ -2388,14 +2398,23 @@ class FixtureManager:
         nodeid2fixturedefs = self._arg2nodeid2fixturedefs.get(argname, {})
         if not node2fixturedefs and not nodeid2fixturedefs:
             return None
-        fixturedefs = [
-            fixturedef
-            for parent in node.iter_parents()
-            for fixturedef in [
-                *node2fixturedefs.get(parent, ()),
-                *nodeid2fixturedefs.get(parent.nodeid, ()),
+        if not nodeid2fixturedefs:
+            # Avoid string nodeid lookups and intermediate lists when no plugin
+            # has registered fixtures through the legacy nodeid-based API.
+            fixturedefs = [
+                fixturedef
+                for parent in node.iter_parents()
+                for fixturedef in node2fixturedefs.get(parent, ())
             ]
-        ]
+        else:
+            fixturedefs = [
+                fixturedef
+                for parent in node.iter_parents()
+                for fixturedef in [
+                    *node2fixturedefs.get(parent, ()),
+                    *nodeid2fixturedefs.get(parent.nodeid, ()),
+                ]
+            ]
         fixturedefs.reverse()
         return fixturedefs
 
