@@ -1350,6 +1350,28 @@ def test_rewritten():
         result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
         result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
+    def test_plugin_imported_as_side_effect_is_rewritten(
+        self, pytester: Pytester
+    ) -> None:
+        """A plugin imported as a side effect of another plugin must still
+        get assertion rewriting (#2353)."""
+        pytester.makepyfile(
+            **{
+                "conftest.py": "pytest_plugins = ['plugin_2353_a', 'plugin_2353_b']",
+                "plugin_2353_a.py": "import plugin_2353_b",
+                "plugin_2353_b.py": "def check():\n    x = 1\n    assert x == 2\n",
+                "test_2353_side_effect.py": (
+                    "import plugin_2353_b\n\ndef test_rewritten():\n"
+                    "    plugin_2353_b.check()\n"
+                ),
+            }
+        )
+        pytester.chdir()
+        result = pytester.runpytest_subprocess()
+        result.assert_outcomes(failed=1)
+        result.stdout.fnmatch_lines(["E *assert 1 == 2*"])
+        result.stdout.no_fnmatch_line("*already imported*")
+
     def test_rewrite_warning_using_pytest_plugins_env_var(
         self, pytester: Pytester, monkeypatch
     ) -> None:
