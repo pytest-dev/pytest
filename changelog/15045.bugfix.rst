@@ -1,0 +1,2 @@
+Fixed ``--last-failed`` silently skipping custom items whose names contain
+brackets.

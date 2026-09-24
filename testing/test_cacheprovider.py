@@ -8,13 +8,19 @@ import errno
 import os
 from pathlib import Path
 import shutil
+from types import SimpleNamespace
 from typing import Any
+from typing import cast
 from unittest.mock import mock_open
 
+from _pytest.cacheprovider import LFPlugin
 from _pytest.compat import assert_never
 from _pytest.config import ExitCode
+from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+from _pytest.reports import CollectReport
+from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
 import pytest
 
@@ -413,6 +419,97 @@ class TestLastFailed:
             shutil.rmtree(".pytest_cache")
         result = pytester.runpytest("--lf", "--cache-clear")
         result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
+
+    def test_lastfailed_custom_item_name_with_brackets(
+        self, pytester: Pytester
+    ) -> None:
+        """Keep custom item names containing brackets intact for --last-failed."""
+        pytester.makeconftest(
+            """
+            import json
+            import pytest
+
+            def pytest_collect_file(parent, file_path):
+                if file_path.name == "test_cases.json":
+                    return Cases.from_parent(parent, path=file_path)
+
+            class Cases(pytest.File):
+                def collect(self):
+                    for name, passed in json.loads(
+                        self.path.read_text(encoding="utf-8")
+                    ).items():
+                        yield Case.from_parent(self, name=name, passed=passed)
+
+            class Case(pytest.Item):
+                def __init__(self, *, passed, **kwargs):
+                    super().__init__(**kwargs)
+                    self.passed = passed
+
+                def runtest(self):
+                    assert self.passed
+            """
+        )
+        cases = pytester.path / "test_cases.json"
+        cases.write_text('{"a_bad[one]": false, "b_fixed": false}', encoding="utf-8")
+
+        result = pytester.runpytest_inprocess("-q")
+        assert result.ret == 1
+
+        cases.write_text('{"a_bad[one]": false, "b_fixed": true}', encoding="utf-8")
+        result = pytester.runpytest_inprocess("-q", "--lf")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["FAILED test_cases.json::a_bad[[]one[]]*"])
+
+    def test_lastfailed_stores_string_nodeids(self, pytester: Pytester) -> None:
+        config = pytester.parseconfigure("--lf")
+        plugin = config.pluginmanager.getplugin("lfplugin")
+        assert isinstance(plugin, LFPlugin)
+
+        failed_report = SimpleNamespace(
+            id="test_file.py::test_case[one]",
+            when="call",
+            passed=False,
+            skipped=False,
+            failed=True,
+        )
+        plugin.pytest_runtest_logreport(cast(TestReport, failed_report))
+        assert plugin.lastfailed == {"test_file.py::test_case[one]": True}
+
+        passed_report = SimpleNamespace(
+            id="test_file.py::test_case[one]",
+            when="call",
+            passed=True,
+            skipped=False,
+            failed=False,
+        )
+        plugin.pytest_runtest_logreport(cast(TestReport, passed_report))
+        assert plugin.lastfailed == {}
+
+        plugin.lastfailed["test_file.py::test_group"] = True
+        plugin.pytest_collectreport(
+            cast(
+                CollectReport,
+                SimpleNamespace(
+                    id="test_file.py::test_group",
+                    outcome="passed",
+                    result=[SimpleNamespace(id="test_file.py::test_case[one]")],
+                ),
+            )
+        )
+        assert plugin.lastfailed == {"test_file.py::test_case[one]": True}
+
+        plugin.pytest_collectreport(
+            cast(
+                CollectReport,
+                SimpleNamespace(
+                    id="test_file.py::test_broken_group",
+                    outcome="failed",
+                    result=[],
+                ),
+            )
+        )
+        assert plugin.lastfailed["test_file.py::test_broken_group"] is True
+        plugin.pytest_sessionfinish(cast(Session, SimpleNamespace()))
 
     def test_failedfirst_order(self, pytester: Pytester) -> None:
         pytester.makepyfile(
