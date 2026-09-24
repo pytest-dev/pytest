@@ -34,6 +34,7 @@ from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import OverrideIniAction
 from _pytest.config.argparsing import Parser
+from _pytest.deselect import deselect_items
 from _pytest.nodeid import NodeId
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
@@ -495,7 +496,7 @@ def pytest_collection_modifyitems(items: list[nodes.Item], config: Config) -> No
             remaining.append(colitem)
 
     if deselected:
-        config.hook.pytest_deselected(items=deselected)
+        deselect_items(config, deselected, "node id matched --deselect")
         items[:] = remaining
 
 

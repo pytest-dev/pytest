@@ -1,0 +1,12 @@
+Running with ``-v`` now lists the deselected items and, for deselections made by
+pytest itself, the reason for them -- the mark or keyword expression that did not
+match, ``--deselect``, ``--lf`` or ``--stepwise``:
+
+.. code-block:: text
+
+    ================================ deselected ================================
+    -m 'not slow' did not match:
+      test_it.py::test_slow
+
+Items deselected by a plugin are listed without a reason, because
+:hook:`pytest_deselected` has no way to carry one.
