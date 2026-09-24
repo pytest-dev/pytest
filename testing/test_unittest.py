@@ -1225,7 +1225,8 @@ def test_BdbQuit(pytester: Pytester) -> None:
     """
     )
     reprec = pytester.inline_run()
-    reprec.assertoutcome(failed=1, passed=1)
+    # BdbQuit now stops the session, so test_should_not_run doesn't run.
+    reprec.assertoutcome(failed=1)
 
 
 def test_exit_outcome(pytester: Pytester) -> None:
