@@ -1,0 +1,3 @@
+Skipping an item whose ``reportinfo()`` reports no line number no longer
+crashes pytest with an ``INTERNALERROR``; the skip location is reported without
+a line instead. Non-Python items may legitimately have no line to point at.
