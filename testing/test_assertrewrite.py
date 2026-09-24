@@ -1315,6 +1315,49 @@ def test_rewritten():
         )
         assert pytester.runpytest_subprocess().ret == 0
 
+    def test_warn_collected_module_imported_too_early(self, pytester: Pytester) -> None:
+        """Collecting an already-imported test module warns (#1930).
+
+        The module is only a test module because it was named on the
+        command line, so the conftest import wins the race and assertion
+        introspection is silently lost.
+        """
+        pytester.makeconftest("import foo")
+        pytester.makepyfile(
+            foo="""
+            def test_compare():
+                x = 1
+                assert x == 2
+        """
+        )
+        # needs to be a subprocess because pytester explicitly disables this warning
+        result = pytester.runpytest_subprocess("foo.py")
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestAssertRewriteWarning: Module 'foo'*was already imported*",
+                "*pytest.register_assert_rewrite('foo')*",
+            ]
+        )
+
+    def test_no_warning_when_import_delayed(self, pytester: Pytester) -> None:
+        """Importing the module from inside a hook leaves rewriting intact."""
+        pytester.makeconftest(
+            """
+            def pytest_assertrepr_compare(op, left, right):
+                import foo  # noqa: F401
+        """
+        )
+        pytester.makepyfile(
+            foo="""
+            def test_compare():
+                x = 1
+                assert x == 2
+        """
+        )
+        result = pytester.runpytest_subprocess("foo.py")
+        result.stdout.fnmatch_lines(["E*assert 1 == 2"])
+        result.stdout.no_fnmatch_line("*PytestAssertRewriteWarning*")
+
     def test_remember_rewritten_modules(
         self, pytestconfig, pytester: Pytester, monkeypatch
     ) -> None:
@@ -1938,6 +1981,33 @@ def test_rewrite_infinite_recursion(
     assert len(write_pyc_called) == 1
 
 
+def test_rewrite_package_init_with_importlib_mode(pytester: Pytester) -> None:
+    """A package's ``__init__.py`` is rewritten under ``--import-mode=importlib``.
+
+    The meta path finder has to be asked for the package in the directory
+    *containing* it, not in the package directory itself (#1930).
+    """
+    pytester.makeini(
+        """
+        [pytest]
+        python_files = *.py
+        pythonpath = .
+        """
+    )
+    pytester.makepyfile(
+        **{
+            "pkg/__init__.py": "",
+            "pkg/sub/__init__.py": """\
+                def test_init():
+                    x = 1
+                    assert x == 2
+            """,
+        }
+    )
+    result = pytester.runpytest("--import-mode=importlib")
+    result.stdout.fnmatch_lines(["E*assert 1 == 2"])
+
+
 class TestEarlyRewriteBailout:
     @pytest.fixture
     def hook(
@@ -2001,6 +2071,25 @@ class TestEarlyRewriteBailout:
         # file is an initial path (passed on the command-line): should be rewritten
         assert hook.find_spec("foobar") is not None
         assert self.find_spec_calls == ["conftest", "test_foo", "foobar"]
+
+    def test_package_init_given_as_initial_path(self, pytester: Pytester) -> None:
+        """A package ``__init__.py`` named on the command-line is rewritten.
+
+        The bailout derives the basenames to check from the initial paths, which
+        for an ``__init__.py`` is the name of the package directory, not
+        ``__init__`` (#1930).
+        """
+        pytester.makepyfile(
+            **{
+                "sub/__init__.py": """\
+                    def test_init():
+                        x = 1
+                        assert x == 2
+                """
+            }
+        )
+        result = pytester.runpytest("sub/__init__.py")
+        result.stdout.fnmatch_lines(["E*assert 1 == 2"])
 
     def test_pattern_contains_subdirectories(
         self, pytester: Pytester, hook: AssertionRewritingHook
