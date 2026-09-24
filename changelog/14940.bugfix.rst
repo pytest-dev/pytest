@@ -1,0 +1,1 @@
+Fixed ``__tracebackhide__`` not hiding frames that share a source location in ``ExceptionGroup`` tracebacks.
