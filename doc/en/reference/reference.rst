@@ -1010,6 +1010,11 @@ FixtureDef
     :members:
     :show-inheritance:
 
+FixtureFunctionDefinition
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.FixtureFunctionDefinition()
+
 MarkDecorator
 ~~~~~~~~~~~~~
 
