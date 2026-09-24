@@ -43,6 +43,15 @@ _JunitLogging = Literal["no", "log", "system-out", "system-err", "out-err", "all
 _JunitDurationReport = Literal["total", "call"]
 _JunitFamily = Literal["legacy", "xunit1", "xunit2"]
 
+# SGR (Select Graphic Rendition) sequences pre-baked into assertion diffs by Pygments
+# when color is enabled. These are invalid in XML and must be stripped before writing.
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[\d;]*m")
+
+
+def strip_ansi_escapes(text: str) -> str:
+    """Remove ANSI SGR escape sequences from *text*."""
+    return _ANSI_ESCAPE_RE.sub("", text)
+
 
 def bin_xml_escape(arg: object) -> str:
     r"""Visually escape invalid XML characters.
@@ -163,6 +172,8 @@ class _NodeReporter:
 
     def _add_simple(self, tag: str, message: str, data: str | None = None) -> None:
         node = ET.Element(tag, message=message)
+        if data is not None:
+            data = strip_ansi_escapes(data)
         node.text = bin_xml_escape(data)
         self.append(node)
 
@@ -194,7 +205,7 @@ class _NodeReporter:
 
     def _write_content(self, report: TestReport, content: str, jheader: str) -> None:
         tag = ET.Element(jheader)
-        tag.text = bin_xml_escape(content)
+        tag.text = bin_xml_escape(strip_ansi_escapes(content))
         self.append(tag)
 
     def append_pass(self, report: TestReport) -> None:
@@ -213,7 +224,7 @@ class _NodeReporter:
                 message = reprcrash.message
             else:
                 message = str(report.longrepr)
-            message = bin_xml_escape(message)
+            message = bin_xml_escape(strip_ansi_escapes(message))
             self._add_simple("failure", message, str(report.longrepr))
 
     def append_collect_error(self, report: CollectReport) -> None:
@@ -236,7 +247,9 @@ class _NodeReporter:
             msg = f'failed on teardown with "{reason}"'
         else:
             msg = f'failed on setup with "{reason}"'
-        self._add_simple("error", bin_xml_escape(msg), str(report.longrepr))
+        self._add_simple(
+            "error", bin_xml_escape(strip_ansi_escapes(msg)), str(report.longrepr)
+        )
 
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):
