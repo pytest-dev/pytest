@@ -812,7 +812,9 @@ class FixtureRequest(abc.ABC):
                 source_path_str = str(source_path.relative_to(funcitem.config.rootpath))
             except ValueError:
                 source_path_str = str(source_path)
-            location = getlocation(fixturedef.func, funcitem.config.rootpath)
+            location = getlocation(
+                fixturedef.func, relative_to=funcitem.config.rootpath
+            )
             msg = (
                 "The requested fixture has no parameter defined for test:\n"
                 f"    {funcitem.nodeid}\n\n"
@@ -1443,7 +1445,7 @@ class FixtureFunctionMarker:
 
         name = self.name or function.__name__
         if name == "request":
-            location = getlocation(function)
+            location = getlocation(function, relative_to=None)
             fail(
                 f"'request' is a reserved word for fixtures, use another name:\n  {location}",
                 pytrace=False,
@@ -2409,13 +2411,13 @@ def show_fixtures_per_test(config: Config) -> int | ExitCode:
 _PYTEST_DIR = Path(_pytest.__file__).parent
 
 
-def _pretty_fixture_path(invocation_dir: Path, func) -> str:
-    loc = Path(getlocation(func, invocation_dir))
+def _pretty_fixture_path(invocation_dir: Path, func: object) -> str:
+    location = getlocation(func, relative_to=None)
     prefix = Path("...", "_pytest")
     try:
-        return str(prefix / loc.relative_to(_PYTEST_DIR))
+        return f"{prefix / location.path.relative_to(_PYTEST_DIR)}:{location.lineno}"
     except ValueError:
-        return bestrelpath(invocation_dir, loc)
+        return f"{bestrelpath(invocation_dir, location.path)}:{location.lineno}"
 
 
 def _get_fixtures_per_test(test: nodes.Item) -> Iterator[FixtureDef[object]]:
@@ -2457,8 +2459,8 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     verbose = config.get_verbosity()
 
     def get_best_relpath(func) -> str:
-        loc = getlocation(func, invocation_dir)
-        return bestrelpath(invocation_dir, Path(loc))
+        location = getlocation(func, relative_to=None)
+        return f"{bestrelpath(invocation_dir, location.path)}:{location.lineno}"
 
     def write_fixture(fixture_def: FixtureDef[object]) -> None:
         argname = fixture_def.argname
