@@ -1,0 +1,20 @@
+New ``--cache-list`` option, listing the cache directories under the user-level cache root together with
+their size, age, origin project and the environments they hold state for:
+
+.. code-block:: text
+
+    user cache directory: /home/ronny/.cache/pytest
+
+      DIRECTORY              SIZE      LAST USED  STATUS    ORIGIN
+      pytest-1a2b3c4d5e6f7a  12.4 MiB  2 days     ok        /home/ronny/Projects/pytest
+        env-venv-9f8e7d6c     1.1 MiB  2 days     ok        /home/ronny/Projects/pytest/.venv
+        env-py312-0a1b2c3d  840.1 KiB  94 days    stale     /home/ronny/Projects/pytest/.tox/py312
+      myproj-9f8e7d6c5b4a3   840 KiB   31 days    orphaned  /home/ronny/src/myproj
+
+    2 directories, 3 scopes, 13.2 MiB total
+
+``orphaned`` means the project it belongs to is gone; ``stale`` means the environment a scope holds state
+for is gone. Directory and origin paths are clickable in terminals which support hyperlinks.
+
+It lists the user-level cache root regardless of the current project's :confval:`cache_policy`, so that
+caches can still be found after switching back to ``local``.
