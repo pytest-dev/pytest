@@ -105,3 +105,65 @@ interesting to look at the collection tree:
         <YamlItem ok>
 
     ======================== 2 tests collected in 0.12s ========================
+
+.. _`non-python parametrization`:
+
+Letting non-python tests take part in parametrization
+-----------------------------------------------------
+
+.. versionadded:: 9.2
+
+A collector which yields items directly, as ``YamlFile`` above does, produces a
+fixed set of tests. To let a test *definition* be parametrized -- by
+:hook:`pytest_generate_tests`, exactly like a Python test function -- collect
+:class:`~_pytest.nodes.ItemDefinition` nodes instead of items.
+
+Such a node declares the names it accepts in
+:attr:`~_pytest.nodes.ItemDefinition.parametrize_argnames` and builds one item
+per parameter set in :meth:`~_pytest.nodes.ItemDefinition.make_item`. The values
+chosen for a given item arrive on ``item.callspec.params``:
+
+.. code-block:: python
+
+    # content of conftest.py
+    from _pytest import nodes
+    import pytest
+
+
+    class YamlItem(pytest.Item):
+        def __init__(self, *, spec, **kwargs):
+            super().__init__(**kwargs)
+            self.spec = spec
+
+        def runtest(self): ...
+
+        def reportinfo(self):
+            return self.path, 0, self.name
+
+
+    class YamlDefinition(nodes.ItemDefinition):
+        parametrize_argnames = ("value",)
+
+        def make_item(self, parent, *, name, callspec, nodeid, context):
+            params = dict(callspec.params) if callspec is not None else {}
+            return YamlItem.from_parent(parent, name=name, nodeid=nodeid, spec=params)
+
+Any ``pytest_generate_tests`` implementation now applies:
+
+.. code-block:: python
+
+    def pytest_generate_tests(metafunc):
+        if "value" in metafunc.fixturenames:
+            metafunc.parametrize("value", ["good", "bad"])
+
+which collects ``test_simple.yaml::hello[good]`` and
+``test_simple.yaml::hello[bad]`` under a single ``<YamlDefinition hello>`` node.
+Parameter ids, ``pytest.param(...)`` marks and node-id selection all work as
+they do for Python tests.
+
+.. note::
+
+    This path covers parametrization only: there is no fixture resolution for
+    non-Python items, so ``indirect=True`` and requesting fixtures from such an
+    item are not supported. A ``parametrize()`` call naming anything outside
+    ``parametrize_argnames`` is rejected at collection time.
