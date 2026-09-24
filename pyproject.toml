@@ -491,6 +491,9 @@ filterwarnings = [
     # (python/cpython#136796 stopped clearing the warning). Often seen on macOS
     # because Mach task_threads counts extra runtime threads.
     'ignore:.*use of forkpty\(\) may lead to deadlocks in the child:DeprecationWarning',
+    # Cython-compiled numpy.random warns on import under PyPy 3.11.16 (PyPy 8.0);
+    # hypothesis imports it whenever numpy is loaded, failing any @given test.
+    'ignore:cython.collection_type only works on PyPy:RuntimeWarning',
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [
