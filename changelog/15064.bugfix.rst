@@ -1,0 +1,7 @@
+Fixed duplicate log records when a logger which was non-propagating at capture
+start enables ``logging.Logger.propagate`` during the test: the record was
+handled both by pytest's handler attached directly to that logger and by the
+one attached to the root logger. Capture (``caplog``, failure-report sections,
+``--log-cli-level`` and ``--log-file`` output) now sees each record exactly
+once, and the previously-missed ``True -> False`` transition on the affected
+loggers and their ancestors is now handled as well.
