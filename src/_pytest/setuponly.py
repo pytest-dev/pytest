@@ -4,12 +4,16 @@ from collections.abc import Generator
 
 from _pytest._io.saferepr import saferepr
 from _pytest.config import Config
-from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import SubRequest
 from _pytest.scope import Scope
 import pytest
+
+
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -92,7 +96,7 @@ def _show_fixture_action(
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
+def pytest_configure(config: Config) -> None:
+    # See the note in setupplan.py: configure time, not cmdline time.
     if config.option.setuponly:
         config.option.setupshow = True
-    return None
