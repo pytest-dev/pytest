@@ -529,6 +529,10 @@ class PytestPluginManager(PluginManager):
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
+        # Historic, so that plugins registered later - which is all of them -
+        # get to contribute their own hookspecs as they are registered, rather
+        # than only if and when a Config gets around to parsing a command line.
+        self.hook.pytest_addhooks.call_historic(kwargs=dict(pluginmanager=self))
         if os.environ.get("PYTEST_DEBUG"):
             err: IO[str] = sys.stderr
             encoding: str = getattr(err, "encoding", "utf8")
@@ -1632,10 +1636,6 @@ class Config:
         # Parse given cmdline arguments into this config object.
         assert self.args == [], (
             "can only parse cmdline args at most once per Config object"
-        )
-
-        self.hook.pytest_addhooks.call_historic(
-            kwargs=dict(pluginmanager=self.pluginmanager)
         )
 
         if addopts:
