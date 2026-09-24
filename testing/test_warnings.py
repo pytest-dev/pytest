@@ -563,6 +563,23 @@ class TestDeprecationWarningsByDefault:
         )
 
 
+def test_dash_w_shows_wait_hint_on_usage_error(pytester: Pytester) -> None:
+    """`-Wait` is parsed as `-W ait`; the hint should point at this."""
+    result = pytester.runpytest("-Wait")
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            "ERROR: while parsing the following warning configuration:",
+            "",
+            "  ait",
+            "",
+            "This error occurred:",
+            "",
+            "invalid action: 'ait'*-Wait*choose from*",
+        ]
+    )
+
+
 @pytest.mark.skip("not relevant until pytest 10.0")
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
 def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> None:
