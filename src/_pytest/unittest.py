@@ -14,6 +14,7 @@ import sys
 import traceback
 import types
 from typing import Any
+from typing import cast
 from typing import TYPE_CHECKING
 from unittest import TestCase
 
@@ -31,6 +32,7 @@ from _pytest.outcomes import exit
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.python import _get_first_non_fixture_func
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
@@ -98,15 +100,22 @@ class UnitTestCase(Class):
 
         skipped = _is_skipped(cls)
         if not skipped:
-            self._register_unittest_setup_method_fixture(cls)
+            # setUpClass keeps running before the class' autouse fixtures, as
+            # unittest guarantees it is the first thing to run for the class.
             self._register_unittest_setup_class_fixture(cls)
-            self._register_setup_class_fixture()
         else:
             self._register_unittest_skip_fixture(cls)
 
         self.session._fixturemanager.parsefactories(
             holder=self.newinstance(), node=self
         )
+
+        if not skipped:
+            # The pytest-style xunit functions are registered after
+            # parsefactories, so they are ordered after the autouse fixtures
+            # visible on this class, just like for a non-TestCase class (#8412).
+            self._register_setup_class_fixture()
+            self._register_unittest_setup_method_fixture(cls)
 
         loader = TestLoader()
         foundsomething = False
@@ -127,8 +136,17 @@ class UnitTestCase(Class):
     def _register_unittest_setup_class_fixture(self, cls: type) -> None:
         """Register an auto-use fixture to invoke setUpClass and
         tearDownClass (#517)."""
-        setup = getattr(cls, "setUpClass", None)
-        teardown = getattr(cls, "tearDownClass", None)
+        # Use the same fixture-aware lookup as for the pytest-style names, so a
+        # fixture-marked setUpClass warns instead of failing with "Fixture
+        # called directly" (#8412).
+        setup = cast(
+            "Callable[..., object] | None",
+            _get_first_non_fixture_func(cls, ("setUpClass",), node=self),
+        )
+        teardown = cast(
+            "Callable[..., object] | None",
+            _get_first_non_fixture_func(cls, ("tearDownClass",), node=self),
+        )
         cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
         def process_teardown_exceptions() -> None:
@@ -197,8 +215,16 @@ class UnitTestCase(Class):
     def _register_unittest_setup_method_fixture(self, cls: type) -> None:
         """Register an auto-use fixture to invoke setup_method and
         teardown_method (#517)."""
-        setup = getattr(cls, "setup_method", None)
-        teardown = getattr(cls, "teardown_method", None)
+        # Use the same fixture-aware lookup as for non-TestCase classes, so a
+        # fixture-marked setup_method warns instead of being called directly.
+        setup = cast(
+            "Callable[..., object] | None",
+            _get_first_non_fixture_func(cls, ("setup_method",), node=self),
+        )
+        teardown = cast(
+            "Callable[..., object] | None",
+            _get_first_non_fixture_func(cls, ("teardown_method",), node=self),
+        )
         if setup is None and teardown is None:
             return
 
