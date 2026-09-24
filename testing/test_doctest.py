@@ -494,7 +494,7 @@ class TestDoctests:
             [
                 "*ERROR collecting hello.py*",
                 "*ModuleNotFoundError: No module named *asdals*",
-                "*Interrupted: 1 error during collection*",
+                "*CollectionInterrupted: 1 error during collection*",
             ]
         )
 

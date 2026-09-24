@@ -3,7 +3,7 @@
 Exit codes
 ========================================================
 
-Running ``pytest`` can result in seven different exit codes:
+Running ``pytest`` can result in eight different exit codes:
 
 :Exit code 0: All tests were collected and passed successfully
 :Exit code 1: Tests were collected and run but some of the tests failed
@@ -12,6 +12,7 @@ Running ``pytest`` can result in seven different exit codes:
 :Exit code 4: pytest command line usage error, including a plugin that cannot be found or a ``conftest.py`` that fails to import
 :Exit code 5: No tests were collected
 :Exit code 6: Maximum number of warnings exceeded (see :option:`--max-warnings`)
+:Exit code 7: Errors occurred during collection
 
 They are represented by the :class:`pytest.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
 
