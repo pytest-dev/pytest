@@ -1,0 +1,1 @@
+Fixed ``RaisesGroup.matches()`` so group-level ``check=`` callbacks are no longer called again on the first nested exception while building suggestion text.
