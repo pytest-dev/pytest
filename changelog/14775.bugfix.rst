@@ -1,0 +1,1 @@
+Fixed an internal ``AssertionError`` that could occur when a fixture's setup fails before its underlying function is even called (e.g. when the class-scoped-fixture-as-instance-method deprecation warning is turned into an error via ``-W error``). The failure is now cached like any other setup error instead of leaking finalizer state into the next test.
