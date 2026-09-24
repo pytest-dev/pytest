@@ -258,9 +258,8 @@ class MonkeyPatch:
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, NOTSET)
-        elif (
-            type(target).__setattr__ is object.__setattr__
-            and not _is_data_descriptor(type(target), name)
+        elif type(target).__setattr__ is object.__setattr__ and not _is_data_descriptor(
+            type(target), name
         ):
             # With no data descriptor in the way and default `object.__setattr__`,
             # the `setattr()` below writes into the instance `__dict__`, so
