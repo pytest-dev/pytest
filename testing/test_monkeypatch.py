@@ -616,20 +616,25 @@ def test_undo_custom_setattr_on_instance() -> None:
     class Config:
         """Stores attributes in a private dict instead of __dict__."""
 
+        _data: dict[str, object]
+
         def __init__(self) -> None:
             object.__setattr__(self, "_data", {"debug": False})
 
         def __getattr__(self, name: str) -> object:
             try:
-                return self._data[name]  # type: ignore[attr-defined]
+                return self._data[name]
             except KeyError:
                 raise AttributeError(name) from None
 
         def __setattr__(self, name: str, value: object) -> None:
-            self._data[name] = value  # type: ignore[attr-defined]
+            self._data[name] = value
 
     cfg = Config()
     monkeypatch = MonkeyPatch()
+
+    with pytest.raises(AttributeError, match="has no attribute 'nonexistent'"):
+        monkeypatch.setattr(cfg, "nonexistent", True)
 
     monkeypatch.setattr(cfg, "debug", True)
     assert cfg.debug is True
