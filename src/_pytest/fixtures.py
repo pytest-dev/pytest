@@ -1125,7 +1125,7 @@ class FixtureDef(Generic[FixtureValue]):
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         *,
         node: nodes.Node | NotSetType = NOTSET,
-        # only used in a deprecationwarning msg, can be removed in pytest9
+        # Whether the fixture is autouse; consulted during fixture closure (#3225).
         _autouse: bool = False,
         _ispytest: bool = False,
     ) -> None:
@@ -1187,7 +1187,7 @@ class FixtureDef(Generic[FixtureValue]):
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
 
-        # only used to emit a deprecationwarning, can be removed in pytest9
+        # Whether the fixture is autouse; consulted during fixture closure (#3225).
         self._autouse = _autouse
 
     @property
@@ -1939,14 +1939,27 @@ class FixtureManager:
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures visible to node."""
+        usefixtures_ini = set(self.config.getini("usefixtures"))
         for parentnode in node.listchain():
             basenames = self._node_autousenames.get(parentnode)
             if basenames:
-                yield from basenames
-            # Legacy fallback: check string-based nodeid autouse names.
+                for name in basenames:
+                    if name in usefixtures_ini or self._is_autouse(name, node):
+                        yield name
+            # Legacy fallback: string-based nodeid autouse names.
             nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
             if nodeid_basenames:
-                yield from nodeid_basenames
+                for name in nodeid_basenames:
+                    if self._is_autouse(name, node):
+                        yield name
+
+    def _is_autouse(self, name: str, node: nodes.Node) -> bool:
+        """Whether the fixture resolved for name is itself autouse.
+
+        A non-autouse override cancels the autouse fixture it shadows (#3225).
+        """
+        fixturedefs = self.getfixturedefs(name, node)
+        return not fixturedefs or fixturedefs[-1]._autouse
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures visible to node."""
