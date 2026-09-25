@@ -15,6 +15,7 @@ import functools
 import os
 import platform
 import re
+from typing import cast
 from typing import Literal
 import xml.etree.ElementTree as ET
 
@@ -29,6 +30,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodeid import coerce_node_id
 from _pytest.nodeid import NodeId
+from _pytest.nodes import Item
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -299,7 +301,8 @@ def record_property(request: FixtureRequest) -> Callable[[str, object], None]:
     _warn_incompatibility_with_xunit2(request, "record_property")
 
     def append_property(name: str, value: object) -> None:
-        request.node.user_properties.append((name, value))
+        node = cast(Item, request.node)
+        node.user_properties.append((name, value))
 
     return append_property
 
