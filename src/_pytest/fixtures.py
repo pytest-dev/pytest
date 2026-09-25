@@ -566,7 +566,7 @@ class FixtureRequest(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def node(self):
+    def node(self) -> nodes.Node:
         """Underlying collection node (depends on current request scope)."""
         raise NotImplementedError()
 
@@ -855,7 +855,7 @@ class TopRequest(FixtureRequest):
         pass
 
     @property
-    def node(self):
+    def node(self) -> Function:
         return self._pyfuncitem
 
     def __repr__(self) -> str:
@@ -922,7 +922,7 @@ class SubRequest(FixtureRequest):
         return self._scope_field
 
     @property
-    def node(self):
+    def node(self) -> Function | nodes.Node:
         return self._node
 
     def _check_scope(
