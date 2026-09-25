@@ -645,7 +645,21 @@ def _init_checker_class() -> type[doctest.OutputChecker]:
                 got = remove_prefixes(self._bytes_literal_re, got)
 
             if allow_number:
-                got = self._remove_unwanted_precision(want, got)
+                number_got = self._remove_unwanted_precision(want, got)
+                if not (optionflags & doctest.ELLIPSIS):
+                    got = number_got
+                elif super().check_output(want, number_got, optionflags):
+                    return True
+                else:
+                    want = str(want.encode("ASCII", "backslashreplace"), "ASCII")
+                    got = str(got.encode("ASCII", "backslashreplace"), "ASCII")
+                    if not (optionflags & doctest.DONT_ACCEPT_BLANKLINE):
+                        want = re.sub(r"(?m)^<BLANKLINE>\s*?$", "", want)
+                        got = re.sub(r"(?m)^[^\S\n]+$", "", got)
+                    if optionflags & doctest.NORMALIZE_WHITESPACE:
+                        want = " ".join(want.split())
+                        got = " ".join(got.split())
+                    got = self._remove_unwanted_precision_with_ellipsis(want, got)
 
             return super().check_output(want, got, optionflags)
 
@@ -671,6 +685,113 @@ def _init_checker_class() -> type[doctest.OutputChecker]:
                         got[: g.start() + offset] + w.group() + got[g.end() + offset :]
                     )
                     offset += w.end() - w.start() - (g.end() - g.start())
+            return got
+
+        def _remove_unwanted_precision_with_ellipsis(self, want: str, got: str) -> str:
+            """Remove unwanted precision from non-ellipsis expected output."""
+            marker = "\0"
+            while marker in want or marker in got:
+                marker = chr(ord(marker) + 1)
+
+            def mask_numbers(
+                text: str,
+            ) -> tuple[str, list[re.Match[str]]]:
+                matches = list(self._number_re.finditer(text))
+                parts: list[str] = []
+                offset = 0
+
+                for match in matches:
+                    parts.extend((text[offset : match.start()], marker))
+                    offset = match.end()
+
+                parts.append(text[offset:])
+                return "".join(parts), matches
+
+            masked_got, got_numbers = mask_numbers(got)
+
+            def match_numbers(
+                position: int,
+                want_numbers: list[re.Match[str]],
+            ) -> list[tuple[int, int, str]] | None:
+                number_index = masked_got[:position].count(marker)
+                matched_got_numbers = got_numbers[
+                    number_index : number_index + len(want_numbers)
+                ]
+
+                replacements: list[tuple[int, int, str]] = []
+                for want_number, got_number in zip(
+                    want_numbers, matched_got_numbers, strict=True
+                ):
+                    normalized = self._remove_unwanted_precision(
+                        want_number.group(), got_number.group()
+                    )
+                    if normalized != want_number.group():
+                        return None
+
+                    replacements.append(
+                        (
+                            got_number.start(),
+                            got_number.end(),
+                            want_number.group(),
+                        )
+                    )
+
+                return replacements
+
+            want_chunks = want.split("...")
+            if len(want_chunks) == 1:
+                return got
+
+            chunks = [mask_numbers(chunk) for chunk in want_chunks]
+            replacements: list[tuple[int, int, str]] = []
+            start = 0
+            end = len(masked_got)
+
+            first_chunk, first_numbers = chunks[0]
+            if first_chunk:
+                if not masked_got.startswith(first_chunk):
+                    return got
+
+                chunk_replacements = match_numbers(0, first_numbers)
+                if chunk_replacements is None:
+                    return got
+
+                replacements.extend(chunk_replacements)
+                start = len(first_chunk)
+
+            last_chunk, last_numbers = chunks[-1]
+            if last_chunk:
+                position = len(masked_got) - len(last_chunk)
+                if position < start or not masked_got.endswith(last_chunk):
+                    return got
+
+                chunk_replacements = match_numbers(position, last_numbers)
+                if chunk_replacements is None:
+                    return got
+
+                replacements.extend(chunk_replacements)
+                end = position
+
+            for chunk, want_numbers in chunks[1:-1]:
+                position = masked_got.find(chunk, start, end)
+                chunk_replacements = None
+
+                while position >= 0:
+                    chunk_replacements = match_numbers(position, want_numbers)
+                    if chunk_replacements is not None:
+                        break
+
+                    position = masked_got.find(chunk, position + 1, end)
+
+                if position < 0 or chunk_replacements is None:
+                    return got
+
+                replacements.extend(chunk_replacements)
+                start = position + len(chunk)
+
+            for start, stop, replacement in sorted(replacements, reverse=True):
+                got = got[:start] + replacement + got[stop:]
+
             return got
 
     return LiteralsOutputChecker
