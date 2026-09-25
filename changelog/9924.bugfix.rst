@@ -1,0 +1,1 @@
+Fixed doctest option flags leaking between docstrings after a failure, skip, or expected failure.
