@@ -213,17 +213,17 @@ class WarningsRecorder(warnings.catch_warnings):
         but not an instance of a child class of any other match.
         Raises ``AssertionError`` if there is no match.
         """
-        best_idx: int | None = None
-        for i, w in enumerate(self._list):
-            if w.category == cls:
-                return self._list.pop(i)  # exact match, stop looking
-            if issubclass(w.category, cls) and (
-                best_idx is None
-                or not issubclass(w.category, self._list[best_idx].category)
+        matches = [
+            (i, w.category)
+            for i, w in enumerate(self._list)
+            if issubclass(w.category, cls)
+        ]
+        for i, category in matches:
+            if not any(
+                other is not category and issubclass(category, other)
+                for _, other in matches
             ):
-                best_idx = i
-        if best_idx is not None:
-            return self._list.pop(best_idx)
+                return self._list.pop(i)
         __tracebackhide__ = True
         raise AssertionError(f"{cls!r} not found in warning list")
 
