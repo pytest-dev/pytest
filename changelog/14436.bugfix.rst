@@ -1,0 +1,2 @@
+Fixed ``KeyError`` from the ``caplog`` fixture when a plugin accesses
+``caplog.text`` during teardown report creation.
