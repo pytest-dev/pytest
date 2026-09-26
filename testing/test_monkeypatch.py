@@ -630,17 +630,35 @@ def test_undo_custom_setattr_on_instance() -> None:
         def __setattr__(self, name: str, value: object) -> None:
             self._data[name] = value
 
+        def __delattr__(self, name: str) -> None:
+            try:
+                del self._data[name]
+            except KeyError:
+                raise AttributeError(name) from None
+
     cfg = Config()
     monkeypatch = MonkeyPatch()
 
     with pytest.raises(AttributeError, match="has no attribute 'nonexistent'"):
         monkeypatch.setattr(cfg, "nonexistent", True)
 
+    # Test setting a missing attribute with raising=False
+    monkeypatch.setattr(cfg, "nonexistent", True, raising=False)
+    assert cfg.nonexistent is True
+
+    # Test setting an existing attribute
     monkeypatch.setattr(cfg, "debug", True)
     assert cfg.debug is True
 
     monkeypatch.undo()
     assert cfg.debug is False
+    assert not hasattr(cfg, "nonexistent")
+
+    # Test that undoing an already-deleted attribute doesn't raise (the AttributeError tolerance)
+    monkeypatch.setattr(cfg, "brand_new", True, raising=False)
+    delattr(cfg, "brand_new")
+    monkeypatch.undo()
+    assert not hasattr(cfg, "brand_new")
 
 
 def test_issue1338_name_resolving() -> None:

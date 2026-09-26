@@ -438,7 +438,10 @@ class MonkeyPatch:
             if value is not NOTSET:
                 setattr(obj, name, value)
             else:
-                delattr(obj, name)
+                try:
+                    delattr(obj, name)
+                except AttributeError:
+                    pass
         self._setattr[:] = []
         for dictionary, key, value in reversed(self._setitem):
             if value is NOTSET:
