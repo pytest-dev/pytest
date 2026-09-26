@@ -52,6 +52,27 @@ def test_setattr() -> None:
         monkeypatch.setattr(A, "y")  # type: ignore[call-overload]
 
 
+def test_setattr_restores_custom_setattr_target(monkeypatch: MonkeyPatch) -> None:
+    class Config:
+        def __init__(self) -> None:
+            object.__setattr__(self, "_data", {"debug": False})
+
+        def __getattr__(self, name: str) -> object:
+            try:
+                return self._data[name]  # type: ignore[attr-defined]
+            except KeyError:
+                raise AttributeError(name) from None
+
+        def __setattr__(self, name: str, value: object) -> None:
+            self._data[name] = value  # type: ignore[attr-defined]
+
+    config = Config()
+    monkeypatch.setattr(config, "debug", True)
+    assert config.debug is True
+    monkeypatch.undo()
+    assert config.debug is False
+
+
 class TestSetattrWithImportPath:
     def test_string_expression(self, monkeypatch: MonkeyPatch) -> None:
         with monkeypatch.context() as mp:
