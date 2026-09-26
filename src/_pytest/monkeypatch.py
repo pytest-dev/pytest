@@ -268,10 +268,7 @@ class MonkeyPatch:
                 ),
                 object.__setattr__,
             )
-            if (
-                isinstance(target_dict, Mapping)
-                and setter is object.__setattr__
-            ):
+            if isinstance(target_dict, Mapping) and setter is object.__setattr__:
                 # With the default setter, restore the instance dictionary
                 # entry directly so inherited attributes are not shadowed.
                 oldval = target_dict.get(name, NOTSET)
