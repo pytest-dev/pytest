@@ -653,6 +653,46 @@ class TestCollectonly:
 
 
 class TestFixtureReporting:
+    def test_failure_headlines_disambiguate_same_test_names(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture
+            def failing_fixture():
+                raise RuntimeError("fixture failed")
+            """
+        )
+        pytester.makepyfile(
+            test_one="""
+                def test(failing_fixture):
+                    pass
+
+                def test_failure():
+                    assert False
+            """,
+            test_two="""
+                def test(failing_fixture):
+                    pass
+
+                def test_failure():
+                    assert False
+            """,
+        )
+
+        result = pytester.runpytest()
+
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR at setup of test_one.py::test*",
+                "*ERROR at setup of test_two.py::test*",
+                "*test_one.py::test_failure*",
+                "*test_two.py::test_failure*",
+            ]
+        )
+
     def test_setup_fixture_error(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
