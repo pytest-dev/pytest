@@ -134,11 +134,17 @@ TESTCASES = [
         >       assert result == expected
         E       AssertionError: assert {1: 'spam', 3: 'eggs'} == {1: 'spam', 2: 'eggs'}
         E         Common items:
-        E         {1: 'spam'}
+        E         {
+        E             1: 'spam',
+        E         }
         E         Left contains 1 more item:
-        E         {3: 'eggs'}
+        E         {
+        E             3: 'eggs',
+        E         }
         E         Right contains 1 more item:
-        E         {2: 'eggs'}
+        E         {
+        E             2: 'eggs',
+        E         }
         E         Full diff: (-: missing in left side, +: extra in left side)
         E           {
         E               1: 'spam',
@@ -161,7 +167,9 @@ TESTCASES = [
         >       assert result == expected
         E       AssertionError: assert {1: 'spam', 2: 'eggs'} == {1: 'spam', 2: 'bacon'}
         E         Common items:
-        E         {1: 'spam'}
+        E         {
+        E             1: 'spam',
+        E         }
         E         Differing items:
         E         {2: 'eggs'} != {2: 'bacon'}
         E         Full diff: (-: missing in left side, +: extra in left side)
@@ -184,11 +192,17 @@ TESTCASES = [
         >       assert result == expected
         E       AssertionError: assert {1: 'spam', 2: 'eggs'} == {1: 'spam', 3: 'bacon'}
         E         Common items:
-        E         {1: 'spam'}
+        E         {
+        E             1: 'spam',
+        E         }
         E         Left contains 1 more item:
-        E         {2: 'eggs'}
+        E         {
+        E             2: 'eggs',
+        E         }
         E         Right contains 1 more item:
-        E         {3: 'bacon'}
+        E         {
+        E             3: 'bacon',
+        E         }
         E         Full diff: (-: missing in left side, +: extra in left side)
         E           {
         E               1: 'spam',
@@ -248,9 +262,13 @@ TESTCASES = [
         >       assert result == expected
         E       AssertionError: assert A(a=1, b='spam') == A(a=2, b='spam')
         E         Matching attributes:
-        E         ['b']
+        E         [
+        E             'b',
+        E         ]
         E         Differing attributes:
-        E         ['a']
+        E         [
+        E             'a',
+        E         ]
         E         Drill down into differing attribute a:
         E           a: 1 != 2
         """,
@@ -274,9 +292,13 @@ TESTCASES = [
         >       assert result == expected
         E       AssertionError: assert A(a=1, b='spam') == A(a=1, b='eggs')
         E         Matching attributes:
-        E         ['a']
+        E         [
+        E             'a',
+        E         ]
         E         Differing attributes:
-        E         ['b']
+        E         [
+        E             'b',
+        E         ]
         E         Drill down into differing attribute b:
         E           b: 'spam' != 'eggs'
         E           - eggs
