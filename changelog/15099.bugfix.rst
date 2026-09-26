@@ -1,0 +1,1 @@
+``monkeypatch.setattr()`` now correctly restores attributes on objects with custom ``__setattr__`` implementations.
