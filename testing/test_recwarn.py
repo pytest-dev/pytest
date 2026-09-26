@@ -82,6 +82,15 @@ class TestSubclassWarningPop:
         _warn = record.pop(self.ParentWarning)
         assert _warn.category is self.ChildWarning
 
+    def test_pop_finds_first_of_unrelated_matches(self):
+        with pytest.warns((UserWarning, RuntimeWarning, DeprecationWarning)) as record:
+            warnings.warn("first", UserWarning)
+            warnings.warn("second", RuntimeWarning)
+            warnings.warn("third", DeprecationWarning)
+
+        _warn = record.pop()
+        assert _warn.category is UserWarning
+
 
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:

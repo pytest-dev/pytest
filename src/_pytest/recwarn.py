@@ -219,7 +219,10 @@ class WarningsRecorder(warnings.catch_warnings):
                 return self._list.pop(i)  # exact match, stop looking
             if issubclass(w.category, cls) and (
                 best_idx is None
-                or not issubclass(w.category, self._list[best_idx].category)
+                or (
+                    issubclass(self._list[best_idx].category, w.category)
+                    and not issubclass(w.category, self._list[best_idx].category)
+                )
             ):
                 best_idx = i
         if best_idx is not None:
