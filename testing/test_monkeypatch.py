@@ -682,14 +682,14 @@ def test_undo_custom_setattr_with_delattr() -> None:
 
     # Test setting a missing attribute with raising=False
     monkeypatch.setattr(cfg, "nonexistent", True, raising=False)
-    assert cfg.nonexistent is True
+    assert getattr(cfg, "nonexistent") is True
 
     # Test setting an existing attribute
     monkeypatch.setattr(cfg, "debug", True)
-    assert cfg.debug is True
+    assert getattr(cfg, "debug") is True
 
     monkeypatch.undo()
-    assert cfg.debug is False
+    assert getattr(cfg, "debug") is False
     assert not hasattr(cfg, "nonexistent")
 
     # Test that undoing an already-deleted attribute doesn't raise (the AttributeError tolerance)
