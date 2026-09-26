@@ -607,11 +607,49 @@ def test_undo_slot_attribute_on_instance() -> None:
     assert obj.x == 1
 
 
-def test_undo_custom_setattr_on_instance() -> None:
-    """An object with custom __setattr__ must restore its old value on undo.
+def test_undo_custom_setattr_without_delattr() -> None:
+    """An object with custom __setattr__ but NO __delattr__ should not crash on undo.
 
-    See #15099.
+    See #15099 maintainer review. Since the object doesn't support deletion,
+    undo() catches AttributeError and tolerates it, though it cannot physically remove the attribute.
     """
+
+    class ConfigNoDel:
+        _data: dict[str, object]
+
+        def __init__(self) -> None:
+            object.__setattr__(self, "_data", {})
+
+        def __getattr__(self, name: str) -> object:
+            try:
+                return self._data[name]
+            except KeyError:
+                raise AttributeError(name) from None
+
+        def __setattr__(self, name: str, value: object) -> None:
+            self._data[name] = value
+
+    cfg = ConfigNoDel()
+    monkeypatch = MonkeyPatch()
+
+    # Attribute initially absent
+    assert not hasattr(cfg, "brand_new")
+
+    # Set missing attribute with raising=False
+    monkeypatch.setattr(cfg, "brand_new", True, raising=False)
+    assert cfg.brand_new is True
+
+    # Undo should not raise AttributeError, even though delattr(cfg, "brand_new") fails
+    monkeypatch.undo()
+
+    # Note: We CANNOT assert not hasattr(cfg, "brand_new") here, because without
+    # a custom __delattr__, monkeypatch has no generic way to remove the attribute
+    # from the custom storage (_data). The tolerance avoids the teardown crash.
+    assert cfg.brand_new is True
+
+
+def test_undo_custom_setattr_with_delattr() -> None:
+    """An object with custom __setattr__ and __delattr__ must restore its old value on undo."""
 
     class Config:
         """Stores attributes in a private dict instead of __dict__."""
