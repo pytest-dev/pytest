@@ -54,17 +54,19 @@ def test_setattr() -> None:
 
 def test_setattr_restores_custom_setattr_target(monkeypatch: MonkeyPatch) -> None:
     class Config:
+        _data: dict[str, object]
+
         def __init__(self) -> None:
             object.__setattr__(self, "_data", {"debug": False})
 
         def __getattr__(self, name: str) -> object:
             try:
-                return self._data[name]  # type: ignore[attr-defined]
+                return self._data[name]
             except KeyError:
                 raise AttributeError(name) from None
 
         def __setattr__(self, name: str, value: object) -> None:
-            self._data[name] = value  # type: ignore[attr-defined]
+            self._data[name] = value
 
     config = Config()
     monkeypatch.setattr(config, "debug", True)
