@@ -1,0 +1,1 @@
+The failure message for :func:`pytest.approx` comparisons of :class:`~decimal.Decimal` collections no longer reports ``Max absolute difference: -inf``, or crashes for mappings, when the :class:`decimal.FloatOperation` trap is set.

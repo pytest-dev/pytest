@@ -1,0 +1,1 @@
+Fixed possible off-by-one line numbers in :option:`--fixtures` and :option:`--fixtures-per-test` output.
