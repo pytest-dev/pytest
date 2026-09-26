@@ -69,6 +69,8 @@ def test_setattr_restores_custom_setattr_target(monkeypatch: MonkeyPatch) -> Non
             self._data[name] = value
 
     config = Config()
+    with pytest.raises(AttributeError, match="missing"):
+        getattr(config, "missing")
     monkeypatch.setattr(config, "debug", True)
     assert config.debug is True
     monkeypatch.undo()
