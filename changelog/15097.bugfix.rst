@@ -1,0 +1,1 @@
+``WarningsRecorder.pop()`` now preserves the first matching warning when the matching warning categories are unrelated.
