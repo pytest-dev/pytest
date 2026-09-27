@@ -59,6 +59,13 @@ def _count(stream: io.StringIO, needle: str) -> int:
     return stream.getvalue().count(needle)
 
 
+def _proxy_for(logger: logging.Logger) -> _BoundProxyHandler:
+    """The bound proxy pytest attached to ``logger`` in the current scope."""
+    proxies = [h for h in logger.handlers if isinstance(h, _BoundProxyHandler)]
+    assert proxies, f"no proxy attached to {logger.name}"
+    return proxies[0]
+
+
 def test_proxy_captures_once_when_propagation_enabled() -> None:
     """The original bug: a non-propagating logger which starts propagating."""
     logger = _make_logger("a")
@@ -133,7 +140,7 @@ def test_identity_hostile_user_handler_survives_capture() -> None:
         def __eq__(self, other: object) -> bool:
             return True
 
-        __hash__ = object.__hash__  # type: ignore[assignment]
+        __hash__ = object.__hash__
 
         def emit(self, record: logging.LogRecord) -> None:
             pass
@@ -158,9 +165,9 @@ def test_detached_proxy_does_not_forward() -> None:
         proxies = [h for h in logger.handlers if isinstance(h, _BoundProxyHandler)]
         assert proxies
         proxy = proxies[0]
-        assert not proxy._is_detached
+    # Detached on exit: the proxy stops forwarding, and a retained reference
+    # cannot resurrect capture or keep the capture handler alive.
     assert proxy._is_detached
-    # A late log through the retained proxy must not resurrect capture.
     logger.warning("late")
     assert _count(stream, "late") == 0
 
@@ -176,6 +183,142 @@ def test_detach_does_not_close_real_handler() -> None:
         logging.LogRecord("i", logging.WARNING, __file__, 1, "after", (), None)
     )
     assert _count(stream, "after") == 1
+
+
+def test_remove_filter_through_proxy_deactivates_it() -> None:
+    """Removing a filter through the proxy must stop it applying, both while
+    capture is live and on the real handler afterwards."""
+    logger = _make_logger("rmfilter")
+    stream, handler = _capture()
+
+    class Reject(logging.Filter):
+        def __init__(self) -> None:
+            super().__init__()
+            self.seen: list[str] = []
+
+        def filter(self, record: logging.LogRecord) -> bool:
+            self.seen.append(record.getMessage())
+            return False
+
+    reject = Reject()
+    with catching_logs(handler, level=logging.DEBUG):
+        proxy = _proxy_for(logger)
+        proxy.addFilter(reject)
+        logger.warning("blocked")
+        assert _count(stream, "blocked") == 0
+        assert reject.seen == ["blocked"]
+
+        proxy.removeFilter(reject)
+        logger.warning("allowed")
+        assert _count(stream, "allowed") == 1
+
+    # And it is gone from the real handler too, so a later scope is unaffected.
+    assert not any(f is reject for f in handler.filters)
+    handler.handle(
+        logging.LogRecord("rmfilter", logging.WARNING, __file__, 1, "later", (), None)
+    )
+    assert _count(stream, "later") == 1
+
+
+def test_set_formatter_through_proxy_applies_to_captured_output() -> None:
+    """A formatter set through the proxy must shape the captured text."""
+    logger = _make_logger("fmt")
+    stream, handler = _capture()
+    with catching_logs(handler, level=logging.DEBUG):
+        _proxy_for(logger).setFormatter(
+            logging.Formatter("FMT:%(levelname)s:%(message)s")
+        )
+        logger.warning("shaped")
+    assert "FMT:WARNING:shaped" in stream.getvalue()
+
+
+def test_set_formatter_through_proxy_accepts_none() -> None:
+    """Passing None clears the formatter rather than raising."""
+    logger = _make_logger("fmt.none")
+    stream, handler = _capture()
+    with catching_logs(handler, level=logging.DEBUG):
+        proxy = _proxy_for(logger)
+        proxy.setFormatter(logging.Formatter("X:%(message)s"))
+        proxy.setFormatter(None)
+        logger.warning("plain")
+    assert "X:plain" not in stream.getvalue()
+    assert "plain" in stream.getvalue()
+
+
+def test_emit_directly_on_proxy_forwards_while_non_propagating() -> None:
+    """Calling ``emit()`` directly (as opposed to ``handle()``) must still
+    forward for a non-propagating logger and be a no-op once it propagates."""
+    logger = _make_logger("direct.emit")
+    stream, handler = _capture()
+    with catching_logs(handler, level=logging.DEBUG):
+        proxy = _proxy_for(logger)
+        proxy.emit(
+            logging.LogRecord(
+                "direct.emit", logging.WARNING, __file__, 1, "viaemit", (), None
+            )
+        )
+        assert _count(stream, "viaemit") == 1
+
+        logger.propagate = True
+        proxy.emit(
+            logging.LogRecord(
+                "direct.emit", logging.WARNING, __file__, 1, "skipped", (), None
+            )
+        )
+        # A direct emit() does not walk the hierarchy, so the proxy must simply
+        # not forward: the record was already sent to root's handler by the
+        # logger's own callHandlers pass, and forwarding again would duplicate
+        # it.
+        assert _count(stream, "skipped") == 0
+
+
+def test_emit_on_detached_proxy_is_a_no_op() -> None:
+    """A detached proxy must not forward even when emit() is called directly."""
+    logger = _make_logger("detached.emit")
+    stream, handler = _capture()
+    with catching_logs(handler, level=logging.DEBUG):
+        proxy = _proxy_for(logger)
+    assert proxy._is_detached
+    proxy.emit(
+        logging.LogRecord(
+            "detached.emit", logging.WARNING, __file__, 1, "nope", (), None
+        )
+    )
+    assert _count(stream, "nope") == 0
+
+
+def test_entry_failure_during_proxy_attachment_rolls_back() -> None:
+    """A failure *while attaching proxies* must undo the partial setup.
+
+    This is the path the transactional ``__enter__`` exists for: root already
+    has pytest's handler by the time proxies are attached, so an error there
+    would otherwise leave it attached with no scope left to remove it.
+    """
+    good = _make_logger("rollback.good")
+    stream, handler = _capture()
+    root = logging.getLogger()
+
+    class Exploding(list):  # type: ignore[type-arg]
+        """A handlers list that refuses new entries."""
+
+        def append(self, item: object) -> None:
+            raise RuntimeError("boom")
+
+    bad = _make_logger("rollback.bad")
+    bad.handlers = Exploding()
+    try:
+        with pytest.raises(RuntimeError):
+            with catching_logs(handler, level=logging.DEBUG):
+                pass
+    finally:
+        # Restore a real list: leaving the poisoned one installed would break
+        # every later capturing_logs scope, including pytest's own session ones.
+        bad.handlers = []
+
+    # Nothing of pytest's is left behind on root or on the loggers.
+    assert not any(h is handler for h in root.handlers)
+    assert not [h for h in good.handlers if isinstance(h, _BoundProxyHandler)]
+    assert _count(stream, "anything") == 0
 
 
 def test_setlevel_on_proxy_is_ignored() -> None:
@@ -220,7 +363,7 @@ def test_proxy_does_not_deadlock_with_real_handler_across_threads() -> None:
 
         def acquire(self, *args: object, **kwargs: object) -> bool:
             note(f"{threading.current_thread().name}:want:{self._name}")
-            acquired = self._rlock.acquire()  # type: ignore[arg-type]
+            acquired = self._rlock.acquire()
             note(f"{threading.current_thread().name}:got:{self._name}")
             return acquired
 
@@ -307,7 +450,7 @@ def test_entry_failure_rolls_back_root_attachment() -> None:
     """
 
     class FailingLevel(logging.Handler):
-        def setLevel(self, level: int) -> None:
+        def setLevel(self, level: int | str) -> None:
             raise RuntimeError("boom")
 
         def emit(self, record: logging.LogRecord) -> None:

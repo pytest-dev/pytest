@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Mapping
 from collections.abc import Set as AbstractSet
@@ -23,6 +24,7 @@ from types import TracebackType
 from typing import final
 from typing import Generic
 from typing import Literal
+from typing import Protocol
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from weakref import WeakKeyDictionary
@@ -46,6 +48,15 @@ from _pytest.terminal import TerminalReporter
 
 if TYPE_CHECKING:
     logging_StreamHandler = logging.StreamHandler[StringIO]
+
+    class _SupportsFilterProtocol(Protocol):
+        """Structural stand-in for typeshed's private ``_SupportsFilter``."""
+
+        def filter(self, record: LogRecord) -> bool: ...
+
+    # Same element type ``logging.Filterer.filters`` uses, which also admits a
+    # plain callable or an object exposing ``.filter()``.
+    _FilterLike = logging.Filter | Callable[[LogRecord], bool] | _SupportsFilterProtocol
 else:
     logging_StreamHandler = logging.StreamHandler
 
@@ -389,7 +400,7 @@ class _BoundProxyHandler(logging.Handler):
         # Filters installed through this proxy (e.g. via ``logger.handlers``).
         # They are applied by the real handler, which the proxy forwards to, so
         # they are tracked here to be taken back off again on detach.
-        self._proxied_filters: list[logging.Filter] = []
+        self._proxied_filters: list[_FilterLike] = []
         # Deliberately skip ``logging.Handler.__init__``'s registration in the
         # global ``_handlerList``: a proxy is a short-lived internal object
         # which pytest detaches itself, it owns no stream, and it must never be
@@ -399,7 +410,9 @@ class _BoundProxyHandler(logging.Handler):
         self._name = None
         self.formatter: logging.Formatter | None = None
         self._closed = False
-        self.filters = []  # type: ignore[assignment]
+        # Matches Filterer.filters' element type, which also admits plain
+        # callables and objects with a .filter() method.
+        self.filters: list[_FilterLike] = []
         self.createLock()
 
     @property
@@ -414,7 +427,7 @@ class _BoundProxyHandler(logging.Handler):
         # through the real handler instead.
         pass
 
-    def addFilter(self, filter: logging.Filter) -> None:
+    def addFilter(self, filter: logging.Filter) -> None:  # type: ignore[override]
         # Filters installed through ``logger.handlers`` (e.g. by
         # ``caplog.filtering()``) must keep affecting capture. ``handle()``
         # below forwards the record to the real handler, which is what applies
