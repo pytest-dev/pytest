@@ -321,6 +321,55 @@ def test_entry_failure_during_proxy_attachment_rolls_back() -> None:
     assert _count(stream, "anything") == 0
 
 
+def test_detached_proxy_ignores_direct_handle_call() -> None:
+    """Calling ``handle()`` on a retained proxy after detach does nothing.
+
+    The proxy is gone from ``logger.handlers`` once capture ends, so a later
+    ``logger.warning()`` never reaches it. This covers someone who kept a
+    reference to the proxy and calls it directly: it must not resurrect
+    capture, nor raise.
+    """
+    logger = _make_logger("retained")
+    stream, handler = _capture()
+    with catching_logs(handler, level=logging.DEBUG):
+        proxy = _proxy_for(logger)
+    proxy.handle(
+        logging.LogRecord("retained", logging.WARNING, __file__, 1, "late", (), None)
+    )
+    assert _count(stream, "late") == 0
+
+
+def test_no_infinite_recursion_when_real_handler_logs_back() -> None:
+    """A real handler that logs into the same logger must not recurse.
+
+    The proxy forwards to the real handler while holding no lock; without a
+    reentrancy guard, a handler (or filter) that logs back into the capturing
+    logger would re-enter the proxy and recurse until the stack blew up. The
+    guard drops the re-entrant record instead of forwarding it, so each
+    message is emitted at most once and the nesting terminates.
+    """
+    emitted: list[str] = []
+
+    class LoggingBack(logging.Handler):
+        def emit(self, record: logging.LogRecord) -> None:
+            emitted.append(record.getMessage())
+            if record.getMessage() == "outer":
+                # Re-enter the capture path from inside the real handler.
+                logger.warning("inner")
+
+    logger = _make_logger("recursive")
+    real = LoggingBack()
+
+    with catching_logs(real, level=logging.DEBUG):
+        logger.warning("outer")
+
+    # "outer" is forwarded once. "inner" is suppressed by the reentrancy
+    # guard (forwarding it here would call back into this same emit), which is
+    # what stops the recursion -- and it also cannot loop forever because the
+    # guard is thread-local, not a one-shot.
+    assert emitted == ["outer"]
+
+
 def test_setlevel_on_proxy_is_ignored() -> None:
     """``setLevel`` on the proxy must not silently diverge from the real
     handler; the real handler's level governs."""
