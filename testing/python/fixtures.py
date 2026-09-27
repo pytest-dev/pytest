@@ -6278,3 +6278,28 @@ def test_classmethod_above_fixture_warning_inherited(pytester: Pytester) -> None
     )
     result.stdout.fnmatch_lines(["*fixture 'fixt' not found*"])
     result.assert_outcomes(errors=1)
+
+
+def test_fixture_finalizer_interrupt(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        from pathlib import Path
+
+        MARKER = Path(__file__).with_name("finalizer-ran")
+
+        @pytest.fixture
+        def resource(request):
+            request.addfinalizer(lambda: MARKER.write_text("ran", encoding="utf-8"))
+            raise KeyboardInterrupt
+        """
+    )
+    pytester.makepyfile(
+        """
+        def test_setup(resource):
+            pass
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    assert result.ret == 2
+    assert (pytester.path / "finalizer-ran").exists()
