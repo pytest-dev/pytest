@@ -43,7 +43,8 @@ def conftest_setinitial(
 @pytest.mark.usefixtures("_sys_snapshot")
 class TestConftestValueAccessGlobal:
     @pytest.fixture(scope="module", params=["global", "inpackage"])
-    def basedir(self, request, tmp_path_factory: TempPathFactory) -> Generator[Path]:
+    @staticmethod
+    def basedir(request, tmp_path_factory: TempPathFactory) -> Generator[Path]:
         tmp_path = tmp_path_factory.mktemp("basedir", numbered=True)
         tmp_path.joinpath("adir/b").mkdir(parents=True)
         tmp_path.joinpath("adir/conftest.py").write_text(
@@ -152,7 +153,7 @@ def test_doubledash_considered(pytester: Pytester) -> None:
 
 
 def test_issue151_load_all_conftests(pytester: Pytester) -> None:
-    names = "code proj src".split()
+    names = ["code", "proj", "src"]
     for name in names:
         p = pytester.mkdir(name)
         p.joinpath("conftest.py").touch()
@@ -248,7 +249,7 @@ def test_conftestcutdir_inplace_considered(pytester: Pytester) -> None:
     assert values[0].__file__.startswith(str(conf))
 
 
-@pytest.mark.parametrize("name", "test tests whatever .dotdir".split())
+@pytest.mark.parametrize("name", ["test", "tests", "whatever", ".dotdir"])
 def test_setinitial_conftest_subdirs(pytester: Pytester, name: str) -> None:
     sub = pytester.mkdir(name)
     subconftest = sub.joinpath("conftest.py")

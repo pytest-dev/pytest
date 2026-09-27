@@ -30,8 +30,8 @@ def test_fixtures_in_module(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*fixtures used by test_arg1*",
-            "*(test_fixtures_in_module.py:9)*",
-            "arg1 -- test_fixtures_in_module.py:6",
+            "*(test_fixtures_in_module.py:8)*",
+            "arg1 -- test_fixtures_in_module.py:5",
             "    arg1 docstring",
         ]
     )
@@ -69,16 +69,16 @@ def test_fixtures_in_conftest(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*fixtures used by test_arg2*",
-            "*(test_fixtures_in_conftest.py:2)*",
-            "arg2 -- conftest.py:6",
+            "*(test_fixtures_in_conftest.py:1)*",
+            "arg2 -- conftest.py:5",
             "    arg2 docstring",
             "*fixtures used by test_arg3*",
-            "*(test_fixtures_in_conftest.py:4)*",
-            "arg1 -- conftest.py:3",
+            "*(test_fixtures_in_conftest.py:3)*",
+            "arg1 -- conftest.py:2",
             "    arg1 docstring",
-            "arg2 -- conftest.py:6",
+            "arg2 -- conftest.py:5",
             "    arg2 docstring",
-            "arg3 -- conftest.py:9",
+            "arg3 -- conftest.py:8",
             "    arg3",
         ]
     )
@@ -112,10 +112,10 @@ def test_should_show_fixtures_used_by_test(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*fixtures used by test_args*",
-            "*(test_should_show_fixtures_used_by_test.py:6)*",
-            "arg1 -- test_should_show_fixtures_used_by_test.py:3",
+            "*(test_should_show_fixtures_used_by_test.py:5)*",
+            "arg1 -- test_should_show_fixtures_used_by_test.py:2",
             "    arg1 from testmodule",
-            "arg2 -- conftest.py:6",
+            "arg2 -- conftest.py:5",
             "    arg2 from conftest",
         ]
     )
@@ -149,12 +149,12 @@ def test_verbose_include_private_fixtures_and_loc(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*fixtures used by test_args*",
-            "*(test_verbose_include_private_fixtures_and_loc.py:6)*",
-            "_arg1 -- conftest.py:3",
+            "*(test_verbose_include_private_fixtures_and_loc.py:5)*",
+            "_arg1 -- conftest.py:2",
             "    _arg1 from conftest",
-            "arg2 -- conftest.py:6",
+            "arg2 -- conftest.py:5",
             "    arg2 from conftest",
-            "arg3 -- test_verbose_include_private_fixtures_and_loc.py:3",
+            "arg3 -- test_verbose_include_private_fixtures_and_loc.py:2",
             "    arg3 from testmodule",
         ]
     )
@@ -209,8 +209,8 @@ def test_multiline_docstring_in_module(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*fixtures used by test_arg1*",
-            "*(test_multiline_docstring_in_module.py:13)*",
-            "arg1 -- test_multiline_docstring_in_module.py:3",
+            "*(test_multiline_docstring_in_module.py:12)*",
+            "arg1 -- test_multiline_docstring_in_module.py:2",
             "    Docstring content that spans across multiple lines,",
             "    through second line,",
             "    and through third line.",
@@ -243,8 +243,8 @@ def test_verbose_include_multiline_docstring(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*fixtures used by test_arg1*",
-            "*(test_verbose_include_multiline_docstring.py:13)*",
-            "arg1 -- test_verbose_include_multiline_docstring.py:3",
+            "*(test_verbose_include_multiline_docstring.py:12)*",
+            "arg1 -- test_verbose_include_multiline_docstring.py:2",
             "    Docstring content that spans across multiple lines,",
             "    through second line,",
             "    and through third line.",
@@ -309,20 +309,20 @@ def test_should_show_parametrized_fixtures_used_by_test(pytester: Pytester) -> N
     result.stdout.fnmatch_lines(
         [
             "*fixtures used by test_directly_parametrized_fixture*",
-            "*(test_should_show_parametrized_fixtures_used_by_test.py:14)*",
-            "directly -- test_should_show_parametrized_fixtures_used_by_test.py:4",
+            "*(test_should_show_parametrized_fixtures_used_by_test.py:13)*",
+            "directly -- test_should_show_parametrized_fixtures_used_by_test.py:3",
             "    parametrized fixture",
             "*fixtures used by test_directly_parametrized_fixture*",
-            "*(test_should_show_parametrized_fixtures_used_by_test.py:14)*",
-            "directly -- test_should_show_parametrized_fixtures_used_by_test.py:4",
+            "*(test_should_show_parametrized_fixtures_used_by_test.py:13)*",
+            "directly -- test_should_show_parametrized_fixtures_used_by_test.py:3",
             "    parametrized fixture",
             "*fixtures used by test_indirectly_parametrized_fixture*",
-            "*(test_should_show_parametrized_fixtures_used_by_test.py:17)*",
-            "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:9",
+            "*(test_should_show_parametrized_fixtures_used_by_test.py:16)*",
+            "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:8",
             "    indirectly parametrized fixture",
             "*fixtures used by test_indirectly_parametrized_fixture*",
-            "*(test_should_show_parametrized_fixtures_used_by_test.py:17)*",
-            "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:9",
+            "*(test_should_show_parametrized_fixtures_used_by_test.py:16)*",
+            "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:8",
             "    indirectly parametrized fixture",
         ]
     )

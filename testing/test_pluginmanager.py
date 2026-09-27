@@ -7,8 +7,11 @@ import shutil
 import sys
 import types
 
+from _pytest._code import ExceptionInfo
+from _pytest.config import _is_missing_module
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import PluginImportFailure
 from _pytest.config import PytestPluginManager
 from _pytest.config.exceptions import UsageError
 from _pytest.main import Session
@@ -252,13 +255,22 @@ def test_importplugin_error_message(
         test_traceback()
         """
     )
-    with pytest.raises(ImportError) as excinfo:
+    with pytest.raises(PluginImportFailure) as excinfo:
         pytestpm.import_plugin("qwe")
 
-    assert str(excinfo.value).endswith(
-        'Error importing plugin "qwe": Not possible to import: ☺'
-    )
-    assert "in test_traceback" in str(excinfo.traceback[-1])
+    assert excinfo.value.args == ("qwe",)
+    # The original error and traceback must stay reachable through the cause,
+    # otherwise there is no way to tell where in the plugin things went wrong.
+    assert excinfo.value.__cause__ is not None
+    assert str(excinfo.value.__cause__) == "Not possible to import: ☺"
+    cause = ExceptionInfo.from_exception(excinfo.value.__cause__)
+    assert "in test_traceback" in str(cause.traceback[-1])
+
+
+def test_is_missing_module_without_name() -> None:
+    """A ModuleNotFoundError raised without a module name cannot be attributed
+    to the requested plugin, so it counts as a defect in the plugin."""
+    assert not _is_missing_module(ModuleNotFoundError("boom"), "myplugin")
 
 
 class TestPytestPluginManager:
@@ -322,7 +334,7 @@ class TestPytestPluginManager:
         self, monkeypatch: MonkeyPatch, pytestpm: PytestPluginManager
     ) -> None:
         monkeypatch.setenv("PYTEST_PLUGINS", "nonexisting", prepend=",")
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             pytestpm.consider_env()
 
     def test_consider_env_entry_point_name(
@@ -458,9 +470,9 @@ class TestPytestPluginManager:
     def test_import_plugin_importname(
         self, pytester: Pytester, pytestpm: PytestPluginManager
     ) -> None:
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             pytestpm.import_plugin("qweqwex.y")
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             pytestpm.import_plugin("pytest_qweqwx.y")
 
         pytester.syspathinsert()
@@ -480,9 +492,9 @@ class TestPytestPluginManager:
     def test_import_plugin_dotted_name(
         self, pytester: Pytester, pytestpm: PytestPluginManager
     ) -> None:
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             pytestpm.import_plugin("qweqwex.y")
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             pytestpm.import_plugin("pytest_qweqwex.y")
 
         pytester.syspathinsert()
@@ -503,17 +515,17 @@ class TestPytestPluginManager:
             root=pytester.path,
             consider_namespace_packages=False,
         )
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             pytestpm.consider_conftest(mod, registration_name="unused")
 
 
 class TestPytestPluginManagerBootstrapping:
     def test_preparse_args(self, pytestpm: PytestPluginManager) -> None:
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             pytestpm.consider_preparse(["xyz", "-p", "hello123"])
 
         # Handles -p without space (#3532).
-        with pytest.raises(ImportError) as excinfo:
+        with pytest.raises(UsageError) as excinfo:
             pytestpm.consider_preparse(["-phello123"])
         assert '"hello123"' in excinfo.value.args[0]
         pytestpm.consider_preparse(["-pno:hello123"])

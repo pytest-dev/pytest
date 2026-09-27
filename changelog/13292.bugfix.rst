@@ -1,0 +1,3 @@
+Fixed a stale rewritten module being used when a test file is modified twice
+within the same second without changing its size -- the pyc header could only
+record whole-second timestamps. The cache is now keyed on a hash of the source.

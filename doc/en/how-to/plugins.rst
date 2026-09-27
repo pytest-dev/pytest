@@ -45,6 +45,10 @@ Here is a little annotated list for some popular plugins:
 * :pypi:`pytest-timeout`:
   to timeout tests based on function marks or global definitions.
 
+* :pypi:`pytest-skip-slow`:
+  to skip tests marked ``@pytest.mark.slow`` by default, and run them with
+  ``--slow``.
+
 * :pypi:`pytest-pep8`:
   a ``--pep8`` option to enable PEP8 compliance checking.
 

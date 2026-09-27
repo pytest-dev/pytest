@@ -217,7 +217,20 @@ class ParameterSet(NamedTuple):
         if parameters:
             # Check all parameter sets have the correct number of values.
             for param in parameters:
-                if len(param.values) != len(argnames):
+                try:
+                    values_len = len(param.values)
+                except TypeError:
+                    values_len = None
+                if values_len is None:
+                    fail(
+                        f'{nodeid}: in "parametrize" expected a sequence of values, '
+                        "for a single value use a one-element tuple like "
+                        "('value',), "
+                        f"got {type(param.values).__name__}:\n"
+                        f"  {param.values}",
+                        pytrace=False,
+                    )
+                if values_len != len(argnames):
                     msg = (
                         '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
                         "  {names}\n"
@@ -230,7 +243,7 @@ class ParameterSet(NamedTuple):
                             values=param.values,
                             names=argnames,
                             names_len=len(argnames),
-                            values_len=len(param.values),
+                            values_len=values_len,
                         ),
                         pytrace=False,
                     )
@@ -604,12 +617,9 @@ class MarkGenerator:
             # name is in the set we definitely know it, but a mark may be known and
             # not in the set.  We therefore start by updating the set!
             if name not in self._markers:
-                for line in self._config.getini("markers"):
-                    # example lines: "skipif(condition): skip the given test if..."
-                    # or "hypothesis: tests which use Hypothesis", so to get the
-                    # marker name we split on both `:` and `(`.
-                    marker = line.split(":")[0].split("(")[0].strip()
-                    self._markers.add(marker)
+                self._markers.update(
+                    m.name for m in self._config._iter_registered_markers()
+                )
 
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.

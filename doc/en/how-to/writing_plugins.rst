@@ -425,6 +425,14 @@ return a result object, with which we can assert the tests' outcomes.
         # check that all 4 tests passed
         result.assert_outcomes(passed=4)
 
+.. note::
+
+    :meth:`pytest.RunResult.assert_outcomes` parses pytest's standard terminal
+    summary. A plugin that changes or removes that summary can make outcome
+    parsing fail. Disable the output-changing plugin for the nested run with
+    ``-p no:<plugin>``, or set ``PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`` when the
+    nested run should not discover third-party plugins.
+
 
 Additionally it is possible to copy examples to the ``pytester``'s isolated environment
 before running pytest on it. This way we can abstract the tested logic to separate files,

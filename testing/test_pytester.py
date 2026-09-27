@@ -299,8 +299,12 @@ def test_assert_outcomes_after_pytest_error(pytester: Pytester) -> None:
     pytester.makepyfile("def test_foo(): assert True")
 
     result = pytester.runpytest("--unexpected-argument")
-    with pytest.raises(ValueError, match="Pytest terminal summary report not found"):
+    with pytest.raises(ValueError) as exc_info:
         result.assert_outcomes(passed=0)
+
+    message = str(exc_info.value)
+    assert "Plugins that modify pytest's terminal output" in message
+    assert "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1" in message
 
 
 class TestSysModulesSnapshot:

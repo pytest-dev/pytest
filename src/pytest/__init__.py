@@ -80,6 +80,7 @@ from _pytest.subtests import Subtests
 from _pytest.terminal import TerminalReporter
 from _pytest.terminal import TestShortLogReport
 from _pytest.tmpdir import TempPathFactory
+from _pytest.warning_types import PytestApproxDecimalToleranceWarning
 from _pytest.warning_types import PytestAssertRewriteWarning
 from _pytest.warning_types import PytestCacheWarning
 from _pytest.warning_types import PytestCollectionWarning
@@ -132,6 +133,7 @@ __all__ = [
     "OptionGroup",
     "Package",
     "Parser",
+    "PytestApproxDecimalToleranceWarning",
     "PytestAssertRewriteWarning",
     "PytestCacheWarning",
     "PytestCollectionWarning",

@@ -7,7 +7,6 @@ import sys
 import threading
 import traceback
 from typing import NamedTuple
-from typing import TYPE_CHECKING
 import warnings
 
 from _pytest.config import Config
@@ -16,9 +15,6 @@ from _pytest.stash import StashKey
 from _pytest.tracemalloc import tracemalloc_message
 import pytest
 
-
-if TYPE_CHECKING:
-    pass
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup

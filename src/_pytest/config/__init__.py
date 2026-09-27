@@ -36,6 +36,7 @@ from typing import Final
 from typing import final
 from typing import IO
 from typing import Literal
+from typing import NamedTuple
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
@@ -68,6 +69,7 @@ from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -141,7 +143,17 @@ class ConftestImportFailure(Exception):
         return f"{type(self.cause).__name__}: {self.cause} (from {self.path})"
 
 
-def filter_traceback_for_conftest_import_failure(
+class PluginImportFailure(Exception):
+    """A plugin was found, but raised while being imported.
+
+    This is deliberately distinct from a plugin which could not be found at
+    all: not finding it means pytest was pointed at something that isn't there,
+    which is a :class:`UsageError`, while a plugin blowing up on import is a
+    defect in the plugin and reported as an internal error.
+    """
+
+
+def filter_traceback_for_import_failure(
     entry: _pytest._code.TracebackEntry,
 ) -> bool:
     """Filter tracebacks entries which point to pytest internals or importlib.
@@ -152,13 +164,11 @@ def filter_traceback_for_conftest_import_failure(
     return filter_traceback(entry) and "importlib" not in str(entry.path).split(os.sep)
 
 
-def print_conftest_import_error(e: ConftestImportFailure, file: TextIO) -> None:
-    exc_info = ExceptionInfo.from_exception(e.cause)
+def _print_import_error(header: str, cause: BaseException, file: TextIO) -> None:
+    exc_info = ExceptionInfo.from_exception(cause)
     tw = TerminalWriter(file)
-    tw.line(f"ImportError while loading conftest '{e.path}'.", red=True)
-    exc_info.traceback = exc_info.traceback.filter(
-        filter_traceback_for_conftest_import_failure
-    )
+    tw.line(header, red=True)
+    exc_info.traceback = exc_info.traceback.filter(filter_traceback_for_import_failure)
     exc_repr = (
         exc_info.getrepr(style="short", chain=False)
         if exc_info.traceback
@@ -167,6 +177,17 @@ def print_conftest_import_error(e: ConftestImportFailure, file: TextIO) -> None:
     formatted_tb = str(exc_repr)
     for line in formatted_tb.splitlines():
         tw.line(line.rstrip(), red=True)
+
+
+def print_conftest_import_error(e: ConftestImportFailure, file: TextIO) -> None:
+    _print_import_error(
+        f"ImportError while loading conftest '{e.path}'.", e.cause, file
+    )
+
+
+def print_plugin_import_error(e: PluginImportFailure, file: TextIO) -> None:
+    assert e.__cause__ is not None, f"{e!r} must be raised `from` the original error"
+    _print_import_error(f'Error while loading plugin "{e}".', e.__cause__, file)
 
 
 def print_usage_error(e: UsageError, file: TextIO) -> None:
@@ -231,6 +252,9 @@ def _main(
         except ConftestImportFailure as e:
             print_conftest_import_error(e, file=sys.stderr)
             return ExitCode.USAGE_ERROR
+        except PluginImportFailure as e:
+            print_plugin_import_error(e, file=sys.stderr)
+            return ExitCode.INTERNAL_ERROR
 
         try:
             ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
@@ -646,11 +670,8 @@ class PytestPluginManager(PluginManager):
 
         anchors = []
         for initial_path in args:
-            path = str(initial_path)
-            # remove node-id syntax
-            i = path.find("::")
-            if i != -1:
-                path = path[:i]
+            # Remove node-id syntax from the argument.
+            path = NodeId.parse(str(initial_path)).path
             anchor = absolutepath(invocation_dir / path)
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
@@ -923,15 +944,45 @@ class PytestPluginManager(PluginManager):
                 # testing/test_config.py::test_disable_plugin_autoload.
                 __import__(importspec)
                 mod = sys.modules[importspec]
-        except ImportError as e:
-            raise ImportError(
-                f'Error importing plugin "{modname}": {e.args[0]}'
-            ).with_traceback(e.__traceback__) from e
-
         except Skipped as e:
             self.skipped_plugins.append((modname, e.msg or ""))
+        except ModuleNotFoundError as e:
+            if _is_missing_module(e, importspec):
+                # The plugin itself is nowhere to be found - pytest was pointed
+                # at something which does not exist, so this is a usage error.
+                raise UsageError(f'Error importing plugin "{modname}": {e}') from e
+            # Some *other* module the plugin imports is missing: the plugin was
+            # found, so this is a defect in the plugin, not a usage error.
+            raise PluginImportFailure(modname) from e
+        except UsageError:
+            raise
+        except Exception as e:
+            raise PluginImportFailure(modname) from e
         else:
             self.register(mod, modname)
+
+    def load_setuptools_entrypoints(self, group: str, name: str | None = None) -> int:
+        """:meta private:"""
+        try:
+            return super().load_setuptools_entrypoints(group, name=name)
+        except UsageError:
+            raise
+        except Exception as e:
+            # An installed plugin which cannot be loaded is a defect in that
+            # plugin - the user did nothing wrong by having it installed.
+            raise PluginImportFailure(name or group) from e
+
+
+def _is_missing_module(e: ModuleNotFoundError, importspec: str) -> bool:
+    """Whether ``e`` means that ``importspec`` itself could not be found.
+
+    A ``ModuleNotFoundError`` naming some other module means the plugin was
+    located but one of its own imports is unsatisfied.
+    """
+    if e.name is None:
+        return False
+    # A missing parent package also means importspec cannot be found.
+    return e.name == importspec or importspec.startswith(f"{e.name}.")
 
 
 def _get_plugin_specs_as_list(
@@ -1042,6 +1093,17 @@ class _DeprecatedInicfgProxy(MutableMapping[str, Any]):
 
     def __len__(self) -> int:
         return len(self._config._inicfg)
+
+
+class RegisteredMarker(NamedTuple):
+    """A marker registered in the configuration."""
+
+    #: The marker name (e.g., ``skipif``).
+    name: str
+    #: The full marker signature (e.g., ``skipif(condition)``).
+    signature: str
+    #: The marker description.
+    description: str
 
 
 @final
@@ -1330,15 +1392,12 @@ class Config:
                 sys.stderr.write(f"INTERNALERROR> {line}\n")
                 sys.stderr.flush()
 
-    def cwd_relative_nodeid(self, nodeid: str) -> str:
+    def cwd_relative_nodeid(self, nodeid: NodeId) -> NodeId:
         # nodeid's are relative to the rootpath, compute relative to cwd.
         if self.invocation_params.dir != self.rootpath:
-            base_path_part, *nodeid_part = nodeid.split("::")
-            # Only process path part
-            fullpath = self.rootpath / base_path_part
+            fullpath = self.rootpath / nodeid.path
             relative_path = bestrelpath(self.invocation_params.dir, fullpath)
-
-            nodeid = "::".join([relative_path, *nodeid_part])
+            return dataclasses.replace(nodeid, path=relative_path)
         return nodeid
 
     @classmethod
@@ -1788,6 +1847,18 @@ class Config:
         self._inicache[canonical_name] = val = self._getini(canonical_name)
         return val
 
+    def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
+        """Iterate over all markers registered in the configuration."""
+        for line in self.getini("markers"):
+            # Example lines: "skipif(condition): skip the given test if..."
+            # or "hypothesis: tests which use Hypothesis", so to get the
+            # marker name we split on both `:` and `(`.
+            parts = line.split(":", 1)
+            signature = parts[0]
+            description = parts[1].strip() if len(parts) == 2 else ""
+            name = signature.split("(")[0].strip()
+            yield RegisteredMarker(name, signature, description)
+
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.
     def _getini_unknown_type(self, name: str, type: str, value: object):
@@ -1919,12 +1990,19 @@ class Config:
             return shlex.split(value) if isinstance(value, str) else value
         elif type == "linelist":
             if isinstance(value, str):
-                return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+                return [
+                    stripped for line in value.split("\n") if (stripped := line.strip())
+                ]
             else:
                 return value
         elif type == "bool":
             return _strtobool(str(value).strip())
         elif type == "string":
+            if not isinstance(value, str):
+                warnings.warn(
+                    _pytest.deprecated.INI_STRING_TYPE_NON_STR_VALUE,
+                    stacklevel=2,
+                )
             return value
         elif type == "int":
             if not isinstance(value, str):

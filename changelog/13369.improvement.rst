@@ -1,0 +1,1 @@
+Improved the error from :meth:`pytest.RunResult.assert_outcomes` when a plugin changes or removes pytest's standard terminal summary, and documented how to isolate output-changing plugins.

@@ -1,14 +1,22 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
 import os
 import sys
+from typing import cast
 from unittest import mock
 
+from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import RegisteredMarker
+from _pytest.config import UsageError
+from _pytest.mark import _validate_marker_names
 from _pytest.mark import MarkGenerator
+from _pytest.mark.expression import Expression
 from _pytest.mark.structures import _EmptyParameterSetMark
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
+from _pytest.nodeid import NodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
@@ -217,6 +225,114 @@ def test_strict_prohibits_unregistered_markers(pytester: Pytester, option: str) 
     result.stdout.fnmatch_lines(
         ["'unregisteredmark' not found in `markers` configuration option"]
     )
+
+
+class TestValidateMarkerNames:
+    """Tests for _validate_marker_names (issue #2781)."""
+
+    class FakeConfig:
+        def __init__(
+            self,
+            markers: list[str],
+            strict_markers: bool | None = None,
+            strict: bool = False,
+        ) -> None:
+            self._ini: dict[str, list[str] | bool | None] = {
+                "markers": markers,
+                "strict_markers": strict_markers,
+                "strict": strict,
+            }
+
+        def getini(self, name: str) -> list[str] | bool | None:
+            return self._ini[name]
+
+        def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
+            yield from Config._iter_registered_markers(cast(Config, self))
+
+    def _make_config(
+        self,
+        strict_markers: bool | None = None,
+        strict: bool = False,
+    ) -> Config:
+        return cast(
+            Config,
+            self.FakeConfig(
+                markers=["registered: a registered marker"],
+                strict_markers=strict_markers,
+                strict=strict,
+            ),
+        )
+
+    def test_unknown_marker_with_strict_markers(self) -> None:
+        expr = Expression.compile("unknown_marker")
+
+        with pytest.raises(UsageError, match=r"Unknown marker.*unknown_marker"):
+            _validate_marker_names(expr, self._make_config(strict_markers=True))
+
+    def test_unknown_marker_with_strict(self) -> None:
+        expr = Expression.compile("unknown_marker")
+
+        with pytest.raises(UsageError, match=r"Unknown marker.*unknown_marker"):
+            _validate_marker_names(expr, self._make_config(strict=True))
+
+    def test_registered_marker_passes(self) -> None:
+        expr = Expression.compile("registered")
+
+        _validate_marker_names(expr, self._make_config(strict_markers=True))
+
+    def test_no_validation_without_strict(self) -> None:
+        expr = Expression.compile("any_marker")
+
+        _validate_marker_names(expr, self._make_config())
+
+
+@pytest.fixture
+def markexpr_pytester(pytester: Pytester) -> Pytester:
+    pytester.makeini(
+        """
+        [pytest]
+        markers =
+            registered: a registered marker
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.registered
+        def test_registered():
+            pass
+
+        def test_plain():
+            pass
+        """
+    )
+    return pytester
+
+
+@pytest.mark.parametrize("option", ["--strict-markers", "--strict"])
+def test_strict_prohibits_unregistered_markers_in_markexpr(
+    markexpr_pytester: Pytester, option: str
+) -> None:
+    result = markexpr_pytester.runpytest(option, "-m", "registered or unregisteredmark")
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        ["*Unknown marker(s) in '-m' expression: unregisteredmark*"]
+    )
+
+
+def test_strict_allows_registered_markers_in_markexpr(
+    markexpr_pytester: Pytester,
+) -> None:
+    result = markexpr_pytester.runpytest("--strict-markers", "-m", "registered")
+    result.assert_outcomes(passed=1, deselected=1)
+
+
+def test_unregistered_markers_in_markexpr_allowed_without_strict(
+    markexpr_pytester: Pytester,
+) -> None:
+    result = markexpr_pytester.runpytest("-m", "unregisteredmark")
+    result.assert_outcomes(deselected=2)
 
 
 @pytest.mark.parametrize(
@@ -496,6 +612,30 @@ def test_parametrized_collect_with_wrong_args(pytester: Pytester) -> None:
     )
 
 
+def test_parametrized_collect_with_non_sequence_values(pytester: Pytester) -> None:
+    """Test collect parametrized func with tuple-style argnames and scalar values."""
+    py_file = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("x,", [None])
+        def test_func(x):
+            pass
+    """
+    )
+
+    result = pytester.runpytest(py_file)
+    result.stdout.fnmatch_lines(
+        [
+            "test_parametrized_collect_with_non_sequence_values.py::test_func: "
+            'in "parametrize" expected a sequence of values, '
+            "for a single value use a one-element tuple like ('value',), "
+            "got NoneType:",
+            "  None",
+        ]
+    )
+
+
 def test_parametrized_with_kwargs(pytester: Pytester) -> None:
     """Test collect parametrized func with wrong number of args."""
     py_file = pytester.makepyfile(
@@ -656,6 +796,18 @@ class TestFunctional:
         assert has_own_marker.kwargs == {"location": "function"}
         assert has_inherited_marker.kwargs == {"location": "class"}
         assert has_own.get_closest_marker("missing") is None
+
+    def test_mark_closest_default_mark_decorator(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_without_mark():
+                pass
+        """
+        )
+        items, _rec = pytester.inline_genitems(p)
+        (item,) = items
+        default = pytest.mark.foo(location="default")
+        assert item.get_closest_marker("foo", default) is default.mark
 
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(
@@ -905,6 +1057,36 @@ class TestKeywordSelection:
         _passed, _skipped, failed = reprec.countoutcomes()
         assert failed == 1
 
+    @pytest.mark.parametrize("keyword", ["pytestmark", "wrapped", "cache_parameters"])
+    def test_no_match_on_ignored_function_attributes(
+        self, pytester: Pytester, keyword: str
+    ) -> None:
+        """`-k` ignores attributes that end up in a test function's __dict__
+        without being meant as keywords (#4569)."""
+        pytester.makepyfile(
+            """
+            import functools
+            import pytest
+
+            def deco(fn):
+                @functools.wraps(fn)
+                def wrapper(*args, **kwargs):
+                    return fn(*args, **kwargs)
+                return wrapper
+
+            @pytest.mark.some_mark
+            def test_marked(): pass
+
+            @deco
+            def test_decorated(): pass
+
+            @functools.lru_cache
+            def test_cached(): pass
+            """
+        )
+        result = pytester.runpytest("-k", keyword)
+        result.assert_outcomes(deselected=3)
+
     @pytest.mark.xfail
     def test_keyword_extra_dash(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -975,6 +1157,106 @@ class TestKeywordSelection:
 
         # do not collect anything based on names outside the collection tree
         assert get_collected_names("-k", pytester._name) == []
+
+    def test_keyword_matches_marks_from_parents(self, pytester: Pytester) -> None:
+        """`-k` matches marker names from the module, class and base classes."""
+        pytester.makepyfile(
+            """
+            import pytest
+            pytestmark = pytest.mark.modmark
+
+            @pytest.mark.basemark
+            class Base:
+                def test_inherited(self): pass
+
+            @pytest.mark.classmark
+            class TestClass(Base):
+                def test_method(self): pass
+
+            def test_toplevel(): pass
+            """
+        )
+        for keyword, selected in [
+            ("modmark", 3),
+            ("classmark", 2),
+            ("basemark", 2),
+        ]:
+            result = pytester.runpytest("-k", keyword)
+            result.assert_outcomes(passed=selected, deselected=3 - selected)
+
+    def test_keyword_does_not_match_mark_arguments(self, pytester: Pytester) -> None:
+        """`-k` matches marker names, not what the marker was called with."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.mymark("someargument", somekwarg="anotherargument")
+            def test_one(): pass
+            """
+        )
+        for keyword in ["someargument", "anotherargument", "somekwarg"]:
+            result = pytester.runpytest("-k", keyword)
+            result.assert_outcomes(deselected=1)
+
+    def test_keyword_matches_dynamically_added_mark(self, pytester: Pytester) -> None:
+        """A mark added in a conftest `pytest_collection_modifyitems` is seen by
+        `-k`, because conftest hook implementations run before the ones of the
+        mark plugin doing the deselection."""
+        pytester.makeconftest(
+            """
+            def pytest_collection_modifyitems(items):
+                for item in items:
+                    if item.name == "test_one":
+                        item.add_marker("addedmark")
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_one(): pass
+            def test_two(): pass
+            """
+        )
+        result = pytester.runpytest("-k", "addedmark")
+        result.assert_outcomes(passed=1, deselected=1)
+
+    def test_keyword_matches_item_extra_keyword_matches(
+        self, pytester: Pytester
+    ) -> None:
+        """`extra_keyword_matches` is honoured on the item itself, not just on
+        a parent collector."""
+        pytester.makeconftest(
+            """
+            def pytest_collection_modifyitems(items):
+                for item in items:
+                    if item.name == "test_one":
+                        item.extra_keyword_matches.add("extrakeyword")
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_one(): pass
+            def test_two(): pass
+            """
+        )
+        result = pytester.runpytest("-k", "extrakeyword")
+        result.assert_outcomes(passed=1, deselected=1)
+
+    @pytest.mark.parametrize("option", ["-k", "-m"])
+    def test_writing_to_keywords_does_not_select(
+        self, pytester: Pytester, option: str
+    ) -> None:
+        """Writing into `item.keywords` does not make a test selectable: `-k`
+        collects its names separately, and `-m` only looks at markers."""
+        pytester.makeconftest(
+            """
+            def pytest_collection_modifyitems(items):
+                for item in items:
+                    item.keywords["setviakeywords"] = True
+            """
+        )
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest(option, "setviakeywords")
+        result.assert_outcomes(deselected=1)
 
 
 class TestMarkDecorator:
@@ -1135,19 +1417,24 @@ def test_mark_expressions_no_smear(pytester: Pytester) -> None:
     deselected_tests = dlist[0].items
     assert len(deselected_tests) == 1
 
-    # todo: fixed
-    # keywords smear - expected behaviour
-    # reprec_keywords = pytester.inline_run("-k", "FOO")
-    # passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
-    # assert passed_k == 2
-    # assert skipped_k == failed_k == 0
+    # Marks used to smear onto the shared base class function object, so that
+    # -k FOO matched both subclasses; it no longer does.
+    reprec_keywords = pytester.inline_run("-k", "FOO")
+    passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
+    assert passed_k == 1
+    assert skipped_k == failed_k == 0
+
+    # -m matches marker names exactly, so the case has to match too.
+    reprec_lower = pytester.inline_run("-m", "foo")
+    assert reprec_lower.countoutcomes() == [0, 0, 0]
 
 
 def test_addmarker_order(pytester) -> None:
-    session = mock.Mock()
+    session = mock.Mock(spec=Collector)
     session.own_markers = []
     session.parent = None
     session.nodeid = ""
+    session.id = NodeId(path="")
     session.path = pytester.path
     node = Node.from_parent(session, name="Test")
     node.add_marker("foo")

@@ -85,7 +85,6 @@ class ColoredLevelFormatter(DatetimeFormatter):
         logging.CRITICAL: {"red"},
         logging.ERROR: {"red", "bold"},
         logging.WARNING: {"yellow"},
-        logging.WARN: {"yellow"},
         logging.INFO: {"green"},
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
@@ -600,11 +599,15 @@ class LogCaptureFixture:
 
         .. versionadded:: 7.5
         """
-        self.handler.addFilter(filter_)
-        try:
+        already_present = filter_ in self.handler.filters
+        if already_present:
             yield
-        finally:
-            self.handler.removeFilter(filter_)
+        else:
+            try:
+                self.handler.addFilter(filter_)
+                yield
+            finally:
+                self.handler.removeFilter(filter_)
 
 
 @fixture

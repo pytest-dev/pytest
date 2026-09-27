@@ -1,0 +1,1 @@
+When :confval:`strict_markers` is enabled, marker names used in :option:`-m` expressions are now validated against registered markers.

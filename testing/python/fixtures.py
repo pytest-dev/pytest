@@ -146,6 +146,37 @@ class TestFillFixtures:
             """
         )
 
+    def test_fixture_not_found_nodeid_fallback(self, pytester: Pytester) -> None:
+        """Test for fallback string nodeid handling in fixture not found error.
+
+        This test can be deleted with FIXTURE_NODEID_DEPRECATED deprecation.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_finish(session):
+                session._fixturemanager._register_fixture(
+                    name="does_exist",
+                    func=lambda: 0,
+                    nodeid="",
+                )
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_it(does_not_exist): pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.stdout.fnmatch_lines(
+            [
+                "*fixture 'does_not_exist' not found*",
+                "*available fixtures: *does_exist*",
+            ]
+        )
+
     def test_detect_recursive_dependency_error(self, pytester: Pytester) -> None:
         pytester.copy_example()
         result = pytester.runpytest()
@@ -1293,7 +1324,8 @@ class TestRequestBasic:
 
 class TestRequestSessionScoped:
     @pytest.fixture(scope="session")
-    def session_request(self, request):
+    @staticmethod
+    def session_request(request):
         return request
 
     @pytest.mark.parametrize("name", ["path", "module"])
@@ -3851,7 +3883,7 @@ class TestShowFixtures:
             """
             *tmp_path -- *
             *fixtures defined from*
-            *arg1 -- test_show_fixtures_testmodule.py:6*
+            *arg1 -- test_show_fixtures_testmodule.py:5*
             *hello world*
         """
         )
@@ -3911,10 +3943,10 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_trimmed_doc *
-                arg2 -- test_show_fixtures_trimmed_doc.py:10
+                arg1 -- test_show_fixtures_trimmed_doc.py:2
                     line1
                     line2
-                arg1 -- test_show_fixtures_trimmed_doc.py:3
+                arg2 -- test_show_fixtures_trimmed_doc.py:9
                     line1
                     line2
                 """
@@ -3940,7 +3972,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_doc *
-                fixture1 -- test_show_fixtures_indented_doc.py:3
+                fixture1 -- test_show_fixtures_indented_doc.py:2
                     line1
                         indented line
                 """
@@ -3968,7 +4000,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_doc_first_line_unindented *
-                fixture1 -- test_show_fixtures_indented_doc_first_line_unindented.py:3
+                fixture1 -- test_show_fixtures_indented_doc_first_line_unindented.py:2
                     line1
                     line2
                         indented line
@@ -3996,7 +4028,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_in_class *
-                fixture1 -- test_show_fixtures_indented_in_class.py:4
+                fixture1 -- test_show_fixtures_indented_in_class.py:3
                     line1
                     line2
                         indented line
@@ -4036,11 +4068,11 @@ class TestShowFixtures:
         result.stdout.fnmatch_lines(
             """
             * fixtures defined from test_a *
-            fix_a -- test_a.py:4
+            fix_a -- test_a.py:3
                 Fixture A
 
             * fixtures defined from test_b *
-            fix_b -- test_b.py:4
+            fix_b -- test_b.py:3
                 Fixture B
         """
         )
@@ -4076,11 +4108,11 @@ class TestShowFixtures:
         result.stdout.fnmatch_lines(
             """
             * fixtures defined from conftest *
-            arg1 -- conftest.py:3
+            arg1 -- conftest.py:2
                 Hello World in conftest.py
 
             * fixtures defined from test_show_fixtures_with_same_name *
-            arg1 -- test_show_fixtures_with_same_name.py:3
+            arg1 -- test_show_fixtures_with_same_name.py:2
                 Hi from test module
         """
         )
@@ -4093,6 +4125,31 @@ class TestShowFixtures:
             @pytest.fixture
             def foo():
                 raise NotImplementedError()
+
+    def test_show_fixtures_deprecated_nodeid_fixture(self, pytester: Pytester) -> None:
+        """Test for fallback string nodeid handling in showfixtures.
+
+        This test can be deleted with FIXTURE_NODEID_DEPRECATED deprecation.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_finish(session):
+                session._fixturemanager._register_fixture(
+                    name="does_exist",
+                    func=lambda: 0,
+                    nodeid="",
+                )
+            """
+        )
+
+        result = pytester.runpytest("--fixtures")
+        result.stdout.fnmatch_lines(
+            [
+                "*does_exist -- conftest.py:*",
+            ]
+        )
 
 
 class TestContextManagerFixtureFuncs:
@@ -4248,7 +4305,7 @@ class TestParameterizedSubRequest:
                 "The requested fixture has no parameter defined for test:",
                 "    test_call_from_fixture.py::test_foo",
                 "Requested fixture 'fix_with_param' defined in:",
-                "test_call_from_fixture.py:4",
+                "test_call_from_fixture.py:3",
                 "Requested here:",
                 "test_call_from_fixture.py:9",
                 "*1 error in*",
@@ -4274,7 +4331,7 @@ class TestParameterizedSubRequest:
                 "The requested fixture has no parameter defined for test:",
                 "    test_call_from_test.py::test_foo",
                 "Requested fixture 'fix_with_param' defined in:",
-                "test_call_from_test.py:4",
+                "test_call_from_test.py:3",
                 "Requested here:",
                 "test_call_from_test.py:8",
                 "*1 failed*",
@@ -4305,7 +4362,7 @@ class TestParameterizedSubRequest:
                 "    test_external_fixture.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                "conftest.py:4",
+                "conftest.py:3",
                 "Requested here:",
                 "test_external_fixture.py:2",
                 "*1 failed*",
@@ -4351,7 +4408,7 @@ class TestParameterizedSubRequest:
                 "    test_foos.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                f"{fixfile}:4",
+                f"{fixfile}:3",
                 "Requested here:",
                 "test_foos.py:4",
                 "*1 failed*",
@@ -4368,7 +4425,7 @@ class TestParameterizedSubRequest:
                 "    test_foos.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                f"{fixfile}:4",
+                f"{fixfile}:3",
                 "Requested here:",
                 f"{testfile}:4",
                 "*1 failed*",
@@ -4541,7 +4598,7 @@ class TestParamValueKey:
     def test_equal_hashable_values(self) -> None:
         # Build equal-but-not-identical values to exercise the ``==`` path
         # rather than the identity shortcut.
-        v1, v2 = tuple([1, 2]), tuple([1, 2])
+        v1, v2 = tuple([1, 2]), tuple([1, 2])  # noqa: C409
         assert v1 is not v2
         k1, k2 = ParamValueKey(v1, 0), ParamValueKey(v2, 1)
         assert k1 == k2
@@ -4628,7 +4685,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "m1 f1".split()
+        assert request.fixturenames == ["m1", "f1"]
 
     def test_func_closure_with_native_fixtures(self, pytester: Pytester) -> None:
         """Sanity check that verifies the order returned by the closures and the
@@ -4717,7 +4774,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "m1 f1".split()
+        assert request.fixturenames == ["m1", "f1"]
 
     def test_func_closure_scopes_reordered(self, pytester: Pytester) -> None:
         """Test ensures that fixtures are ordered by scope regardless of the order of the parameters, although
@@ -4751,7 +4808,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "s1 m1 c1 f2 f1".split()
+        assert request.fixturenames == ["s1", "m1", "c1", "f2", "f1"]
 
     def test_func_closure_same_scope_closer_root_first(
         self, pytester: Pytester
@@ -4794,7 +4851,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "p_sub m_conf m_sub m_test f1".split()
+        assert request.fixturenames == ["p_sub", "m_conf", "m_sub", "m_test", "f1"]
 
     def test_func_closure_all_scopes_complex(self, pytester: Pytester) -> None:
         """Complex test involving all scopes and mixing autouse with normal fixtures"""
@@ -4839,7 +4896,7 @@ class TestScopeOrdering:
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        assert request.fixturenames == "s1 p1 m1 m2 c1 f2 f1".split()
+        assert request.fixturenames == ["s1", "p1", "m1", "m2", "c1", "f2", "f1"]
 
     def test_parametrized_package_scope_reordering(self, pytester: Pytester) -> None:
         """A parameterized package-scoped fixture correctly reorders items to
@@ -5221,7 +5278,7 @@ def test_fixture_named_request(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*'request' is a reserved word for fixtures, use another name:",
-            "  *test_fixture_named_request.py:8",
+            "  *test_fixture_named_request.py:7",
         ]
     )
 
