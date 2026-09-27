@@ -357,9 +357,22 @@ def test_proxy_does_not_deadlock_with_real_handler_across_threads() -> None:
             trace.append(message)
 
     class TracingRLock:
+        """An RLock that records acquisition order across threads.
+
+        Implements the context-manager protocol as well, because
+        ``logging.Handler.handle()`` uses ``with self.lock:`` on newer
+        Pythons (3.14+).
+        """
+
         def __init__(self, name: str) -> None:
             self._rlock = threading.RLock()
             self._name = name
+
+        def __enter__(self) -> None:
+            self.acquire()
+
+        def __exit__(self, *exc: object) -> None:
+            self.release()
 
         def acquire(self, *args: object, **kwargs: object) -> bool:
             note(f"{threading.current_thread().name}:want:{self._name}")
