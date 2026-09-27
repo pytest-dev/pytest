@@ -138,7 +138,7 @@ def test_identity_hostile_user_handler_survives_capture() -> None:
 
     class Hostile(logging.Handler):
         def __eq__(self, other: object) -> bool:
-            return True
+            return True  # pragma: no cover - never called; that is the point
 
         __hash__ = object.__hash__
 
@@ -309,7 +309,7 @@ def test_entry_failure_during_proxy_attachment_rolls_back() -> None:
     try:
         with pytest.raises(RuntimeError):
             with catching_logs(handler, level=logging.DEBUG):
-                pass
+                pass  # pragma: no cover - __enter__ raises before this line
     finally:
         # Restore a real list: leaving the poisoned one installed would break
         # every later capturing_logs scope, including pytest's own session ones.
@@ -369,10 +369,10 @@ def test_proxy_does_not_deadlock_with_real_handler_across_threads() -> None:
             self._name = name
 
         def __enter__(self) -> None:
-            self.acquire()
+            self.acquire()  # pragma: no cover - only taken on Python 3.14+
 
         def __exit__(self, *exc: object) -> None:
-            self.release()
+            self.release()  # pragma: no cover - only taken on Python 3.14+
 
         def acquire(self, *args: object, **kwargs: object) -> bool:
             note(f"{threading.current_thread().name}:want:{self._name}")
@@ -417,7 +417,7 @@ def test_proxy_does_not_deadlock_with_real_handler_across_threads() -> None:
     # The inversion: a thread holding PROXY while waiting for REAL.
     for index, entry in enumerate(trace[:-1]):
         if entry.endswith(":got:PROXY") and trace[index + 1].endswith(":want:REAL"):
-            pytest.fail(
+            pytest.fail(  # pragma: no cover - only on a reintroduced deadlock
                 "proxy held its own lock while invoking the real handler: "
                 f"{entry} -> {trace[index + 1]}"
             )
@@ -467,14 +467,14 @@ def test_entry_failure_rolls_back_root_attachment() -> None:
             raise RuntimeError("boom")
 
         def emit(self, record: logging.LogRecord) -> None:
-            pass
+            pass  # pragma: no cover - setLevel raises before any record
 
     _make_logger("o")
     handler = FailingLevel()
     root = logging.getLogger()
     with pytest.raises(RuntimeError):
         with catching_logs(handler, level=logging.DEBUG):
-            pass
+            pass  # pragma: no cover - __enter__ raises before this line
     assert not any(h is handler for h in root.handlers)
 
 
