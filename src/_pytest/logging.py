@@ -18,12 +18,14 @@ from logging import LogRecord
 import os
 from pathlib import Path
 import re
+from threading import local
 from types import TracebackType
 from typing import final
 from typing import Generic
 from typing import Literal
 from typing import TYPE_CHECKING
 from typing import TypeVar
+from weakref import WeakKeyDictionary
 
 from _pytest import nodes
 from _pytest._io import TerminalWriter
@@ -334,6 +336,23 @@ def pytest_addoption(parser: Parser) -> None:
 _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 
 
+def _remove_handler_by_identity(
+    logger: logging.Logger, handler: logging.Handler
+) -> None:
+    """Remove ``handler`` from ``logger.handlers`` comparing by identity.
+
+    ``Logger.removeHandler()`` uses ``list.remove()``, i.e. ``__eq__``, so a
+    user handler which compares equal to one of pytest's own would be removed
+    in its place. Two loggers may also share a single ``handlers`` list, in
+    which case the handler must come out of that one list exactly once.
+    """
+    handlers = logger.handlers
+    for index, existing in enumerate(handlers):
+        if existing is handler:
+            del handlers[index]
+            return
+
+
 class _BoundProxyHandler(logging.Handler):
     """A proxy for a pytest capture handler, bound to one logger.
 
@@ -345,12 +364,43 @@ class _BoundProxyHandler(logging.Handler):
     misses it (#15064, #3697).
     """
 
-    __slots__ = ("logger", "real_handler")
+    __slots__ = (
+        "_detached",
+        "_proxied_filters",
+        "_refcount",
+        "_state",
+        "logger",
+        "real_handler",
+    )
 
     def __init__(self, logger: logging.Logger, real_handler: logging.Handler) -> None:
         self.logger = logger
         self.real_handler = real_handler
-        super().__init__()
+        # Per-thread reentrancy guard: the proxy forwards into the real
+        # handler, which may itself log and re-enter the same proxy.
+        self._state = local()
+        self._detached = False
+        # Number of catching_logs scopes currently sharing this proxy. Overlapping
+        # scopes (e.g. caplog + report handler nested per test phase, or two
+        # contexts sharing one handler) must attach a single proxy, or the record
+        # is forwarded once per scope and captured twice. Starts at 0: the
+        # owning scope's ``__enter__`` accounts for the first reference.
+        self._refcount = 0
+        # Filters installed through this proxy (e.g. via ``logger.handlers``).
+        # They are applied by the real handler, which the proxy forwards to, so
+        # they are tracked here to be taken back off again on detach.
+        self._proxied_filters: list[logging.Filter] = []
+        # Deliberately skip ``logging.Handler.__init__``'s registration in the
+        # global ``_handlerList``: a proxy is a short-lived internal object
+        # which pytest detaches itself, it owns no stream, and it must never be
+        # closed by ``logging.shutdown()`` (that would close the real handler
+        # it forwards to). Everything else the base initialiser sets up is
+        # replicated here.
+        self._name = None
+        self.formatter: logging.Formatter | None = None
+        self._closed = False
+        self.filters = []  # type: ignore[assignment]
+        self.createLock()
 
     @property
     def level(self) -> int:
@@ -364,21 +414,136 @@ class _BoundProxyHandler(logging.Handler):
         # through the real handler instead.
         pass
 
+    def addFilter(self, filter: logging.Filter) -> None:
+        # Filters installed through ``logger.handlers`` (e.g. by
+        # ``caplog.filtering()``) must keep affecting capture. ``handle()``
+        # below forwards the record to the real handler, which is what applies
+        # filters, so the filter is installed there too -- tracked so it can be
+        # taken back off on detach. The real handler's own filters are left
+        # untouched.
+        super().addFilter(filter)
+        self._proxied_filters.append(filter)
+        real = self.real_handler
+        if real is not None and not any(f is filter for f in real.filters):
+            real.filters.append(filter)
+
+    def removeFilter(self, filter: logging.Filter) -> None:  # type: ignore[override]
+        # Removed from both, by identity, so a filter removed through the proxy
+        # (as ``caplog.filtering()`` does on exit) does not stay active for the
+        # next test.
+        for existing_list in (self.filters, self._proxied_filters):
+            for index, existing in enumerate(existing_list):
+                if existing is filter:
+                    del existing_list[index]
+                    break
+        real = self.real_handler
+        if real is not None:
+            for index, existing in enumerate(real.filters):
+                if existing is filter:
+                    del real.filters[index]
+                    break
+
+    def setFormatter(self, fmt: logging.Formatter | None) -> None:
+        self.formatter = fmt
+        if self.real_handler is not None:
+            self.real_handler.setFormatter(fmt)
+
+    def handle(self, record: logging.LogRecord) -> bool:
+        """Forward to the real handler without holding the proxy's own lock.
+
+        ``logging.Handler.handle()`` holds ``self.lock`` across ``emit()``.
+        Calling ``real_handler.handle()`` from there would additionally take the
+        real handler's lock, establishing a ``proxy -> real`` lock order that
+        another thread can invert (``real -> proxy``) and deadlock on. Instead,
+        take the real handler's lock directly, so only one lock is ever held.
+
+        ``Logger.callHandlers()`` ignores the return value, so returning a
+        falsy value here is safe; the stdlib's ``found`` bookkeeping is
+        unaffected.
+        """
+        if self._is_detached:
+            return False
+        if self.logger.propagate:
+            # The logger propagates now, so the record continues up the
+            # hierarchy (to the real handler attached to root) -- do not
+            # deliver it a second time.
+            return False
+        if any(h is self.real_handler for h in self.logger.handlers):
+            # The real handler is attached to this logger directly (e.g. a
+            # handler installed through ``logger.addHandler``), so this record
+            # is already going to be handled by it on this same walk -- forward
+            # and it would be captured twice.
+            return False
+        if getattr(self._state, "forwarding", False):
+            # Re-entered from inside the real handler's own emit(); forwarding
+            # again would recurse, so skip (the guard in ``emit()`` also covers
+            # direct emit() calls).
+            return False
+        self._state.forwarding = True
+        try:
+            # Delegate whole-record handling (filters, level, lock, handleError)
+            # to the real handler.
+            return self.real_handler.handle(record)
+        finally:
+            self._state.forwarding = False
+
     def emit(self, record: logging.LogRecord) -> None:
-        if not self.logger.propagate:
-            self.real_handler.handle(record)
+        # Only reached when the handler is driven directly (``emit()`` by user
+        # code); ``handle()`` forwards before acquiring this handler's lock.
+        if (
+            not self._is_detached
+            and not self.logger.propagate
+            and not getattr(self._state, "forwarding", False)
+        ):
+            self.handle(record)
+
+    def close(self) -> None:
+        # Detaching must not close the real handler, which pytest reuses across
+        # phases; only mark the proxy detached so a retained proxy can neither
+        # keep the capture handler alive nor forward records after the context
+        # has ended. ``_detached`` rather than clearing the attributes, so that
+        # any late call fails safe (no forwarding) instead of raising.
+        self._detached = True
+        # Filters installed through the proxy are also installed on the real
+        # handler, so they must be taken back off on detach -- otherwise they
+        # stay active for the next test and silently drop its records.
+        real = self.real_handler
+        if real is not None and self._proxied_filters:
+            proxied = self._proxied_filters
+            real.filters = [
+                existing
+                for existing in real.filters
+                if not any(existing is f for f in proxied)
+            ]
+        self._proxied_filters.clear()
+        super().close()
+
+    @property
+    def _is_detached(self) -> bool:
+        return getattr(self, "_detached", False)
 
 
 # Not using @contextmanager for performance reasons.
 class catching_logs(Generic[_HandlerType]):
     """Context manager that prepares the whole logging machinery properly."""
 
+    # Proxies are reused across the enclosing capture scope, so the set of
+    # loggers needing one is cached per (manager, handler) and recomputed only
+    # when a *new* non-propagating logger appears. pytest re-enters
+    # ``catching_logs`` for every test phase, so this turns a per-entry
+    # O(n^2) rescan into a single walk.
     __slots__ = (
         "attached_loggers",
         "attached_proxies",
         "handler",
         "level",
         "orig_level",
+    )
+
+    # Weakly keyed by the handler so the cache dies with it (pytest's handlers
+    # live for the whole session, so this is bounded by a handful of entries).
+    _target_cache: WeakKeyDictionary[object, tuple[logging.Logger, ...]] = (
+        WeakKeyDictionary()
     )
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
@@ -402,28 +567,121 @@ class catching_logs(Generic[_HandlerType]):
         # Note that this still misses loggers (outside those ancestor
         # chains) which *become* non-propagating after the `__enter__`.
         # Not worth the trouble for now.
-        proxy_targets: dict[logging.Logger, None] = {}
-        for logger in root_logger.manager.loggerDict.values():
-            if (
-                isinstance(logger, logging.Logger)
-                and not logger.propagate
-                and logger is not root_logger
-            ):
-                proxy_targets[logger] = None
-                parent = logger.parent
-                while parent is not None and parent is not root_logger:
-                    proxy_targets.setdefault(parent)
-                    parent = parent.parent
-        for logger in proxy_targets:
-            proxy = _BoundProxyHandler(logger, self.handler)
-            logger.addHandler(proxy)
-            self.attached_proxies.append((logger, proxy))
+        try:
+            for logger in self._proxy_targets(root_logger, self.handler):
+                # Reuse a proxy already bound to this (logger, handler) pair, so
+                # that overlapping capturing_logs scopes -- pytest nests one per
+                # handler and re-enters them for every test phase -- attach a
+                # single proxy. Without reuse the same record is forwarded once
+                # per scope and captured more than once.
+                proxy: _BoundProxyHandler | None = None
+                for existing in logger.handlers:
+                    if (
+                        isinstance(existing, _BoundProxyHandler)
+                        and existing.real_handler is self.handler
+                    ):
+                        proxy = existing
+                        break
+                reused = proxy is not None
+                if proxy is None:
+                    proxy = _BoundProxyHandler(logger, self.handler)
+                # ``Logger.addHandler`` refuses a handler that compares equal to
+                # one already attached, so attach by identity and remember
+                # exactly what we added -- otherwise a user handler which
+                # compares equal would suppress the proxy *and* be removed in its
+                # place on exit.
+                if not reused and not any(h is proxy for h in logger.handlers):
+                    logger.handlers.append(proxy)
+                proxy._refcount += 1
+                self.attached_proxies.append((logger, proxy))
+        except BaseException:
+            # Entry must be transactional: if anything above fails (e.g. an
+            # unhashable Logger), undo the partial setup instead of leaving
+            # pytest's handler attached to root with no owner to remove it.
+            self._detach()
+            raise
         if self.level is not None:
             # Non-propagating loggers still inherit the level (unless a logger
             # explicitly set level), so only do this on the root logger.
             self.orig_level = root_logger.level
             root_logger.setLevel(min(self.orig_level, self.level))
         return self.handler
+
+    @classmethod
+    def _proxy_targets(
+        cls, root_logger: logging.Logger, handler: logging.Handler
+    ) -> tuple[logging.Logger, ...]:
+        """Loggers which need a bound proxy, in a stable order.
+
+        Cached per handler and revalidated on every entry: the cache is only
+        reused when the logger population is unchanged and every cached target
+        is still registered and still non-propagating. Any logger which appears
+        or flips ``propagate`` afterwards therefore forces a recompute, while
+        the common case -- pytest re-entering the same scope for every test
+        phase with nothing changed -- is an O(n) revalidation.
+
+        Identity is used throughout: loggers are not guaranteed to be
+        hashable (``Logger`` subclasses may set ``__hash__ = None``) and two
+        distinct loggers can share one ``handlers`` list, so neither a dict
+        keyed by logger nor a set is safe here.
+        """
+        manager = root_logger.manager
+        current = manager.loggerDict
+        cached = cls._target_cache.get(handler)
+        if cached is not None and len(cached) == len(current):
+            if all(
+                any(existing is logger for existing in current.values())
+                and not logger.propagate
+                for logger in cached
+            ):
+                return cached
+
+        root = current
+        targets: list[logging.Logger] = []
+        # Identity set: avoids hashing loggers and gives O(1) membership.
+        seen: dict[int, logging.Logger] = {}
+        for logger in list(root.values()):
+            if (
+                not isinstance(logger, logging.Logger)
+                or logger is root_logger
+                or logger.propagate
+            ):
+                continue
+            if id(logger) not in seen:
+                seen[id(logger)] = logger
+                targets.append(logger)
+            parent = logger.parent
+            while parent is not None and parent is not root_logger:
+                if id(parent) not in seen:
+                    seen[id(parent)] = parent
+                    targets.append(parent)
+                parent = parent.parent
+        result = tuple(targets)
+        cls._target_cache[handler] = result
+        return result
+
+    def _detach(self) -> None:
+        """Release everything this context attached, by identity.
+
+        A proxy shared with an outer (still-active) scope is only released when
+        the last owner lets go of it, so nested contexts over the same handler
+        neither detach early nor double-forward.
+        """
+        for logger in self.attached_loggers:
+            if any(h is self.handler for h in logger.handlers):
+                _remove_handler_by_identity(logger, self.handler)
+        self.attached_loggers.clear()
+        for logger, proxy in self.attached_proxies:
+            proxy._refcount -= 1
+            if proxy._refcount > 0:
+                # Still owned by an enclosing scope; leave it attached.
+                continue
+            if any(h is proxy for h in logger.handlers):
+                _remove_handler_by_identity(logger, proxy)
+            # Stop a retained proxy from forwarding (or keeping the capture
+            # handler and logger alive) once capture is over.
+            proxy.close()
+        self.attached_proxies.clear()
 
     def __exit__(
         self,
@@ -434,12 +692,7 @@ class catching_logs(Generic[_HandlerType]):
         root_logger = logging.getLogger()
         if self.level is not None:
             root_logger.setLevel(self.orig_level)
-        for logger in self.attached_loggers:
-            logger.removeHandler(self.handler)
-        self.attached_loggers.clear()
-        for logger, proxy in self.attached_proxies:
-            logger.removeHandler(proxy)
-        self.attached_proxies.clear()
+        self._detach()
 
 
 class LogCaptureHandler(logging_StreamHandler):

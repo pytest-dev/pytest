@@ -1610,3 +1610,145 @@ def test_log_file_cli_fallback_options(pytester: Pytester) -> None:
         assert "info text going to logger" not in contents
         assert "warning text going to logger" not in contents
         assert "error text going to logger" in contents
+
+
+def test_log_cli_output_capture_once_when_propagation_enabled_during_test(
+    pytester: Pytester,
+) -> None:
+    """Live ``--log-cli-level`` output shows a record once, not twice, when a
+    logger enables propagation mid-test (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("cli.example")
+        logger.propagate = False
+
+        def test_log_once():
+            logger.propagate = True
+            logger.warning("live only once")
+        """
+    )
+
+    result = pytester.runpytest("--log-cli-level=WARNING")
+    result.assert_outcomes(passed=1)
+    result.stdout.no_fnmatch_line("*live only once*live only once*")
+    assert result.stdout.str().count("live only once") == 1
+
+
+def test_log_file_output_capture_once_when_propagation_enabled_during_test(
+    pytester: Pytester,
+) -> None:
+    """``--log-file`` output records the message once, not twice (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("file.example")
+        logger.propagate = False
+
+        def test_log_once():
+            logger.propagate = True
+            logger.warning("file only once")
+        """
+    )
+
+    log_file = str(pytester.path.joinpath("pytest.log"))
+    result = pytester.runpytest(f"--log-file={log_file}", "--log-file-level=WARNING")
+    result.assert_outcomes(passed=1)
+
+    with open(log_file, encoding="utf-8") as rfh:
+        contents = rfh.read()
+    assert contents.count("file only once") == 1
+
+
+def test_report_capture_with_level_filter_on_non_propagating_logger(
+    pytester: Pytester,
+) -> None:
+    """A level set through the proxy on a non-propagating logger still applies
+    to records forwarded to the real capture handler (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("level.example")
+        logger.propagate = False
+
+        def test_level_filter(caplog):
+            with caplog.at_level(logging.WARNING, logger="level.example"):
+                logger.info("suppressed info")
+                logger.warning("kept warning")
+            assert caplog.messages == ["kept warning"]
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_report_capture_with_handler_filter_on_non_propagating_logger(
+    pytester: Pytester,
+) -> None:
+    """A filter installed through the proxy on a non-propagating logger still
+    affects capture, and does not leak into the next test (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("filter.example")
+        logger.propagate = False
+
+        def only_warnings(record):
+            return record.levelno >= logging.WARNING
+
+        def test_filter_applies(caplog):
+            for handler in logger.handlers:
+                handler.addFilter(only_warnings)
+            logger.info("dropped")
+            logger.warning("kept")
+            assert "dropped" not in caplog.text
+            assert "kept" in caplog.text
+
+        def test_filter_did_not_leak(caplog):
+            # The filter from the previous test must not still be installed:
+            # an INFO record must be captured again. caplog's default level is
+            # WARNING, so lower it to see the record at all.
+            caplog.set_level(logging.INFO)
+            logger.info("not filtered now")
+            assert "not filtered now" in caplog.text
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_report_capture_replacement_record_on_non_propagating_logger(
+    pytester: Pytester,
+) -> None:
+    """A filter returning a replacement record still applies through the proxy
+    (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("replace.example")
+        logger.propagate = False
+
+        def replace(record):
+            return logging.makeLogRecord({
+                "msg": "replaced message",
+                "levelname": "ERROR",
+                "levelno": logging.ERROR,
+            })
+
+        def test_replacement(caplog):
+            for handler in logger.handlers:
+                handler.addFilter(replace)
+            logger.warning("original message")
+            assert caplog.messages == ["replaced message"]
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
