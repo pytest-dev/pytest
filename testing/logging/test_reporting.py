@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
 import re
+import sys
 from typing import cast
 
 from _pytest.capture import CaptureManager
@@ -1723,11 +1725,21 @@ def test_report_capture_with_handler_filter_on_non_propagating_logger(
     result.assert_outcomes(passed=2)
 
 
+@pytest.mark.skipif(
+    not hasattr(logging, "LogRecord") or sys.version_info < (3, 12),
+    reason="filter() returning a replacement record is only honoured from 3.12",
+)
 def test_report_capture_replacement_record_on_non_propagating_logger(
     pytester: Pytester,
 ) -> None:
     """A filter returning a replacement record still applies through the proxy
-    (#15064)."""
+    (#15064).
+
+    ``logging.Handler.handle()`` only honours a replacement record (a filter
+    returning a ``LogRecord`` rather than a bool) from Python 3.12; on 3.10 and
+    3.11 the return value is used as a plain truthiness test by the stdlib
+    itself, so the record is emitted unchanged. Skipped there accordingly.
+    """
     pytester.makepyfile(
         """
         import logging
