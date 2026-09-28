@@ -122,9 +122,7 @@ class TestParser:
         group._addoption("-x", action="store_true")
         assert len(group.options) == 1
 
-    def test_group_addoption_rejects_positional(
-        self, parser: parseopt.Parser
-    ) -> None:
+    def test_group_addoption_rejects_positional(self, parser: parseopt.Parser) -> None:
         # See #13817: a non-dash option string used to either crash with an
         # AttributeError (from repr of the incomplete Argument) or be silently
         # registered as a required positional.
