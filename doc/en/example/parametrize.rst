@@ -105,13 +105,13 @@ the argument name:
     ]
 
 
-    @pytest.mark.parametrize("a,b,expected", testdata)
+    @pytest.mark.parametrize(("a", "b", "expected"), testdata)
     def test_timedistance_v0(a, b, expected):
         diff = a - b
         assert diff == expected
 
 
-    @pytest.mark.parametrize("a,b,expected", testdata, ids=["forward", "backward"])
+    @pytest.mark.parametrize(("a", "b", "expected"), testdata, ids=["forward", "backward"])
     def test_timedistance_v1(a, b, expected):
         diff = a - b
         assert diff == expected
@@ -123,14 +123,14 @@ the argument name:
             return val.strftime("%Y%m%d")
 
 
-    @pytest.mark.parametrize("a,b,expected", testdata, ids=idfn)
+    @pytest.mark.parametrize(("a", "b", "expected"), testdata, ids=idfn)
     def test_timedistance_v2(a, b, expected):
         diff = a - b
         assert diff == expected
 
 
     @pytest.mark.parametrize(
-        "a,b,expected",
+        ("a","b","expected"),
         [
             pytest.param(
                 datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1), id="forward"
@@ -412,7 +412,7 @@ will be passed to respective fixture function:
         return request.param * 2
 
 
-    @pytest.mark.parametrize("x, y", [("a", "b")], indirect=["x"])
+    @pytest.mark.parametrize(("x", "y"), [("a", "b")], indirect=["x"])
     def test_indirect(x, y):
         assert x == "aaa"
         assert y == "b"
@@ -613,7 +613,7 @@ For example:
 
 
     @pytest.mark.parametrize(
-        "test_input,expected",
+        ("test_input", "expected"),
         [
             ("3+5", 8),
             pytest.param("1+7", 8, marks=pytest.mark.basic),
@@ -681,7 +681,7 @@ For example:
 
 
     @pytest.mark.parametrize(
-        "example_input,expectation",
+        ("example_input", "expectation"),
         [
             (3, nullcontext(2)),
             (2, nullcontext(3)),
