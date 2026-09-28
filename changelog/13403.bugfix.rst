@@ -1,0 +1,1 @@
+Disable assertion for modules outside current working dir(cwd)
