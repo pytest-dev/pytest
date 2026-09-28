@@ -1961,6 +1961,12 @@ hooks available to tests in ``app/tests``.
     recommended: importing fixtures into a module will register them in pytest
     as *defined* in that module.
 
-    This has minor consequences, such as appearing multiple times in ``pytest --help``,
+    If multiple test modules import the same fixture, pytest registers it separately in each
+    module. Consequently, even a session-scoped fixture can be set up once per importing
+    module. To share a fixture across test modules, define or import it in a shared
+    ``conftest.py`` file, or register the module containing it as a plugin using
+    :globalvar:`pytest_plugins`.
+
+    This has other consequences, such as appearing multiple times in ``pytest --help``,
     but it is not **recommended** because this behavior might change/stop working
     in future versions.
