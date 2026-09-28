@@ -19,7 +19,6 @@ from logging import LogRecord
 import os
 from pathlib import Path
 import re
-import weakref
 from types import TracebackType
 from typing import final
 from typing import Generic
@@ -28,6 +27,7 @@ from typing import NamedTuple
 from typing import Protocol
 from typing import TYPE_CHECKING
 from typing import TypeVar
+import weakref
 
 from _pytest import nodes
 from _pytest._io import TerminalWriter
@@ -656,7 +656,7 @@ class catching_logs(Generic[_HandlerType]):
     # can neither keep a removed logger (or a dead handler) alive nor let a
     # recycled ``id()`` match a stale entry. It is rebuilt whenever the logger
     # population changes.
-    _target_cache: dict[int, "_TargetCacheEntry"] = {}
+    _target_cache: dict[int, _TargetCacheEntry] = {}
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
         self.handler = handler
@@ -785,9 +785,7 @@ class catching_logs(Generic[_HandlerType]):
                     if (
                         logger is None
                         or logger.propagate
-                        or not any(
-                            existing is logger for existing in current.values()
-                        )
+                        or not any(existing is logger for existing in current.values())
                     ):
                         usable = False
                         break
@@ -832,7 +830,9 @@ class catching_logs(Generic[_HandlerType]):
             else:
                 entry[0].append(logger)
 
-        result = tuple((tuple(loggers), handlers) for loggers, handlers in groups.values())
+        result = tuple(
+            (tuple(loggers), handlers) for loggers, handlers in groups.values()
+        )
         # Store weak references to the loggers so the cache cannot keep a
         # logger alive after it has been removed from the manager's dict, and
         # a weak back-reference to the handler so a recycled id() is rejected.
