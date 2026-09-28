@@ -122,6 +122,17 @@ class TestParser:
         group._addoption("-x", action="store_true")
         assert len(group.options) == 1
 
+    def test_group_addoption_rejects_positional(
+        self, parser: parseopt.Parser
+    ) -> None:
+        # See #13817: a non-dash option string used to either crash with an
+        # AttributeError (from repr of the incomplete Argument) or be silently
+        # registered as a required positional.
+        group = parser.getgroup("hello")
+        with pytest.raises(ValueError, match="invalid option string 'shuffle'"):
+            group.addoption("shuffle")
+        assert len(group.options) == 0
+
     def test_parser_addoption(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("custom options")
         assert len(group.options) == 0
