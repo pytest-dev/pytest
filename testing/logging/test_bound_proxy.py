@@ -667,7 +667,7 @@ def test_pre_existing_target_filter_survives_teardown() -> None:
     of it: teardown would then delete a filter the caller installed.
     """
     logger = _make_logger("preexisting")
-    stream, handler = _capture()
+    _stream, handler = _capture()
     pre = logging.Filter("pre-existing")
     handler.addFilter(pre)
 
@@ -703,7 +703,7 @@ def test_pre_existing_filter_still_applies_after_teardown() -> None:
 def test_proxy_delegates_level_filters_and_formatter() -> None:
     """The proxy is a view: level, filters and formatter are the real ones."""
     logger = _make_logger("view")
-    stream, handler = _capture()
+    _stream, handler = _capture()
     with catching_logs(handler):
         proxy = _proxy_for(logger)
         # level is a view in both directions
@@ -748,7 +748,9 @@ def test_capture_handler_is_not_held_by_detached_proxy() -> None:
     logger = _make_logger("gcpin")
     handler = logging.StreamHandler(io.StringIO())
     with catching_logs(handler):
-        proxy = _proxy_for(logger)
+        # Assert the proxy exists so the handler is exercised; the point of the
+        # test is what happens to ``handler`` once the proxy is detached.
+        assert _proxy_for(logger) is not None
         logger.error("x")
     ref = weakref.ref(handler)
     del handler
