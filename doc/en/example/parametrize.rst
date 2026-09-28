@@ -130,7 +130,7 @@ the argument name:
 
 
     @pytest.mark.parametrize(
-        ("a","b","expected"),
+        ("a", "b", "expected"),
         [
             pytest.param(
                 datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1), id="forward"
