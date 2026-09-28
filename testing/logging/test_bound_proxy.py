@@ -339,14 +339,18 @@ def test_detached_proxy_ignores_direct_handle_call() -> None:
     assert _count(stream, "late") == 0
 
 
-def test_no_infinite_recursion_when_real_handler_logs_back() -> None:
-    """A real handler that logs into the same logger must not recurse.
+def test_finite_nested_record_is_captured_not_dropped() -> None:
+    """A real handler logging one finite nested record must not lose it.
 
-    The proxy forwards to the real handler while holding no lock; without a
-    reentrancy guard, a handler (or filter) that logs back into the capturing
-    logger would re-enter the proxy and recurse until the stack blew up. The
-    guard drops the re-entrant record instead of forwarding it, so each
-    message is emitted at most once and the nesting terminates.
+    The proxy forwards into the real handler, which may log one further record
+    from its own ``emit()``. That nested record is a distinct record and the
+    un-proxied handler would have captured it, so it must be captured here too:
+    the real handler's lock is an ``RLock``, so the finite nesting terminates
+    on its own and needs no reentrancy guard.
+
+    A handler that logs *unconditionally* from its own ``emit()`` still
+    recurses, but it does so identically without a proxy (the stdlib has the
+    same reentrant lock), so that is not something the proxy changes.
     """
     emitted: list[str] = []
 
@@ -354,7 +358,7 @@ def test_no_infinite_recursion_when_real_handler_logs_back() -> None:
         def emit(self, record: logging.LogRecord) -> None:
             emitted.append(record.getMessage())
             if record.getMessage() == "outer":
-                # Re-enter the capture path from inside the real handler.
+                # One finite nested record, then stop.
                 logger.warning("inner")
 
     logger = _make_logger("recursive")
@@ -363,24 +367,25 @@ def test_no_infinite_recursion_when_real_handler_logs_back() -> None:
     with catching_logs(real, level=logging.DEBUG):
         logger.warning("outer")
 
-    # "outer" is forwarded once. "inner" is suppressed by the reentrancy
-    # guard (forwarding it here would call back into this same emit), which is
-    # what stops the recursion -- and it also cannot loop forever because the
-    # guard is thread-local, not a one-shot.
-    assert emitted == ["outer"]
+    assert emitted == ["outer", "inner"]
 
 
-def test_setlevel_on_proxy_is_ignored() -> None:
-    """``setLevel`` on the proxy must not silently diverge from the real
-    handler; the real handler's level governs."""
+def test_setlevel_on_proxy_reaches_the_real_handler() -> None:
+    """``setLevel`` on the proxy must reach the real handler.
+
+    The proxy is a view of the real handler, so a level written through it is
+    the level that is actually in force -- dropping the write would leave
+    ``logger.handlers`` advertising a level that does not apply.
+    """
     logger = _make_logger("j")
     stream, handler = _capture()
     with catching_logs(handler, level=logging.DEBUG):
         proxy = next(h for h in logger.handlers if isinstance(h, _BoundProxyHandler))
         proxy.setLevel(logging.CRITICAL)
-        assert proxy.level == logging.DEBUG
+        assert proxy.level == logging.CRITICAL
         logger.warning("m")
-    assert _count(stream, "m") == 1
+    # The record is now below the real handler's level, so it is not handled.
+    assert _count(stream, "m") == 0
 
 
 def test_proxy_does_not_deadlock_with_real_handler_across_threads() -> None:
@@ -580,3 +585,221 @@ def test_removed_logger_is_not_held_by_the_target_cache() -> None:
 
     with catching_logs(handler, level=logging.DEBUG):
         assert not [h for h in gone.handlers if isinstance(h, _BoundProxyHandler)]
+
+
+# --------------------------------------------------------------------------
+# Regression coverage named in review #2 on #15075. Each of these fails on the
+# previous head (or on the merge base) and pins the corrected behaviour.
+
+
+def test_shared_handlers_list_transition_does_not_lose_sibling() -> None:
+    """Two loggers sharing one ``handlers`` list, one flips ``propagate``.
+
+    The proxy is shared by the pair, so it must decide from the logger that
+    actually emitted the record. Binding the decision to a single owner loses
+    the sibling's record the moment the owner starts propagating.
+    """
+    a = _make_logger("shared.a")
+    b = _make_logger("shared.b")
+    shared: list[logging.Handler] = []
+    a.handlers = shared
+    b.handlers = shared
+
+    stream, handler = _capture()
+    with catching_logs(handler):
+        # One proxy for the one shared list, not one per logger.
+        proxies = [h for h in shared if isinstance(h, _BoundProxyHandler)]
+        assert len(proxies) == 1
+        a.propagate = True
+        b.error("from-b")
+
+    assert _count(stream, "from-b") == 1
+
+
+def test_shared_handlers_list_no_duplicate_when_one_propagates() -> None:
+    """The shared-list case must not capture a record twice."""
+    a = _make_logger("dup.a")
+    b = _make_logger("dup.b")
+    shared: list[logging.Handler] = []
+    a.handlers = shared
+    b.handlers = shared
+
+    stream, handler = _capture()
+    with catching_logs(handler):
+        a.propagate = True
+        b.error("only-once")
+        a.error("via-root")
+
+    assert _count(stream, "only-once") == 1
+    assert _count(stream, "via-root") == 1
+
+
+def test_finite_nested_record_from_real_handler_emit() -> None:
+    """A handler logging one distinct record from its own ``emit()`` keeps it.
+
+    The record is finite, so the reentrant lock terminates the nesting on its
+    own; the proxy must not swallow it.
+    """
+    emitted: list[str] = []
+
+    class Nested(logging.Handler):
+        def __init__(self) -> None:
+            super().__init__()
+            self.once = False
+
+        def emit(self, record: logging.LogRecord) -> None:
+            emitted.append(record.getMessage())
+            if not self.once and record.getMessage() == "outer":
+                self.once = True
+                logger.warning("inner")
+
+    logger = _make_logger("nested.emit")
+    with catching_logs(Nested()):
+        logger.error("outer")
+
+    assert emitted == ["outer", "inner"]
+
+
+def test_pre_existing_target_filter_survives_teardown() -> None:
+    """A filter already on the real handler is not removed at detach.
+
+    Adding it again through the proxy must not make the proxy claim ownership
+    of it: teardown would then delete a filter the caller installed.
+    """
+    logger = _make_logger("preexisting")
+    stream, handler = _capture()
+    pre = logging.Filter("pre-existing")
+    handler.addFilter(pre)
+
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+        proxy.addFilter(pre)  # same object, added again via the proxy
+        assert any(f is pre for f in handler.filters)
+
+    assert any(f is pre for f in handler.filters), (
+        "teardown removed a filter the proxy did not add"
+    )
+
+
+def test_pre_existing_filter_still_applies_after_teardown() -> None:
+    """The surviving filter must keep filtering, not merely survive."""
+    logger = _make_logger("preexisting2")
+    stream, handler = _capture()
+
+    def only_warnings(record: logging.LogRecord) -> bool:
+        return record.levelno >= logging.WARNING
+
+    handler.addFilter(only_warnings)
+    with catching_logs(handler):
+        logger.info("dropped")
+        logger.warning("kept")
+    assert _count(stream, "dropped") == 0
+    assert _count(stream, "kept") == 1
+    # Still in force after the context ended.
+    logger.info("dropped-too")
+    assert _count(stream, "dropped-too") == 0
+
+
+def test_proxy_delegates_level_filters_and_formatter() -> None:
+    """The proxy is a view: level, filters and formatter are the real ones."""
+    logger = _make_logger("view")
+    stream, handler = _capture()
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+        # level is a view in both directions
+        assert proxy.level == logging.DEBUG
+        handler.setLevel(logging.ERROR)
+        assert proxy.level == logging.ERROR
+        # filters list is the real handler's
+        f = logging.Filter("f")
+        proxy.addFilter(f)
+        assert any(x is f for x in handler.filters)
+        assert proxy.filters is handler.filters
+        # formatter is the real handler's
+        proxy.setFormatter(logging.Formatter("VIEW:%(message)s"))
+        assert handler.formatter is not None
+        assert handler.formatter._fmt == "VIEW:%(message)s"
+        proxy.removeFilter(f)
+        assert not any(x is f for x in handler.filters)
+
+
+def test_detach_releases_strong_references_and_is_inert() -> None:
+    """Final detach clears the proxy's strong refs and makes it inert."""
+    logger = _make_logger("detach")
+    proxies: list[_BoundProxyHandler] = []
+    with catching_logs(logging.StreamHandler(io.StringIO())):
+        proxies.append(_proxy_for(logger))
+    proxy = proxies[0]
+
+    assert proxy._is_detached
+    assert proxy.logger is None
+    assert proxy.real_handler is None
+    assert proxy._group == ()
+    # A late handle() is a safe no-op, not an AttributeError.
+    record = logging.LogRecord("detach", logging.ERROR, "p", 1, "late", (), None)
+    assert proxy.handle(record) is False
+
+
+def test_capture_handler_is_not_held_by_detached_proxy() -> None:
+    """A detached proxy must not pin the capture handler alive."""
+    import gc
+    import weakref
+
+    logger = _make_logger("gcpin")
+    handler = logging.StreamHandler(io.StringIO())
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+        logger.error("x")
+    ref = weakref.ref(handler)
+    del handler
+    gc.collect()
+    assert ref() is None, "detached proxy kept the capture handler alive"
+
+
+def test_unhashable_logger_can_be_captured() -> None:
+    """A ``Logger`` subclass with ``__hash__ = None`` must not break entry.
+
+    Keying the proxy-target cache by the logger would raise ``TypeError`` here.
+    """
+    root = logging.getLogger()
+
+    class UnhashableLogger(logging.Logger):
+        __hash__ = None  # type: ignore[assignment]
+
+    logger = UnhashableLogger("unhashable")
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    root.manager.loggerDict["unhashable"] = logger
+
+    stream, handler = _capture()
+    with catching_logs(handler):
+        logger.error("from-unhashable")
+
+    assert _count(stream, "from-unhashable") == 1
+
+
+def test_nested_contexts_share_one_proxy_for_shared_list() -> None:
+    """Overlapping scopes over a shared list refcount a single proxy."""
+    a = _make_logger("nested_ctx.a")
+    b = _make_logger("nested_ctx.b")
+    shared: list[logging.Handler] = []
+    a.handlers = shared
+    b.handlers = shared
+
+    stream, handler = _capture()
+    with catching_logs(handler):
+        with catching_logs(handler):
+            proxies = [h for h in shared if isinstance(h, _BoundProxyHandler)]
+            assert len(proxies) == 1
+            assert proxies[0]._refcount == 2, "nested scopes must share one claim"
+            b.error("inner-record")
+        # Outer scope still active: the proxy is still attached.
+        assert any(isinstance(h, _BoundProxyHandler) for h in shared)
+        b.error("outer-record")
+
+    # Distinct needles: "inner-record" is a substring of neither, and the two
+    # records are counted separately.
+    assert _count(stream, "inner-record") == 1
+    assert _count(stream, "outer-record") == 1
+    # Both contexts exited: nothing left behind.
+    assert not [h for h in shared if isinstance(h, _BoundProxyHandler)]

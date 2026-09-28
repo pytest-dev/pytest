@@ -1692,7 +1692,13 @@ def test_report_capture_with_handler_filter_on_non_propagating_logger(
     pytester: Pytester,
 ) -> None:
     """A filter installed through the proxy on a non-propagating logger still
-    affects capture, and does not leak into the next test (#15064)."""
+    affects capture (#15064).
+
+    The filter is the caller's own: the proxy is a view of the real handler, so
+    the filter stays on the real handler until it is explicitly removed, which
+    is what the un-proxied handler would do. Teardown deliberately does NOT
+    remove it -- a proxy must not claim ownership of state it did not create.
+    """
     pytester.makepyfile(
         """
         import logging
@@ -1711,10 +1717,16 @@ def test_report_capture_with_handler_filter_on_non_propagating_logger(
             assert "dropped" not in caplog.text
             assert "kept" in caplog.text
 
-        def test_filter_did_not_leak(caplog):
-            # The filter from the previous test must not still be installed:
-            # an INFO record must be captured again. caplog's default level is
-            # WARNING, so lower it to see the record at all.
+        def test_filter_still_applies_until_removed(caplog):
+            # The filter was not removed at the end of the previous test: it
+            # belongs to the caller, so it persists exactly as it would on the
+            # real handler. It is removed here explicitly, which is the only
+            # thing that should take it out of the capture path.
+            logger.info("still dropped")
+            assert "still dropped" not in caplog.text
+            for handler in logger.handlers:
+                if hasattr(handler, "removeFilter"):
+                    handler.removeFilter(only_warnings)
             caplog.set_level(logging.INFO)
             logger.info("not filtered now")
             assert "not filtered now" in caplog.text

@@ -58,3 +58,6 @@ pip-wheel-metadata/
 
 # pytest debug logs generated via --debug
 pytestdebug.log
+
+# Local verification virtualenvs created with a numeric suffix
+.venv*/
