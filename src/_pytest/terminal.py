@@ -1071,11 +1071,18 @@ class TerminalReporter:
             res = "[location]"
         return res + " "
 
-    def _getfailureheadline(self, rep):
+    def _getfailureheadline(
+        self, rep: BaseReport, reports: Sequence[BaseReport] | None = None
+    ) -> str:
         head_line = rep.head_line
-        if head_line:
-            return head_line
-        return "test session"  # XXX?
+        if (
+            reports is not None
+            and head_line
+            and rep.nodeid
+            and sum(report.head_line == head_line for report in reports) > 1
+        ):
+            return rep.nodeid
+        return head_line or "test session"
 
     def _getcrashline(self, rep):
         try:
@@ -1228,7 +1235,9 @@ class TerminalReporter:
                         self.write_line(line)
                 else:
                     for rep in reports:
-                        msg = self._getfailureheadline(rep)
+                        msg = self._getfailureheadline(
+                            rep, reports=reports if which_reports == "failed" else None
+                        )
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
                         self._handle_teardown_sections(rep.id)
@@ -1240,7 +1249,7 @@ class TerminalReporter:
                 return
             self.write_sep("=", "ERRORS")
             for rep in self.stats["error"]:
-                msg = self._getfailureheadline(rep)
+                msg = self._getfailureheadline(rep, reports=reports)
                 if rep.when == "collect":
                     msg = "ERROR collecting " + msg
                 else:
