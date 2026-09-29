@@ -1,0 +1,1 @@
+Exposed :class:`pytest.FixtureFunctionDefinition` as the type of a fixture function after decoration by :func:`pytest.fixture`, allowing fixture factories to use it in type annotations.
