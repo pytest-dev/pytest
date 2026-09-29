@@ -34,9 +34,15 @@ def catch_warnings_for_item(
         # apply filters from "filterwarnings" marks
         nodeid = "" if item is None else item.nodeid
         if item is not None:
-            for mark in item.iter_markers(name="filterwarnings"):
-                for arg in mark.args:
-                    warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
+            # Filters are prepended, so apply outer scopes first. Preserve the
+            # order within each node for decorators and parametrization marks.
+            for node in item.listchain():
+                for mark in node.own_markers:
+                    if mark.name == "filterwarnings":
+                        for arg in mark.args:
+                            warnings.filterwarnings(
+                                *parse_warning_filter(arg, escape=False)
+                            )
 
         try:
             yield
