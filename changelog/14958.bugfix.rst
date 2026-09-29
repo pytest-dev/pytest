@@ -1,0 +1,4 @@
+Module cleanups registered with :func:`unittest.addModuleCleanup` (and
+:func:`unittest.enterModuleContext`) are now executed. Cleanups registered
+during a module visit run after ``tearDownModule`` (or when ``setUpModule``
+fails); import-time registrations are drained at session end.
