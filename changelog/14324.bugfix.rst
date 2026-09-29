@@ -1,0 +1,1 @@
+``RaisesGroup`` no longer calls the ``check`` callback a second time with a contained exception after the callback rejects the group.
