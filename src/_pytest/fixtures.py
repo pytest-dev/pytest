@@ -1217,8 +1217,6 @@ class FixtureDef(Generic[FixtureValue]):
             except BaseException as e:
                 exceptions.append(e)
 
-
-
         node = request.node
         # Even if finalization fails, we invalidate the cached fixture
         # value and remove all finalizers because they may be bound methods
