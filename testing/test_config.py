@@ -2168,7 +2168,7 @@ def test_notify_exception(pytester: Pytester, capfd) -> None:
 def test_no_terminal_discovery_error(pytester: Pytester) -> None:
     pytester.makepyfile("raise TypeError('oops!')")
     result = pytester.runpytest("-p", "no:terminal", "--collect-only")
-    assert result.ret == ExitCode.INTERRUPTED
+    assert result.ret == ExitCode.COLLECTION_ERROR
 
 
 def test_load_initial_conftest_last_ordering(_config_for_test):
@@ -2962,7 +2962,7 @@ class TestPytestPluginsVariable:
         """
         )
         res = pytester.runpytest()
-        assert res.ret == 2
+        assert res.ret == ExitCode.COLLECTION_ERROR
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         res.stdout.fnmatch_lines([f"*{msg}*", f"*subdirectory{os.sep}conftest.py*"])
 
@@ -2984,7 +2984,7 @@ class TestPytestPluginsVariable:
 
         args = ("--pyargs", "pkg") if use_pyargs else ()
         res = pytester.runpytest(*args)
-        assert res.ret == (0 if use_pyargs else 2)
+        assert res.ret == (ExitCode.OK if use_pyargs else ExitCode.COLLECTION_ERROR)
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         if use_pyargs:
             assert msg not in res.stdout.str()
@@ -3013,7 +3013,7 @@ class TestPytestPluginsVariable:
         )
 
         res = pytester.runpytest_subprocess()
-        assert res.ret == 2
+        assert res.ret == ExitCode.COLLECTION_ERROR
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         res.stdout.fnmatch_lines([f"*{msg}*", f"*subdirectory{os.sep}conftest.py*"])
 

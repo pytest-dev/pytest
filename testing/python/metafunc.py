@@ -1754,7 +1754,7 @@ class TestMetafuncFunctional:
                 "test_parametrize_misspelling.py:3: in <module>",
                 '    @pytest.mark.parametrise("x", range(2))',
                 "E   Failed: Unknown 'parametrise' mark, did you mean 'parametrize'?",
-                "*! Interrupted: 1 error during collection !*",
+                "*! CollectionInterrupted: 1 error during collection !*",
                 "*= no tests collected, 1 error in *",
             ]
         )
@@ -2476,7 +2476,7 @@ class TestHiddenParam:
                 "*_ ERROR collecting test_multiple_hidden_param_is_forbidden.py _*",
                 "E   Failed: In test_multiple_hidden_param_is_forbidden.py::test_func: multiple instances of "
                 "HIDDEN_PARAM cannot be used in the same parametrize call, because the tests names need to be unique.",
-                "*! Interrupted: 1 error during collection !*",
+                "*! CollectionInterrupted: 1 error during collection !*",
                 "*= no tests collected, 1 error in *",
             ]
         )
