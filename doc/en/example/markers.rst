@@ -162,15 +162,16 @@ Or select multiple nodes:
     when running pytest with the ``-rf`` option.  You can also
     construct Node IDs from the output of ``pytest --collect-only``.
 
-Using ``-k expr`` to select tests based on their name
+.. _`keyword expressions`:
+
+Using ``-k expr`` to select tests by keyword
 -------------------------------------------------------
 
 .. versionadded:: 2.0/2.3.4
 
 You can use the :option:`-k` command line option to specify an expression
-which implements a substring match on the test names instead of the
-exact match on markers that :option:`-m` provides.  This makes it easy to
-select tests based on their names:
+which implements a substring match on the test's *keywords*, instead of the
+exact match on markers that :option:`-m` provides.
 
 .. versionchanged:: 5.4
 
@@ -224,10 +225,37 @@ Or to select "http" and "quick" tests:
 
 You can use ``and``, ``or``, ``not`` and parentheses.
 
+A test's own name is only one of its keywords.  The others are:
 
-In addition to the test's name, :option:`-k` also matches the names of the test's parents (usually, the name of the file and class it's in),
-attributes set on the test function, markers applied to it or its parents and any :attr:`extra keywords <_pytest.nodes.Node.extra_keyword_matches>`
-explicitly added to it or its parents.
+* the names of the test's parents, usually the file and class it is in
+  (``test_server.py``, ``TestClass``);
+* the names of the markers applied to it or to its parents (``webtest``,
+  ``device``);
+* attributes set on the test function, as in the legacy ``test_func.slow = True``
+  style;
+* any :attr:`extra keywords <_pytest.nodes.Node.extra_keyword_matches>`
+  explicitly added to it or to its parents.
+
+Marker names being keywords is why ``-k webtest`` selects ``test_send_http``,
+whose name contains no ``webtest`` at all:
+
+.. code-block:: pytest
+
+    $ pytest -v -k webtest
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
+    collecting ... collected 4 items / 3 deselected / 1 selected
+
+    test_server.py::test_send_http PASSED                                [100%]
+
+    ===================== 1 passed, 3 deselected in 0.12s ======================
+
+A marker's arguments are not keywords, though, and the match is a substring
+one: ``-k device`` selects both ``device`` tests, where
+:ref:`the -m expression above <marker_keyword_expression_example>` selects only
+the one.  Use :option:`-m` when you want markers and nothing else.
 
 
 Registering markers

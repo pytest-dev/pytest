@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import sys
 import textwrap
+from types import MappingProxyType
 import warnings
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -194,6 +195,57 @@ def test_delitem() -> None:
     assert d["x"] == 1500
     monkeypatch.undo()
     assert d == {"hello": "world", "x": 1}
+
+
+def test_failed_delattr(monkeypatch: MonkeyPatch) -> None:
+    """If delattr() raises, no stale undo entry should be recorded (#14909)."""
+
+    class A:
+        __slots__ = ()
+        x = 1
+
+    a = A()
+    with pytest.raises(AttributeError):
+        monkeypatch.delattr(a, "x")
+    assert a.x == 1
+    # undo() must not raise — no entry should be on the undo stack.
+    monkeypatch.undo()
+
+
+def test_failed_setitem(monkeypatch: MonkeyPatch) -> None:
+    """If setitem() raises, no stale undo entry should be recorded (#14909)."""
+    mapping = MappingProxyType({"x": 1})
+    with pytest.raises(TypeError):
+        monkeypatch.setitem(mapping, "x", 2)
+    assert mapping["x"] == 1
+    # undo() must not raise — no entry should be on the undo stack.
+    monkeypatch.undo()
+
+
+def test_failed_delitem(monkeypatch: MonkeyPatch) -> None:
+    """If delitem() raises, no stale undo entry should be recorded (#14909)."""
+    mapping = MappingProxyType({"x": 1})
+    with pytest.raises(TypeError):
+        monkeypatch.delitem(mapping, "x")
+    assert mapping["x"] == 1
+    # undo() must not raise — no entry should be on the undo stack.
+    monkeypatch.undo()
+
+
+def test_setitem_delitem_oldval_captured_before_mutation(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """For setitem/delitem the old value must be captured *before* the
+    mutation so undo() restores the correct value (#14909). This case
+    exercises both the capture-before line and the append-after line in
+    the success path (no exception), so codecov patch coverage for the
+    new lines stays 100% even when the surrounding pytest suite changes.
+    """
+    inner: dict[str, int] = {"x": 1, "y": 2}
+    monkeypatch.setitem(inner, "x", 99)
+    monkeypatch.delitem(inner, "y")
+    monkeypatch.undo()
+    assert inner == {"x": 1, "y": 2}
 
 
 def test_setenv() -> None:
@@ -416,6 +468,143 @@ def test_undo_class_descriptors_delattr() -> None:
     monkeypatch.undo()
     assert original_hello == SampleChild.hello
     assert original_world == SampleChild.world
+
+
+def test_undo_inherited_attribute_on_instance() -> None:
+    """Undo must not leave an inherited attribute behind in the instance dict.
+
+    See #10644.
+    """
+
+    class Parent:
+        x = 1
+
+    class Child(Parent):
+        pass
+
+    obj = Child()
+    monkeypatch = MonkeyPatch()
+
+    monkeypatch.setattr(obj, "x", 2)
+    assert obj.x == 2
+    assert vars(obj)["x"] == 2
+
+    monkeypatch.undo()
+    assert obj.x == 1
+    assert "x" not in vars(obj)
+
+
+def test_undo_inherited_non_data_descriptor_on_instance() -> None:
+    """Undo must not freeze a descriptor which resolves dynamically.
+
+    See #10644.
+    """
+
+    class Dynamic:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def __get__(self, instance: object, owner: type | None = None) -> int:
+            self.calls += 1
+            return self.calls
+
+    class Sample:
+        value = Dynamic()
+
+    obj = Sample()
+    first, second = obj.value, obj.value
+    assert first != second
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(obj, "value", -1)
+    assert obj.value == -1
+
+    monkeypatch.undo()
+    assert "value" not in vars(obj)
+    third, fourth = obj.value, obj.value
+    assert third != fourth
+
+
+def test_undo_inherited_method_on_instance() -> None:
+    """Patching a method on an instance must not leave a bound method behind."""
+
+    class Sample:
+        def hello(self) -> str:
+            return "hello"
+
+    obj = Sample()
+    monkeypatch = MonkeyPatch()
+
+    monkeypatch.setattr(obj, "hello", lambda: "patched")
+    assert obj.hello() == "patched"
+
+    monkeypatch.undo()
+    assert obj.hello() == "hello"
+    assert "hello" not in vars(obj)
+
+
+def test_undo_own_attribute_on_instance() -> None:
+    """An attribute owned by the instance is still restored to its old value."""
+
+    class Sample:
+        x = "class"
+
+        def __init__(self) -> None:
+            self.x = "instance"
+
+    obj = Sample()
+    monkeypatch = MonkeyPatch()
+
+    monkeypatch.setattr(obj, "x", "patched")
+    assert obj.x == "patched"
+
+    monkeypatch.undo()
+    assert vars(obj)["x"] == "instance"
+
+
+def test_undo_data_descriptor_on_instance() -> None:
+    """A data descriptor owns the attribute, so the old value is set back through it."""
+
+    class Sample:
+        def __init__(self) -> None:
+            self._x = 1
+
+        @property
+        def x(self) -> int:
+            return self._x
+
+        @x.setter
+        def x(self, value: int) -> None:
+            self._x = value
+
+    obj = Sample()
+    monkeypatch = MonkeyPatch()
+
+    monkeypatch.setattr(obj, "x", 2)
+    assert obj.x == 2
+
+    monkeypatch.undo()
+    assert obj.x == 1
+    assert "x" not in vars(obj)
+
+
+def test_undo_slot_attribute_on_instance() -> None:
+    """Slot descriptors are data descriptors, so undo restores the slot value."""
+
+    class Sample:
+        __slots__ = ("x",)
+
+        def __init__(self) -> None:
+            self.x = 1
+
+    obj = Sample()
+    monkeypatch = MonkeyPatch()
+
+    monkeypatch.setattr(obj, "x", 2)
+    assert obj.x == 2
+
+    monkeypatch.undo()
+    assert obj.x == 1
 
 
 def test_issue1338_name_resolving() -> None:

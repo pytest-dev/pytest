@@ -34,6 +34,7 @@ from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import OverrideIniAction
 from _pytest.config.argparsing import Parser
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -144,6 +145,8 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "max_warnings",
         help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
+        type=int | str,
+        default=None,
     )
 
     group = parser.getgroup("collect", "collection")
@@ -608,7 +611,7 @@ class Session(nodes.Collector):
             parent=None,
             config=config,
             session=self,
-            nodeid="",
+            nodeid=NodeId(path=""),
         )
         self.testsfailed = 0
         self.testscollected = 0
