@@ -857,15 +857,16 @@ class TestStackLevel:
         )
         pytester.parseconfig("--help")
 
-        # with stacklevel=2 the warning should originate from config._preparse and is
-        # thrown by an erroneous conftest.py
+        # with stacklevel=2 the warning should originate from the conftest
+        # loading phase of config.parse and is thrown by an erroneous
+        # conftest.py
         assert len(capwarn.captured) == 1
         warning, location = capwarn.captured.pop()
         file, _, func = location
 
         assert "could not load initial conftests" in str(warning.message)
         assert f"config{os.sep}__init__.py" in file
-        assert func == "parse"
+        assert func == "_load_initial_conftests_phase"
 
     @pytest.mark.filterwarnings("default")
     def test_conftest_warning_captured(self, pytester: Pytester) -> None:
