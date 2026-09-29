@@ -1405,7 +1405,7 @@ class Pytester:
         """Run a command with arguments.
 
         Run a process using :py:class:`subprocess.Popen` saving the stdout and
-        stderr.
+        stderr. The output is decoded as UTF-8, with undecodable bytes escaped.
 
         :param cmdargs:
             The sequence of arguments to pass to :py:class:`subprocess.Popen`,
@@ -1471,7 +1471,12 @@ class Pytester:
             f1.flush()
             f2.flush()
 
-        with p1.open(encoding="utf8") as f1, p2.open(encoding="utf8") as f2:
+        # The command may write bytes which are not valid UTF-8. Escaping them
+        # keeps the byte values, and keeps the result printable by _dump_lines.
+        with (
+            p1.open(encoding="utf8", errors="backslashreplace") as f1,
+            p2.open(encoding="utf8", errors="backslashreplace") as f2,
+        ):
             out = f1.read().splitlines()
             err = f2.read().splitlines()
 
