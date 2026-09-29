@@ -170,11 +170,9 @@ class _NodeReporter:
         testcase.extend(self.nodes)
         return testcase
 
-    def _add_simple(self, tag: str, message: str, data: str | None = None) -> None:
+    def _add_simple(self, tag: str, message: str, data: str = "") -> None:
         node = ET.Element(tag, message=message)
-        if data is not None:
-            data = strip_ansi_escapes(data)
-        node.text = bin_xml_escape(data)
+        node.text = bin_xml_escape(strip_ansi_escapes(data))
         self.append(node)
 
     def write_captured_output(self, report: TestReport) -> None:
