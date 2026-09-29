@@ -6278,3 +6278,78 @@ def test_classmethod_above_fixture_warning_inherited(pytester: Pytester) -> None
     )
     result.stdout.fnmatch_lines(["*fixture 'fixt' not found*"])
     result.assert_outcomes(errors=1)
+
+
+def test_fixture_finalizer_interrupt(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        from pathlib import Path
+
+        MARKER = Path(__file__).with_name("finalizer-ran")
+
+        @pytest.fixture
+        def resource(request):
+            request.addfinalizer(lambda: MARKER.write_text("ran", encoding="utf-8"))
+            raise KeyboardInterrupt
+        """
+    )
+    pytester.makepyfile(
+        """
+        def test_setup(resource):
+            pass
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    assert result.ret == 2
+    assert (pytester.path / "finalizer-ran").exists()
+
+
+def test_fixture_post_finalizer_skipped_on_setup_failure(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        from pathlib import Path
+
+        @pytest.fixture
+        def broken_fixture(request):
+            request.addfinalizer(lambda: print("USER_FINALIZER_RAN"))
+            raise SystemExit("Setup interrupted!")
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            print(f"POST_FINALIZER_RAN:{fixturedef.argname}:{fixturedef.cached_result is not None}")
+        """
+    )
+    pytester.makepyfile(
+        """
+        def test_setup(broken_fixture):
+            pass
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.stdout.fnmatch_lines(["*USER_FINALIZER_RAN*"])
+    assert "POST_FINALIZER_RAN:broken_fixture" not in result.stdout.str()
+    assert "POST_FINALIZER_RAN:broken_fixture:False" not in result.stdout.str()
+
+
+def test_fixture_post_finalizer_adds_finalizer(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def my_fixture(request):
+            pass
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            request.addfinalizer(lambda: print("DYNAMIC_FINALIZER_RAN"))
+        """
+    )
+    pytester.makepyfile(
+        """
+        def test_dynamic_finalizer(my_fixture):
+            pass
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.stdout.fnmatch_lines(["*DYNAMIC_FINALIZER_RAN*"])

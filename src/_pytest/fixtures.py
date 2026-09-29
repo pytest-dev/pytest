@@ -1204,7 +1204,7 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
-        if self.cached_result is None:
+        if self.cached_result is None and not self._finalizers:
             # Already finished. It is assumed that finalizers cannot be added in
             # this state.
             return
@@ -1216,6 +1216,7 @@ class FixtureDef(Generic[FixtureValue]):
                 fin()
             except BaseException as e:
                 exceptions.append(e)
+
         node = request.node
         # Even if finalization fails, we invalidate the cached fixture
         # value and remove all finalizers because they may be bound methods
@@ -1279,11 +1280,14 @@ class FixtureDef(Generic[FixtureValue]):
         # Register the pytest_fixture_post_finalizer as the first finalizer,
         # which is executed last.
         assert not self._finalizers
-        self.addfinalizer(
-            lambda: request.node.ihook.pytest_fixture_post_finalizer(
-                fixturedef=self, request=request
-            )
-        )
+
+        def post_finalizer() -> None:
+            if self.cached_result is not None:
+                request.node.ihook.pytest_fixture_post_finalizer(
+                    fixturedef=self, request=request
+                )
+
+        self.addfinalizer(post_finalizer)
 
         ihook = request.node.ihook
         try:
