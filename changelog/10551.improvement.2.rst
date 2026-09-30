@@ -1,0 +1,1 @@
+:confval:`max_warnings` and :confval:`faulthandler_timeout` are now registered with their types. ``max_warnings`` is an integer, as it was already documented to be, and an invalid value is reported as a usage error at startup instead of crashing at the end of the run; ``faulthandler_timeout`` is a float.

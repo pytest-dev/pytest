@@ -1,0 +1,11 @@
+New :class:`config.settings <pytest.Settings>`, a mapping of every configuration setting to its resolved value:
+
+.. code-block:: python
+
+    config.settings["log_level"]  # the value, whatever set it
+    config.settings.source_of("log_level")  # where it came from
+    config.settings.spec("log_level")  # how it was declared
+
+It answers for a setting whichever source supplied it -- a configuration file, an ``-o`` override, or a command line option declared for it -- and :func:`config.getini <pytest.Config.getini>` is now a thin adapter over it. Command line options that are not configuration settings live in ``config.settings.options``, keyed by their argparse ``dest``.
+
+This API is experimental; its behaviour may change in future releases.
