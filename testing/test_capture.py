@@ -131,6 +131,46 @@ def test_capturing_bytes_in_utf8_encoding(pytester: Pytester, method: str) -> No
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+@pytest.mark.parametrize("method", ["fd", "sys"])
+def test_capture_replacement_reports_original_encoding(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str
+) -> None:
+    """Replacement streams report the original encoding, buffer stays UTF-8 (#4389)."""
+    pytester.makepyfile(
+        """\
+        def test_encoding(capsys):
+            import sys
+
+            assert sys.stdout.encoding == sys.__stdout__.encoding
+            assert sys.stderr.encoding == sys.__stderr__.encoding
+            print("hx\\u0107 calf\\u00e9 \\u65e5\\u672c\\u8a9e")
+            out, _ = capsys.readouterr()
+            assert out == "hx\\u0107 calf\\u00e9 \\u65e5\\u672c\\u8a9e\\n"
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+def test_capture_replacement_reports_original_encoding_tee_sys(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Tee replacements report the original encoding as well (#4389)."""
+    pytester.makepyfile(
+        """\
+        def test_encoding():
+            import sys
+
+            assert sys.stdout.encoding == sys.__stdout__.encoding
+            print("plain ascii")
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess("--capture=tee-sys")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
 def test_collect_capturing(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """
