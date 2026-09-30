@@ -542,3 +542,31 @@ def test_log_report_captures_according_to_config_option_upon_failure(
         ["*Print message*", "*INFO log message*", "*WARNING log message*"]
     )
     assert result.ret == 1
+
+
+def test_caplog_text_access_from_teardown_makereport(pytester: Pytester) -> None:
+    """Regression test for #14436."""
+    pytester.makeconftest(
+        """
+        def pytest_runtest_makereport(item, call):
+            if call.when == "teardown" and "caplog" in item.funcargs:
+                caplog = item.funcargs["caplog"]
+                caplog.text
+                assert [r.getMessage() for r in caplog.get_records("call")] == [
+                    "call log"
+                ]
+        """
+    )
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test_uses_caplog(caplog):
+            caplog.set_level(logging.INFO)
+            logging.info("call log")
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+    result.stdout.no_fnmatch_line("*KeyError*")
