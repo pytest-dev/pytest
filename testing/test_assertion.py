@@ -499,6 +499,39 @@ class TestAssert_reprcompare:
             "+ spam",
         ]
 
+    @pytest.mark.parametrize(
+        "left, right",
+        [("cat", pytest.approx(3)), (pytest.approx(3), "cat")],
+        ids=["str-on-the-left", "str-on-the-right"],
+    )
+    def test_approx_wins_over_text(self, left: Any, right: Any) -> None:
+        """``approx`` explains itself even when the other operand is a string.
+
+        The ``approx`` cases are matched before the ``str`` ones, which stop
+        the dispatch; swapping that order silently drops this explanation.
+        """
+        lines = callequal(left, right)
+        assert lines is not None
+        assert lines[1:] == [
+            "",
+            "comparison failed",
+            "Obtained: cat",
+            "Expected: 3 ± 3.0e-06",
+        ]
+
+    @pytest.mark.parametrize(
+        "left, right",
+        [("cat", ["c", "a", "t"]), (["c", "a", "t"], "cat")],
+        ids=["str-on-the-left", "str-on-the-right"],
+    )
+    def test_no_sequence_diff_against_text(self, left: Any, right: Any) -> None:
+        """A string compared to another sequence gets no explanation.
+
+        ``str`` is a ``Sequence``, so the ``str`` cases have to stop the
+        dispatch before the sequence one describes the string per character.
+        """
+        assert callequal(left, right) is None
+
     def test_text_diff_ndiff_style(self) -> None:
         assert list(
             _compare_eq_text(
@@ -2675,7 +2708,7 @@ def test_exit_from_assertrepr_compare(monkeypatch) -> None:
     def raise_exit(obj):
         outcomes.exit("Quitting debugger")
 
-    monkeypatch.setattr(_compare_any, "istext", raise_exit)
+    monkeypatch.setattr(_compare_any, "isdatacls", raise_exit)
 
     with pytest.raises(outcomes.Exit, match="Quitting debugger"):
         callequal(1, 1)
@@ -2762,9 +2795,9 @@ def test_exception_before_first_yield_emits_summary_and_notice(monkeypatch) -> N
     def raise_value_error(obj):
         raise ValueError("synthetic repr failure")
 
-    # ``istext`` is called before the first yield, so this triggers the
+    # ``isdatacls`` is called before the first yield, so this triggers the
     # failure path on the very first ``next()``.
-    monkeypatch.setattr(_compare_any, "istext", raise_value_error)
+    monkeypatch.setattr(_compare_any, "isdatacls", raise_value_error)
 
     expl = callequal(1, 1)
     assert expl is not None
