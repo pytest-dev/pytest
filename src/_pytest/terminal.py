@@ -39,6 +39,7 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 import _pytest._version
+from _pytest.capture import get_terminal_stdout
 from _pytest.compat import running_on_ci
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
@@ -297,7 +298,7 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_configure(config: Config) -> None:
     # Eagerly validate the value; it is only read lazily during reporting.
     config.getini("console_output_style")
-    reporter = TerminalReporter(config, sys.stdout)
+    reporter = TerminalReporter(config)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
 
@@ -398,7 +399,13 @@ class TerminalReporter:
         self._known_types: list[str] | None = None
         self.startpath = config.invocation_params.dir
         if file is None:
-            file = sys.stdout
+            # The terminal channel writes past output capture (#8973); it
+            # falls back to sys.stdout when there is none. Resolved from the
+            # default rather than in pytest_configure so that every caller
+            # that leaves `file` unset gets it -- including plugins that
+            # construct a reporter of their own (pytest-sugar does, despite
+            # the @final above).
+            file = get_terminal_stdout(config)
         self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
         self.currentfspath: Path | str | int | None = None
@@ -534,6 +541,18 @@ class TerminalReporter:
         self._tw.write(wrapped, flush=flush, **markup)
 
     def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
+        """Write content to the terminal.
+
+        This is the supported way for a plugin to write to the terminal: it
+        reaches the terminal even while output capture is active, and does so
+        without suspending capture (:issue:`8973`).
+
+        :param content: The text to write.
+        :param flush: Whether to flush the stream afterwards.
+        :param markup:
+            Markup to apply to the text, for example ``red=True`` or
+            ``bold=True``. An unknown markup name raises :class:`ValueError`.
+        """
         self._tw.write(content, flush=flush, **markup)
 
     def write_raw(self, content: str, *, flush: bool = False) -> None:
