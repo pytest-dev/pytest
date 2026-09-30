@@ -718,6 +718,132 @@ class TestFillFixtures:
         )
         result.stdout.no_fnmatch_line("*INTERNAL*")
 
+    def test_funcarg_lookup_error_hints_at_out_of_scope_definition(
+        self, pytester: Pytester
+    ) -> None:
+        """A fixture moved into a sibling conftest is registered, just not here.
+
+        The bare "not found" sends the reader hunting for a name that is
+        already in the tree, one directory over. See #10151.
+        """
+        pytester.makepyfile(
+            **{
+                "pkg/tests/conftest.py": """
+                    import pytest
+
+                    @pytest.fixture
+                    def myfixture(): pass
+                """,
+                "pkg/tests/test_near.py": "def test_near(myfixture): pass",
+                "pkg/utils/tests/test_far.py": "def test_far(myfixture): pass",
+            }
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "E       fixture 'myfixture' not found",
+                ">       hint: 'myfixture' is defined in pkg?tests?conftest.py:*,"
+                " but not visible here",
+            ]
+        )
+        result.assert_outcomes(passed=1, errors=1)
+
+    def test_funcarg_lookup_error_hint_collapses_many_definitions(
+        self, pytester: Pytester
+    ) -> None:
+        """Past a handful of locations a count beats a wall of paths."""
+        files = {"test_top.py": "def test_top(shared): pass"}
+        for name in "abcdefg":
+            files[f"{name}/conftest.py"] = """
+                import pytest
+
+                @pytest.fixture
+                def shared(): pass
+            """
+            # Unique basenames: rootdir has no __init__.py, so equal ones collide.
+            files[f"{name}/test_use_{name}.py"] = f"def test_use_{name}(shared): pass"
+        pytester.makepyfile(**files)
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "E       fixture 'shared' not found",
+                ">       hint: 'shared' is defined in 7 places, none visible here:"
+                " a?conftest.py:*, and 2 more",
+            ]
+        )
+        result.assert_outcomes(passed=7, errors=1)
+
+    def test_funcarg_lookup_error_hints_at_a_legacy_nodeid_definition(
+        self, pytester: Pytester
+    ) -> None:
+        """Fixtures registered by the deprecated nodeid API are hinted at too.
+
+        They live in a separate mapping, so the hint has to read both.
+        This test can be deleted with FIXTURE_NODEID_DEPRECATED deprecation.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_finish(session):
+                session._fixturemanager._register_fixture(
+                    name="legacy",
+                    func=lambda: 0,
+                    nodeid="somewhere/else",
+                )
+            """
+        )
+        pytester.makepyfile("def test_it(legacy): pass")
+        result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn10Warning")
+        result.stdout.fnmatch_lines(
+            [
+                "E       fixture 'legacy' not found",
+                ">       hint: 'legacy' is defined in conftest.py:*,"
+                " but not visible here",
+            ]
+        )
+
+    def test_funcarg_lookup_error_hint_skips_a_fixture_with_no_source(
+        self, pytester: Pytester
+    ) -> None:
+        """One unlocatable definition must not cost the whole hint.
+
+        A plugin may register a builtin or a C callable, which has no file to
+        point at; the remaining definitions are still worth naming.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_finish(session):
+                fm = session._fixturemanager
+                fm._register_fixture(name="mixed", func=len, nodeid="no/source")
+                fm._register_fixture(
+                    name="mixed", func=lambda: 0, nodeid="somewhere/else"
+                )
+            """
+        )
+        pytester.makepyfile("def test_it(mixed): pass")
+        result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn10Warning")
+        result.stdout.fnmatch_lines(
+            [
+                "E       fixture 'mixed' not found",
+                ">       hint: 'mixed' is defined in conftest.py:*,"
+                " but not visible here",
+            ]
+        )
+
+    def test_funcarg_lookup_error_has_no_hint_for_an_unknown_name(
+        self, pytester: Pytester
+    ) -> None:
+        """The hint speaks about definitions that exist; this name has none."""
+        pytester.makepyfile("def test_it(never_defined_anywhere): pass")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            ["E       fixture 'never_defined_anywhere' not found"]
+        )
+        result.stdout.no_fnmatch_line("*hint:*")
+
     def test_fixture_excinfo_leak(self, pytester: Pytester) -> None:
         # on python2 sys.excinfo would leak into fixture executions
         pytester.makepyfile(
@@ -741,6 +867,290 @@ class TestFillFixtures:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+
+#: pytest's own suite turns warnings into errors; the inner runs opt back out.
+_SHOW_DUPLICATE_WARNING = "-Wdefault::pytest.PytestImportedFixtureWarning"
+
+
+class TestImportedFixtureWarning:
+    """Importing a fixture can register it twice; say so. See #1511.
+
+    The harm is the duplicate registration, not the import, so every case here
+    turns on whether two *module* holders end up registering the same function.
+    """
+
+    def test_two_conftests_importing_one_fixture_warn(self, pytester: Pytester) -> None:
+        """The reported bug: one definition, two registrations, no sign in either file."""
+        pytester.makepyfile(
+            **{
+                "helpers.py": """
+                    import pytest
+
+                    @pytest.fixture
+                    def shared(): return 1
+                """,
+                "a/conftest.py": "from helpers import shared",
+                "a/test_a.py": "def test_a(shared): assert shared == 1",
+                "b/conftest.py": "from helpers import shared",
+                "b/test_b.py": "def test_b(shared): assert shared == 1",
+            }
+        )
+        # The conftests live in subdirectories; only their own dirs get onto
+        # sys.path, so make the shared module importable from both.
+        pytester.syspathinsert()
+        result = pytester.runpytest(_SHOW_DUPLICATE_WARNING)
+        result.stdout.fnmatch_lines(
+            [
+                "*conftest.py:1: PytestImportedFixtureWarning: fixture 'shared',"
+                " defined in 'helpers', is registered twice: by '*conftest' and"
+                " by '*conftest'.",
+            ]
+        )
+        result.assert_outcomes(passed=2, warnings=1)
+
+    def test_importing_from_a_collected_module_warns(self, pytester: Pytester) -> None:
+        """The defining module is itself a holder, so the import is the second one."""
+        pytester.makepyfile(
+            test_helpers="""
+                import pytest
+
+                @pytest.fixture
+                def shared(): return 1
+
+                def test_helpers(shared): assert shared == 1
+            """,
+            test_it="""
+                from test_helpers import shared
+
+                def test_it(shared): assert shared == 1
+            """,
+        )
+        result = pytester.runpytest(_SHOW_DUPLICATE_WARNING)
+        result.stdout.fnmatch_lines(
+            [
+                "*test_it.py:1: PytestImportedFixtureWarning: fixture 'shared',"
+                " defined in 'test_helpers', is registered twice*",
+            ]
+        )
+        result.assert_outcomes(passed=2, warnings=1)
+
+    def test_importing_from_a_module_that_is_never_a_holder_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """One registration is not a duplicate, whatever route the name took.
+
+        ``helpers`` is never collected and never a plugin, so the fixture is
+        registered exactly once and behaves exactly as if it were defined here.
+        """
+        pytester.makepyfile(
+            helpers="""
+                import pytest
+
+                @pytest.fixture
+                def shared(): return 1
+            """,
+            test_it="""
+                from helpers import shared
+
+                def test_it(shared): assert shared == 1
+            """,
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, warnings=0)
+
+    def test_plugin_split_across_its_own_modules_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """A plugin keeping its fixtures in a sibling module registers them once.
+
+        This is pytest-django's layout, and it tripped the first version of
+        this check.
+        """
+        pytester.makepyfile(
+            **{
+                "myplugin/__init__.py": "",
+                "myplugin/fixtures.py": """
+                    import pytest
+
+                    @pytest.fixture
+                    def shared(): return 1
+                """,
+                "myplugin/plugin.py": "from myplugin.fixtures import shared",
+                "conftest.py": "pytest_plugins = ['myplugin.plugin']",
+                "test_it.py": "def test_it(shared): assert shared == 1",
+            }
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, warnings=0)
+
+    def test_defining_module_registered_last_is_still_reported(
+        self, pytester: Pytester
+    ) -> None:
+        """A conftest is parsed before the test module it imported the fixture from.
+
+        The second holder is then the module that *defines* the fixture, so the
+        pair is reported the other way round.
+        """
+        pytester.makepyfile(
+            **{
+                "conftest.py": "from test_helpers import shared",
+                "test_helpers.py": """
+                    import pytest
+
+                    @pytest.fixture
+                    def shared(): return 1
+                """,
+                "test_it.py": "def test_it(shared): assert shared == 1",
+            }
+        )
+        result = pytester.runpytest(_SHOW_DUPLICATE_WARNING)
+        result.stdout.fnmatch_lines(
+            [
+                "*test_helpers.py:1: PytestImportedFixtureWarning: fixture 'shared',"
+                " defined in 'test_helpers', is registered twice: by 'conftest' and"
+                " by 'test_helpers'."
+            ]
+        )
+
+    def test_the_location_survives_being_turned_into_an_error(
+        self, pytester: Pytester
+    ) -> None:
+        """-W error drops the location, so the message has to carry it.
+
+        This is how the warning surfaces in a suite that errors on warnings,
+        which is how it first showed up in pytest's own plugin CI.
+        """
+        pytester.makepyfile(
+            test_helpers="""
+                import pytest
+
+                @pytest.fixture
+                def shared(): return 1
+            """,
+            test_it="""
+                from test_helpers import shared
+
+                def test_it(shared): assert shared == 1
+            """,
+        )
+        result = pytester.runpytest("-Werror::pytest.PytestImportedFixtureWarning")
+        result.stdout.fnmatch_lines(["*at *test_it.py"])
+        assert result.ret != 0
+
+    def test_a_module_with_no_file_is_named_instead_of_located(
+        self, pytester: Pytester
+    ) -> None:
+        """A plugin module built at runtime still gets an anchor, just not a path."""
+        pytester.makepyfile(
+            helpers="""
+                import pytest
+
+                @pytest.fixture
+                def shared(): return 1
+            """,
+            **{
+                "conftest.py": """
+                    import sys
+                    import types
+
+                    synthetic = types.ModuleType("synthetic_plugin")
+                    exec("from helpers import shared", synthetic.__dict__)
+                    sys.modules["synthetic_plugin"] = synthetic
+
+                    pytest_plugins = ["helpers", "synthetic_plugin"]
+                """,
+                "test_it.py": "def test_it(shared): assert shared == 1",
+            },
+        )
+        # Registering a plugin happens before the per-item warning capture, so
+        # turn it into an error to get it onto the inner run's stdout.
+        result = pytester.runpytest("-Werror::pytest.PytestImportedFixtureWarning")
+        result.stdout.fnmatch_lines(
+            [
+                "*fixture 'shared', defined in 'helpers', is registered twice:"
+                " by 'helpers' and by 'synthetic_plugin'.",
+                "*at <synthetic_plugin>",
+            ]
+        )
+        assert result.ret != 0
+
+    def test_inheriting_a_fixture_from_another_module_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """Two subclasses register the same function by design, once each."""
+        pytester.makepyfile(
+            base="""
+                import pytest
+
+                class BaseTests:
+                    @pytest.fixture
+                    def shared(self): return 1
+            """,
+            test_it="""
+                from base import BaseTests
+
+                class TestOne(BaseTests):
+                    def test_one(self, shared): assert shared == 1
+
+                class TestTwo(BaseTests):
+                    def test_two(self, shared): assert shared == 1
+            """,
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, warnings=0)
+
+    def test_fixture_built_by_a_factory_elsewhere_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """A factory hands back a fresh function per call, so two calls are two fixtures."""
+        pytester.makepyfile(
+            helpers="""
+                import pytest
+
+                def make_fixture(value):
+                    @pytest.fixture
+                    def produced(): return value
+                    return produced
+            """,
+            **{
+                "a/conftest.py": """
+                    from helpers import make_fixture
+
+                    produced = make_fixture(1)
+                """,
+                "a/test_a.py": "def test_a(produced): assert produced == 1",
+                "b/conftest.py": """
+                    from helpers import make_fixture
+
+                    produced = make_fixture(2)
+                """,
+                "b/test_b.py": "def test_b(produced): assert produced == 2",
+            },
+        )
+        pytester.syspathinsert()
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, warnings=0)
+
+    def test_a_plugin_module_defining_its_own_fixtures_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """`pytest_plugins` is the recommended alternative; it must stay quiet."""
+        pytester.makepyfile(
+            helpers="""
+                import pytest
+
+                @pytest.fixture
+                def shared(): return 1
+            """,
+            test_it="""
+                pytest_plugins = ["helpers"]
+
+                def test_it(shared): assert shared == 1
+            """,
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, warnings=0)
 
 
 class TestRequestBasic:
