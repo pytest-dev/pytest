@@ -165,7 +165,14 @@ def test_staticmethod_fixture_not_deprecated(pytester: Pytester, scope: Scope) -
                 pass
         """
     )
-    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    # The definition scope only exists once function definitions are part of
+    # the collection tree, which is opt-in.
+    extra_args = (
+        ["-o", "collect_function_definition=pedantic"]
+        if scope is Scope.Definition
+        else []
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning", *extra_args)
     result.assert_outcomes(passed=1)
 
 
@@ -355,8 +362,8 @@ class TestFixtureNodeidDeprecations:
 
 def test_callspec2_renamed() -> None:
     """Importing/accessing CallSpec2 warns and returns CallSpec."""
+    from _pytest.parametrize import CallSpec
     import _pytest.python as python_mod
-    from _pytest.python import CallSpec
 
     with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
         from _pytest.python import CallSpec2
