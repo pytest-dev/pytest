@@ -426,10 +426,11 @@ def test_check() -> None:
     def is_value_error(e: BaseException) -> bool:
         return isinstance(e, ValueError)
 
-    # helpful suggestion if the user thinks the check is for the sub-exception
+    # the check is only called with the group, never with the contained
+    # exception (see #14324), so no "did return True for the expected" suggestion
     with (
         fails_raises_group(
-            f"check {is_value_error} did not return True on the ExceptionGroup, but did return True for the expected ValueError. You might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
+            f"check {is_value_error} did not return True on the ExceptionGroup"
         ),
         RaisesGroup(ValueError, check=is_value_error),
     ):
