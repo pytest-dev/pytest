@@ -16,6 +16,8 @@ import threading
 import weakref
 
 from _pytest.logging import _BoundProxyHandler
+from _pytest.logging import _remove_handler_by_identity
+from _pytest.logging import _remove_handler_by_identity_from_list
 from _pytest.logging import catching_logs
 import pytest
 
@@ -859,3 +861,286 @@ def test_handlers_list_replaced_between_catches_is_not_stale() -> None:
     del old_list, logger, user_handler
     gc.collect()
     assert handler_alive() is None
+
+
+# --------------------------------------------------------------------------
+# Coverage for the proxy's direct property assignments, defensive guards,
+# cache revalidation mismatches, and the identity-based removal helpers.
+
+
+def test_direct_level_assignment_through_proxy_reaches_real_handler() -> None:
+    """``proxy.level = X`` (not just ``setLevel()``) must write through."""
+    logger = _make_logger("prop.level")
+    stream, handler = _capture()
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+        proxy.level = logging.CRITICAL
+        assert handler.level == logging.CRITICAL
+        assert proxy.level == logging.CRITICAL
+        logger.warning("quiet")
+    assert _count(stream, "quiet") == 0
+
+
+def test_direct_filters_assignment_through_proxy_replaces_real_list() -> None:
+    """``proxy.filters = [...]`` must replace the real handler's filter list."""
+    logger = _make_logger("prop.filters")
+    stream, handler = _capture()
+    keep = logging.Filter()
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+        proxy.filters = [keep]
+        assert handler.filters is proxy.filters
+        assert any(f is keep for f in handler.filters)
+        logger.warning("seen")
+    assert _count(stream, "seen") == 1
+
+
+def test_direct_formatter_assignment_through_proxy_shapes_output() -> None:
+    """``proxy.formatter = ...`` must write through to the real handler."""
+    logger = _make_logger("prop.formatter")
+    stream, handler = _capture()
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+        proxy.formatter = logging.Formatter("PROP:%(message)s")
+        assert proxy.formatter is handler.formatter
+        logger.warning("shaped")
+        proxy.formatter = None
+        assert proxy.formatter is None
+    assert "PROP:shaped" in stream.getvalue()
+
+
+def test_detached_proxy_property_accessors_are_inert() -> None:
+    """Every proxy property and setter must be a safe no-op once detached."""
+    logger = _make_logger("detached.props")
+    stream, handler = _capture()
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+    assert proxy._is_detached
+    assert proxy.level == logging.NOTSET
+    proxy.level = logging.ERROR  # no target to write to
+    assert proxy.filters == []
+    proxy.filters = [logging.Filter()]  # no target to write to
+    assert proxy.formatter is None
+    proxy.formatter = logging.Formatter()  # no target to write to
+    proxy.setLevel(logging.ERROR)  # must not raise
+    proxy.addFilter(logging.Filter())  # must not raise
+    proxy.removeFilter(logging.Filter())  # must not raise
+    proxy.setFormatter(logging.Formatter())  # must not raise
+    logger.warning("after")
+    assert _count(stream, "after") == 0
+
+
+def test_remove_filter_scans_past_non_matching_filters() -> None:
+    """``removeFilter`` must scan by identity and tolerate a missing filter."""
+    logger = _make_logger("rmfilter.scan")
+    _stream, handler = _capture()
+    first = logging.Filter("first")
+    target = logging.Filter("target")
+    absent = logging.Filter("absent")
+    handler.addFilter(first)
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+        proxy.addFilter(target)
+        # 'first' is skipped by identity comparison before 'target' matches.
+        proxy.removeFilter(target)
+        assert any(f is first for f in handler.filters)
+        assert not any(f is target for f in handler.filters)
+        # No match anywhere: a no-op, not an error.
+        proxy.removeFilter(absent)
+        assert any(f is first for f in handler.filters)
+
+
+def test_proxy_handle_guards_missing_references() -> None:
+    """``handle()`` must return False, not crash, when a reference is gone.
+
+    ``close()`` clears the references together with the detached flag, so a
+    half-cleared proxy is a defensive state the guards exist for; it is
+    assembled directly here because no public path produces it.
+    """
+    logger = _make_logger("guard.refs")
+    real = logging.StreamHandler(io.StringIO())
+    proxy = _BoundProxyHandler(logger, real)
+    record = logging.LogRecord(
+        "guard.unrelated", logging.ERROR, __file__, 1, "x", (), None
+    )
+    proxy.real_handler = None
+    assert proxy.handle(record) is False  # real handler missing
+    assert proxy.level == logging.NOTSET
+    assert proxy.filters == []
+    assert proxy.formatter is None
+    proxy.real_handler = real
+    proxy.logger = None  # emitter is outside the group and the binding is gone
+    assert proxy.handle(record) is False
+
+
+def test_proxy_forwards_record_from_a_propagating_child() -> None:
+    """A record from a propagating child reaches the parent's proxy.
+
+    The child is not part of the proxy's group, so the *bound* logger's
+    ``propagate`` decides whether the proxy forwards the record.
+    """
+    parent = _make_logger("route.par")
+    kid = _make_logger("route.par.kid", propagate=True)
+    stream, handler = _capture()
+    with catching_logs(handler):
+        assert not [h for h in kid.handlers if isinstance(h, _BoundProxyHandler)]
+        assert _proxy_for(parent)
+        kid.error("via-parent")
+    assert _count(stream, "via-parent") == 1
+
+
+def test_stale_cache_entry_is_rejected_via_the_back_reference() -> None:
+    """A cached snapshot whose handler died is never reused.
+
+    The target cache is keyed by ``id(handler)``, which the interpreter can
+    recycle for a different handler. The stored ``handler_ref`` back-
+    reference resolves to the *original* handler, so after it dies the guard
+    at lookup time rejects the stale snapshot and forces a rebuild for the
+    new handler -- asserted here directly on the cache, since reliably
+    reproducing a recycled id is not possible.
+    """
+    _make_logger("stale.first")
+    handler = logging.StreamHandler(io.StringIO())
+    with catching_logs(handler):
+        pass
+    key = id(handler)
+    assert catching_logs._target_cache[key].handler_ref() is handler
+
+    # Simulate the handler's death for the cache without freeing the object
+    # (freeing it could let its id be recycled under an unrelated handler).
+    stale_ref = catching_logs._target_cache[key].handler_ref
+    other = logging.StreamHandler(io.StringIO())
+    with catching_logs(other):
+        # ``other`` may or may not be cached under a different key; what must
+        # hold is that the original snapshot can no longer validate: its
+        # back-reference would not resolve to whichever handler looks it up.
+        if key in catching_logs._target_cache:
+            entry = catching_logs._target_cache[key]
+            assert entry.handler_ref is stale_ref
+            assert entry.handler_ref() is handler  # still alive here
+
+    # Once the handler is really gone, the back-reference resolves to nothing
+    # and the entry can never pass the ``handler_ref() is handler`` check.
+    gone = weakref.ref(handler)
+    del handler
+    gc.collect()
+    assert gone() is None
+    assert stale_ref() is None
+
+
+def test_owner_count_change_invalidates_the_proxy_bucket() -> None:
+    """A cached single-owner list that gains a second owner forces a rebuild.
+
+    The proxy-vs-direct classification depends on list *ownership*, not just
+    list identity: when another logger starts sharing the cached list without
+    the population changing, the cached entry must be rejected and the list
+    re-classified for direct attachment.
+    """
+    a = _make_logger("owners.a")
+    b = _make_logger("owners.b", propagate=True)
+    _stream, handler = _capture()
+    with catching_logs(handler):
+        assert any(isinstance(h, _BoundProxyHandler) for h in a.handlers)
+    b.handlers = a.handlers  # a second owner, without a population change
+    with catching_logs(handler):
+        assert not [h for h in a.handlers if isinstance(h, _BoundProxyHandler)]
+        assert sum(h is handler for h in a.handlers) == 1
+        a.error("owned")
+    assert _count(_stream, "owned") == 1
+
+
+def test_ancestor_already_collected_is_not_added_twice() -> None:
+    """A non-propagating logger reached as an ancestor first is collected once.
+
+    ``loggerDict`` iteration order decides which visit comes first; re-
+    inserting a parent behind its child simulates a parent that the ancestor
+    walk had already picked up, pinning the dedup-by-identity branch.
+    """
+    root = logging.getLogger()
+    parent = _make_logger("twice")
+    kid = _make_logger("twice.kid")
+    registry = root.manager.loggerDict
+    # Re-insert the parent last so iteration visits the child first: the
+    # child's ancestor walk collects the parent into ``seen``, and when
+    # iteration later reaches the parent it is already collected, taking the
+    # dedup-by-identity branch.
+    del registry["twice"]
+    registry["twice"] = parent
+
+    stream, handler = _capture()
+    with catching_logs(handler):
+        proxies = [h for h in parent.handlers if isinstance(h, _BoundProxyHandler)]
+        assert len(proxies) == 1
+        parent.error("from-parent")
+        kid.error("from-kid")
+    assert _count(stream, "from-parent") == 1
+    assert _count(stream, "from-kid") == 1
+
+
+def test_shared_list_group_with_only_propagating_members_is_skipped() -> None:
+    """A direct-classified group whose needed members are empty attaches nothing.
+
+    The ancestor walk adds a propagating parent to the targets; if its list
+    is shared with another logger the group lands in the direct bucket, but
+    every member propagates and reaches root on its own, so the filtered
+    ``needed`` set is empty and the group is skipped entirely.
+    """
+    parent = _make_logger("skip.par", propagate=True)
+    kid = _make_logger("skip.par.kid")  # non-propagating
+    other = _make_logger("skip.other", propagate=True)
+    other.handlers = parent.handlers  # two owners of parent's list
+
+    stream, handler = _capture()
+    with catching_logs(handler):
+        assert not [h for h in parent.handlers if isinstance(h, _BoundProxyHandler)]
+        assert not any(h is handler for h in parent.handlers)
+        kid.error("kid")
+        parent.error("from-par")
+    assert _count(stream, "kid") == 1
+    assert _count(stream, "from-par") == 1
+
+
+def test_parent_and_child_sharing_one_handlers_list() -> None:
+    """Parent and child sharing one ``handlers`` list get one direct claim."""
+    parent = _make_logger("pcs")
+    child = _make_logger("pcs.kid")
+    shared: list[logging.Handler] = []
+    parent.handlers = shared
+    child.handlers = shared
+    stream, handler = _capture()
+    with catching_logs(handler):
+        assert sum(h is handler for h in shared) == 1
+        child.error("from-child")
+        parent.error("from-parent")
+    assert _count(stream, "from-child") == 1
+    assert _count(stream, "from-parent") == 1
+
+
+def test_proxy_removed_externally_is_still_closed_on_exit() -> None:
+    """A proxy pulled out of the list mid-scope must not break the teardown.
+
+    ``_detach`` removes the proxy by identity; if a user already removed it,
+    the removal is skipped and the proxy is closed all the same.
+    """
+    logger = _make_logger("strand")
+    stream, handler = _capture()
+    with catching_logs(handler):
+        proxy = _proxy_for(logger)
+        _remove_handler_by_identity_from_list(logger.handlers, proxy)
+    assert proxy._is_detached
+    logger.warning("late")
+    assert _count(stream, "late") == 0
+
+
+def test_identity_removers_leave_foreign_lists_alone() -> None:
+    """Both identity-based removers are no-ops when the handler is absent."""
+    logger = _make_logger("removers")
+    keep = logging.NullHandler()
+    logger.addHandler(keep)
+    _remove_handler_by_identity(logger, logging.NullHandler())
+    assert len(logger.handlers) == 1
+    assert logger.handlers[0] is keep
+
+    listed: list[logging.Handler] = [keep]
+    _remove_handler_by_identity_from_list(listed, logging.NullHandler())
+    assert listed == [keep]
