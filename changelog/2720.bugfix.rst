@@ -1,0 +1,8 @@
+Plugins now contribute their own hookspecs via :hook:`pytest_addhooks` as soon as they are
+registered, instead of only when a :class:`~pytest.Config` parses a command line.
+
+Previously a :class:`~pytest.PytestPluginManager` obtained outside a full pytest run - for
+example from ``_pytest.config.get_plugin_manager()``, which is documented for integration
+with other tools - never called :hook:`pytest_addhooks` on the plugins registered with it.
+Such a plugin's own hook implementations were then rejected with
+``PluginValidationError: unknown hook ...``.
