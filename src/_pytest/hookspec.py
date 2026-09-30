@@ -251,6 +251,8 @@ def pytest_collection(session: Session) -> object | None:
     3. Set ``session.items`` to the list of collected items
     4. ``pytest_collection_finish(session)``
     5. Set ``session.testscollected`` to the number of collected items
+    6. Abort with :class:`~pytest.Interrupted` if collection reported errors
+       (unless ``--continue-on-collection-errors`` is set)
 
     You can implement this hook to only perform some action before collection,
     for example the terminal plugin uses it to start displaying the collection
@@ -595,8 +597,8 @@ def pytest_runtestloop(session: Session) -> object | None:
     """Perform the main runtest loop (after collection finished).
 
     The default hook implementation performs the runtest protocol for all items
-    collected in the session (``session.items``), unless the collection failed
-    or the ``collectonly`` pytest option is set.
+    collected in the session (``session.items``), unless the
+    ``collectonly`` pytest option is set.
 
     If at any point :py:func:`pytest.exit` is called, the loop is
     terminated immediately.
