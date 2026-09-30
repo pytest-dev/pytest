@@ -1204,9 +1204,11 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
-        if self.cached_result is None:
-            # Already finished. It is assumed that finalizers cannot be added in
-            # this state.
+        if self.cached_result is None and not self._finalizers:
+            # Already finished, and no finalizers were registered, so there is
+            # nothing to clean up. Note that a setup interrupted by a
+            # BaseException (e.g. KeyboardInterrupt) has no cached result but
+            # may still have pending finalizers; those must run (#15067).
             return
 
         exceptions: list[BaseException] = []

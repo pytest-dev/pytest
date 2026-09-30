@@ -3526,6 +3526,37 @@ class TestFixtureMarker:
         reprec = pytester.inline_run("-lvs")
         reprec.assertoutcome(passed=3)
 
+    def test_finalizer_runs_when_setup_interrupted_by_keyboard_interrupt(
+        self, pytester: Pytester
+    ) -> None:
+        """Finalizers registered before a KeyboardInterrupt interrupts fixture
+        setup must still run (#15067)."""
+        marker = pytester.path / "finalizer-marker.txt"
+        item = pytester.getitem(
+            f"""
+            import pytest
+            from pathlib import Path
+
+            marker = {str(marker)!r}
+
+            @pytest.fixture
+            def resource(request):
+                request.addfinalizer(lambda: Path(marker).write_text("ran", encoding="utf-8"))
+                raise KeyboardInterrupt
+
+            def test_func(resource):
+                assert resource
+            """
+        )
+
+        from _pytest import runner
+
+        try:
+            runner.runtestprotocol(item, log=False)
+        except KeyboardInterrupt:
+            pass
+        assert Path(marker).read_text(encoding="utf-8") == "ran"
+
     def test_class_scope_parametrization_ordering(self, pytester: Pytester) -> None:
         """#396"""
         pytester.makepyfile(

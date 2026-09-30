@@ -1,0 +1,1 @@
+Fixture finalizers now run when fixture setup is interrupted by a ``BaseException`` such as ``KeyboardInterrupt`` instead of being silently skipped, matching the documented behavior of :meth:`request.addfinalizer`. This also prevents the fixture's finalizer list from leaking.
