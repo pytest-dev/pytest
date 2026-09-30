@@ -1313,7 +1313,7 @@ class Metafunc:
         ``request.getfixturevalue`` and arguments introduced by direct
         parametrization are not included.
         """
-        fixturedefs = []
+        fixturedefs: list[fixtures.FixtureDef[object]] = []
         for argname in self.fixturenames:
             arg_fixturedefs = self._arg2fixturedefs.get(argname)
             if not arg_fixturedefs:
