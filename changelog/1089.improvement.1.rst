@@ -1,0 +1,6 @@
+The :fixture:`pytester` fixture now also isolates the user-level cache directory of inner test runs,
+by unsetting ``XDG_CACHE_HOME`` and ``PYTEST_CACHE_HOME`` and pointing ``LOCALAPPDATA`` inside the
+temporary home directory.
+
+Previously only ``HOME``/``USERPROFILE`` were redirected, which is not enough: ``XDG_CACHE_HOME`` takes
+precedence over ``HOME``, and on Windows ``LOCALAPPDATA`` is not derived from ``USERPROFILE`` at all.
