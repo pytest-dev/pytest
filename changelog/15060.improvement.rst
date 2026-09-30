@@ -1,0 +1,1 @@
+Improved collection performance for large test suites, particularly those with many unittest methods, and avoided recursion errors while collecting deeply nested fixture dependencies.
