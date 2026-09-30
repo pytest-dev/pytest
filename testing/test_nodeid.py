@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+
+from _pytest.config import ExitCode
 from _pytest.nodeid import coerce_node_id
 from _pytest.nodeid import NodeId
+from _pytest.pytester import Pytester
 from _pytest.reports import TestReport
 import pytest
 
@@ -74,6 +78,41 @@ class TestNodeId:
         no_params = NodeId(path="a/test_b.py", names=("test_c",))
         with_params = NodeId(path="a/test_b.py", names=("test_c",), params="1")
         assert no_params != with_params
+
+    @pytest.mark.parametrize(
+        "node_id",
+        [
+            NodeId(path="test[1].json", names=("test[x]",)),
+            NodeId(path="test.json", names=("test[]",)),
+            NodeId(path="test.json", names=("test[",)),
+            NodeId(path="test.json", names=("test[x]suffix",)),
+            NodeId(path="test.json", names=("test::name",)),
+            NodeId(path="test.json", names=("Group[x]", "test")),
+            NodeId(path="test.json", names=("Group[x]", "test"), params="a::b"),
+        ],
+    )
+    def test_identity_survives_string_round_trip(self, node_id: NodeId) -> None:
+        restored = NodeId.parse(str(node_id))
+        assert node_id == restored
+        assert restored == node_id
+        assert hash(node_id) == hash(restored)
+        assert {node_id: True}[restored]
+        assert {restored: True}[node_id]
+        assert len({node_id, restored}) == 1
+
+    def test_distinct_strings_with_same_parsed_fields(self) -> None:
+        # Parsing accepts an unclosed bracket and preserves the original text.
+        unclosed = NodeId.parse("test.json::test[x")
+        closed = NodeId.parse("test.json::test[x]")
+        assert unclosed.names == closed.names
+        assert unclosed.params == closed.params
+        assert unclosed != closed
+        assert len({unclosed, closed}) == 2
+
+    def test_equality_with_other_types(self) -> None:
+        node_id = NodeId(path="test.json", names=("test",))
+        assert node_id.__eq__(str(node_id)) is NotImplemented
+        assert node_id != str(node_id)
 
     # -- parse() --
 
@@ -172,3 +211,51 @@ class TestWithNodeIdSetter:
         report.nodeid = "a/test_b.py::test_d"
         assert report.id == NodeId(path="a/test_b.py", names=("test_d",))
         assert report.nodeid == "a/test_b.py::test_d"
+
+
+@pytest.mark.parametrize("name", ["b_bad[one]", "b_bad[]", "b_bad[", "b_bad::one"])
+@pytest.mark.parametrize("mode", ["--lf", "--sw"])
+def test_cached_custom_item_names(pytester: Pytester, name: str, mode: str) -> None:
+    pytester.makeconftest(
+        """
+        import json
+        import pytest
+
+        def pytest_collect_file(parent, file_path):
+            if file_path.name == "test_cases.json":
+                return Cases.from_parent(parent, path=file_path)
+
+        class Cases(pytest.File):
+            def collect(self):
+                for name, passed in json.loads(self.path.read_text()).items():
+                    yield Case.from_parent(self, name=name, passed=passed)
+
+        class Case(pytest.Item):
+            def __init__(self, *, passed, **kwargs):
+                super().__init__(**kwargs)
+                self.passed = passed
+
+            def runtest(self):
+                assert self.passed
+        """
+    )
+    cases = {"a_pass": True, name: False, "c_fixed": False}
+    path = pytester.makefile(".json", test_cases=json.dumps(cases))
+    result = pytester.runpytest_subprocess(mode, "--tb=no")
+    if mode == "--lf":
+        result.assert_outcomes(failed=2, passed=1)
+        assert result.ret == ExitCode.TESTS_FAILED
+    else:
+        result.assert_outcomes(failed=1, passed=1)
+        assert result.ret == ExitCode.INTERRUPTED
+
+    # Fix only the ordinary item. The custom-named failure must still be found.
+    cases["c_fixed"] = True
+    path.write_text(json.dumps(cases), encoding="utf-8")
+    result = pytester.runpytest_subprocess(mode, "--tb=no")
+    if mode == "--lf":
+        result.assert_outcomes(failed=1, passed=1)
+        assert result.ret == ExitCode.TESTS_FAILED
+    else:
+        result.assert_outcomes(failed=1, deselected=1)
+        assert result.ret == ExitCode.INTERRUPTED
