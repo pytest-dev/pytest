@@ -158,13 +158,18 @@ class TestMetafunc:
         result = pytester.runpytest()
         result.assert_outcomes(passed=1)
 
-    def test_fixturedefs_ignores_missing_definitions(self) -> None:
-        def func(missing_fixture):
+    def test_fixturedefs_filters_missing_and_direct_definitions(self) -> None:
+        def func(defined_fixture, parameterized, missing_fixture):
             pass
 
         metafunc = self.Metafunc(func)
+        defined_fixture = object()
+        metafunc._arg2fixturedefs["defined_fixture"] = [  # type: ignore[assignment]
+            defined_fixture
+        ]
+        metafunc.parametrize("parameterized", [1])
 
-        assert metafunc.fixturedefs == ()
+        assert metafunc.fixturedefs == (defined_fixture,)
 
     def test_parametrize_single_arg_trailing_comma(self) -> None:
         """Test that trailing comma in string argnames behaves like tuple argnames.
