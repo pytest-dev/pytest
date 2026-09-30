@@ -66,7 +66,7 @@ TESTCASES = [
         >       assert result == expected
         E       assert [1, 3] == [1, 2, 3]
         E         At index 1 diff: 3 != 2
-        E         Right contains one more item: 3
+        E         Right contains one more item: 2
         E         Full diff: (-: missing in left side, +: extra in left side)
         E           [
         E               1,
@@ -75,6 +75,50 @@ TESTCASES = [
         E           ]
         """,
         id="Compare lists, one item missing",
+    ),
+    pytest.param(
+        """
+        def test_this():
+            result =   [1, 2, 3]
+            expected = [1, 2, 0, 3]
+            assert result == expected
+        """,
+        """
+        >       assert result == expected
+        E       assert [1, 2, 3] == [1, 2, 0, 3]
+        E         At index 2 diff: 3 != 0
+        E         Right contains one more item: 0
+        E         Full diff: (-: missing in left side, +: extra in left side)
+        E           [
+        E               1,
+        E               2,
+        E         -     0,
+        E               3,
+        E           ]
+        """,
+        id="Compare lists, one extra item inserted mid-list",
+    ),
+    pytest.param(
+        """
+        def test_this():
+            result =   [1, 2, 0, 3]
+            expected = [1, 2, 3]
+            assert result == expected
+        """,
+        """
+        >       assert result == expected
+        E       assert [1, 2, 0, 3] == [1, 2, 3]
+        E         At index 2 diff: 0 != 3
+        E         Left contains one more item: 0
+        E         Full diff: (-: missing in left side, +: extra in left side)
+        E           [
+        E               1,
+        E               2,
+        E         +     0,
+        E               3,
+        E           ]
+        """,
+        id="Compare lists, one extra item inserted mid-list on left",
     ),
     pytest.param(
         """
