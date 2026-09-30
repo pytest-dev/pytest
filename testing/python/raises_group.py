@@ -464,7 +464,7 @@ def test_check_not_called_with_subexception_issue_14324() -> None:
 
     def check_only_sees_group(e: BaseException) -> bool:
         seen.append(e)
-        return isinstance(e, BaseExceptionGroup) and len(e.exceptions) > 1  # type: ignore[attr-defined]
+        return isinstance(e, BaseExceptionGroup) and len(e.exceptions) > 1
 
     exc = ExceptionGroup("Main message", (ValueError("foo"),))
     with (
