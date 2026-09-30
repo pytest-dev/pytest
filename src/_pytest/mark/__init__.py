@@ -26,6 +26,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.deselect import deselect_items
 from _pytest.stash import StashKey
 
 
@@ -241,7 +242,7 @@ def deselect_by_keyword(items: list[Item], config: Config) -> None:
             remaining.append(colitem)
 
     if deselected:
-        config.hook.pytest_deselected(items=deselected)
+        deselect_items(config, deselected, f"-k {keywordexpr!r} did not match")
         items[:] = remaining
 
 
@@ -289,7 +290,7 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
         else:
             deselected.append(item)
     if deselected:
-        config.hook.pytest_deselected(items=deselected)
+        deselect_items(config, deselected, f"-m {matchexpr!r} did not match")
         items[:] = remaining
 
 

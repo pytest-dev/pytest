@@ -3576,3 +3576,175 @@ class TestTerminalProgressPlugin:
         # Session finish - should remove progress.
         plugin.pytest_sessionfinish()
         assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
+
+
+class TestDeselectedSummary:
+    """The ``deselected`` section listing items and why they were deselected."""
+
+    @pytest.fixture
+    def pytester(self, pytester: Pytester) -> Pytester:
+        pytester.makeini("[pytest]\nmarkers = slow\n")
+        pytester.makepyfile(
+            test_it="""
+            import pytest
+
+            @pytest.mark.slow
+            def test_slow(): pass
+
+            def test_fast(): pass
+            """
+        )
+        return pytester
+
+    def test_not_shown_without_verbosity(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("-m", "not slow")
+        result.stdout.no_fnmatch_line("*deselected*did not match*")
+        result.stdout.fnmatch_lines(["*1 passed, 1 deselected*"])
+
+    def test_mark_expression(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("-v", "-m", "not slow")
+        result.stdout.fnmatch_lines(
+            [
+                "*= deselected =*",
+                "-m 'not slow' did not match:",
+                "  test_it.py::test_slow",
+            ]
+        )
+
+    def test_keyword_expression(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("-v", "-k", "fast")
+        result.stdout.fnmatch_lines(
+            ["*= deselected =*", "-k 'fast' did not match:", "  test_it.py::test_slow"]
+        )
+
+    def test_deselect_option(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("-v", "--deselect", "test_it.py::test_slow")
+        result.stdout.fnmatch_lines(
+            [
+                "*= deselected =*",
+                "node id matched --deselect:",
+                "  test_it.py::test_slow",
+            ]
+        )
+
+    def test_shown_with_collect_only(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("-v", "--collect-only", "-m", "not slow")
+        result.stdout.fnmatch_lines(
+            ["*= deselected =*", "-m 'not slow' did not match:"]
+        )
+
+    def test_last_failed(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_it="""
+            def test_pass(): pass
+
+            def test_fail(): assert False
+            """
+        )
+        pytester.runpytest()
+        # Pass the file explicitly so that the passing item survives collection
+        # and is deselected rather than never collected.
+        result = pytester.runpytest("-v", "--lf", "test_it.py")
+        result.stdout.fnmatch_lines(
+            [
+                "*= deselected =*",
+                "passed in the last run (--lf):",
+                "  test_it.py::test_pass",
+            ]
+        )
+
+    def test_last_failed_no_failures_none(self, pytester: Pytester) -> None:
+        result = pytester.runpytest(
+            "-v", "--lf", "--last-failed-no-failures=none", "test_it.py"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "*= deselected =*",
+                "no test failed in the last run (--lf --last-failed-no-failures=none):",
+                "  test_it.py::test_slow",
+                "  test_it.py::test_fast",
+            ]
+        )
+
+    def test_stepwise(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_it="""
+            def test_pass(): pass
+
+            def test_fail(): assert False
+            """
+        )
+        pytester.runpytest("--stepwise")
+        result = pytester.runpytest("-v", "--stepwise")
+        result.stdout.fnmatch_lines(
+            [
+                "*= deselected =*",
+                "already passed before the last failure (--stepwise):",
+                "  test_it.py::test_pass",
+            ]
+        )
+
+    def test_plugin_deselection_has_no_reason(self, pytester: Pytester) -> None:
+        """A plugin cannot record a reason -- see _pytest.deselect."""
+        pytester.makeconftest(
+            """
+            def pytest_collection_modifyitems(config, items):
+                deselected = [item for item in items if item.name == "test_slow"]
+                for item in deselected:
+                    items.remove(item)
+                config.hook.pytest_deselected(items=deselected)
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.stdout.fnmatch_lines(
+            [
+                "*= deselected =*",
+                "deselected by a plugin, no reason recorded:",
+                "  test_it.py::test_slow",
+            ]
+        )
+
+    def test_reason_is_only_set_during_the_hook_call(self, pytester: Pytester) -> None:
+        """The side channel does not leak past the call that sets it."""
+        pytester.makeconftest(
+            """
+            from _pytest.deselect import get_deselection_reason
+
+            seen = []
+
+            def pytest_deselected(items):
+                seen.append(get_deselection_reason(items[0].config))
+
+            def pytest_collection_finish(session):
+                assert seen == ["-m 'not slow' did not match"], seen
+                assert get_deselection_reason(session.config) is None
+            """
+        )
+        result = pytester.runpytest("-m", "not slow")
+        assert result.ret == 0
+
+    def test_nested_deselection_restores_the_outer_reason(
+        self, pytester: Pytester
+    ) -> None:
+        """An implementation that deselects further items does not clobber it."""
+        pytester.makeconftest(
+            """
+            from _pytest.deselect import deselect_items
+            from _pytest.deselect import get_deselection_reason
+
+            seen = []
+
+            def pytest_deselected(items):
+                reason = get_deselection_reason(items[0].config)
+                seen.append(reason)
+                if reason != "inner":
+                    deselect_items(items[0].config, items, "inner")
+                    seen.append(get_deselection_reason(items[0].config))
+
+            def pytest_collection_finish(session):
+                assert seen == ["-m 'not slow' did not match", "inner",
+                                "-m 'not slow' did not match"], seen
+            """
+        )
+        result = pytester.runpytest("-m", "not slow")
+        assert result.ret == 0

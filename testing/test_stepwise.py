@@ -141,8 +141,10 @@ def test_fail_and_continue_with_stepwise(stepwise_pytester: Pytester) -> None:
     assert _strip_resource_warnings(result.stderr.lines) == []
 
     stdout = result.stdout.str()
-    # Make sure the latest failing test runs and then continues.
-    assert "test_success_before_fail" not in stdout
+    # Make sure the latest failing test runs and then continues.  The already
+    # passed test is still named by the deselected summary, so check that it did
+    # not run rather than that it is absent.
+    assert "test_success_before_fail PASSED" not in stdout
     assert "test_fail_on_flag PASSED" in stdout
     assert "test_success_after_fail PASSED" in stdout
 
