@@ -44,6 +44,7 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.nodeid import NodeId
 from _pytest.nodes import Item
@@ -414,6 +415,9 @@ class TerminalReporter:
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
+        self._warnings_collapse_threshold: int | None = (
+            self._get_warnings_collapse_threshold()
+        )
 
     def _determine_show_progress_info(
         self,
@@ -1086,6 +1090,31 @@ class TerminalReporter:
             except AttributeError:
                 return ""
 
+    def _get_warnings_collapse_threshold(self) -> int | None:
+        """Return the warnings collapse threshold, from CLI or INI, defaulting to 10.
+
+        Returns None to indicate no threshold (never collapse).
+        Raises UsageError if the value is not a positive integer or 'none'.
+        """
+        raw: int | str | None = self.config.option.warnings_collapse_threshold
+        if raw is None:
+            raw = self.config.getini("warnings_collapse_threshold")
+        if raw is None:
+            return 10
+        if isinstance(raw, str) and raw.lower() == "none":
+            return None
+        try:
+            value = int(raw)
+        except (ValueError, TypeError):
+            raise UsageError(
+                f"warnings_collapse_threshold must be a positive integer or 'none', got {raw!r}"
+            )
+        if value <= 0:
+            raise UsageError(
+                f"warnings_collapse_threshold must be a positive integer or 'none', got {value}"
+            )
+        return value
+
     def _get_max_warnings(self) -> int | None:
         """Return the max_warnings threshold, from CLI or INI, or None if unset."""
         value = self.config.option.max_warnings
@@ -1123,7 +1152,8 @@ class TerminalReporter:
 
             def collapsed_location_report(reports: list[WarningReport]) -> str:
                 locations = [x for w in reports if (x := w.get_location(self.config))]
-                if len(locations) < 10:
+                threshold = self._warnings_collapse_threshold
+                if threshold is None or len(locations) < threshold:
                     return "\n".join(map(str, locations))
 
                 counts_by_filename = Counter(
