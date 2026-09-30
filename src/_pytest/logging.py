@@ -981,18 +981,24 @@ class catching_logs(Generic[_HandlerType]):
         round 3).
         """
         key = id(handler)
-        handler_ref = weakref.ref(handler)
 
         def _evict(
             _ref: weakref.ref[logging.Handler],
             key: int = key,
-            handler_ref: weakref.ref[logging.Handler] = handler_ref,
             cache: dict[int, _TargetCacheEntry] = cls._target_cache,
         ) -> None:
-            if cache.get(key) is not None and cache[key].handler_ref is handler_ref:
+            # ``_ref`` is the weakref that fired, i.e. the one stored on the
+            # entry. Comparing by identity rejects a recycled ``id()`` whose
+            # entry already belongs to a different handler.
+            entry = cache.get(key)
+            if entry is not None and entry.handler_ref is _ref:
                 del cache[key]
 
-        weakref.ref(handler, _evict)
+        # The callback must be attached to the weakref that the entry actually
+        # keeps. A separate throwaway ``weakref.ref(handler, _evict)`` would be
+        # collected immediately, dropping the callback with it and never
+        # evicting the entry.
+        handler_ref = weakref.ref(handler, _evict)
         cls._target_cache[key] = _TargetCacheEntry(
             handler_ref,
             tuple(

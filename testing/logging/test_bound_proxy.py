@@ -591,6 +591,32 @@ def test_removed_logger_is_not_held_by_the_target_cache() -> None:
         assert not [h for h in gone.handlers if isinstance(h, _BoundProxyHandler)]
 
 
+def test_dead_handler_is_evicted_from_the_target_cache() -> None:
+    """The entry's weakref callback must evict it once the handler dies.
+
+    The callback has to be attached to the weakref the entry actually keeps --
+    a separate throwaway ``weakref.ref(handler, cb)`` is collected immediately
+    and never fires. Without the eviction the entry lingers until its ``id()``
+    is recycled.
+    """
+    from _pytest.logging import catching_logs as _catching_logs
+
+    _make_logger("cache.dead")
+    _stream, handler = _capture()
+
+    with _catching_logs(handler, level=logging.DEBUG):
+        pass
+
+    cache = _catching_logs._target_cache
+    key = id(handler)
+    assert key in cache, "the scope should have cached the target snapshot"
+
+    del handler
+    gc.collect()
+
+    assert key not in cache, "a dead handler's cache entry must be evicted"
+
+
 # --------------------------------------------------------------------------
 # Regression coverage named in review #2 on #15075. Each of these fails on the
 # previous head (or on the merge base) and pins the corrected behaviour.
