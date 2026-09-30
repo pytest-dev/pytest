@@ -1395,7 +1395,6 @@ class Config:
     def cwd_relative_nodeid(self, nodeid: NodeId) -> NodeId:
         # nodeid's are relative to the rootpath, compute relative to cwd.
         if self.invocation_params.dir != self.rootpath:
-            fullpath = self.rootpath / nodeid.path
             relative_path = bestrelpath(self.invocation_params.dir, fullpath)
             return dataclasses.replace(nodeid, path=relative_path)
         return nodeid
