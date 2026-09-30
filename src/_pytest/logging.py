@@ -346,6 +346,10 @@ def pytest_addoption(parser: Parser) -> None:
 
 _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 
+# One capture-target group: the loggers sharing one ``handlers`` list, plus
+# that list. Identity is what groups loggers; hashability is not assumed.
+_TargetGroup = tuple[tuple[logging.Logger, ...], list[logging.Handler]]
+
 
 def _remove_handler_by_identity(
     logger: logging.Logger, handler: logging.Handler
@@ -402,7 +406,6 @@ class _BoundProxyHandler(logging.Handler):
         "_detached",
         "_group",
         "_list_owner",
-        "_own_filters",
         "_refcount",
         "logger",
         "real_handler",
@@ -441,11 +444,10 @@ class _BoundProxyHandler(logging.Handler):
         # it forwards to). Everything else the base initialiser sets up is
         # replicated here.
         self._name = None
-        # ``logging.Handler.__init__`` also sets these two; the properties above
-        # forward to the real handler once it is known, so the proxy only needs
-        # the values for the brief window before that.
+        # ``logging.Handler.__init__`` also sets ``self._closed`` and creates
+        # the lock; ``level`` and ``filters`` are not replicated -- the
+        # properties above read and write the real handler directly.
         self._closed = False
-        self._own_filters: list[_FilterLike] = []
         self.createLock()
 
     # ------------------------------------------------------------- live view
@@ -461,9 +463,9 @@ class _BoundProxyHandler(logging.Handler):
 
     @level.setter
     def level(self, value: int) -> None:
-        # Only assigned by logging.Handler.__init__(); the level is tracked
-        # through the real handler instead.
-        pass
+        real = self.real_handler
+        if real is not None:
+            real.level = value
 
     @property
     def filters(self) -> list[_FilterLike]:
@@ -476,10 +478,12 @@ class _BoundProxyHandler(logging.Handler):
 
     @filters.setter
     def filters(self, value: list[_FilterLike]) -> None:
-        # logging.Handler.__init__ assigns ``self.filters = []``. Store it on the
-        # proxy until a real handler is known; afterwards the real handler's
-        # list is authoritative.
-        self._own_filters = value
+        real = self.real_handler
+        if real is not None:
+            # ``Handler.filters`` is typed invariantly as ``list[Filter]``;
+            # the wider filter kinds are accepted by the stdlib at runtime
+            # (same invariance mismatch as the getter above).
+            real.filters = value  # pyright: ignore[reportAttributeAccessIssue]
 
     @property
     def formatter(self) -> logging.Formatter | None:
@@ -588,11 +592,7 @@ class _BoundProxyHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         # Only reached when the handler is driven directly (``emit()`` by user
         # code); ``handle()`` forwards before acquiring this handler's lock.
-        if self._is_detached:
-            return
-        logger = self.logger
-        if logger is not None and not logger.propagate:
-            self.handle(record)
+        self.handle(record)
 
     def close(self) -> None:
         """Detach, then release the proxy's strong references.
@@ -608,6 +608,10 @@ class _BoundProxyHandler(logging.Handler):
         self.logger = None
         self.real_handler = None
         self._group = ()
+        # Release the remembered list too: a closed proxy is no longer a live
+        # occupant of any ``handlers`` list, and must not keep a (possibly
+        # already-replaced) list alive (#15075 review round 3).
+        self._list_owner = None
         # Drop the level too: logging.Handler.close() removes it from the
         # module-level level registry.
         super().close()
@@ -621,15 +625,47 @@ class _TargetCacheEntry(NamedTuple):
     """One cached ``catching_logs`` target snapshot, keyed by ``id(handler)``.
 
     ``handler_ref`` is a weak back-reference used to reject a recycled
-    ``id()``. Each group is the loggers sharing one ``handlers`` list, held
-    weakly so the cache cannot keep a removed logger alive, paired with that
-    list object (needed to attach to / remove from it).
+    ``id()`` and its callback evicts the entry when the handler dies. Each
+    group is the loggers sharing one ``handlers`` list, held weakly so the
+    cache cannot keep a removed logger alive, plus the ``id()`` of that list
+    -- *identity metadata only*, never a strong reference, so the cache can
+    never retain a replaced list and the unrelated user handlers inside it.
+    Lookup re-derives the live list from the group's members and validates
+    that it still has the stored ``id()`` and is still the current
+    ``handlers`` attribute of every member, and that the list's owner count
+    still matches the bucket (proxy vs direct) it was classified into; any
+    mismatch forces a rebuild (#15075 review round 3).
     """
 
     handler_ref: weakref.ref[logging.Handler]
-    groups: tuple[
-        tuple[tuple[weakref.ref[logging.Logger], ...], list[logging.Handler]], ...
-    ]
+    # Groups classified for bound-proxy attachment: lists with exactly one
+    # registered owner. Each entry is the group's weak loggers plus the
+    # ``id()`` of their shared ``handlers`` list.
+    proxy_groups: tuple[tuple[tuple[weakref.ref[logging.Logger], ...], int], ...]
+    # Groups classified for direct attachment of the real handler: lists
+    # with more than one registered owner (shared or aliased to root).
+    direct_groups: tuple[tuple[tuple[weakref.ref[logging.Logger], ...], int], ...]
+    registry_size: int
+
+
+def _count_list_owners(
+    current: Mapping[str, object], root_logger: logging.Logger
+) -> dict[int, int]:
+    """Map ``id(logger.handlers)`` to the number of loggers owning it.
+
+    All registered loggers count, including root and propagating ones: the
+    proxy-vs-direct classification must see every owner of a list, not just
+    the ones selected as capture targets, or a later owner's records get
+    mis-routed (#15075 review).
+    """
+    owners: dict[int, int] = {}
+    for candidate in current.values():
+        if isinstance(candidate, logging.Logger):
+            list_id = id(candidate.handlers)
+            owners[list_id] = owners.get(list_id, 0) + 1
+    root_id = id(root_logger.handlers)
+    owners[root_id] = owners.get(root_id, 0) + 1
+    return owners
 
 
 # Not using @contextmanager for performance reasons.
@@ -642,6 +678,7 @@ class catching_logs(Generic[_HandlerType]):
     # ``catching_logs`` for every test phase, so this turns a per-entry
     # O(n^2) rescan into a single walk.
     __slots__ = (
+        "attached_claims",
         "attached_loggers",
         "attached_proxies",
         "handler",
@@ -652,10 +689,13 @@ class catching_logs(Generic[_HandlerType]):
     # Keyed by ``id(handler)`` rather than by the handler itself: a custom
     # capture handler may set ``__hash__ = None``, and a WeakKeyDictionary
     # would raise ``TypeError`` when used as a key. The entry holds a weak
-    # reference back to the handler plus weak references to the loggers, so it
-    # can neither keep a removed logger (or a dead handler) alive nor let a
-    # recycled ``id()`` match a stale entry. It is rebuilt whenever the logger
-    # population changes.
+    # reference back to the handler plus weak references to the loggers, so
+    # it can neither keep a dead handler alive nor keep a removed logger
+    # alive. A recycled ``id()`` is rejected via the back-reference, and a
+    # stale group is rejected on lookup because the stored ``handlers`` list
+    # must still be the current list of every group member. It is rebuilt
+    # whenever the logger population, ``propagate`` state, or any cached
+    # group's list identity changes.
     _target_cache: dict[int, _TargetCacheEntry] = {}
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
@@ -665,6 +705,13 @@ class catching_logs(Generic[_HandlerType]):
         self.attached_proxies: list[
             tuple[list[logging.Handler], _BoundProxyHandler]
         ] = []
+        # ``handlers`` lists onto which the real handler was appended
+        # directly, paired with whether this scope did the appending -- the
+        # conservative path for shared/aliased lists (#15075 review). An
+        # enclosing scope's or a user's existing copy is claimed without
+        # appending and must not be removed; only the appending scope removes
+        # it, from the remembered list object.
+        self.attached_claims: list[tuple[list[logging.Handler], bool]] = []
 
     def __enter__(self) -> _HandlerType:
         root_logger = logging.getLogger()
@@ -697,23 +744,27 @@ class catching_logs(Generic[_HandlerType]):
         return self.handler
 
     def _attach_proxies(self, root_logger: logging.Logger) -> None:
-        """Attach (or share) one proxy per ``handlers`` list that needs one.
+        """Attach proxies / direct claims for every ``handlers`` list needing one.
 
-        Loggers are grouped by the *identity* of their ``handlers`` list, not by
-        logger identity. Two loggers sharing one list must share a single proxy:
-        a proxy is bound to one logger, so binding it to the first of the pair
-        and reusing it for the second loses the second logger's records as soon
-        as the first one starts propagating. Requiring the proxy's owner to
-        match during reuse would instead put two proxies in one list and
-        duplicate every record.
+        Loggers are grouped by the *identity* of their ``handlers`` list, and
+        each group is then classified by list ownership:
 
-        The shared-list case is handled as a conservative fallback: one proxy
-        whose owner is the first logger in the group. It still forwards for
-        that logger, and for a sibling it defers to the direct-attachment path
-        (the real handler attached to the sibling's list), so a sibling that
-        starts propagating retains the same limitation the un-proxied code has.
+        * A list owned by exactly one logger gets a bound proxy: the proxy
+          consults the live ``propagate`` value per record, so flipping it
+          during a test neither duplicates nor misses records (#15064).
+        * A list with more than one owner (shared between loggers, or aliased
+          to ``root.handlers``) cannot host a sound proxy: one proxy cannot
+          know which owner a shared-list visit is for, and two proxies in one
+          list duplicate every record. Such lists get the real handler
+          attached *directly* instead -- the behaviour predating the proxy --
+          claimed by identity so nested scopes share one copy and a handler
+          the user installed on the list is never removed by teardown. This
+          deliberately retains the pre-proxy limitation for aliased lists:
+          records of an owner which flips ``propagate`` mid-scope behave
+          exactly as they did before the proxy existed.
         """
-        for targets, shared_list in self._proxy_targets(root_logger, self.handler):
+        proxy_groups, direct_groups = self._proxy_targets(root_logger, self.handler)
+        for targets, shared_list in proxy_groups:
             # One proxy for this group. Reuse a live one already installed in
             # this list so that overlapping catching_logs scopes -- pytest
             # nests one per handler and re-enters them for every test phase --
@@ -742,25 +793,44 @@ class catching_logs(Generic[_HandlerType]):
             # shared list is one claim, so nested contexts over the same list
             # refcount it once and cannot strand the proxy.
             self.attached_proxies.append((shared_list, proxy))
+        for _targets, shared_list in direct_groups:
+            # A scope appends the real handler at most once per list. An
+            # enclosing scope's (or a user's) copy already in the list is
+            # found here and left alone, so exit must not remove it either;
+            # only the scope which actually appended removes it, and it
+            # removes it from *this* list object even if an owner has since
+            # replaced its ``handlers`` attribute.
+            added = not any(h is self.handler for h in shared_list)
+            if added:
+                shared_list.append(self.handler)
+            self.attached_claims.append((shared_list, added))
 
     @classmethod
     def _proxy_targets(
-        cls, root_logger: logging.Logger, handler: logging.Handler
-    ) -> tuple[tuple[tuple[logging.Logger, ...], list[logging.Handler]], ...]:
-        """Groups of loggers needing a proxy, grouped by ``handlers`` list.
+        cls,
+        root_logger: logging.Logger,
+        handler: logging.Handler,
+    ) -> tuple[tuple[_TargetGroup, ...], tuple[_TargetGroup, ...]]:
+        """Groups of loggers needing capture, grouped by ``handlers`` list.
 
-        Yields ``(loggers_in_group, their_shared_handlers_list)`` pairs. All
-        loggers in a group share one list object, so one proxy covers the whole
-        group. The real handler's own attachment to root is excluded: root is
-        handled separately, and a list shared with ``root.handlers`` is a
-        special case handled as its own group below.
+        Returns ``(proxy_groups, direct_groups)``: each group pairs the
+        loggers sharing one ``handlers`` list with that list. A group needs a
+        bound proxy only when its list has exactly one owner; lists with more
+        than one owner (including lists aliased to ``root.handlers``) go to
+        the direct-attachment path instead, whose members are only the
+        loggers that were non-propagating at entry -- a propagating logger
+        on such a list reaches root already and must not gain a second copy
+        of the handler through the shared list.
 
         Cached per handler and revalidated on every entry: the cache is only
-        reused when the logger population is unchanged and every cached group
-        is still registered and still non-propagating. Any logger which appears
-        or flips ``propagate`` afterwards therefore forces a recompute, while
-        the common case -- pytest re-entering the same scope for every test
-        phase with nothing changed -- is an O(n) revalidation.
+        reused when the logger population is unchanged, every cached group is
+        still registered, every member is still non-propagating, and every
+        cached list is still the *live* list of all its members (validated by
+        stored ``id()``, never by holding the list itself). A logger which
+        appears, flips ``propagate``, or replaces its ``handlers`` list
+        therefore forces a recompute, while the common case -- pytest
+        re-entering the same scope for every test phase with nothing changed
+        -- is an O(n) revalidation.
 
         Identity is used throughout: loggers are not guaranteed to be hashable
         (``Logger`` subclasses may set ``__hash__ = None``) and two distinct
@@ -770,32 +840,70 @@ class catching_logs(Generic[_HandlerType]):
         manager = root_logger.manager
         current = manager.loggerDict
         cached = cls._target_cache.get(id(handler))
-        if cached is not None and cached.handler_ref() is handler:
-            # Dereference the weak logger references: the cache is only usable
-            # while the logger population is unchanged and every logger in it
-            # is still registered and still non-propagating. A collected
-            # logger invalidates the entry, so a removed logger is never kept
-            # alive by the cache and never reused.
+        if (
+            cached is not None
+            and cached.handler_ref() is handler
+            and cached.registry_size == len(current)
+        ):
+            # Revalidate the snapshot: the population is unchanged, so every
+            # logger it names is usable only while it is still registered
+            # and non-propagating; the live list re-derived from each group
+            # must still carry the stored list ``id()`` and be the *current*
+            # ``handlers`` attribute of all group members; and the list's
+            # owner count must still match the bucket it was classified
+            # into. A logger whose ``handlers`` attribute was replaced (or
+            # which shares a list with a new logger) after the snapshot was
+            # taken therefore forces a rebuild, so a stale entry never
+            # attaches to an obsolete list or to a list whose ownership has
+            # changed (#15075 review round 3).
+            registered: dict[int, None] = {}
+            for existing in current.values():
+                registered[id(existing)] = None
+            owners = _count_list_owners(current, root_logger)
             derefed: list[tuple[logging.Logger, ...]] = []
+            live_lists: list[list[logging.Handler]] = []
             usable = True
-            for group, _handlers_list in cached.groups:
-                group_loggers: list[logging.Logger] = []
-                for ref in group:
-                    logger = ref()
-                    if (
-                        logger is None
-                        or logger.propagate
-                        or not any(existing is logger for existing in current.values())
+            for bucket_is_proxy, groups in (
+                (True, cached.proxy_groups),
+                (False, cached.direct_groups),
+            ):
+                for group, stored_list_id in groups:
+                    group_loggers: list[logging.Logger] = []
+                    for ref in group:
+                        logger = ref()
+                        if (
+                            logger is None
+                            or logger.propagate
+                            or id(logger) not in registered
+                        ):
+                            usable = False
+                            break
+                        group_loggers.append(logger)
+                    if not usable:
+                        break
+                    assert group_loggers
+                    live_list = group_loggers[0].handlers
+                    if id(live_list) != stored_list_id or any(
+                        logger.handlers is not live_list for logger in group_loggers[1:]
                     ):
                         usable = False
                         break
-                    group_loggers.append(logger)
+                    owned_alone = owners.get(id(live_list), 0) == 1
+                    if owned_alone is not bucket_is_proxy:
+                        usable = False
+                        break
+                    derefed.append(tuple(group_loggers))
+                    live_lists.append(live_list)
                 if not usable:
                     break
-                derefed.append(tuple(group_loggers))
-            if usable and sum(len(g) for g, _ in cached.groups) == len(current):
-                return tuple(
-                    (derefed[i], cached.groups[i][1]) for i in range(len(derefed))
+            if usable:
+                n_proxy = len(cached.proxy_groups)
+                return (
+                    tuple((derefed[i], live_lists[i]) for i in range(n_proxy)),
+                    tuple(
+                        (derefed[i], live_lists[i])
+                        for i in range(n_proxy, len(derefed))
+                    ),
                 )
 
         # Collect the non-propagating loggers and their ancestors.
@@ -819,31 +927,85 @@ class catching_logs(Generic[_HandlerType]):
                     targets.append(parent)
                 parent = parent.parent
 
-        # Group by the identity of the handlers list. A list may be shared
-        # between two loggers or aliased to root's; both are handled here.
-        groups: dict[int, tuple[list[logging.Logger], list[logging.Handler]]] = {}
+        # Group by the identity of the handlers list, then classify each
+        # group by how many *registered* loggers own that list -- including
+        # root and propagating loggers, which may share a list with a target.
+        owners = _count_list_owners(current, root_logger)
+        list_groups: dict[int, tuple[list[logging.Logger], list[logging.Handler]]] = {}
         for logger in targets:
             key = id(logger.handlers)
-            entry = groups.get(key)
+            entry = list_groups.get(key)
             if entry is None:
-                groups[key] = ([logger], logger.handlers)
+                list_groups[key] = ([logger], logger.handlers)
             else:
                 entry[0].append(logger)
 
-        result = tuple(
-            (tuple(loggers), handlers) for loggers, handlers in groups.values()
+        proxy_groups: list[
+            tuple[tuple[logging.Logger, ...], list[logging.Handler]]
+        ] = []
+        direct_groups: list[
+            tuple[tuple[logging.Logger, ...], list[logging.Handler]]
+        ] = []
+        for loggers, handlers_list in list_groups.values():
+            if owners.get(id(handlers_list), 1) == 1:
+                proxy_groups.append((tuple(loggers), handlers_list))
+            elif any(not logger.propagate for logger in loggers):
+                # Shared/aliased list: direct attachment for the members which
+                # need it; a propagating member (an ancestor added by the
+                # walk) reaches root on its own and gets no copy.
+                needed = tuple(m for m in loggers if not m.propagate)
+                direct_groups.append((needed, handlers_list))
+        return cls._store_targets(
+            handler, tuple(proxy_groups), tuple(direct_groups), len(current)
         )
-        # Store weak references to the loggers so the cache cannot keep a
-        # logger alive after it has been removed from the manager's dict, and
-        # a weak back-reference to the handler so a recycled id() is rejected.
-        cls._target_cache[id(handler)] = _TargetCacheEntry(
-            weakref.ref(handler),
+
+    @classmethod
+    def _store_targets(
+        cls,
+        handler: logging.Handler,
+        proxy_groups: tuple[_TargetGroup, ...],
+        direct_groups: tuple[_TargetGroup, ...],
+        registry_size: int,
+    ) -> tuple[tuple[_TargetGroup, ...], tuple[_TargetGroup, ...]]:
+        """Snapshot the groups into the cache and return them.
+
+        The weak back-reference to ``handler`` rejects a recycled ``id()``;
+        its callback evicts the entry once the handler dies (before the
+        memory -- and the ``id()`` -- can be reused, so a later entry is
+        never evicted by the previous handler's death). Only the ``id()`` of
+        each shared ``handlers`` list is stored, never the list itself: a
+        strong reference would retain a replaced list and every unrelated
+        user handler inside it, so staleness is caught on lookup, where the
+        group's live list must still carry the stored ``id()`` and still be
+        the current ``handlers`` attribute of every member (#15075 review
+        round 3).
+        """
+        key = id(handler)
+        handler_ref = weakref.ref(handler)
+
+        def _evict(
+            _ref: weakref.ref[logging.Handler],
+            key: int = key,
+            handler_ref: weakref.ref[logging.Handler] = handler_ref,
+            cache: dict[int, _TargetCacheEntry] = cls._target_cache,
+        ) -> None:
+            if cache.get(key) is not None and cache[key].handler_ref is handler_ref:
+                del cache[key]
+
+        weakref.ref(handler, _evict)
+        cls._target_cache[key] = _TargetCacheEntry(
+            handler_ref,
             tuple(
-                (tuple(weakref.ref(logger) for logger in loggers), handlers)
-                for loggers, handlers in result
+                (tuple(weakref.ref(logger) for logger in loggers), id(handlers_list))
+                for loggers, handlers_list in proxy_groups
             ),
+            tuple(
+                (tuple(weakref.ref(logger) for logger in loggers), id(handlers_list))
+                for loggers, handlers_list in direct_groups
+            ),
+            registry_size,
         )
-        return result
+        return proxy_groups, direct_groups
 
     def _detach(self) -> None:
         """Release everything this context attached, by identity.
@@ -869,6 +1031,14 @@ class catching_logs(Generic[_HandlerType]):
             # handler and logger alive) once capture is over.
             proxy.close()
         self.attached_proxies.clear()
+        for shared_list, added in self.attached_claims:
+            # Only a copy this scope appended is removed -- an enclosing
+            # scope's or a user's copy stays -- and it is removed from the
+            # remembered list object even if an owner replaced its
+            # ``handlers`` attribute since entry.
+            if added and any(h is self.handler for h in shared_list):
+                _remove_handler_by_identity_from_list(shared_list, self.handler)
+        self.attached_claims.clear()
 
     def __exit__(
         self,

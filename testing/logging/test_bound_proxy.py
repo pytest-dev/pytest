@@ -9,9 +9,11 @@ test_fixture.py / test_reporting.py.
 from __future__ import annotations
 
 from collections.abc import Iterator
+import gc
 import io
 import logging
 import threading
+import weakref
 
 from _pytest.logging import _BoundProxyHandler
 from _pytest.logging import catching_logs
@@ -595,9 +597,11 @@ def test_removed_logger_is_not_held_by_the_target_cache() -> None:
 def test_shared_handlers_list_transition_does_not_lose_sibling() -> None:
     """Two loggers sharing one ``handlers`` list, one flips ``propagate``.
 
-    The proxy is shared by the pair, so it must decide from the logger that
-    actually emitted the record. Binding the decision to a single owner loses
-    the sibling's record the moment the owner starts propagating.
+    A list with more than one owner gets the real handler attached directly
+    (the conservative fallback -- a single proxy cannot know which owner a
+    shared-list visit is for), so the sibling's record is captured through
+    the list itself and is never lost when the other owner starts
+    propagating.
     """
     a = _make_logger("shared.a")
     b = _make_logger("shared.b")
@@ -607,17 +611,26 @@ def test_shared_handlers_list_transition_does_not_lose_sibling() -> None:
 
     stream, handler = _capture()
     with catching_logs(handler):
-        # One proxy for the one shared list, not one per logger.
-        proxies = [h for h in shared if isinstance(h, _BoundProxyHandler)]
-        assert len(proxies) == 1
+        # Direct attachment for the shared list, not a proxy: the real
+        # handler is in the list once, claimed by identity.
+        assert not [h for h in shared if isinstance(h, _BoundProxyHandler)]
+        assert sum(h is handler for h in shared) == 1
         a.propagate = True
         b.error("from-b")
 
     assert _count(stream, "from-b") == 1
 
 
-def test_shared_handlers_list_no_duplicate_when_one_propagates() -> None:
-    """The shared-list case must not capture a record twice."""
+def test_shared_handlers_list_transition_keeps_merge_base_behaviour() -> None:
+    """Shared lists deliberately retain the pre-proxy transition limitation.
+
+    With direct attachment on a shared list, a sibling that stays
+    non-propagating always has its record captured (no lost records), while
+    a record from the owner that flipped ``propagate`` mid-scope is handled
+    once via the list and once via root -- exactly what the merge base did.
+    Proxying shared lists cannot do better without per-owner routing the
+    stdlib dispatch does not provide, so the conservative behaviour wins.
+    """
     a = _make_logger("dup.a")
     b = _make_logger("dup.b")
     shared: list[logging.Handler] = []
@@ -631,7 +644,9 @@ def test_shared_handlers_list_no_duplicate_when_one_propagates() -> None:
         a.error("via-root")
 
     assert _count(stream, "only-once") == 1
-    assert _count(stream, "via-root") == 1
+    # Merge-base behaviour for a mid-scope False->True flip on a shared
+    # list: the list attachment and the root attachment both see it.
+    assert _count(stream, "via-root") == 2
 
 
 def test_finite_nested_record_from_real_handler_emit() -> None:
@@ -780,8 +795,8 @@ def test_unhashable_logger_can_be_captured() -> None:
     assert _count(stream, "from-unhashable") == 1
 
 
-def test_nested_contexts_share_one_proxy_for_shared_list() -> None:
-    """Overlapping scopes over a shared list refcount a single proxy."""
+def test_nested_contexts_share_one_direct_claim_for_shared_list() -> None:
+    """Overlapping scopes over a shared list claim one direct attachment."""
     a = _make_logger("nested_ctx.a")
     b = _make_logger("nested_ctx.b")
     shared: list[logging.Handler] = []
@@ -791,12 +806,15 @@ def test_nested_contexts_share_one_proxy_for_shared_list() -> None:
     stream, handler = _capture()
     with catching_logs(handler):
         with catching_logs(handler):
-            proxies = [h for h in shared if isinstance(h, _BoundProxyHandler)]
-            assert len(proxies) == 1
-            assert proxies[0]._refcount == 2, "nested scopes must share one claim"
+            # Shared list -> direct attachment; the inner scope reuses the
+            # outer scope's copy instead of adding a second one.
+            assert not [h for h in shared if isinstance(h, _BoundProxyHandler)]
+            assert sum(h is handler for h in shared) == 1, (
+                "nested scopes must share one claim"
+            )
             b.error("inner-record")
-        # Outer scope still active: the proxy is still attached.
-        assert any(isinstance(h, _BoundProxyHandler) for h in shared)
+        # Outer scope still active: the claim is still attached.
+        assert any(h is handler for h in shared)
         b.error("outer-record")
 
     # Distinct needles: "inner-record" is a substring of neither, and the two
@@ -804,4 +822,40 @@ def test_nested_contexts_share_one_proxy_for_shared_list() -> None:
     assert _count(stream, "inner-record") == 1
     assert _count(stream, "outer-record") == 1
     # Both contexts exited: nothing left behind.
-    assert not [h for h in shared if isinstance(h, _BoundProxyHandler)]
+    assert not [h for h in shared if h is handler]
+
+
+def test_handlers_list_replaced_between_catches_is_not_stale() -> None:
+    """Replacing a logger's ``handlers`` list between captures is detected.
+
+    The target cache may not attach to the list that was cached during the
+    first capture; the second capture must reach the logger's *current*
+    list. The cache only stores the ``id()`` of each list, so the replaced
+    list (and any unrelated user handler inside it) is never retained.
+    """
+    logger = _make_logger("cache.replace")
+    old_list: list[logging.Handler] = logger.handlers
+    user_handler = logging.NullHandler()
+    old_list.append(user_handler)
+
+    stream, handler = _capture()
+    with catching_logs(handler):
+        logger.error("first")
+    assert _count(stream, "first") == 1
+
+    fresh: list[logging.Handler] = []
+    logger.handlers = fresh
+    with catching_logs(handler):
+        assert any(isinstance(h, _BoundProxyHandler) for h in fresh), (
+            "capture must attach to the logger's current list"
+        )
+        logger.error("second")
+    assert _count(stream, "second") == 1
+    # The cache must not retain the replaced list. Plain lists are not
+    # weak-referenceable, so use the user handler still sitting in it as a
+    # liveness probe: if the cache held the old list, the handler (and the
+    # list) could not be collected.
+    handler_alive = weakref.ref(user_handler)
+    del old_list, logger, user_handler
+    gc.collect()
+    assert handler_alive() is None
