@@ -31,6 +31,7 @@ from _pytest.outcomes import exit
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.python import _warn_if_abstract_tests_go_dark
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
@@ -58,7 +59,7 @@ _SysExcInfoType = (
 
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
-) -> UnitTestCase | None:
+) -> UnitTestCase | list[Item | Collector] | None:
     try:
         # Has unittest been imported?
         ut = sys.modules["unittest"]
@@ -71,7 +72,10 @@ def pytest_pycollect_makeitem(
     # Is obj a concrete class?
     # Abstract classes can't be instantiated so no point collecting them.
     if inspect.isabstract(obj):
-        return None
+        # Return a result rather than None so that the python plugin does not
+        # warn a second time about a TestCase subclass named like a test class.
+        _warn_if_abstract_tests_go_dark(collector, name, obj)
+        return []
     # Yes, so let's collect it.
     return UnitTestCase.from_parent(collector, name=name, obj=obj)
 
