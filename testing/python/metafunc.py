@@ -111,6 +111,66 @@ class TestMetafunc:
         assert metafunc.function is func
         assert metafunc.cls is None
 
+    def test_fixturedefs(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def autouse_fixture():
+                pass
+
+            @pytest.fixture
+            def shared():
+                return "base"
+
+            @pytest.fixture
+            def dependent(shared):
+                return shared
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def shared():
+                return "local"
+
+            def pytest_generate_tests(metafunc):
+                if metafunc.function.__name__ == "test_example":
+                    metafunc.parametrize("parameterized", [1])
+                    fixturedefs = {
+                        fixturedef.argname: fixturedef.func.__name__
+                        for fixturedef in metafunc.fixturedefs
+                    }
+                    assert fixturedefs == {
+                        "autouse_fixture": "autouse_fixture",
+                        "dependent": "dependent",
+                        "shared": "shared",
+                    }
+
+            def test_example(dependent, parameterized):
+                assert dependent == "local"
+            """
+        )
+
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
+    def test_fixturedefs_filters_missing_and_direct_definitions(self) -> None:
+        def func(defined_fixture, parameterized, missing_fixture):
+            pass
+
+        metafunc = self.Metafunc(func)
+        defined_fixture = object()
+        metafunc._arg2fixturedefs["defined_fixture"] = [  # type: ignore[assignment]
+            defined_fixture
+        ]
+        metafunc.parametrize("parameterized", [1])
+
+        assert metafunc.fixturedefs == (defined_fixture,)
+
     def test_parametrize_single_arg_trailing_comma(self) -> None:
         """Test that trailing comma in string argnames behaves like tuple argnames.
 

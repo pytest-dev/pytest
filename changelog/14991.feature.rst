@@ -1,0 +1,2 @@
+Added :attr:`pytest.Metafunc.fixturedefs` to expose the effective fixture
+definitions statically required by a test during :hook:`pytest_generate_tests`.

@@ -1304,6 +1304,25 @@ class Metafunc:
 
         self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
 
+    @property
+    def fixturedefs(self) -> tuple[fixtures.FixtureDef[object], ...]:
+        """Fixture definitions statically required by the test function.
+
+        The returned definitions are the effective definitions after fixture
+        overrides have been resolved. Fixtures requested dynamically with
+        ``request.getfixturevalue`` and arguments introduced by direct
+        parametrization are not included.
+        """
+        fixturedefs: list[fixtures.FixtureDef[object]] = []
+        for argname in self.fixturenames:
+            arg_fixturedefs = self._arg2fixturedefs.get(argname)
+            if not arg_fixturedefs:
+                continue
+            fixturedef = arg_fixturedefs[-1]
+            if not isinstance(fixturedef, DirectParamFixtureDef):
+                fixturedefs.append(fixturedef)
+        return tuple(fixturedefs)
+
     def parametrize(
         self,
         argnames: str | Sequence[str],
