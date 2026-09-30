@@ -617,6 +617,37 @@ def test_dead_handler_is_evicted_from_the_target_cache() -> None:
     assert key not in cache, "a dead handler's cache entry must be evicted"
 
 
+def test_eviction_callback_tolerates_an_already_removed_entry() -> None:
+    """A dead handler whose cache entry is already gone must not raise.
+
+    The entry can disappear before the handler does (a later scope, an explicit
+    clear). The callback's ``cache.get`` then returns ``None`` and it must fall
+    through instead of touching the missing entry.
+    """
+    from _pytest.logging import catching_logs as _catching_logs
+
+    _make_logger("cache.precleared")
+    _stream, handler = _capture()
+
+    with _catching_logs(handler, level=logging.DEBUG):
+        pass
+
+    cache = _catching_logs._target_cache
+    key = id(handler)
+    assert key in cache
+
+    # Hold the entry's weakref so the callback still has a live owner after the
+    # entry itself is removed, then let the handler die: the callback fires with
+    # ``cache.get`` returning ``None`` and must fall through.
+    entry_ref = cache[key].handler_ref
+    del cache[key]
+    del handler
+    gc.collect()
+
+    assert entry_ref() is None
+    assert key not in cache
+
+
 # --------------------------------------------------------------------------
 # Regression coverage named in review #2 on #15075. Each of these fails on the
 # previous head (or on the merge base) and pins the corrected behaviour.
