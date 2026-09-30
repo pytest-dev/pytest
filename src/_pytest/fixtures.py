@@ -2456,10 +2456,6 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.get_verbosity()
 
-    def get_best_relpath(func) -> str:
-        loc = getlocation(func, invocation_dir)
-        return bestrelpath(invocation_dir, Path(loc))
-
     def write_fixture(fixture_def: FixtureDef[object]) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
@@ -2485,11 +2481,13 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             # This test item does not use any fixtures.
             return
 
+        path, lineno, _test_name = item.reportinfo()
+        relpath = str(bestrelpath(invocation_dir, Path(path)))
+        title = f"{relpath}:{lineno + 1}" if lineno is not None else relpath
+
         tw.line()
         tw.sep("-", f"fixtures used by {item.name}")
-        # TODO: Fix this type ignore.
-        tw.sep("-", f"({get_best_relpath(item.function)})")  # type: ignore[attr-defined]
-
+        tw.sep("-", f"({title})")
         for fixturedef in fixturedefs:
             write_fixture(fixturedef)
 
