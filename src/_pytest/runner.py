@@ -35,6 +35,7 @@ from _pytest.outcomes import Exit
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
+from _pytest.stash import StashKey
 
 
 if sys.version_info < (3, 11):
@@ -436,6 +437,24 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     return rep
 
 
+# Set when session teardown raises; consumed once by the teardown report (#8375).
+session_teardown_error_key = StashKey[bool]()
+
+
+def consume_session_teardown_error(item: Item, call: CallInfo[None]) -> bool:
+    """Consume a recorded session teardown error for a teardown report.
+
+    Returns True once if session teardown raised, else False (#8375).
+    """
+    if call.when != "teardown":
+        return False
+    stash = item.session.stash
+    if session_teardown_error_key not in stash:
+        return False
+    del stash[session_teardown_error_key]
+    return True
+
+
 class SetupState:
     """Shared state for setting up/tearing down test items or collectors
     in a session.
@@ -574,6 +593,9 @@ class SetupState:
             elif these_exceptions:
                 msg = f"errors while tearing down {node!r}"
                 exceptions.append(BaseExceptionGroup(msg, these_exceptions[::-1]))
+
+            if node.parent is None and these_exceptions:
+                node.session.stash[session_teardown_error_key] = True
 
         if len(exceptions) == 1:
             raise exceptions[0]
