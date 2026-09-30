@@ -1071,10 +1071,11 @@ def test_stale_cache_entry_is_rejected_via_the_back_reference() -> None:
         # ``other`` may or may not be cached under a different key; what must
         # hold is that the original snapshot can no longer validate: its
         # back-reference would not resolve to whichever handler looks it up.
-        if key in catching_logs._target_cache:
-            entry = catching_logs._target_cache[key]
-            assert entry.handler_ref is stale_ref
-            assert entry.handler_ref() is handler  # still alive here
+        # The entry for ``handler`` is still present (asserted above and not
+        # evicted while ``handler`` is alive), so no guard is needed here.
+        entry = catching_logs._target_cache[key]
+        assert entry.handler_ref is stale_ref
+        assert entry.handler_ref() is handler  # still alive here
 
     # Once the handler is really gone, the back-reference resolves to nothing
     # and the entry can never pass the ``handler_ref() is handler`` check.
