@@ -158,6 +158,14 @@ class TestMetafunc:
         result = pytester.runpytest()
         result.assert_outcomes(passed=1)
 
+    def test_fixturedefs_ignores_missing_definitions(self) -> None:
+        def func(missing_fixture):
+            pass
+
+        metafunc = self.Metafunc(func)
+
+        assert metafunc.fixturedefs == ()
+
     def test_parametrize_single_arg_trailing_comma(self) -> None:
         """Test that trailing comma in string argnames behaves like tuple argnames.
 
