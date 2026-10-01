@@ -408,7 +408,7 @@ def test_repeated_deprecation_raises_do_not_accumulate_traceback() -> None:
             warnings.simplefilter("error")
             try:
                 warnings.warn(deprecated.YIELD_FIXTURE.format())
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 depth = 0
                 tb = exc.__traceback__
                 while tb is not None:
