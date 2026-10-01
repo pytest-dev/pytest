@@ -217,10 +217,18 @@ class WarningsRecorder(warnings.catch_warnings):
         for i, w in enumerate(self._list):
             if w.category == cls:
                 return self._list.pop(i)  # exact match, stop looking
-            if issubclass(w.category, cls) and (
-                best_idx is None
-                or not issubclass(w.category, self._list[best_idx].category)
+            if not issubclass(w.category, cls):
+                continue
+            if best_idx is None:
+                best_idx = i
+                continue
+            best_category = self._list[best_idx].category
+            if best_category is not w.category and issubclass(
+                best_category, w.category
             ):
+                # A later, more general category is a better match than an
+                # earlier, more specific one. Unrelated categories do not replace
+                # each other, the first one is returned (#15097).
                 best_idx = i
         if best_idx is not None:
             return self._list.pop(best_idx)

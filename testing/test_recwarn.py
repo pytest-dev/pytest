@@ -82,6 +82,34 @@ class TestSubclassWarningPop:
         _warn = record.pop(self.ParentWarning)
         assert _warn.category is self.ChildWarning
 
+    def test_pop_finds_first_of_unrelated_categories(self):
+        """Unrelated categories do not replace each other, the first one wins.
+
+        See #15097.
+        """
+        rec = WarningsRecorder(_ispytest=True)
+        with rec:
+            warnings.warn("first", UserWarning)
+            warnings.warn("second", RuntimeWarning)
+            warnings.warn("third", DeprecationWarning)
+
+        assert str(rec.pop().message) == "first"
+        assert str(rec.pop().message) == "second"
+        assert str(rec.pop().message) == "third"
+
+    def test_pop_finds_first_of_repeated_category(self):
+        """A repeated category does not replace the earlier match.
+
+        See #15097.
+        """
+        rec = WarningsRecorder(_ispytest=True)
+        with rec:
+            warnings.warn("first", self.ChildWarning)
+            warnings.warn("second", self.ChildWarning)
+
+        assert str(rec.pop(self.ParentWarning).message) == "first"
+        assert str(rec.pop(self.ParentWarning).message) == "second"
+
 
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:
