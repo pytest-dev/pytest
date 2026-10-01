@@ -1,0 +1,3 @@
+``monkeypatch.setattr()`` no longer fails to undo an attribute of an object which defines a custom ``__setattr__``.
+
+Previously the old value was looked up in the instance ``__dict__``, which such an object may not use to store it, so ``undo()`` tried to delete the attribute instead of restoring it, raising :exc:`AttributeError` and leaking the patched value into later tests.
