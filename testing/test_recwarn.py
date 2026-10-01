@@ -110,6 +110,20 @@ class TestSubclassWarningPop:
         assert str(rec.pop(self.ParentWarning).message) == "first"
         assert str(rec.pop(self.ParentWarning).message) == "second"
 
+    def test_pop_skips_child_of_another_match(self):
+        """A match which is a child class of another match is not returned.
+
+        See #15097.
+        """
+        rec = WarningsRecorder(_ispytest=True)
+        with rec:
+            warnings.warn("child first", self.ChildWarning)
+            warnings.warn("parent", self.ParentWarning)
+            warnings.warn("grandchild", self.ChildOfChildWarning)
+
+        assert str(rec.pop(self.ParentWarning).message) == "parent"
+        assert str(rec.pop(self.ParentWarning).message) == "child first"
+
 
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:
