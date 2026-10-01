@@ -1,0 +1,6 @@
+Deprecation warnings no longer share a single warning instance. Previously the
+constants in ``_pytest.deprecated`` were module-level warning objects passed
+directly to ``warnings.warn()``; when warnings are configured as errors, CPython
+appends to the existing ``__traceback__`` of the raised exception, so the
+traceback of a process-lifetime object grew with every raise and could point at
+unrelated test code. A fresh instance is now created at each call site.

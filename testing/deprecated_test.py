@@ -365,3 +365,60 @@ def test_callspec2_renamed() -> None:
 
     with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
         assert python_mod.CallSpec2 is CallSpec
+
+
+def test_deprecation_constants_are_unformatted_warnings() -> None:
+    """The shared deprecation constants must not be warning instances.
+
+    Passing a module-level warning instance to ``warnings.warn()`` is a bug:
+    with ``-W error`` the same exception object is raised repeatedly and
+    CPython appends to its existing ``__traceback__``, so the traceback of a
+    process-lifetime global grows on every raise and ends up pointing at
+    unrelated test code (see #14912).
+    """
+    from _pytest.warning_types import UnformattedWarning
+
+    for name in (
+        "YIELD_FIXTURE",
+        "PRIVATE",
+        "MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES",
+        "CONSOLE_MAIN",
+        "CONFIG_INICFG",
+        "PASTEBIN",
+        "INI_STRING_TYPE_NON_STR_VALUE",
+        "FIXTURE_BASEID_DEPRECATED",
+        "FIXTURE_NODEID_DEPRECATED",
+        "FIXTUREDEF_HAS_LOCATION_DEPRECATED",
+        "PARSEFACTORIES_NODEID_DEPRECATED",
+        "CALLSPEC2_RENAMED",
+    ):
+        obj = getattr(deprecated, name)
+        assert isinstance(obj, UnformattedWarning), f"{name} is not UnformattedWarning"
+        # ``format()`` must hand back a fresh instance every time.
+        assert obj.format() is not obj.format()
+
+
+def test_repeated_deprecation_raises_do_not_accumulate_traceback() -> None:
+    """Raising the same deprecation twice must not grow a shared traceback."""
+    import warnings
+
+    frames = []
+    for _ in range(4):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            try:
+                warnings.warn(deprecated.YIELD_FIXTURE.format())
+            except Exception as exc:  # noqa: BLE001
+                depth = 0
+                tb = exc.__traceback__
+                while tb is not None:
+                    depth += 1
+                    tb = tb.tb_next
+                frames.append(depth)
+
+    # ``id()`` is not usable here: CPython reuses the address of a freed
+    # object, so a correct implementation still reports equal ids. Instead
+    # assert the properties that actually matter -- the depth of the traceback
+    # stays constant, and each warning carries a fresh ``__traceback__``.
+    assert len(set(frames)) == 1, f"traceback depth grew across raises: {frames}"
+    assert frames[0] == 1, f"expected a single frame per raise, got {frames}"
