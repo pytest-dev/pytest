@@ -3036,6 +3036,58 @@ class TestPytestPluginsVariable:
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         assert msg not in res.stdout.str()
 
+    @pytest.mark.filterwarnings("default")
+    def test_pytest_plugins_in_test_module_warns(self, pytester: Pytester) -> None:
+        """Using pytest_plugins in a test module affects the whole suite (#13030)."""
+        pytester.makepyfile(
+            test_a="def test_a(): pass",
+            test_b="""
+                pytest_plugins = ['capture']
+
+                def test_b(): pass
+            """,
+        )
+        res = pytester.runpytest()
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(
+            [
+                "*test_b.py:1: PytestConfigWarning: Defining 'pytest_plugins' "
+                "in test module test_b.py affects the entire test suite*",
+                "*2 passed, 1 warning*",
+            ]
+        )
+
+    def test_pytest_plugins_in_single_test_module_no_warning(
+        self, pytester: Pytester
+    ) -> None:
+        """A single-file test suite (e.g. a plugin's own tests) stays quiet (#13030)."""
+        pytester.makepyfile(
+            """
+            pytest_plugins = ['capture']
+
+            def test_func(): pass
+            """
+        )
+        res = pytester.runpytest()
+        assert res.ret == 0
+        assert "Defining 'pytest_plugins' in test module" not in res.stdout.str()
+
+    def test_pytest_plugins_in_test_module_as_error(self, pytester: Pytester) -> None:
+        """Turned into an error, the warning is a regular collection error (#13030)."""
+        pytester.makepyfile(
+            test_a="def test_a(): pass",
+            test_b="""
+                pytest_plugins = ['capture']
+
+                def test_b(): pass
+            """,
+        )
+        res = pytester.runpytest("-W", "error::pytest.PytestConfigWarning")
+        assert res.ret == pytest.ExitCode.INTERRUPTED
+        res.stdout.fnmatch_lines(
+            ["*ERROR collecting test_b.py*", "*in test module test_b.py affects*"]
+        )
+
 
 def test_conftest_import_error_repr(tmp_path: Path) -> None:
     """`ConftestImportFailure` should use a short error message and readable
