@@ -124,6 +124,33 @@ class TestSubclassWarningPop:
         assert str(rec.pop(self.ParentWarning).message) == "parent"
         assert str(rec.pop(self.ParentWarning).message) == "child first"
 
+    def test_pop_ignores_ancestor_recorded_after_unrelated_sibling(self):
+        """An ancestor recorded after an unrelated sibling does not hide it.
+
+        ``ChildOfSubA`` at index 0 is a child of ``SubA`` at index 2, so it is
+        not the best match, and it must not prevent the unrelated ``SubB`` at
+        index 1 -- recorded before ``SubA`` -- from being returned.
+
+        See #15097.
+        """
+
+        class SubB(self.ParentWarning):
+            pass
+
+        class SubA(self.ParentWarning):
+            pass
+
+        class ChildOfSubA(SubA):
+            pass
+
+        rec = WarningsRecorder(_ispytest=True)
+        with rec:
+            warnings.warn("first", ChildOfSubA)
+            warnings.warn("second", SubB)
+            warnings.warn("third", SubA)
+
+        assert str(rec.pop(self.ParentWarning).message) == "second"
+
 
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:

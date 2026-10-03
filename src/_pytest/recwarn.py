@@ -214,22 +214,31 @@ class WarningsRecorder(warnings.catch_warnings):
         Raises ``AssertionError`` if there is no match.
         """
         best_idx: int | None = None
+        # Indices of every warning which is an instance of ``cls``. An exact
+        # match short-circuits, as before.
+        candidates: list[int] = []
         for i, w in enumerate(self._list):
             if w.category == cls:
                 return self._list.pop(i)  # exact match, stop looking
-            if not issubclass(w.category, cls):
-                continue
-            if best_idx is None:
-                best_idx = i
-                continue
-            best_category = self._list[best_idx].category
-            if best_category is not w.category and issubclass(
-                best_category, w.category
+            if issubclass(w.category, cls):
+                candidates.append(i)
+        # Pick the first candidate which is not a child class of any other
+        # candidate, so that a more specific earlier warning does not shadow
+        # the best match, and unrelated categories do not displace each other.
+        for i in candidates:
+            category = self._list[i].category
+            if any(
+                j != i and issubclass(category, self._list[j].category)
+                for j in candidates
             ):
-                # A later, more general category is a better match than an
-                # earlier, more specific one. Unrelated categories do not replace
-                # each other, the first one is returned (#15097).
-                best_idx = i
+                continue
+            best_idx = i
+            break
+        else:
+            # Every candidate is a child class of another one; the first is the
+            # closest match available.
+            if candidates:
+                best_idx = candidates[0]
         if best_idx is not None:
             return self._list.pop(best_idx)
         __tracebackhide__ = True
