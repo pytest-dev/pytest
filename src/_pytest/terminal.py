@@ -394,6 +394,9 @@ class TerminalReporter:
         self._showfspath: bool | None = None
 
         self.stats: dict[str, list[Any]] = {}
+        # Position of each report in the order it was reported, used to display
+        # reports grouped by outcome while keeping their original ordering.
+        self._reports_order: dict[int, int] = {}
         self._main_color: str | None = None
         self._known_types: list[str] | None = None
         self.startpath = config.invocation_params.dir
@@ -585,6 +588,8 @@ class TerminalReporter:
     def _add_stats(self, category: str, items: Sequence[Any]) -> None:
         set_main_color = category not in self.stats
         self.stats.setdefault(category, []).extend(items)
+        for item in items:
+            self._reports_order[id(item)] = len(self._reports_order)
         if set_main_color:
             self._set_main_color()
 
@@ -1100,7 +1105,24 @@ class TerminalReporter:
     # Summaries for sessionfinish.
     #
     def getreports(self, name: str):
-        return [x for x in self.stats.get(name, ()) if not hasattr(x, "_pdbshown")]
+        return [
+            x for x in self._stats_with_subtests(name) if not hasattr(x, "_pdbshown")
+        ]
+
+    def _stats_with_subtests(self, name: str) -> list[Any]:
+        """Reports stored under ``name``, including failed subtests.
+
+        Failed subtests are stored under their own ``subtests failed`` category so that
+        they are not double-counted in the summary line (#13986), but their tracebacks
+        still belong in the failure-oriented sections next to regular failures.
+        """
+        reports = self.stats.get(name, [])
+        if name == "failed":
+            reports = reports + self.stats.get("subtests failed", [])
+            # Keep the reports in the order they were run, as `stats` groups them by
+            # outcome; reports tracked outside of `_add_stats` sort last.
+            reports.sort(key=lambda report: self._reports_order.get(id(report), 0))
+        return reports
 
     def summary_warnings(self) -> None:
         if self.hasopt("w"):
@@ -1302,7 +1324,7 @@ class TerminalReporter:
             return
 
         def show_simple(lines: list[str], *, stat: str) -> None:
-            failed = self.stats.get(stat, [])
+            failed = self._stats_with_subtests(stat)
             if not failed:
                 return
             config = self.config
