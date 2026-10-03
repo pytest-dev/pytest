@@ -134,10 +134,10 @@ class TestSubclassWarningPop:
         See #15097.
         """
 
-        class SubB(self.ParentWarning):
+        class SubB(TestSubclassWarningPop.ParentWarning):
             pass
 
-        class SubA(self.ParentWarning):
+        class SubA(TestSubclassWarningPop.ParentWarning):
             pass
 
         class ChildOfSubA(SubA):
