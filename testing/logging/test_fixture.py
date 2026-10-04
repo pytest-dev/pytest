@@ -472,6 +472,243 @@ def test_can_capture_non_propagating_logger(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_captures_once_when_non_propagating_logger_starts_propagating(
+    pytester: Pytester,
+) -> None:
+    """#15064: a record reaching root must not also be delivered on the logger."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("starts_propagating")
+        logger.propagate = False
+
+        def test_log_is_captured_once(caplog):
+            logger.propagate = True
+            logger.warning("only once")
+            logger.getChild("child").warning("child once")
+            assert caplog.messages == ["only once", "child once"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_captures_once_when_nested_non_propagating_logger_starts_propagating(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+
+        parent = logging.getLogger("nested.parent")
+        parent.propagate = False
+        child = logging.getLogger("nested.parent.child")
+        child.propagate = False
+
+        def test_child_starts_propagating(caplog):
+            child.propagate = True
+            child.warning("stops at parent")
+            parent.propagate = True
+            child.warning("reaches root")
+            assert caplog.messages == ["stops at parent", "reaches root"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_captures_when_propagation_barrier_moves_to_ancestor(
+    pytester: Pytester,
+) -> None:
+    """The ancestor is not non-propagating at capture start, so nothing of
+    pytest's is attached to it; the record must still be captured once."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        parent = logging.getLogger("barrier_moves.parent")
+        child = logging.getLogger("barrier_moves.parent.child")
+        child.propagate = False
+
+        def test_barrier_moves_up(caplog):
+            child.propagate = True
+            parent.propagate = False
+            child.warning("stops at parent")
+            assert caplog.messages == ["stops at parent"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_captures_logger_made_non_propagating_by_session_fixture(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+        import pytest
+
+        app = logging.getLogger("session_fixture")
+
+        @pytest.fixture(scope="session", autouse=True)
+        def configure_logging():
+            app.propagate = False
+            yield
+            app.propagate = True
+
+        def test_one(caplog):
+            app.warning("one")
+            assert caplog.messages == ["one"]
+
+        def test_two(caplog):
+            app.warning("two")
+            assert caplog.messages == ["two"]
+        """
+    )
+    result = pytester.runpytest("-p", "no:randomly")
+    result.assert_outcomes(passed=2)
+
+
+def test_captures_logger_made_non_propagating_by_previous_test(
+    pytester: Pytester,
+) -> None:
+    """Which loggers end propagation is re-read for every capture: reusing an
+    earlier answer while the set of loggers is unchanged loses this record."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logging.getLogger("previous_test.unrelated").propagate = False
+        app = logging.getLogger("previous_test.app")
+
+        def test_first(caplog):
+            app.warning("first")
+            assert caplog.messages == ["first"]
+            app.propagate = False
+
+        def test_second(caplog):
+            app.warning("second")
+            assert caplog.messages == ["second"]
+        """
+    )
+    result = pytester.runpytest("-p", "no:randomly")
+    result.assert_outcomes(passed=2)
+
+
+def test_captures_once_with_handler_also_added_to_non_propagating_logger(
+    pytester: Pytester,
+) -> None:
+    """Adding caplog.handler to the logger was the workaround before #3697."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("also_added_directly")
+        logger.propagate = False
+
+        def test_direct(caplog):
+            logger.addHandler(caplog.handler)
+            logger.warning("once")
+            logger.removeHandler(caplog.handler)
+            assert caplog.messages == ["once"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_capture_from_non_propagating_logger_creates_no_loggers(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("no_new_loggers")
+        logger.propagate = False
+
+        def test_foreign_record_name(caplog):
+            record = logging.makeLogRecord(
+                {"name": "elsewhere", "msg": "hi", "levelno": logging.WARNING}
+            )
+            logger.handle(record)
+            assert caplog.messages == ["hi"]
+            assert "elsewhere" not in logging.Logger.manager.loggerDict
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_raising_handler_stops_capture_as_for_propagating_loggers(
+    pytester: Pytester,
+) -> None:
+    """A record whose propagation reaches root is captured at root, so a parent's
+    handler raising out of the dispatch loses it, exactly as it does for a
+    logger that always propagated."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        class Raising(logging.Handler):
+            def emit(self, record):
+                raise RuntimeError("boom")
+
+            def handleError(self, record):
+                raise
+
+        parent = logging.getLogger("raising.parent")
+        flipped = logging.getLogger("raising.parent.flipped")
+        flipped.propagate = False
+        always = logging.getLogger("raising.parent.always")
+
+        def test_raise(caplog):
+            flipped.propagate = True
+            raising = Raising()
+            parent.addHandler(raising)
+            for logger in (flipped, always):
+                try:
+                    logger.warning(logger.name)
+                except RuntimeError:
+                    pass
+            parent.removeHandler(raising)
+            assert caplog.messages == []
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_subtest_captures_once_when_logger_starts_propagating(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("subtest")
+        logger.propagate = False
+
+        def test_sub(subtests):
+            with subtests.test("one"):
+                logger.propagate = True
+                logger.warning("in sub")
+                assert False
+        """
+    )
+    reprec = pytester.inline_run()
+    sections = [
+        content
+        for report in reprec.getreports("pytest_runtest_logreport")
+        for _, content in report.get_sections("Captured log call")
+    ]
+    assert sections
+    for content in sections:
+        assert content.count("in sub") == 1, content
+
+
 def test_captures_despite_exception(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
