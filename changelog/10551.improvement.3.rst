@@ -1,0 +1,3 @@
+Declaring a configuration option that another plugin already declared, with a different type or default, now warns and says where both declarations are, instead of silently overwriting the first one.
+
+:func:`config.getini <pytest.Config.getini>` and :func:`config.getoption <pytest.Config.getoption>` also now say which of the two to use when the name is known to the other one.

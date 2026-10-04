@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Generator
 import os
 import sys
+from typing import cast
 
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
@@ -24,7 +25,7 @@ def pytest_addoption(parser: Parser) -> None:
         "Exit the test process if a test takes more than "
         "faulthandler_timeout seconds to finish"
     )
-    parser.addini("faulthandler_timeout", help_timeout, default=0.0)
+    parser.addini("faulthandler_timeout", help_timeout, type=float, default=0.0)
     parser.addini(
         "faulthandler_exit_on_timeout", help_exit_on_timeout, type="bool", default=False
     )
@@ -76,7 +77,7 @@ def get_stderr_fileno() -> int:
 
 
 def get_timeout_config_value(config: Config) -> float:
-    return float(config.getini("faulthandler_timeout") or 0.0)
+    return cast(float, config.getini("faulthandler_timeout"))
 
 
 def get_exit_on_timeout_config_value(config: Config) -> bool:
