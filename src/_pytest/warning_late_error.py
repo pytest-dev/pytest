@@ -41,7 +41,8 @@ class LateWarning:
     """A warning that matched an ``error_later`` filter, rendered down to plain data.
 
     Everything is pre-rendered so that no warning instance, and nothing the
-    warning referenced, is kept alive until the report is written.
+    warning referenced, is kept alive until the report is written, and so that
+    it can travel from a pytest-xdist worker to the controller.
     """
 
     message: str

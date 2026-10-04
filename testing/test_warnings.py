@@ -1651,3 +1651,42 @@ class TestErrorLaterWarnings:
 
         result.stderr.fnmatch_lines(["*: UserWarning: from pytest_unconfigure"])
         assert result.ret == ExitCode.OK
+
+    @pytest.mark.parametrize("mode", ["test", "session"])
+    def test_xdist_reports_on_the_controller(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch, mode: str
+    ) -> None:
+        pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        pytester.makeini(
+            f"""
+            [pytest]
+            error_later_report = {mode}
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            test_one="""
+            import warnings
+            warnings.warn("at import time", UserWarning)
+
+            def test_emits():
+                warnings.warn("in the test", UserWarning)
+            """,
+            test_two="def test_pass(): pass",
+        )
+
+        result = pytester.runpytest_subprocess("-n2", "-W", "error_later::UserWarning")
+
+        # Both workers collect both modules; the import-time one is reported once.
+        late_section = result.stdout.str().partition("= late warning errors =")[2]
+        assert late_section.count("UserWarning: at import time") == 1
+        if mode == "session":
+            result.stdout.fnmatch_lines(
+                ["*(test_one.py::test_emits): UserWarning: in the test"]
+            )
+            assert result.ret == ExitCode.LATE_WARNING_ERROR
+        else:
+            result.stdout.fnmatch_lines(["FAILED test_one.py::test_emits - *"])
+            assert result.ret == ExitCode.TESTS_FAILED
