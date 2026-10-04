@@ -1,0 +1,11 @@
+Added an ``error_later`` warning filter action, valid anywhere a warning filter is accepted
+(:option:`-W <pytest -W>`, the :confval:`filterwarnings` ini option and
+:ref:`@pytest.mark.filterwarnings <filterwarnings>`).
+
+``error`` raises at the :func:`warnings.warn` call site, aborting the code under test
+halfway through and reporting the failure at the frame that emitted the warning.
+``error_later`` still turns the warning into an error, but records it first: the code under
+test runs to completion, and pytest raises afterwards. The new :confval:`error_later_report`
+option chooses what fails -- ``test`` (the default) fails the test that emitted the warning,
+``session`` lets the tests pass and fails the run at the end with the new
+``ExitCode.LATE_WARNING_ERROR``.
