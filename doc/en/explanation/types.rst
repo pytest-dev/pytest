@@ -81,6 +81,27 @@ The same logic applies when typing fixture functions which receive other fixture
     def mock_env_user(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("USER", "TestingUser")
 
+For a fixture that uses ``yield``, annotate the fixture function with the
+type of its generator. Annotate a test or another fixture that requests it
+with the type of the value yielded:
+
+.. code-block:: python
+
+    from typing import Generator
+
+    import pytest
+
+
+    @pytest.fixture
+    def sample_fixture_yield() -> Generator[int, None, None]:
+        yield 38
+
+
+    def test_sample_fixture_yield(sample_fixture_yield: int) -> None:
+        assert sample_fixture_yield == 38
+
+The test receives the yielded ``int``, not the generator object. See :ref:`How to use fixtures <how-to-fixtures>` for more information about
+``yield`` fixtures and teardown.
 
 Conclusion
 ----------
