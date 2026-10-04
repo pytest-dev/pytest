@@ -1170,3 +1170,447 @@ def test_pythonwarnings_not_duplicated(pytester: Pytester) -> None:
     warnings_list = config.known_args_namespace.pythonwarnings
     assert warnings_list is not None
     assert warnings_list == ["error"]
+
+
+class TestErrorLaterWarnings:
+    """The ``error_later`` filter action."""
+
+    def _emitting_test(self, pytester: Pytester) -> None:
+        # In-process pytester runs inherit the filters of the outer session,
+        # which runs under ``filterwarnings = error``.
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+
+            def test_emits():
+                warnings.warn("too late", UserWarning)
+                print("body ran to completion")
+
+            def test_clean():
+                pass
+            """
+        )
+
+    def test_test_mode_fails_only_the_emitting_test(self, pytester: Pytester) -> None:
+        self._emitting_test(pytester)
+
+        result = pytester.runpytest("-W", "error_later::UserWarning", "-s")
+
+        result.assert_outcomes(passed=1, failed=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                # The test body is not interrupted the way an "error" filter
+                # would interrupt it.
+                "*body ran to completion*",
+                "*1 warning matched an 'error_later' filter:",
+                "*test_test_mode_fails_only_the_emitting_test.py:*: UserWarning: too late",
+            ]
+        )
+        assert result.ret == ExitCode.TESTS_FAILED
+
+    def test_not_matched_by_a_different_category(self, pytester: Pytester) -> None:
+        self._emitting_test(pytester)
+
+        result = pytester.runpytest("-W", "error_later::DeprecationWarning")
+
+        result.assert_outcomes(passed=2, warnings=1)
+        assert result.ret == ExitCode.OK
+
+    def test_higher_precedence_filter_wins(self, pytester: Pytester) -> None:
+        """A ``filterwarnings`` mark is applied last, so it beats the ini."""
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                error_later::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            import pytest
+
+            def test_errors_late():
+                warnings.warn("boom", UserWarning)
+
+            @pytest.mark.filterwarnings("ignore::UserWarning")
+            def test_overridden():
+                warnings.warn("boom", UserWarning)
+            """
+        )
+
+        result = pytester.runpytest()
+
+        result.assert_outcomes(passed=1, failed=1, warnings=1)
+
+    def test_mark_can_apply_to_a_single_test(self, pytester: Pytester) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            import pytest
+
+            @pytest.mark.filterwarnings("error_later::UserWarning")
+            def test_errors_late():
+                warnings.warn("boom", UserWarning)
+
+            def test_unaffected():
+                warnings.warn("boom", UserWarning)
+            """
+        )
+
+        result = pytester.runpytest()
+
+        result.assert_outcomes(passed=1, failed=1, warnings=2)
+
+    def test_collection_warnings_are_reported_at_the_end(
+        self, pytester: Pytester
+    ) -> None:
+        """Collection has no test phase to fail, so it reports at the end."""
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            warnings.warn("at import time", UserWarning)
+
+            def test_pass():
+                pass
+            """
+        )
+
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*= late warning errors =*",
+                "*: UserWarning: at import time",
+                "*= 1 passed, 1 warning, 1 late warning error in *",
+            ]
+        )
+        assert result.ret == ExitCode.LATE_WARNING_ERROR
+
+    def test_rejects_module_and_line_fields(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("-W", "error_later::UserWarning:somemod")
+
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            ["*the 'error_later' action does not support the module and line fields*"]
+        )
+
+    def test_message_matches_case_insensitively(self, pytester: Pytester) -> None:
+        """The message field is matched with re.I, as by the warnings module."""
+        self._emitting_test(pytester)
+
+        result = pytester.runpytest("-W", "error_later:TOO LATE:UserWarning")
+
+        result.assert_outcomes(passed=1, failed=1, warnings=1)
+
+    def test_cmdline_message_is_escaped(self, pytester: Pytester) -> None:
+        """-W takes a literal message, so regex characters match themselves."""
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+
+            def test_literal():
+                warnings.warn("value (x+y) is deprecated", UserWarning)
+
+            def test_not_a_regex_match():
+                warnings.warn("value xxy is deprecated", UserWarning)
+            """
+        )
+
+        result = pytester.runpytest("-W", "error_later:value (x+y):UserWarning")
+
+        result.assert_outcomes(passed=1, failed=1, warnings=2)
+        result.stdout.fnmatch_lines(["FAILED *::test_literal - *"])
+
+    def test_later_filter_restricted_to_the_module_wins(
+        self, pytester: Pytester
+    ) -> None:
+        """Module-restricted filters take part in precedence like the others."""
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                error_later::UserWarning
+                default::UserWarning:test_later_filter_restricted_to_the_module_wins
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+
+            def test_emits():
+                warnings.warn("boom", UserWarning)
+            """
+        )
+
+        result = pytester.runpytest()
+
+        result.assert_outcomes(passed=1, warnings=1)
+
+    def test_later_filter_restricted_to_another_line_does_not_win(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                error_later::UserWarning
+                default::UserWarning::999
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+
+            def test_emits():
+                warnings.warn("boom", UserWarning)
+            """
+        )
+
+        result = pytester.runpytest()
+
+        result.assert_outcomes(failed=1, warnings=1)
+
+    def test_failing_test_is_reported_once(self, pytester: Pytester) -> None:
+        """The warnings go into the failure, not into a second teardown error."""
+        self._emitting_test(pytester)
+        pytester.makepyfile(
+            """
+            import warnings
+
+            def test_emits_and_fails():
+                warnings.warn("too late", UserWarning)
+                assert False, "the test's own failure"
+            """
+        )
+
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        result.assert_outcomes(failed=1, errors=0, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "E       AssertionError: the test's own failure",
+                "*- late warning errors -*",
+                "1 warning matched an 'error_later' filter:",
+                "*: UserWarning: too late",
+            ]
+        )
+
+    def test_failing_setup_is_reported_once(self, pytester: Pytester) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            import pytest
+
+            @pytest.fixture
+            def broken():
+                warnings.warn("from the fixture", UserWarning)
+                raise RuntimeError("setup failed")
+
+            def test_uses_broken(broken):
+                pass
+            """
+        )
+
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        result.assert_outcomes(errors=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            ["E       RuntimeError: setup failed", "*: UserWarning: from the fixture"]
+        )
+        result.stdout.no_fnmatch_line("*= late warning errors =*")
+
+    def test_each_phase_reports_its_own_warnings(self, pytester: Pytester) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            import pytest
+
+            @pytest.fixture
+            def warns_in_teardown():
+                yield
+                warnings.warn("from teardown", UserWarning)
+
+            def test_fails(warns_in_teardown):
+                warnings.warn("from call", UserWarning)
+                assert False
+            """
+        )
+
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        result.assert_outcomes(failed=1, errors=1, warnings=2)
+        result.stdout.fnmatch_lines(
+            [
+                "*_ ERROR at teardown of test_fails _*",
+                "*: UserWarning: from teardown",
+                "*_ test_fails _*",
+                "*- late warning errors -*",
+                "*: UserWarning: from call",
+            ]
+        )
+
+    def test_skipped_test_reports_at_the_end(self, pytester: Pytester) -> None:
+        """A skip is not a failure to add to, and must not swallow the warning."""
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            import pytest
+
+            def test_skips():
+                warnings.warn("before the skip", UserWarning)
+                pytest.skip("not today")
+            """
+        )
+
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        result.assert_outcomes(skipped=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            ["*= late warning errors =*", "*(*::test_skips): UserWarning: before*"]
+        )
+        assert result.ret == ExitCode.LATE_WARNING_ERROR
+
+    def test_configure_time_warning_reports_at_the_end(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            import warnings
+
+            def pytest_configure(config):
+                warnings.warn("from pytest_configure", UserWarning)
+            """
+        )
+        pytester.makepyfile("def test_pass(): pass")
+
+        result = pytester.runpytest_subprocess("-W", "error_later::UserWarning")
+
+        result.stdout.fnmatch_lines(
+            ["*= late warning errors =*", "*conftest.py:4: UserWarning: from*"]
+        )
+        assert result.ret == ExitCode.LATE_WARNING_ERROR
+
+    def test_issue_config_time_warning_reports_at_the_end(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_configure(config):
+                config.issue_config_time_warning(
+                    UserWarning("via issue_config_time_warning"), stacklevel=2
+                )
+            """
+        )
+        pytester.makepyfile("def test_pass(): pass")
+
+        result = pytester.runpytest_subprocess("-W", "error_later::UserWarning")
+
+        result.stdout.fnmatch_lines(
+            ["*= late warning errors =*", "*: UserWarning: via issue_config*"]
+        )
+        assert result.ret == ExitCode.LATE_WARNING_ERROR
+
+    def test_plugin_import_warning_reports_at_the_end(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            warning_plugin="""
+            import warnings
+            warnings.warn("while importing the plugin", UserWarning)
+            """
+        )
+        pytester.makepyfile("def test_pass(): pass")
+        pytester.syspathinsert()
+
+        result = pytester.runpytest_subprocess(
+            "-W", "error_later::UserWarning", "-p", "warning_plugin"
+        )
+
+        result.stdout.fnmatch_lines(
+            ["*= late warning errors =*", "*: UserWarning: while importing*"]
+        )
+        assert result.ret == ExitCode.LATE_WARNING_ERROR
+
+    def test_sessionfinish_warning_reports_at_the_end(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import warnings
+
+            def pytest_sessionfinish(session):
+                warnings.warn("from pytest_sessionfinish", UserWarning)
+            """
+        )
+        pytester.makepyfile("def test_pass(): pass")
+
+        result = pytester.runpytest_subprocess("-W", "error_later::UserWarning")
+
+        result.stdout.fnmatch_lines(
+            ["*= late warning errors =*", "*: UserWarning: from pytest_sessionfin*"]
+        )
+        assert result.ret == ExitCode.LATE_WARNING_ERROR
+
+    def test_unconfigure_warning_is_still_shown(self, pytester: Pytester) -> None:
+        """Too late to report, so it is shown as usual rather than dropped."""
+        pytester.makeconftest(
+            """
+            import warnings
+
+            def pytest_unconfigure(config):
+                warnings.warn("from pytest_unconfigure", UserWarning)
+            """
+        )
+        pytester.makepyfile("def test_pass(): pass")
+
+        result = pytester.runpytest_subprocess("-W", "error_later::UserWarning")
+
+        result.stderr.fnmatch_lines(["*: UserWarning: from pytest_unconfigure"])
+        assert result.ret == ExitCode.OK
