@@ -1,0 +1,1 @@
+Fixed :meth:`monkeypatch.setattr <pytest.MonkeyPatch.setattr>` failing to restore the original value on objects with a custom ``__setattr__`` that does not write into the instance ``__dict``: ``undo()`` now falls back to the value from ``getattr()`` instead of trying to delete the attribute (:issue:`15099`).

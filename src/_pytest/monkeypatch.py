@@ -265,8 +265,15 @@ class MonkeyPatch:
             # instance would instead leave behind a new entry shadowing the
             # class attribute, which permanently freezes descriptors that
             # resolve dynamically (#10644).
+            # However, if the target has a custom `__setattr__` that doesn't
+            # write into `__dict__`, we must use the value from `getattr()`
+            # instead, otherwise `undo()` would try to delete the attribute
+            # rather than restore it (#15099).
             target_dict = getattr(target, "__dict__", None)
-            if isinstance(target_dict, Mapping):
+            if isinstance(target_dict, Mapping) and (
+                name in target_dict
+                or type(target).__setattr__ is object.__setattr__
+            ):
                 oldval = target_dict.get(name, NOTSET)
         setattr(target, name, value)
         self._setattr.append((target, name, oldval))
