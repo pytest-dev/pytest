@@ -11,6 +11,7 @@ from _pytest._code.code import ExceptionRepr
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
+from _pytest.config import UsageError
 from _pytest.main import Session
 from _pytest.nodes import Item
 from _pytest.outcomes import fail
@@ -129,15 +130,21 @@ def _late_warnings_phase(item: Item, when: str) -> Generator[None, object, objec
         result = yield
     except BaseException:
         if late := _drain_innermost(config):
-            # The phase already failed; pytest_runtest_makereport adds them to
-            # that failure instead of failing a second time.
-            item.stash.setdefault(_phase_late_warnings_key, {})[when] = late
+            if _error_later_report_mode(config) == "session":
+                config.stash[late_warning_state_key].collected.extend(late)
+            else:
+                # The phase already failed; pytest_runtest_makereport adds
+                # them to that failure instead of failing a second time.
+                item.stash.setdefault(_phase_late_warnings_key, {})[when] = late
         raise
     if late := _drain_innermost(config):
-        # The warning's own location is in the message; the frames between
-        # here and the emitting code are pytest's, so there is no traceback
-        # worth showing.
-        fail(_describe(late), pytrace=False)
+        if _error_later_report_mode(config) == "session":
+            config.stash[late_warning_state_key].collected.extend(late)
+        else:
+            # The warning's own location is in the message; the frames between
+            # here and the emitting code are pytest's, so there is no traceback
+            # worth showing.
+            fail(_describe(late), pytrace=False)
     return result
 
 
@@ -254,8 +261,9 @@ def pytest_sessionfinish(session: Session) -> Generator[None]:
 def _settle_late_warnings(session: Session) -> None:
     """Count the late warnings no test phase could fail for, and fail the run.
 
-    Those are the ones emitted outside a test phase, such as during collection,
-    and the ones of a test that was skipped.
+    Under ``session`` that is every one of them; under ``test`` it is the ones
+    emitted outside a test phase, such as during collection, and the ones of a
+    test that was skipped.
     """
     config = session.config
     state = config.stash.get(late_warning_state_key, None)
@@ -292,7 +300,22 @@ def pytest_load_initial_conftests(
         return (yield)
 
 
+LATE_ERROR_REPORT_MODES = ("test", "session")
+
+
+def _error_later_report_mode(config: Config) -> str:
+    mode: str = config.getini("error_later_report")
+    if mode not in LATE_ERROR_REPORT_MODES:
+        raise UsageError(
+            f"Invalid error_later_report value {mode!r}, "
+            f"expected one of {', '.join(LATE_ERROR_REPORT_MODES)}"
+        )
+    return mode
+
+
 def pytest_configure(config: Config) -> None:
+    # Fail early on a bad value rather than once a warning matches the filter.
+    _error_later_report_mode(config)
     config.addinivalue_line(
         "markers",
         "filterwarnings(warning): add a warning filter to the given test. "
