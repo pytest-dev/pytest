@@ -271,8 +271,7 @@ class MonkeyPatch:
             # rather than restore it (#15099).
             target_dict = getattr(target, "__dict__", None)
             if isinstance(target_dict, Mapping) and (
-                name in target_dict
-                or type(target).__setattr__ is object.__setattr__
+                name in target_dict or type(target).__setattr__ is object.__setattr__
             ):
                 oldval = target_dict.get(name, NOTSET)
         setattr(target, name, value)
