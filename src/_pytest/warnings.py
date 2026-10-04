@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Generator
 from contextlib import contextmanager
 import dataclasses
+from typing import Any
 from typing import Literal
 import warnings
 
@@ -244,6 +245,14 @@ def pytest_terminal_summary(
 def pytest_sessionfinish(session: Session) -> Generator[None]:
     config = session.config
     state = config.stash.setdefault(late_warning_state_key, LateWarningState())
+    workeroutput = getattr(config, "workeroutput", None)
+    if workeroutput is not None:
+        # A pytest-xdist worker: its exit status and terminal go nowhere, so
+        # hand everything to the controller. xdist sends workeroutput once the
+        # inner sessionfinish hooks are done, so this has to happen first.
+        workeroutput[_XDIST_WORKEROUTPUT_KEY] = [
+            dataclasses.asdict(late) for late in state.collected
+        ]
     try:
         # The context drains on exit, so it has to be closed before settling:
         # otherwise warnings from other pytest_sessionfinish hooks are lost.
@@ -316,8 +325,33 @@ def _error_later_report_mode(config: Config) -> str:
 def pytest_configure(config: Config) -> None:
     # Fail early on a bad value rather than once a warning matches the filter.
     _error_later_report_mode(config)
+    # xdist adds this hook to the spec, so it exists exactly when the xdist
+    # controller can call it; registering it otherwise fails validation.
+    if hasattr(config.hook, "pytest_testnodedown"):
+        config.pluginmanager.register(
+            _XdistLateWarningsCollector(config), "error-later-xdist-collector"
+        )
     config.addinivalue_line(
         "markers",
         "filterwarnings(warning): add a warning filter to the given test. "
         "see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#pytest-mark-filterwarnings ",
     )
+
+
+_XDIST_WORKEROUTPUT_KEY = "pytest_error_later"
+
+
+class _XdistLateWarningsCollector:
+    """Merge the late warnings of pytest-xdist workers into the controller's."""
+
+    def __init__(self, config: Config) -> None:
+        self.config = config
+
+    def pytest_testnodedown(self, node: Any, error: object) -> None:
+        workeroutput = getattr(node, "workeroutput", None) or {}
+        state = self.config.stash.setdefault(late_warning_state_key, LateWarningState())
+        for data in workeroutput.get(_XDIST_WORKEROUTPUT_KEY, []):
+            late = LateWarning(**data)
+            # Every worker collects and configures; report those warnings once.
+            if late.nodeid or late not in state.collected:
+                state.collected.append(late)
