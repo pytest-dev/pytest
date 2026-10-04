@@ -1215,6 +1215,22 @@ class TestErrorLaterWarnings:
         )
         assert result.ret == ExitCode.TESTS_FAILED
 
+    def test_session_mode_reports_at_the_end(self, pytester: Pytester) -> None:
+        self._emitting_test(pytester)
+
+        result = pytester.runpytest(
+            "-W", "error_later::UserWarning", "-o", "error_later_report=session"
+        )
+
+        result.assert_outcomes(passed=2, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*= late warning errors =*",
+                "*: UserWarning: too late",
+            ]
+        )
+        assert result.ret == ExitCode.LATE_WARNING_ERROR
+
     def test_not_matched_by_a_different_category(self, pytester: Pytester) -> None:
         self._emitting_test(pytester)
 
@@ -1316,6 +1332,14 @@ class TestErrorLaterWarnings:
         result.stderr.fnmatch_lines(
             ["*the 'error_later' action does not support the module and line fields*"]
         )
+
+    def test_invalid_report_mode_is_a_usage_error(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def test_pass(): pass")
+
+        result = pytester.runpytest("-o", "error_later_report=nonsense")
+
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(["*Invalid error_later_report value 'nonsense'*"])
 
     def test_message_matches_case_insensitively(self, pytester: Pytester) -> None:
         """The message field is matched with re.I, as by the warnings module."""
@@ -1520,6 +1544,19 @@ class TestErrorLaterWarnings:
             ["*= late warning errors =*", "*(*::test_skips): UserWarning: before*"]
         )
         assert result.ret == ExitCode.LATE_WARNING_ERROR
+
+    def test_session_mode_summary_line_counts_late_errors(
+        self, pytester: Pytester
+    ) -> None:
+        self._emitting_test(pytester)
+
+        result = pytester.runpytest(
+            "-W", "error_later::UserWarning", "-o", "error_later_report=session"
+        )
+
+        result.stdout.fnmatch_lines(
+            ["*= 2 passed, 1 warning, 1 late warning error in *"]
+        )
 
     def test_configure_time_warning_reports_at_the_end(
         self, pytester: Pytester
