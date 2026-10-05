@@ -30,7 +30,6 @@ from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
-import warnings
 
 import _pytest
 from _pytest import nodes
@@ -777,10 +776,7 @@ class FixtureRequest(abc.ABC):
         if not self.session._setupstate.is_node_active(self.node):
             # TODO(pytest10.1): Remove the `warn` and `if` and call
             # _raise_teardown_lookup_error unconditionally.
-            warnings.warn(
-                FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN.format(argname=argname),
-                stacklevel=3,
-            )
+            FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN.warn(stacklevel=3, argname=argname)
             if subrequest.node not in self.session._setupstate.stack:
                 self._raise_teardown_lookup_error(argname)
 
@@ -1132,7 +1128,7 @@ class FixtureDef(Generic[FixtureValue]):
         check_ispytest(_ispytest)
         # Emit deprecation warning if deprecated baseid string is used.
         if node is NOTSET:
-            warnings.warn(FIXTURE_BASEID_DEPRECATED, stacklevel=2)
+            FIXTURE_BASEID_DEPRECATED.warn(stacklevel=2)
         if baseid is NOTSET:
             baseid = None
         # The node where this fixture was defined, if available.
@@ -1197,7 +1193,7 @@ class FixtureDef(Generic[FixtureValue]):
 
     @property
     def has_location(self) -> bool:
-        warnings.warn(FIXTUREDEF_HAS_LOCATION_DEPRECATED, stacklevel=2)
+        FIXTUREDEF_HAS_LOCATION_DEPRECATED.warn(stacklevel=2)
         return self._has_location
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
@@ -1350,11 +1346,9 @@ def resolve_fixture_function(
             # classmethod: bound_to is the class itself (a type)
             # instance method: bound_to is an instance (not a type)
             if not isinstance(bound_to, type):
-                warnings.warn(
-                    CLASS_FIXTURE_INSTANCE_METHOD.format(
-                        scope=fixturedef._scope.name.capitalize(),
-                        fixturename=request.fixturename,
-                    ),
+                CLASS_FIXTURE_INSTANCE_METHOD.warn(
+                    scope=fixturedef._scope.name.capitalize(),
+                    fixturename=request.fixturename,
                     stacklevel=2,
                 )
 
@@ -1620,7 +1614,7 @@ def yield_fixture(
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    warnings.warn(YIELD_FIXTURE, stacklevel=2)
+    YIELD_FIXTURE.warn(stacklevel=2)
     return fixture(
         fixture_function,
         *args,
@@ -2091,7 +2085,7 @@ class FixtureManager:
         """
         # Emit deprecation warning if nodeid string.
         if nodeid is not NOTSET or node is NOTSET:
-            warnings.warn(FIXTURE_NODEID_DEPRECATED, stacklevel=2)
+            FIXTURE_NODEID_DEPRECATED.warn(stacklevel=2)
         fixture_def = FixtureDef(
             config=self.config,
             baseid=nodeid,
@@ -2280,7 +2274,7 @@ class FixtureManager:
             raise TypeError("parsefactories() requires holder or node_or_obj")
         elif nodeid is not NOTSET:
             # Legacy: parsefactories(obj, nodeid) - string-based scoping only.
-            warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED, stacklevel=2)
+            PARSEFACTORIES_NODEID_DEPRECATED.warn(stacklevel=2)
             holderobj = node_or_obj
             effective_nodeid = nodeid
         else:
