@@ -322,12 +322,9 @@ def _error_later_report_mode(config: Config) -> str:
 def pytest_configure(config: Config) -> None:
     # Fail early on a bad value rather than once a warning matches the filter.
     _error_later_report_mode(config)
-    # xdist adds this hook to the spec, so it exists exactly when the xdist
-    # controller can call it; registering it otherwise fails validation.
-    if hasattr(config.hook, "pytest_testnodedown"):
-        config.pluginmanager.register(
-            _XdistLateWarningsCollector(config), "error-later-xdist-collector"
-        )
+    config.pluginmanager.register(
+        _XdistLateWarningsCollector(config), "error-later-xdist-collector"
+    )
     config.addinivalue_line(
         "markers",
         "filterwarnings(warning): add a warning filter to the given test. "
@@ -344,6 +341,10 @@ class _XdistLateWarningsCollector:
     def __init__(self, config: Config) -> None:
         self.config = config
 
+    # Optional: the hookspec only exists with xdist installed. Checking for
+    # the hook on config.hook is not enough, as pytest-cov implements it as
+    # optional too, which creates the hook caller without a spec.
+    @pytest.hookimpl(optionalhook=True)
     def pytest_testnodedown(self, node: Any, error: object) -> None:
         workeroutput = getattr(node, "workeroutput", None) or {}
         state = self.config.stash.setdefault(late_warning_state_key, LateWarningState())
