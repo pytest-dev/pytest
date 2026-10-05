@@ -1748,6 +1748,24 @@ class TestErrorLaterWarnings:
         result.stderr.fnmatch_lines(["*: UserWarning: from pytest_unconfigure"])
         assert result.ret == ExitCode.OK
 
+    def test_optional_xdist_hook_without_xdist(self, pytester: Pytester) -> None:
+        # pytest-cov implements pytest_testnodedown as an optional hook, which
+        # creates the hook caller without a spec when xdist is not installed.
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.hookimpl(optionalhook=True)
+            def pytest_testnodedown(node, error):
+                pass
+            """
+        )
+        pytester.makepyfile("def test_pass(): pass")
+
+        result = pytester.runpytest("-p", "no:xdist")
+
+        result.assert_outcomes(passed=1)
+
     @pytest.mark.parametrize("mode", ["test", "session"])
     def test_xdist_reports_on_the_controller(
         self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch, mode: str
