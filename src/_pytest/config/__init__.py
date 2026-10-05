@@ -17,7 +17,6 @@ import contextlib
 import copy
 import dataclasses
 import enum
-import functools
 from functools import lru_cache
 import glob
 import importlib
@@ -80,13 +79,14 @@ from _pytest.pathlib import ImportMode
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
+from _pytest.warning_late_error import collect_or_show
 from _pytest.warning_late_error import ERROR_LATER_ACTION
 from _pytest.warning_late_error import install_warning_filter
 from _pytest.warning_late_error import late_warning_state_key
+from _pytest.warning_late_error import LateWarningLog
 from _pytest.warning_late_error import LateWarningState
+from _pytest.warning_late_error import recording_warnings
 from _pytest.warning_late_error import select_late_warnings
-from _pytest.warning_late_error import should_error_later
-from _pytest.warning_late_error import to_late_warning
 from _pytest.warning_late_error import WarningFilter
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
@@ -1284,7 +1284,7 @@ class Config:
         self,
         *,
         record: bool,
-    ) -> Generator[list[warnings.WarningMessage] | None]:
+    ) -> Generator[LateWarningLog | None]:
         """Apply configured filters in a warnings-catching context.
 
         Defined here instead of _pytest.warnings as _do_configure uses
@@ -1293,7 +1293,10 @@ class Config:
         """
         config_filters = self.getini("filterwarnings")
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
-        with warnings.catch_warnings(record=record) as log:
+        catcher: contextlib.AbstractContextManager[LateWarningLog | None] = (
+            recording_warnings() if record else warnings.catch_warnings()
+        )
+        with catcher as log:
             if not sys.warnoptions:
                 # If user is not explicitly configuring warning filters, show deprecation warnings by default (#2908).
                 warnings.filterwarnings("always", category=DeprecationWarning)
@@ -1302,23 +1305,14 @@ class Config:
             # To be enabled in pytest 10.0.0.
             # warnings.filterwarnings("error", category=pytest.PytestRemovedIn10Warning)
 
-            applied = apply_warning_filters(config_filters, cmdline_filters)
-            # Mirror the save/restore that ``catch_warnings`` does for
-            # ``warnings.filters``, so nested contexts see the right filters.
+            apply_warning_filters(config_filters, cmdline_filters)
             state = self.stash.setdefault(late_warning_state_key, LateWarningState())
-            previous_filters = state.filters
-            state.filters = applied
             if log is None:
                 # Nothing records here, so an 'error_later' warning would just be
                 # printed. Collect it instead; nested recording contexts swap
                 # showwarning out and back, so this only sees unrecorded warnings.
-                warnings.showwarning = functools.partial(
-                    _collect_or_show_warning, state, warnings.showwarning
-                )
-            try:
-                yield log
-            finally:
-                state.filters = previous_filters
+                warnings.showwarning = collect_or_show(state, warnings.showwarning)
+            yield log
 
     @contextlib.contextmanager
     def _capture_plugin_import_warnings(self) -> Iterator[None]:
@@ -1330,9 +1324,7 @@ class Config:
                 yield
             finally:
                 state = self.stash[late_warning_state_key]
-                state.collected.extend(
-                    select_late_warnings(records, state.filters, nodeid="")
-                )
+                state.collected.extend(select_late_warnings(records, 0, nodeid=""))
                 for warning_message in records:
                     self.hook.pytest_warning_recorded.call_historic(
                         kwargs=dict(
@@ -1811,14 +1803,14 @@ class Config:
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
         config_filters = self.getini("filterwarnings")
 
-        with warnings.catch_warnings(record=True) as records:
+        with recording_warnings() as records:
             warnings.simplefilter("always", type(warning))
-            applied = apply_warning_filters(config_filters, cmdline_filters)
+            apply_warning_filters(config_filters, cmdline_filters)
             warnings.warn(warning, stacklevel=stacklevel)
 
         if records:
             state = self.stash.setdefault(late_warning_state_key, LateWarningState())
-            state.collected.extend(select_late_warnings(records, applied, nodeid=""))
+            state.collected.extend(select_late_warnings(records, 0, nodeid=""))
             frame = sys._getframe(stacklevel - 1)
             location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
             self.hook.pytest_warning_recorded.call_historic(
@@ -2396,16 +2388,6 @@ def parse_warning_filter(arg: str, *, escape: bool) -> WarningFilter:
     action_, message, category_, module, lineno_ = (s.strip() for s in parts)
     action: warnings._ActionKind | Literal["error_later"]
     if action_ == ERROR_LATER_ACTION:
-        # The action is resolved against a recorded warning, which carries the
-        # emitting file rather than the emitting module's __name__, so the
-        # module and line fields cannot be honoured.
-        if module or lineno_:
-            raise UsageError(
-                error_template.format(
-                    error=f"the {ERROR_LATER_ACTION!r} action does not support the module "
-                    f"and line fields; use {ERROR_LATER_ACTION}:message:category instead\n"
-                )
-            )
         action = ERROR_LATER_ACTION
     else:
         try:
@@ -2465,26 +2447,6 @@ def _resolve_warning_category(category: str) -> type[Warning]:
     if not issubclass(cat, Warning):
         raise UsageError(f"{cat} is not a Warning subclass")
     return cast(type[Warning], cat)
-
-
-def _collect_or_show_warning(
-    state: LateWarningState,
-    showwarning: Callable[..., object],
-    message: Warning | str,
-    category: type[Warning],
-    filename: str,
-    lineno: int,
-    file: TextIO | None = None,
-    line: str | None = None,
-) -> None:
-    """``warnings.showwarning`` replacement for contexts that do not record."""
-    warning_message = warnings.WarningMessage(
-        message, category, filename, lineno, file, line
-    )
-    if not state.closed and should_error_later(warning_message, state.filters):
-        state.collected.append(to_late_warning(warning_message, nodeid=""))
-    else:
-        showwarning(message, category, filename, lineno, file, line)
 
 
 def apply_warning_filters(

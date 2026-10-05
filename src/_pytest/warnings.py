@@ -25,6 +25,7 @@ from _pytest.warning_late_error import install_warning_filter
 from _pytest.warning_late_error import LATE_WARNING_ERRORS_STAT
 from _pytest.warning_late_error import late_warning_state_key
 from _pytest.warning_late_error import LateWarning
+from _pytest.warning_late_error import LateWarningLog
 from _pytest.warning_late_error import LateWarningState
 from _pytest.warning_late_error import select_late_warnings
 import pytest
@@ -54,7 +55,6 @@ def catch_warnings_for_item(
                 for arg in mark.args:
                     parsed = parse_warning_filter(arg, escape=False)
                     install_warning_filter(parsed)
-                    state.filters.append(parsed)
 
         # record=True means log is not None; mypy can't infer that.
         recording = _Recording(log=log, nodeid=nodeid) if log is not None else None
@@ -89,7 +89,7 @@ def catch_warnings_for_item(
 class _Recording:
     """A live ``catch_warnings(record=True)`` log and how much of it was drained."""
 
-    log: list[warnings.WarningMessage]
+    log: LateWarningLog
     nodeid: str
     cursor: int = 0
 
@@ -104,10 +104,7 @@ _phase_late_warnings_key: StashKey[dict[str, list[LateWarning]]] = StashKey()
 
 def _drain(config: Config, recording: _Recording) -> list[LateWarning]:
     """Take the warnings recorded since the last drain that must error later."""
-    state = config.stash[late_warning_state_key]
-    late = select_late_warnings(
-        recording.log[recording.cursor :], state.filters, recording.nodeid
-    )
+    late = select_late_warnings(recording.log, recording.cursor, recording.nodeid)
     recording.cursor = len(recording.log)
     return late
 

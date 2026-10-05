@@ -383,18 +383,20 @@ which reports them and sets the exit code.
 
 .. note::
 
-    Unlike the other actions, ``error_later`` cannot be restricted by module or line::
+    Python's own filter matching decides whether ``error_later`` applies, exactly as it
+    decides for ``error``. The message, category, module and line fields all work, and
+    module and line match the way :mod:`warnings` matches them::
 
-        filterwarnings = error_later::DeprecationWarning:some.module   # UsageError
+        filterwarnings = error_later::DeprecationWarning:some\.module
 
-    The action is resolved against the recorded warning, which carries the file the
-    warning came from rather than the emitting module's ``__name__``. Use the message
-    and category fields instead.
+    For the same reason, filters that the code under test installs itself, with
+    :func:`warnings.simplefilter` or :func:`warnings.catch_warnings` for example, take
+    precedence over an ``error_later`` filter, just as they take precedence over ``error``.
+    Warnings re-emitted by :func:`pytest.warns` carry a module name derived from the
+    file path, so a filter restricted to a module does not match them.
 
     ``error_later`` is a pytest action: :envvar:`python:PYTHONWARNINGS` and ``python -W`` do
-    not accept it. Filters that the code under test installs itself can still ``ignore``
-    a warning, but any other action they set does not stop a warning that matches an
-    ``error_later`` filter from erroring later.
+    not accept it.
 
 
 .. _`ensuring a function triggers a deprecation warning`:

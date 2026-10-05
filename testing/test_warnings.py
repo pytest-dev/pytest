@@ -1325,13 +1325,109 @@ class TestErrorLaterWarnings:
         )
         assert result.ret == ExitCode.LATE_WARNING_ERROR
 
-    def test_rejects_module_and_line_fields(self, pytester: Pytester) -> None:
-        result = pytester.runpytest("-W", "error_later::UserWarning:somemod")
-
-        assert result.ret == ExitCode.USAGE_ERROR
-        result.stderr.fnmatch_lines(
-            ["*the 'error_later' action does not support the module and line fields*"]
+    def test_module_field_matches_the_emitting_module(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            pkg_a="import warnings\ndef f(): warnings.warn('from a', UserWarning)",
+            pkg_b="import warnings\ndef f(): warnings.warn('from b', UserWarning)",
+            test_mod="import pkg_a, pkg_b\ndef test_it():\n    pkg_a.f()\n    pkg_b.f()",
         )
+        result = pytester.runpytest(
+            "-W", "always::UserWarning", "-W", "error_later::UserWarning:pkg_a"
+        )
+
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.stdout.fnmatch_lines(
+            [
+                "*1 warning matched an 'error_later' filter:",
+                "*pkg_a.py:2: UserWarning: from a",
+                "*= warnings summary =*",
+                "*pkg_b.py:2: UserWarning: from b",
+            ]
+        )
+
+    def test_line_field_matches_the_emitting_line(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_it():
+                warnings.warn("line 3", UserWarning)
+                warnings.warn("line 4", UserWarning)
+            """
+        )
+        result = pytester.runpytest(
+            "-W", "always::UserWarning", "-W", "error_later::UserWarning::4"
+        )
+
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.stdout.fnmatch_lines(
+            ["*1 warning matched an 'error_later' filter:", "*:4: UserWarning: line 4"]
+        )
+
+    def test_module_of_code_without_a_name_is_string(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_it():
+                exec("warnings.warn('nameless', UserWarning)", {"warnings": warnings})
+            """
+        )
+        result = pytester.runpytest("-W", "error_later::UserWarning:<string>")
+
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.stdout.fnmatch_lines(["*UserWarning: nameless"])
+
+    def test_filter_installed_by_the_test_takes_precedence(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_it():
+                warnings.simplefilter("always")
+                warnings.warn("shown, not late", UserWarning)
+            """
+        )
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["*1 passed, 1 warning*"])
+
+    def test_filter_installed_by_a_fixture_takes_precedence(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            import warnings, pytest
+            @pytest.fixture(autouse=True)
+            def quiet_noisy():
+                warnings.filterwarnings("ignore", module="noisy")
+            """
+        )
+        pytester.makepyfile(
+            noisy="import warnings\ndef f(): warnings.warn('noise', UserWarning)",
+            test_mod="import noisy\ndef test_it():\n    noisy.f()",
+        )
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["*1 passed in*"])
+
+    def test_pytest_warns_takes_the_warning(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import warnings, pytest
+            def test_it():
+                with pytest.warns(UserWarning):
+                    warnings.warn("expected", UserWarning)
+                warnings.warn("other", DeprecationWarning)
+            """
+        )
+        result = pytester.runpytest(
+            "-W", "error_later::UserWarning", "-W", "always::DeprecationWarning"
+        )
+
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["*1 passed, 1 warning*"])
 
     def test_invalid_report_mode_is_a_usage_error(self, pytester: Pytester) -> None:
         pytester.makepyfile("def test_pass(): pass")
