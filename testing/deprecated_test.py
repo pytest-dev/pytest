@@ -1,9 +1,16 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import importlib
+import pkgutil
+import string
+import traceback
+
+import _pytest
 from _pytest import deprecated
 from _pytest.pytester import Pytester
 from _pytest.scope import Scope
+from _pytest.warning_types import WarningTemplate
 import pytest
 from pytest import PytestDeprecationWarning
 from pytest import PytestRemovedIn10Warning
@@ -365,3 +372,84 @@ def test_callspec2_renamed() -> None:
 
     with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
         assert python_mod.CallSpec2 is CallSpec
+
+
+class TestNoSharedWarningInstances:
+    """Deprecations must not be emitted from shared ``Warning`` instances (#14912).
+
+    Under an ``error`` filter ``warnings.warn(instance)`` raises that very object,
+    so a module-level instance accumulates traceback frames and ``__context__``
+    across unrelated emissions.
+    """
+
+    @staticmethod
+    def _raise_private() -> PytestDeprecationWarning:
+        with pytest.raises(PytestDeprecationWarning) as excinfo:
+            deprecated.check_ispytest(False)
+        return excinfo.value
+
+    @pytest.mark.filterwarnings("error")
+    def test_each_emission_raises_a_fresh_exception(self) -> None:
+        raised = [self._raise_private() for _ in range(3)]
+
+        assert len({id(exc) for exc in raised}) == 3
+        depths = [len(traceback.extract_tb(exc.__traceback__)) for exc in raised]
+        assert len(set(depths)) == 1, depths
+        assert [exc.__context__ for exc in raised] == [None, None, None]
+
+    @pytest.mark.filterwarnings("error")
+    def test_unrelated_context_does_not_leak_into_later_emissions(self) -> None:
+        try:
+            raise ValueError("unrelated")
+        except ValueError:
+            first = self._raise_private()
+        assert isinstance(first.__context__, ValueError)
+
+        second = self._raise_private()
+
+        assert second.__context__ is None
+        first_frames = {tb.tb_frame for tb in _walk_traceback(first.__traceback__)}
+        second_frames = {tb.tb_frame for tb in _walk_traceback(second.__traceback__)}
+        assert not first_frames & second_frames
+
+    def test_no_module_level_warning_instances(self) -> None:
+        """Guard against reintroducing shared instances anywhere in ``_pytest``."""
+        offenders = []
+        for module_info in pkgutil.walk_packages(_pytest.__path__, prefix="_pytest."):
+            module = importlib.import_module(module_info.name)
+            for name, value in vars(module).items():
+                if isinstance(value, Warning):
+                    offenders.append(f"{module_info.name}.{name}")
+        assert sorted(offenders) == []
+
+    @pytest.mark.parametrize(
+        ("name", "template"),
+        sorted(
+            (name, value)
+            for name, value in vars(deprecated).items()
+            if isinstance(value, WarningTemplate)
+        ),
+    )
+    def test_templates_are_well_formed(self, name: str, template) -> None:
+        fields = {
+            field
+            for _, field, _, _ in string.Formatter().parse(template.template)
+            if field is not None
+        }
+        # ``{}`` would silently consume a positional argument that never arrives.
+        assert "" not in fields, name
+        # ``warn()`` takes ``stacklevel`` as a keyword, so a field of that name
+        # could never be filled in.
+        assert "stacklevel" not in fields, name
+
+        warning = template.format(**dict.fromkeys(fields, "x"))
+
+        assert isinstance(warning, template.category)
+        if not fields:
+            assert str(warning) == template.template
+
+
+def _walk_traceback(tb):
+    while tb is not None:
+        yield tb
+        tb = tb.tb_next

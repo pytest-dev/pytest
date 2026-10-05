@@ -4,18 +4,18 @@ is planned to be removed in the next pytest release.
 Keeping it in a central location makes it easy to track what is deprecated and should
 be removed when the time comes.
 
-All constants defined in this module should be either instances of
-:class:`PytestWarning`, or :class:`UnformattedWarning`
-in case of warnings which need to format their messages.
+All constants defined in this module must be :class:`WarningTemplate` instances,
+never :class:`Warning` instances: a warning object handed to ``warnings.warn()`` is
+raised as-is under an ``error`` filter, so a shared instance accumulates traceback
+frames and ``__context__`` across unrelated emissions (#14912). A template builds a
+fresh warning for every emission.
 """
 
 from __future__ import annotations
 
-from warnings import warn
-
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn10Warning
-from _pytest.warning_types import UnformattedWarning
+from _pytest.warning_types import WarningTemplate
 
 
 # set of plugins which have been integrated into the core; we use this list to ignore
@@ -29,12 +29,13 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 
 
 # This could have been removed pytest 8, but it's harmless and common, so no rush to remove.
-YIELD_FIXTURE = PytestRemovedIn10Warning(
+YIELD_FIXTURE = WarningTemplate(
+    PytestRemovedIn10Warning,
     "@pytest.yield_fixture is deprecated.\n"
-    "Use @pytest.fixture instead; they are the same."
+    "Use @pytest.fixture instead; they are the same.",
 )
 
-CLASS_FIXTURE_INSTANCE_METHOD = UnformattedWarning(
+CLASS_FIXTURE_INSTANCE_METHOD = WarningTemplate(
     PytestRemovedIn10Warning,
     "{scope}-scoped fixtures defined as instance methods are deprecated.\n"
     "Instance attributes set in the {fixturename!r} fixture will NOT be visible to test methods,\n"
@@ -44,10 +45,12 @@ CLASS_FIXTURE_INSTANCE_METHOD = UnformattedWarning(
 )
 
 # This deprecation is never really meant to be removed.
-PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
+PRIVATE = WarningTemplate(
+    PytestDeprecationWarning, "A private pytest class or function was used."
+)
 
 
-HOOK_LEGACY_MARKING = UnformattedWarning(
+HOOK_LEGACY_MARKING = WarningTemplate(
     PytestRemovedIn10Warning,
     "The hook{type} {fullname} uses old-style configuration options (marks or attributes).\n"
     "Please use the pytest.hook{type}({hook_opts}) decorator instead\n"
@@ -56,14 +59,15 @@ HOOK_LEGACY_MARKING = UnformattedWarning(
     "#configuring-hook-specs-impls-using-markers",
 )
 
-MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES = PytestRemovedIn10Warning(
+MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES = WarningTemplate(
+    PytestRemovedIn10Warning,
     "monkeypatch.syspath_prepend() called with pkg_resources legacy namespace packages detected.\n"
     "Legacy namespace packages (using pkg_resources.declare_namespace) are deprecated.\n"
     "Please use native namespace packages (PEP 420) instead.\n"
-    "See https://docs.pytest.org/en/stable/deprecations.html#monkeypatch-fixup-namespace-packages"
+    "See https://docs.pytest.org/en/stable/deprecations.html#monkeypatch-fixup-namespace-packages",
 )
 
-PARAMETRIZE_NON_COLLECTION_ITERABLE = UnformattedWarning(
+PARAMETRIZE_NON_COLLECTION_ITERABLE = WarningTemplate(
     PytestRemovedIn10Warning,
     "Passing a non-Collection iterable to parametrize is deprecated.\n"
     "Test: {nodeid}, argvalues type: {type_name}\n"
@@ -71,18 +75,20 @@ PARAMETRIZE_NON_COLLECTION_ITERABLE = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#parametrize-iterators",
 )
 
-CONSOLE_MAIN = PytestRemovedIn10Warning(
+CONSOLE_MAIN = WarningTemplate(
+    PytestRemovedIn10Warning,
     "pytest.console_main() is deprecated and will be removed in pytest 10.\n"
     "It was never intended for programmatic use; use pytest.main() instead.\n"
-    "See https://docs.pytest.org/en/stable/deprecations.html#console-main"
+    "See https://docs.pytest.org/en/stable/deprecations.html#console-main",
 )
 
-CONFIG_INICFG = PytestRemovedIn10Warning(
+CONFIG_INICFG = WarningTemplate(
+    PytestRemovedIn10Warning,
     "config.inicfg is deprecated, use config.getini() to access configuration values instead.\n"
-    "See https://docs.pytest.org/en/stable/deprecations.html#config-inicfg"
+    "See https://docs.pytest.org/en/stable/deprecations.html#config-inicfg",
 )
 
-FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN = UnformattedWarning(
+FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN = WarningTemplate(
     PytestRemovedIn10Warning,
     'Calling request.getfixturevalue("{argname}") during teardown is deprecated.\n'
     "Please request the fixture before teardown begins, either by declaring it in the fixture signature "
@@ -90,18 +96,20 @@ FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#dynamic-fixture-request-during-teardown",
 )
 
-PASTEBIN = PytestRemovedIn10Warning(
+PASTEBIN = WarningTemplate(
+    PytestRemovedIn10Warning,
     "The --pastebin option is deprecated. "
     "The functionality is now available in an external plugin package, pytest-pastebin.\n"
-    "See https://docs.pytest.org/en/stable/deprecations.html#the-pastebin-option"
+    "See https://docs.pytest.org/en/stable/deprecations.html#the-pastebin-option",
 )
 
-INI_STRING_TYPE_NON_STR_VALUE = PytestRemovedIn10Warning(
+INI_STRING_TYPE_NON_STR_VALUE = WarningTemplate(
+    PytestRemovedIn10Warning,
     "Passing a value that is not a string to a 'string'-typed ini option is deprecated.\n"
     "In a future version this will raise a TypeError, matching the behavior of the "
     "corresponding TOML config path.\n"
     "If your plugin intentionally accepts non-string values, declare an explicit type "
-    '(e.g. type="args") instead of relying on the implicit string default.'
+    '(e.g. type="args") instead of relying on the implicit string default.',
 )
 
 # You want to make some `__init__` or function "private".
@@ -123,33 +131,38 @@ INI_STRING_TYPE_NON_STR_VALUE = PytestRemovedIn10Warning(
 # the warning (possibly error in the future).
 
 
-FIXTURE_BASEID_DEPRECATED = PytestRemovedIn10Warning(
-    "Passing baseid to FixtureDef is deprecated. Pass node instead for fixture scoping."
+FIXTURE_BASEID_DEPRECATED = WarningTemplate(
+    PytestRemovedIn10Warning,
+    "Passing baseid to FixtureDef is deprecated. Pass node instead for fixture scoping.",
 )
 
-FIXTURE_NODEID_DEPRECATED = PytestRemovedIn10Warning(
+FIXTURE_NODEID_DEPRECATED = WarningTemplate(
+    PytestRemovedIn10Warning,
     "Passing nodeid to _register_fixture is deprecated. "
-    "Pass node instead for fixture scoping."
+    "Pass node instead for fixture scoping.",
 )
 
-FIXTUREDEF_HAS_LOCATION_DEPRECATED = PytestRemovedIn10Warning(
+FIXTUREDEF_HAS_LOCATION_DEPRECATED = WarningTemplate(
+    PytestRemovedIn10Warning,
     "FixtureDef.has_location is deprecated and will be removed in pytest 10. "
-    "See https://docs.pytest.org/en/stable/deprecations.html#fixturedef-has-location-deprecated"
+    "See https://docs.pytest.org/en/stable/deprecations.html#fixturedef-has-location-deprecated",
 )
 
-PARSEFACTORIES_NODEID_DEPRECATED = PytestRemovedIn10Warning(
+PARSEFACTORIES_NODEID_DEPRECATED = WarningTemplate(
+    PytestRemovedIn10Warning,
     "Passing nodeid string to parsefactories is deprecated. "
-    "Use parsefactories(holder=obj, node=node) instead."
+    "Use parsefactories(holder=obj, node=node) instead.",
 )
 
-CALLSPEC2_RENAMED = PytestRemovedIn10Warning(
+CALLSPEC2_RENAMED = WarningTemplate(
+    PytestRemovedIn10Warning,
     "_pytest.python.CallSpec2 has been renamed to CallSpec.\n"
     "The CallSpec2 alias will be removed in pytest 10.\n"
     "Update imports to use CallSpec instead.\n"
-    "See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed"
+    "See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed",
 )
 
 
 def check_ispytest(ispytest: bool) -> None:
     if not ispytest:
-        warn(PRIVATE, stacklevel=3)
+        PRIVATE.warn(stacklevel=3)

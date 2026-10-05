@@ -1,0 +1,9 @@
+Fixed pytest's own deprecation warnings accumulating traceback frames, retaining memory and
+leaking unrelated exception context when warnings are configured as errors (for example
+``-W error`` or ``filterwarnings = error``).
+
+pytest reused a single warning instance per deprecation. Because Python raises the warning
+object itself under an ``error`` filter, every raise appended frames to that same object: the
+traceback grew without bound, the locals of unrelated frames stayed alive, and failure reports
+could show frames belonging to earlier, unrelated tests. Deprecation warnings are now built
+fresh for each emission.
