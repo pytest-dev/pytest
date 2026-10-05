@@ -628,6 +628,8 @@ class _StoreProxy:
 def test_undo_attribute_stored_outside_instance_dict() -> None:
     """Undo restores an attribute that a custom ``__setattr__`` stores elsewhere (#15099)."""
     config = _StoreProxy()
+    with pytest.raises(AttributeError):
+        config.missing  # noqa: B018
     monkeypatch = MonkeyPatch()
     monkeypatch.setattr(config, "debug", True)
     assert config.debug is True
@@ -694,6 +696,8 @@ def test_undo_module_getattr_attribute() -> None:
         raise AttributeError(name)
 
     mod.__getattr__ = module_getattr  # type: ignore[method-assign]
+    with pytest.raises(AttributeError):
+        mod.missing  # noqa: B018
     monkeypatch = MonkeyPatch()
     monkeypatch.setattr(mod, "dyn", 7)
     assert mod.dyn == 7
@@ -739,6 +743,8 @@ def test_undo_class_attribute_with_metaclass_setattr() -> None:
     class Configured(metaclass=Meta):
         pass
 
+    with pytest.raises(AttributeError):
+        Configured.missing  # noqa: B018
     monkeypatch = MonkeyPatch()
     monkeypatch.setattr(Configured, "opt", 2)
     assert store == {"opt": 2}
@@ -763,6 +769,13 @@ def test_non_raising_class_descriptor_not_bound(operation: str, raises: bool) ->
 
     class Target:
         value = descriptor
+
+    if raises:
+        with pytest.raises(RuntimeError, match="descriptor should not execute"):
+            Target.value  # noqa: B018
+    else:
+        assert Target.value == 42
+    calls.clear()
 
     with MonkeyPatch.context() as mp:
         if operation == "setattr":
@@ -862,6 +875,8 @@ def test_non_raising_dynamic_attribute() -> None:
         assert obj.value == 99
     assert "value" not in vars(obj)
     assert obj.value == 42
+    with pytest.raises(AttributeError):
+        obj.missing  # noqa: B018
 
 
 def test_issue1338_name_resolving() -> None:
