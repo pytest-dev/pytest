@@ -359,7 +359,7 @@ to completion, and pytest raises afterwards.
         filterwarnings =
             error_later::DeprecationWarning
 
-``error_later`` is valid anywhere a warning filter is, including :option:`-W <pytest -W>` and
+``error_later`` is valid anywhere a warning filter is, including :option:`-W` and
 :ref:`@pytest.mark.filterwarnings <filterwarnings>`, and follows the same precedence
 rules as every other action: the last matching filter wins.
 
@@ -390,7 +390,7 @@ which reports them and sets the exit code.
         filterwarnings = error_later::DeprecationWarning:some\.module
 
     For the same reason, filters that the code under test installs itself, with
-    :func:`warnings.simplefilter` or :func:`warnings.catch_warnings` for example, take
+    :func:`warnings.simplefilter` or :class:`warnings.catch_warnings` for example, take
     precedence over an ``error_later`` filter, just as they take precedence over ``error``.
     Warnings re-emitted by :func:`pytest.warns` carry a module name derived from the
     file path, so a filter restricted to a module does not match them.
