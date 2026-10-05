@@ -211,6 +211,46 @@ class TestTerminal:
         for line in subpassed_lines + passed_lines:
             assert "0.000us" not in line
 
+    def test_console_output_style_times_slow_teardown_does_not_leak(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                import time, pytest
+
+                @pytest.fixture
+                def slow_td():
+                    yield
+                    time.sleep(0.3)
+
+                def test_a1(slow_td):
+                    pass
+
+                def test_a2():
+                    pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-v",
+            "-o",
+            "console_output_style=times",
+        )
+        lines = result.stdout.lines
+        a2_lines = [line for line in lines if "test_a2 PASSED" in line]
+        assert len(a2_lines) == 1
+        # The teardown duration of test_a1 (300ms) should not leak into test_a2.
+        duration_str = a2_lines[0].split()[-1]
+        if duration_str.endswith("us"):
+            dur_seconds = float(duration_str[:-2]) / 1_000_000
+        elif duration_str.endswith("ms"):
+            dur_seconds = float(duration_str[:-2]) / 1_000
+        elif duration_str.endswith("s"):
+            dur_seconds = float(duration_str[:-1])
+        else:
+            dur_seconds = 0.0
+        assert dur_seconds < 0.1
+
     def test_progress_information_message_no_current_report(
         self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:

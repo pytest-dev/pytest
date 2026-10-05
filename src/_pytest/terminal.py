@@ -409,7 +409,7 @@ class TerminalReporter:
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[NodeId] = set()
-        self._timing_report_ids_reported: set[int] = set()
+        self._timing_nodeids_reported: set[NodeId] = set()
         self._current_logreport: TestReport | None = None
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
@@ -743,6 +743,13 @@ class TerminalReporter:
         if self._show_progress_info == "times":
             if not collected:
                 return ""
+            from _pytest.subtests import SubtestReport
+
+            if isinstance(self._current_logreport, SubtestReport):
+                if self.showlongtestinfo:
+                    return format_node_duration(self._current_logreport.duration)
+                return ""
+
             all_reports = (
                 self._get_reports_to_display("passed")
                 + self._get_reports_to_display("xpassed")
@@ -752,9 +759,6 @@ class TerminalReporter:
                 + self._get_reports_to_display("error")
                 + self._get_reports_to_display("")
             )
-            for key in self.stats:
-                if key.startswith("subtests "):
-                    all_reports.extend(self._get_reports_to_display(key))
 
             report = self._current_logreport
             if report is not None:
@@ -763,7 +767,10 @@ class TerminalReporter:
                 current_location = all_reports[-1].location[0] if all_reports else ""
 
             not_reported = [
-                r for r in all_reports if id(r) not in self._timing_report_ids_reported
+                r
+                for r in all_reports
+                if not isinstance(r, SubtestReport)
+                and r.id not in self._timing_nodeids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
@@ -775,7 +782,7 @@ class TerminalReporter:
             )
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
-                self._timing_report_ids_reported.update(id(r) for r in not_reported)
+                self._timing_nodeids_reported.update(r.id for r in not_reported)
                 return format_node_duration(
                     sum(r.duration for r in not_reported if isinstance(r, TestReport))
                 )
