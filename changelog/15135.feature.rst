@@ -1,5 +1,5 @@
 Added an ``error_later`` warning filter action, valid anywhere a warning filter is accepted
-(:option:`-W <pytest -W>`, the :confval:`filterwarnings` ini option and
+(:option:`-W`, the :confval:`filterwarnings` ini option and
 :ref:`@pytest.mark.filterwarnings <filterwarnings>`).
 
 ``error`` raises at the :func:`warnings.warn` call site, aborting the code under test
