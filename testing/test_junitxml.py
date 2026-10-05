@@ -655,6 +655,53 @@ class TestPython:
         fnode = tnode.get_first_by_tag("failure")
         fnode.assert_attr(message="AssertionError: An error\nassert 0")
 
+    @pytest.mark.parametrize("verbosity", ["-q", "-vv"])
+    def test_failure_message_is_truncated(
+        self, pytester: Pytester, run_and_parse: RunAndParse, verbosity: str
+    ) -> None:
+        """The message attribute is bounded while the body keeps the full report (#12223)."""
+        pytester.makepyfile(
+            """
+            def test_fail():
+                assert ["x"] * 500 == ["x\\n"] * 500
+        """
+        )
+        result, dom = run_and_parse(verbosity)
+        assert result.ret == 1
+        fnode = dom.get_first_by_tag("failure")
+        message = fnode["message"]
+        assert message.startswith("AssertionError: assert ['x', 'x', ")
+        if verbosity == "-q":
+            assert len(message) < 1000
+            assert not message.endswith("...")
+        else:
+            assert len(message) == 1000 + len("...")
+            assert message.endswith("...")
+            assert len(fnode.text) > 10 * len(message)
+            assert "Full diff:" in fnode.text
+            assert "'x\\n'," in fnode.text
+
+    def test_error_message_is_truncated(
+        self, pytester: Pytester, run_and_parse: RunAndParse
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                raise ValueError("a" * 2000)
+            def test_function(arg):
+                pass
+        """
+        )
+        result, dom = run_and_parse()
+        assert result.ret
+        fnode = dom.get_first_by_tag("error")
+        prefix = 'failed on setup with "ValueError: '
+        assert fnode["message"] == prefix + "a" * (1000 - len(prefix)) + "..."
+        assert "a" * 2000 in fnode.text
+
     @parametrize_families
     def test_failure_escape(
         self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily

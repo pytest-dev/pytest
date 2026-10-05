@@ -69,6 +69,17 @@ def bin_xml_escape(arg: object) -> str:
     return re.sub(illegal_xml_re, repl, str(arg))
 
 
+# Maximum length of the escaped message attribute of <failure> and <error>
+# elements; the complete report is still written to the element body.
+_MAX_FAILURE_MESSAGE_LENGTH = 1000
+
+
+def _truncate_failure_message(message: str) -> str:
+    if len(message) <= _MAX_FAILURE_MESSAGE_LENGTH:
+        return message
+    return message[:_MAX_FAILURE_MESSAGE_LENGTH] + "..."
+
+
 def merge_family(left, right) -> None:
     result = {}
     for kl, vl in left.items():
@@ -213,7 +224,7 @@ class _NodeReporter:
                 message = reprcrash.message
             else:
                 message = str(report.longrepr)
-            message = bin_xml_escape(message)
+            message = _truncate_failure_message(bin_xml_escape(message))
             self._add_simple("failure", message, str(report.longrepr))
 
     def append_collect_error(self, report: CollectReport) -> None:
@@ -236,7 +247,11 @@ class _NodeReporter:
             msg = f'failed on teardown with "{reason}"'
         else:
             msg = f'failed on setup with "{reason}"'
-        self._add_simple("error", bin_xml_escape(msg), str(report.longrepr))
+        self._add_simple(
+            "error",
+            _truncate_failure_message(bin_xml_escape(msg)),
+            str(report.longrepr),
+        )
 
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):

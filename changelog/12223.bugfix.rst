@@ -1,0 +1,1 @@
+The ``message`` attribute of ``<failure>`` and ``<error>`` elements in ``--junitxml`` reports is now truncated to 1000 characters (followed by ``...``) after XML escaping, so verbose assertion output (e.g. with ``-vv``) no longer produces huge attributes; the full report is still written to the element body.
