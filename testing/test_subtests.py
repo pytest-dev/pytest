@@ -1048,6 +1048,25 @@ def test_serialization() -> None:
     )
 
 
+class MyStrEnum(str, Enum):
+    B = "B"
+
+
+@pytest.mark.parametrize(
+    ("msg", "expected"),
+    [
+        pytest.param(MyStrEnum.B, "B", id="str-subclass"),
+        pytest.param("plain", "plain", id="str"),
+        pytest.param(None, None, id="none"),
+    ],
+)
+def test_msg_is_plain_str(msg: str | None, expected: str | None) -> None:
+    """Ensure subtest's msg is a plain str, which execnet can serialize (pytest-dev/pytest-xdist#1161)."""
+    context = SubtestContext(msg=msg, kwargs={})
+    assert context.msg == expected
+    assert type(context.msg) is type(expected)
+
+
 def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no cover
     """Regression test for pytest-dev/pytest-xdist#1273."""
     pytest.importorskip("xdist")
@@ -1059,8 +1078,15 @@ def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no c
         class MyEnum(Enum):
             A = "A"
 
+        class MyStrEnum(str, Enum):
+            B = "B"
+
         def test(subtests):
             with subtests.test(a=MyEnum.A):
+                pass
+
+        def test_str_subclass_msg(subtests):
+            with subtests.test(msg=MyStrEnum.B):
                 pass
 
         class T(unittest.TestCase):
@@ -1072,4 +1098,4 @@ def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no c
     )
     pytester.syspathinsert()
     result = pytester.runpytest("-n1", "-pxdist.plugin")
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=3)

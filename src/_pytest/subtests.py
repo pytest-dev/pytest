@@ -67,6 +67,12 @@ class SubtestContext:
         object.__setattr__(
             self, "kwargs", {k: saferepr(v) for (k, v) in self.kwargs.items()}
         )
+        # Ensure msg is a plain str: str subclasses such as StrEnum members
+        # cannot be serialized by execnet (pytest-dev/pytest-xdist#1161).
+        # str.__str__ keeps the string data, while str() on a (str, Enum)
+        # mixin would return "Cls.MEMBER".
+        if isinstance(self.msg, str) and type(self.msg) is not str:
+            object.__setattr__(self, "msg", str.__str__(self.msg))
 
     def _to_json(self) -> dict[str, Any]:
         result = dataclasses.asdict(self)
