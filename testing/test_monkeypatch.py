@@ -607,6 +607,263 @@ def test_undo_slot_attribute_on_instance() -> None:
     assert obj.x == 1
 
 
+class _StoreProxy:
+    """Keeps attributes in a private mapping instead of ``__dict__``."""
+
+    _data: dict[str, object]
+
+    def __init__(self) -> None:
+        object.__setattr__(self, "_data", {"debug": False})
+
+    def __getattr__(self, name: str) -> object:
+        try:
+            return self._data[name]
+        except KeyError:
+            raise AttributeError(name) from None
+
+    def __setattr__(self, name: str, value: object) -> None:
+        self._data[name] = value
+
+
+def test_undo_attribute_stored_outside_instance_dict() -> None:
+    """Undo restores an attribute that a custom ``__setattr__`` stores elsewhere (#15099)."""
+    config = _StoreProxy()
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(config, "debug", True)
+    assert config.debug is True
+    assert "debug" not in vars(config)
+    monkeypatch.undo()
+    assert config.debug is False
+
+
+def test_undo_inherited_descriptor_with_delegating_setattr() -> None:
+    """A ``__setattr__`` that only delegates to ``object`` still writes into
+    ``__dict__``, so undo must remove the entry again instead of freezing the
+    descriptor's value on the instance (#10644)."""
+    calls = 0
+
+    class Counter:
+        def __get__(self, obj: object, owner: type | None = None) -> int:
+            nonlocal calls
+            calls += 1
+            return calls
+
+    class Validated:
+        x = Counter()
+
+        def __setattr__(self, name: str, value: object) -> None:
+            super().__setattr__(name, value)
+
+    obj = Validated()
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(obj, "x", 99)
+    assert obj.x == 99
+    monkeypatch.undo()
+    assert "x" not in vars(obj)
+    assert obj.x != obj.x
+
+
+@pytest.mark.parametrize("raising", [True, False])
+def test_undo_inherited_method_with_delegating_setattr(raising: bool) -> None:
+    class Validated:
+        def meth(self) -> str:
+            return "orig"
+
+        def __setattr__(self, name: str, value: object) -> None:
+            super().__setattr__(name, value)
+
+    obj = Validated()
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(obj, "meth", lambda: "patched", raising=raising)
+    assert obj.meth() == "patched"
+    monkeypatch.undo()
+    assert vars(obj) == {}
+    assert obj.meth() == "orig"
+
+
+def test_undo_module_getattr_attribute() -> None:
+    """A PEP 562 module ``__getattr__`` attribute must not get frozen into the
+    module ``__dict__``."""
+    import types
+
+    mod = types.ModuleType("dynamic_mod")
+
+    def module_getattr(name: str) -> int:
+        if name == "dyn":
+            return 5
+        raise AttributeError(name)
+
+    mod.__getattr__ = module_getattr  # type: ignore[method-assign]
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(mod, "dyn", 7)
+    assert mod.dyn == 7
+    monkeypatch.undo()
+    assert "dyn" not in vars(mod)
+    assert mod.dyn == 5
+
+
+@pytest.mark.parametrize("raising", [True, False])
+def test_issue1938_patch_class_bases(raising: bool) -> None:
+    class Loud:
+        def thing(self) -> str:
+            return "!!!!"
+
+    class Quiet:
+        def thing(self) -> str:
+            return "sssh..."
+
+    class ThingToTest(Loud):
+        pass
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(ThingToTest, "__bases__", (Quiet,), raising=raising)
+    assert ThingToTest().thing() == "sssh..."
+    monkeypatch.undo()
+    assert ThingToTest.__bases__ == (Loud,)
+    assert ThingToTest().thing() == "!!!!"
+
+
+def test_undo_class_attribute_with_metaclass_setattr() -> None:
+    store: dict[str, object] = {"opt": 1}
+
+    class Meta(type):
+        def __setattr__(cls, name: str, value: object) -> None:
+            store[name] = value
+
+        def __getattr__(cls, name: str) -> object:
+            try:
+                return store[name]
+            except KeyError:
+                raise AttributeError(name) from None
+
+    class Configured(metaclass=Meta):
+        pass
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(Configured, "opt", 2)
+    assert store == {"opt": 2}
+    monkeypatch.undo()
+    assert store == {"opt": 1}
+
+
+@pytest.mark.parametrize("operation", ["setattr", "delattr"])
+@pytest.mark.parametrize("raises", [False, True])
+def test_non_raising_class_descriptor_not_bound(operation: str, raises: bool) -> None:
+    """With ``raising=False`` descriptors are not bound just to look them up (#10646)."""
+    calls = []
+
+    class Descriptor:
+        def __get__(self, instance: object, owner: type | None = None) -> int:
+            calls.append(True)
+            if raises:
+                raise RuntimeError("descriptor should not execute")
+            return 42
+
+    descriptor = Descriptor()
+
+    class Target:
+        value = descriptor
+
+    with MonkeyPatch.context() as mp:
+        if operation == "setattr":
+            mp.setattr(Target, "value", 99, raising=False)
+            assert vars(Target)["value"] == 99
+        else:
+            mp.delattr(Target, "value", raising=False)
+            assert "value" not in vars(Target)
+    assert vars(Target)["value"] is descriptor
+    assert calls == []
+
+
+def test_non_raising_inherited_descriptor_not_bound() -> None:
+    class Descriptor:
+        def __get__(self, instance: object, owner: type | None = None) -> int:
+            raise RuntimeError("descriptor should not execute")
+
+    class Parent:
+        value = Descriptor()
+
+    class Child(Parent):
+        pass
+
+    obj = Child()
+    with MonkeyPatch.context() as mp:
+        mp.setattr(Child, "value", 99, raising=False)
+        mp.setattr(obj, "value", 100, raising=False)
+        assert Child.value == 99
+        assert obj.value == 100
+    assert "value" not in vars(Child)
+    assert "value" not in vars(obj)
+
+    with MonkeyPatch.context() as mp:
+        with pytest.raises(RuntimeError, match="descriptor should not execute"):
+            mp.setattr(Child, "value", 99)
+
+
+@pytest.mark.parametrize("operation", ["setattr", "delattr"])
+def test_non_raising_data_descriptor_undo(operation: str) -> None:
+    """Data descriptors are still read, because undo writes back through them."""
+
+    class Target:
+        def __init__(self) -> None:
+            self._value = 42
+
+        @property
+        def value(self) -> int:
+            return self._value
+
+        @value.setter
+        def value(self, value: int) -> None:
+            self._value = value
+
+        @value.deleter
+        def value(self) -> None:
+            del self._value
+
+    obj = Target()
+    with MonkeyPatch.context() as mp:
+        if operation == "setattr":
+            mp.setattr(obj, "value", 99, raising=False)
+            assert obj.value == 99
+        else:
+            mp.delattr(obj, "value", raising=False)
+            assert not hasattr(obj, "_value")
+    assert obj.value == 42
+
+
+@pytest.mark.parametrize("operation", ["setattr", "delattr"])
+def test_non_raising_slot_undo(operation: str) -> None:
+    class Target:
+        __slots__ = ("value",)
+        value: int
+
+    obj = Target()
+    obj.value = 42
+    with MonkeyPatch.context() as mp:
+        if operation == "setattr":
+            mp.setattr(obj, "value", 99, raising=False)
+            assert obj.value == 99
+        else:
+            mp.delattr(obj, "value", raising=False)
+            assert not hasattr(obj, "value")
+    assert obj.value == 42
+
+
+def test_non_raising_dynamic_attribute() -> None:
+    class Target:
+        def __getattr__(self, name: str) -> int:
+            if name == "value":
+                return 42
+            raise AttributeError(name)
+
+    obj = Target()
+    with MonkeyPatch.context() as mp:
+        mp.setattr(obj, "value", 99, raising=False)
+        assert obj.value == 99
+    assert "value" not in vars(obj)
+    assert obj.value == 42
+
+
 def test_issue1338_name_resolving() -> None:
     pytest.importorskip("requests")
     monkeypatch = MonkeyPatch()
