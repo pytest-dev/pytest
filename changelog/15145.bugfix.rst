@@ -1,0 +1,1 @@
+With :confval:`console_output_style` set to ``times``, durations just below a unit boundary are now shown in the next unit (e.g. ``1.000ms`` instead of ``1000.0us``).
