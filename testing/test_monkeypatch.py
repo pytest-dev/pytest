@@ -618,10 +618,7 @@ def test_setattr_custom_setattr_undo() -> None:
             self._store = {"debug": False}
 
         def __getattr__(self, name: str) -> object:
-            try:
-                return self._store[name]
-            except KeyError:
-                raise AttributeError(name) from None
+            return self._store[name]
 
         def __setattr__(self, name: str, value: object) -> None:
             if name == "_store":
@@ -634,7 +631,8 @@ def test_setattr_custom_setattr_undo() -> None:
 
     monkeypatch = MonkeyPatch()
     monkeypatch.setattr(cfg, "debug", True)
-    assert cfg.debug is True
+    patched: object = cfg.debug
+    assert patched is True
 
     monkeypatch.undo()
     assert cfg.debug is False
