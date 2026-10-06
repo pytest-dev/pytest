@@ -60,91 +60,111 @@ A modern solution should be expressed in these terms instead of in
 Proposed solution
 -----------------
 
-Introduce *import roots* as an alternative to import modes — configuring
-import roots replaces ``--import-mode`` entirely rather than adding a fourth
-mode.
+Introduce *import roots* as an opt-in alternative to import modes.  Without
+import roots configured, pytest behaves exactly as it does today.  With import
+roots configured, they replace ``--import-mode`` and the ``pythonpath`` option
+entirely; combining either with import roots is a usage error.
 
-An import root is a directory in the worktree together with a declaration of
-how its content maps onto the import system:
+An import root declares how one part of the world maps onto the import
+system.  There are three kinds:
 
 ``local``
-    Content that is not distributed (typically test folders).  Modules are
-    imported under names anchored at the root, without any ``sys.path``
-    mutation.  A folder without ``__init__.py`` becomes a namespace package
-    whose search path is limited to the root; a folder with ``__init__.py``
-    is imported as a regular package.
+    Content that is not distributed (typically the project's own test
+    folder).  Modules are imported under the root's declared name, without
+    any ``sys.path`` mutation, through an importer pytest installs for the
+    duration of the session.  A folder without ``__init__.py`` becomes a
+    namespace package whose search path is limited to the root; a folder
+    with ``__init__.py`` is imported as a regular package.
+
+``mirrored``
+    The worktree source of a distribution that is installed into the current
+    environment.  Collection walks the worktree; modules are imported under
+    their real, installed name.  pytest classifies the installation (see
+    below) and verifies that what it collects is what will be imported.
 
 ``installed``
-    The worktree source of a distribution that is installed into the current
-    environment.  Modules are imported under their real, installed name.
-    pytest classifies the installation (see below) and verifies that what it
-    collects is what will be imported.
+    An installed distribution with no worktree involved.  Collection walks
+    the installed files and imports them under their real name, for example
+    to run a test suite shipped inside a package.
 
-In all cases pytest collects the file tree of the worktree, never touches
-``sys.path``, and resolves imports through the standard spec-based machinery.
 Conftest files are imported under proper dotted names derived from their
-root, removing the need for ``sys.modules`` special-casing.
+root (``<name>.conftest``, ``<name>.sub.conftest``), removing the need for
+``sys.modules`` special-casing.
 
-Implied and explicit roots
+Configuration
+-------------
+
+Import roots are configured in TOML only, as native ``[tool.pytest]`` (or
+``pytest.toml``) configuration.  There is no ini spelling.  Every root
+requires a ``name``; there is no default and no inference.
+
+.. code-block:: toml
+
+  # contents of pyproject.toml
+  [tool.pytest]
+  import_roots = [
+    { kind = "local", path = "testing", name = "mypkg_testing" },
+    { kind = "mirrored", path = "src/mypkg", name = "mypkg" },
+    { kind = "installed", name = "otherpkg" },
+  ]
+
+``local`` and ``mirrored`` roots take a ``path`` and a ``name``; ``installed``
+roots take a ``name`` only.
+
+Conventions and collisions
 --------------------------
 
-pytest should imply import roots automatically in simple cases, so most
-projects need no configuration:
+Import roots rely on conventions and a collision check instead of import
+tricks:
 
-* an installed (or editable-installed) distribution whose recorded files map
-  back into the worktree implies an ``installed`` root,
-* conventional layouts (``src/`` layout, a ``tests`` folder that is not part
-  of any distribution) imply their obvious classification.
+* tests that are not shipped live in a top-level ``testing/`` folder,
+  declared as a ``local`` root with a project-specific name (for example
+  ``mypkg_testing``),
+* tests that are shipped live in a ``tests`` subpackage of the package
+  (``mypkg/tests/``) and belong to the package's ``mirrored`` or
+  ``installed`` root, importing as ``mypkg.tests``,
+* a top-level ``tests/`` folder is discouraged under import roots: its name
+  does not say which of the two it is, and it is the most common colliding
+  top-level name.
 
-When the layout is ambiguous — multiple distributions, overlapping trees,
-test folders inside installed packages, or content matching no known
-distribution — pytest must not guess.  Collection fails with an error that
-explains which paths could not be classified and asks for explicit roots:
+When roots are set up, every declared top-level name of a ``local`` root is
+checked against ``sys.modules``, the import system (excluding pytest's own
+importer) and ``importlib.metadata.packages_distributions()``.  A clash is a
+usage error naming the colliding distribution or module.  pytest never
+shadows an installed package and is never shadowed by one.
 
-.. code-block:: ini
+There are no aliases, no path shims and no implicit subprocess support.
+Modules of a ``local`` root are importable only inside the pytest process;
+code that a subprocess or an unpickler must import belongs in a ``mirrored``
+or ``installed`` root.
 
-  # contents of pytest.ini
-  [pytest]
-  import_roots =
-      tests local
-      src/mypkg installed as mypkg
-
-The configuration syntax shown here is a sketch; the concrete spelling
-(including a TOML-native form in ``pyproject.toml``) is an open question.
-
-Interaction with ``testpaths``
-------------------------------
+Interaction with ``testpaths``, ``--pyargs`` and ``pythonpath``
+-------------------------------------------------------------------
 
 ``testpaths`` and import roots answer different questions and stay separate:
 ``testpaths`` selects *what* is collected when no arguments are given, import
-roots declare *how* collected files are imported.  They interact in defined
-ways:
+roots declare *how* collected files are imported.
 
-* every collection target — whether it comes from ``testpaths``, command line
-  arguments, or full-tree collection — must fall under exactly one import
-  root.  A target that maps to no root is reported with the same
-  unclassified-path error as any other ambiguity, instead of falling back to
-  ``sys.path`` guessing.
-* ``testpaths`` entries serve as an additional signal for implied roots: an
-  entry that is not part of any installed distribution implies a ``local``
-  root.  The common ``testpaths = tests`` layout therefore needs no explicit
-  root configuration.
-* ``testpaths`` may point into an ``installed`` root — for example
-  ``testpaths = src`` together with ``--doctest-modules``.  Collection still
+* every collection target, whether it comes from ``testpaths``, command line
+  arguments, or full-tree collection, must fall under exactly one import
+  root.  A target outside every root is a usage error.
+* ``testpaths`` may point into a ``mirrored`` root (for example
+  ``testpaths = ["src"]`` together with ``--doctest-modules``).  Collection
   walks the worktree while imports resolve to the installed name, so the
   staleness verification applies exactly as for test-driven imports.
-* command line arguments outside ``testpaths`` but inside a declared or
-  implied root behave normally; arguments outside every root fail with the
-  unclassified-path error.
-* conftest files between the rootdir and the ``testpaths`` entries are
-  loaded today without belonging to any test package; under import roots
-  these files still participate and need a defined module name (see the
-  open questions).
+* ``--pyargs`` arguments are resolved through the configured roots by
+  longest name prefix, without importing anything.  The resolved name is
+  the name the module is imported under; it is never re-derived from the
+  path.  A name matching no root is a usage error.
+* ``pythonpath`` is superseded by ``local`` roots.
+* conftest files above every root (for example next to ``pyproject.toml``)
+  still participate and need a defined module name (see the open
+  questions).
 
 Editable versus real versus stale installs
 ------------------------------------------
 
-For ``installed`` roots, pytest performs a minimal classification using
+For ``mirrored`` roots, pytest performs a minimal classification using
 ``importlib.metadata`` and :pep:`610` ``direct_url.json``:
 
 editable install
@@ -155,59 +175,71 @@ editable install
 real (non-editable) install
     The import origin is the installed copy, not the worktree.  pytest
     verifies that the content of each imported file matches the
-    corresponding worktree file, and fails collection with a
-    ``StaleInstallError`` (naming both paths and suggesting a reinstall)
-    when they differ.  An optional strict variant may verify the complete
-    file set of the distribution, including files missing on either side.
+    corresponding worktree file (for example against the hashes recorded in
+    ``RECORD``), and fails collection with a ``StaleInstallError`` (naming
+    both paths and suggesting a reinstall) when they differ.  An optional
+    strict variant may verify the complete file set of the distribution,
+    including files missing on either side.
 
 not installed
-    A root declared (or implied) as ``installed`` whose distribution cannot
-    be found fails collection with a clear message, instead of silently
-    falling back to path-based importing.
+    A ``mirrored`` or ``installed`` root whose distribution cannot be found
+    fails collection with a clear message, instead of silently falling back
+    to path-based importing.
 
-The detection is deliberately minimal: distributions installed through
-mechanisms that record no usable provenance are treated best-effort, with an
-explicit root declaration as the escape hatch.
+Distributions installed through mechanisms that record no usable provenance
+are treated best-effort.
 
 Migration
 ---------
 
-* Configuring import roots and ``--import-mode`` together is an error.
-* The long-term goal is for implied import roots to become pytest's default
-  importing behavior, with the legacy import modes deprecated afterwards —
-  something none of the existing modes could achieve.
-* Collection integrates naturally with the directory collection nodes:
-  each collected directory belongs to exactly one root, which determines the
-  module names beneath it.
+* Without import roots configured, nothing changes: ``--import-mode``,
+  ``--pyargs``, ``pythonpath`` and ``consider_namespace_packages`` behave as
+  today.  Import roots are not a new default.
+* Configuring import roots together with ``--import-mode`` or ``pythonpath``
+  is an error.
+* Collection integrates with the directory collection nodes: each collected
+  directory belongs to exactly one root, which determines the module names
+  beneath it.
+
+Related proposals
+-----------------
+
+:doc:`packaged_suites` describes how a test suite shipped inside a package
+is declared and bound by a consuming project.  It is independent of import
+roots; with roots configured, such a suite's package is an ``installed`` (or
+``mirrored``) root.
 
 Open questions
 --------------
 
-* the concrete configuration syntax (ini line format versus structured TOML),
-* interaction with the ``pythonpath`` ini option, ``--pyargs``, and rootdir,
-* the module name for conftest files that live above every import root
-  (for example a ``conftest.py`` next to ``pyproject.toml``),
+* the module name for conftest files that live above every import root,
 * which file (worktree or installed copy) appears in tracebacks and reports
   for real installs, and how assertion rewriting applies to the installed
   origin,
-* how much layout inference is acceptable before requiring explicit roots.
+* the exact TOML schema (field names, validation messages) and the new
+  structured option type it needs, since ``addini`` types are currently
+  scalar or lists of strings.
 
 Test cases
 ----------
 
-* real install: imported name differs from the path in the source tree;
-  collection succeeds when content matches and fails with
-  ``StaleInstallError`` when it differs; strict mode additionally detects
-  missing/extra files,
-* editable install: modules import under the real name with the worktree as
-  origin,
-* declared ``installed`` root without a matching distribution: collection
-  fails with a clear message,
+* no import roots configured: behaviour is identical to today,
+* import roots together with ``--import-mode`` or ``pythonpath``: usage
+  error,
+* a root without ``name``: usage error,
+* ``mirrored`` real install: collection succeeds when content matches and
+  fails with ``StaleInstallError`` when it differs; strict mode additionally
+  detects missing/extra files,
+* ``mirrored`` editable install: modules import under the real name with the
+  worktree as origin,
+* ``mirrored`` or ``installed`` root without a matching distribution:
+  collection fails with a clear message,
 * ``local`` root without ``__init__.py``: a namespace package anchored at the
   root, with its search path limited to the root,
 * ``local`` root with ``__init__.py``: a regular package, still without any
   ``sys.path`` mutation,
-* ambiguous layouts fail collection with a message naming the unclassified
-  paths,
+* a ``local`` root whose name collides with an installed distribution:
+  usage error naming the distribution,
+* ``--pyargs`` resolves through roots without importing parents,
 * conftest files receive proper dotted module names in every case,
 * every collected folder maps to exactly one root.
