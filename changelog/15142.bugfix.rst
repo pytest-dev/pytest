@@ -1,0 +1,7 @@
+A ``conftest.py`` that skips its directory while being imported, with :func:`pytest.importorskip` or ``pytest.skip(..., allow_module_level=True)``, now skips it consistently: also when a path or node id below that directory is given on the command line, which previously crashed with a raw ``Skipped`` traceback.
+
+``pytest.fail()`` and ``pytest.xfail()`` while a ``conftest.py`` is imported are now reported as a conftest import error instead of crashing pytest.
+
+A node id into a module that skips at import time (for example ``pytest test_mod.py::test_a``) now reports the skip instead of also failing with ``ERROR: found no collectors``.
+
+With ``--import-mode=importlib``, a module that raises while being imported is no longer left half-executed in :data:`sys.modules`.
