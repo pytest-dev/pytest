@@ -138,7 +138,7 @@ class ConftestImportFailure(Exception):
         self,
         path: pathlib.Path,
         *,
-        cause: BaseException,
+        cause: Exception | OutcomeException,
     ) -> None:
         self.path = path
         self.cause = cause
