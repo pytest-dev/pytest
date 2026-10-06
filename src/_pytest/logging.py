@@ -54,6 +54,20 @@ caplog_handler_key = StashKey["LogCaptureHandler"]()
 caplog_records_key = StashKey[dict[str, list[logging.LogRecord]]]()
 
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from typing import Protocol
+
+    class _SupportsFilterProtocol(Protocol):
+        """Structural stand-in for typeshed's private ``_SupportsFilter``."""
+
+        def filter(self, record: LogRecord) -> bool: ...
+
+    # The element type ``logging.Filterer.filters`` uses, which also admits a
+    # plain callable or an object exposing ``.filter()``.
+    _FilterLike = logging.Filter | Callable[[LogRecord], bool] | _SupportsFilterProtocol
+
+
 def _remove_ansi_escape_sequences(text: str) -> str:
     return _ANSI_ESCAPE_SEQ.sub("", text)
 
@@ -334,16 +348,187 @@ def pytest_addoption(parser: Parser) -> None:
 _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 
 
+def _remove_handler_by_identity(
+    logger: logging.Logger, handler: logging.Handler
+) -> None:
+    """Remove ``handler`` from ``logger.handlers`` comparing by identity.
+
+    ``Logger.removeHandler()`` removes by equality, so a user handler which
+    compares equal to one of pytest's own would be removed in its place.
+    """
+    handlers = logger.handlers
+    for index, existing in enumerate(handlers):
+        if existing is handler:
+            del handlers[index]
+            return
+
+
+class _BoundProxyHandler(logging.Handler):
+    """A stand-in for a pytest capture handler on a non-propagating logger.
+
+    A logger which is non-propagating when capture starts never reaches the
+    root logger, so the capture handler has to be attached to that logger as
+    well. If the logger then enables ``Logger.propagate`` during the test, the
+    record is seen by both that handler and the one on the root logger and is
+    captured twice (#15064).
+
+    This proxy is attached instead of the real handler. It forwards to the
+    real handler only while its logger is *still* non-propagating, so the
+    record is captured exactly once whether or not ``propagate`` was flipped.
+    The decision is per record and reads the bound logger's live ``propagate``
+    value, so nothing needs to be cached or recomputed between test phases.
+
+    The proxy is a live *view* of the real handler: its level, filters and
+    formatter are the real handler's, so ``caplog.set_level()``,
+    ``caplog.filtering()`` and a formatter installed through ``logger.handlers``
+    keep applying, and nothing has to be undone at teardown.
+    """
+
+    def __init__(self, logger: logging.Logger, real_handler: logging.Handler) -> None:
+        # Deliberately skip ``logging.Handler.__init__``: it would set
+        # ``level``/``filters``/``formatter``, which are live views onto the
+        # real handler here, clobbering its state, and it registers the proxy
+        # in the global handler list, so ``logging.shutdown()`` could close the
+        # real handler. Replicate only the base state the stdlib relies on.
+        self._name = None
+        self._closed = False
+        self.createLock()
+        self.logger: logging.Logger | None = logger
+        # Both are cleared on detach so a retained proxy cannot keep the
+        # capture handler or logger alive; readers treat ``None`` as
+        # "do not forward".
+        self.real_handler: logging.Handler | None = real_handler
+        # Number of catching_logs scopes currently sharing this proxy; the
+        # last one out removes it. Overlapping scopes (e.g. caplog and the
+        # report handler, or two contexts sharing one handler) must attach a
+        # single proxy, or the record is forwarded once per scope.
+        self._refcount = 0
+
+    # ------------------------------------------------------------- live view
+    @property
+    def level(self) -> int:
+        real = self.real_handler
+        return logging.NOTSET if real is None else real.level
+
+    @level.setter
+    def level(self, value: int) -> None:
+        real = self.real_handler
+        if real is not None:
+            real.level = value
+
+    @property
+    def filters(self) -> list[_FilterLike]:
+        real = self.real_handler
+        return [] if real is None else real.filters
+
+    @filters.setter
+    def filters(self, value: list[_FilterLike]) -> None:
+        real = self.real_handler
+        if real is not None:
+            # ``Handler.filters`` is typed invariantly as ``list[Filter]``;
+            # the wider filter kinds are accepted by the stdlib at runtime.
+            real.filters = value  # pyright: ignore[reportAttributeAccessIssue]
+
+    @property
+    def formatter(self) -> logging.Formatter | None:
+        real = self.real_handler
+        return None if real is None else real.formatter
+
+    @formatter.setter
+    def formatter(self, value: logging.Formatter | None) -> None:
+        real = self.real_handler
+        if real is not None:
+            real.formatter = value
+
+    def setLevel(self, level: int | str) -> None:
+        real = self.real_handler
+        if real is not None:
+            real.setLevel(level)
+
+    def addFilter(self, filter: logging.Filter) -> None:  # type: ignore[override]
+        # Filters installed through ``logger.handlers`` (e.g. by
+        # ``caplog.filtering()``) must keep affecting capture, and the real
+        # handler is what applies them, so the filter goes there.
+        real = self.real_handler
+        if real is not None and not any(f is filter for f in real.filters):
+            real.addFilter(filter)
+
+    def removeFilter(self, filter: logging.Filter) -> None:  # type: ignore[override]
+        real = self.real_handler
+        if real is not None:
+            for index, existing in enumerate(real.filters):
+                if existing is filter:
+                    del real.filters[index]
+                    break
+
+    def setFormatter(self, fmt: logging.Formatter | None) -> None:
+        real = self.real_handler
+        if real is not None:
+            real.setFormatter(fmt)
+
+    # ------------------------------------------------------------ forwarding
+    def handle(self, record: logging.LogRecord) -> bool:
+        """Forward to the real handler while the bound logger is non-propagating.
+
+        Called directly by ``Logger.callHandlers()``. The proxy's own lock is
+        deliberately not taken: only the real handler's lock is held while
+        forwarding, so there is no ``proxy -> real`` lock order for another
+        thread to invert and deadlock on. ``Logger.callHandlers()`` ignores the
+        return value.
+        """
+        real = self.real_handler
+        logger = self.logger
+        if real is None or logger is None:
+            return False
+        if logger.propagate:
+            # The bound logger propagates now, so the walk continues past it --
+            # either to the real handler on root or to a non-propagating
+            # ancestor which has its own proxy. Forwarding here too would
+            # deliver a second copy.
+            return False
+        if any(h is real for h in logger.handlers):
+            # The real handler is attached to this logger directly, so this
+            # same walk will already handle the record with it.
+            return False
+        return real.handle(record)
+
+    def emit(self, record: logging.LogRecord) -> None:
+        # Only reached when the handler is driven directly by user code;
+        # ``handle()`` forwards before this handler's own lock is taken.
+        self.handle(record)
+
+    def close(self) -> None:
+        """Detach, then release strong references.
+
+        Detaching must not close the real handler, which pytest reuses across
+        phases. The strong ``logger``/``real_handler`` references are dropped
+        so a retained proxy cannot keep either object alive; ``handle()`` and
+        ``emit()`` treat a missing reference as "do not forward".
+        """
+        self.logger = None
+        self.real_handler = None
+        super().close()
+
+
 # Not using @contextmanager for performance reasons.
 class catching_logs(Generic[_HandlerType]):
     """Context manager that prepares the whole logging machinery properly."""
 
-    __slots__ = ("attached_loggers", "handler", "level", "orig_level")
+    __slots__ = (
+        "attached_loggers",
+        "attached_proxies",
+        "handler",
+        "level",
+        "orig_level",
+    )
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
         self.handler = handler
         self.level = level
         self.attached_loggers: list[logging.Logger] = []
+        self.attached_proxies: list[
+            tuple[list[logging.Handler], _BoundProxyHandler]
+        ] = []
 
     def __enter__(self) -> _HandlerType:
         root_logger = logging.getLogger()
@@ -352,23 +537,58 @@ class catching_logs(Generic[_HandlerType]):
         # Attach to root logger.
         root_logger.addHandler(self.handler)
         self.attached_loggers.append(root_logger)
-        # Attach to all non-propagating loggers (won't reach root).
-        # Note that will miss loggers that *become* non-propagating
-        # after the `__enter__`. Not worth the trouble for now.
-        for logger in root_logger.manager.loggerDict.values():
-            if (
-                isinstance(logger, logging.Logger)
-                and not logger.propagate
-                and logger is not root_logger
-            ):
-                logger.addHandler(self.handler)
-                self.attached_loggers.append(logger)
+        # Attach a stand-in to all non-propagating loggers (their records
+        # won't reach root) and to their ancestors, so that a logger which
+        # flips ``propagate`` during the test -- or an ancestor which becomes
+        # the new barrier -- is still captured exactly once (#15064).
+        self._attach_proxies(root_logger)
         if self.level is not None:
             # Non-propagating loggers still inherit the level (unless a logger
             # explicitly set level), so only do this on the root logger.
             self.orig_level = root_logger.level
             root_logger.setLevel(min(self.orig_level, self.level))
         return self.handler
+
+    def _attach_proxies(self, root_logger: logging.Logger) -> None:
+        """Attach a proxy for every logger which cannot reach the root logger.
+
+        A non-propagating logger never reaches root, so the real handler on
+        root does not see its records; the proxy stands in for it there. Its
+        ancestors get one too: a record emitted below an ancestor which
+        becomes non-propagating mid-test stops at that ancestor, so it needs a
+        stand-in as well.
+        """
+        for logger in root_logger.manager.loggerDict.values():
+            if (
+                not isinstance(logger, logging.Logger)
+                or logger is root_logger
+                or logger.propagate
+            ):
+                continue
+            node: logging.Logger | None = logger
+            while node is not None and node is not root_logger:
+                self._attach_proxy(node)
+                node = node.parent
+
+    def _attach_proxy(self, logger: logging.Logger) -> None:
+        # Reuse a proxy an enclosing scope already attached for this handler,
+        # so overlapping scopes forward a record once rather than once each.
+        for existing in logger.handlers:
+            if (
+                isinstance(existing, _BoundProxyHandler)
+                and existing.real_handler is self.handler
+            ):
+                existing._refcount += 1
+                self.attached_proxies.append((logger.handlers, existing))
+                return
+        proxy = _BoundProxyHandler(logger, self.handler)
+        # ``Logger.addHandler`` refuses a handler comparing equal to one
+        # already attached, so append by identity and remember the exact list
+        # so teardown removes it from there even if the attribute is replaced.
+        handlers = logger.handlers
+        handlers.append(proxy)
+        proxy._refcount = 1
+        self.attached_proxies.append((handlers, proxy))
 
     def __exit__(
         self,
@@ -380,8 +600,22 @@ class catching_logs(Generic[_HandlerType]):
         if self.level is not None:
             root_logger.setLevel(self.orig_level)
         for logger in self.attached_loggers:
-            logger.removeHandler(self.handler)
+            if any(h is self.handler for h in logger.handlers):
+                _remove_handler_by_identity(logger, self.handler)
         self.attached_loggers.clear()
+        for handlers, proxy in self.attached_proxies:
+            proxy._refcount -= 1
+            if proxy._refcount > 0:
+                # Still owned by an enclosing scope; leave it attached.
+                continue
+            # Remove by identity from the exact list the proxy was appended
+            # to; a no-op if it was already removed externally.
+            for index, existing in enumerate(handlers):
+                if existing is proxy:
+                    del handlers[index]
+                    break
+            proxy.close()
+        self.attached_proxies.clear()
 
 
 class LogCaptureHandler(logging_StreamHandler):

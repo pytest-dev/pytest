@@ -1287,6 +1287,160 @@ def test_log_propagation_false(pytester: Pytester) -> None:
     assert not list(report.get_sections("Captured stderr call"))
 
 
+def test_log_propagation_enabled_during_test_captured_once(
+    pytester: Pytester,
+) -> None:
+    """Records from a logger which enables propagation during the test appear
+    exactly once in the report's captured-log sections (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logging.getLogger('foo').propagate = False
+
+        def test_log_once():
+            logging.getLogger('foo').warning("before enabling propagation")
+            logging.getLogger('foo').propagate = True
+            logging.getLogger('foo').warning("after enabling propagation")
+            assert False, "intentionally fail to trigger report logging output"
+    """
+    )
+
+    reprec = pytester.inline_run()
+    reports = reprec.getfailures()
+    assert len(reports) == 1
+    report = reports[0]
+    sections = list(report.get_sections("Captured log call"))
+    assert len(sections) == 1
+    log_text = sections[0][1]
+    assert log_text.count("before enabling propagation") == 1
+    assert log_text.count("after enabling propagation") == 1
+    assert log_text.count("WARNING") == 2
+
+
+def test_log_cli_output_capture_once_when_propagation_enabled_during_test(
+    pytester: Pytester,
+) -> None:
+    """Live ``--log-cli-level`` output shows a record once, not twice, when a
+    logger enables propagation mid-test (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("cli.example")
+        logger.propagate = False
+
+        def test_log_once():
+            logger.propagate = True
+            logger.warning("live only once")
+        """
+    )
+
+    result = pytester.runpytest("--log-cli-level=WARNING")
+    result.assert_outcomes(passed=1)
+    result.stdout.no_fnmatch_line("*live only once*live only once*")
+    assert result.stdout.str().count("live only once") == 1
+
+
+def test_log_file_output_capture_once_when_propagation_enabled_during_test(
+    pytester: Pytester,
+) -> None:
+    """``--log-file`` output records the message once, not twice (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("file.example")
+        logger.propagate = False
+
+        def test_log_once():
+            logger.propagate = True
+            logger.warning("file only once")
+        """
+    )
+
+    log_file = str(pytester.path.joinpath("pytest.log"))
+    result = pytester.runpytest(f"--log-file={log_file}", "--log-file-level=WARNING")
+    result.assert_outcomes(passed=1)
+
+    with open(log_file, encoding="utf-8") as rfh:
+        contents = rfh.read()
+    assert contents.count("file only once") == 1
+
+
+def test_report_capture_with_level_filter_on_non_propagating_logger(
+    pytester: Pytester,
+) -> None:
+    """A level set through the proxy on a non-propagating logger still applies
+    to records forwarded to the real capture handler (#15064)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("level.example")
+        logger.propagate = False
+
+        def test_level_filter(caplog):
+            with caplog.at_level(logging.WARNING, logger="level.example"):
+                logger.info("suppressed info")
+                logger.warning("kept warning")
+            assert caplog.messages == ["kept warning"]
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_report_capture_with_handler_filter_on_non_propagating_logger(
+    pytester: Pytester,
+) -> None:
+    """A filter installed through the proxy on a non-propagating logger still
+    affects capture (#15064).
+
+    The filter is the caller's own: the proxy is a view of the real handler, so
+    the filter stays on the real handler until it is explicitly removed, which
+    is what the un-proxied handler would do. Teardown deliberately does NOT
+    remove it -- a proxy must not claim ownership of state it did not create.
+    """
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("filter.example")
+        logger.propagate = False
+
+        def only_warnings(record):
+            return record.levelno >= logging.WARNING
+
+        def test_filter_applies(caplog):
+            for handler in logger.handlers:
+                handler.addFilter(only_warnings)
+            logger.info("dropped")
+            logger.warning("kept")
+            assert "dropped" not in caplog.text
+            assert "kept" in caplog.text
+
+        def test_filter_still_applies_until_removed(caplog):
+            # The filter was not removed at the end of the previous test: it
+            # belongs to the caller, so it persists exactly as it would on the
+            # real handler. It is removed here explicitly, which is the only
+            # thing that should take it out of the capture path.
+            logger.info("still dropped")
+            assert "still dropped" not in caplog.text
+            for handler in logger.handlers:
+                if hasattr(handler, "removeFilter"):
+                    handler.removeFilter(only_warnings)
+            caplog.set_level(logging.INFO)
+            logger.info("not filtered now")
+            assert "not filtered now" in caplog.text
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_colored_ansi_esc_caplogtext(pytester: Pytester) -> None:
     """Make sure that caplog.text does not contain ANSI escape sequences."""
     pytester.makepyfile(
