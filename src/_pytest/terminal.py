@@ -410,6 +410,7 @@ class TerminalReporter:
         self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[NodeId] = set()
         self._timing_nodeids_reported: set[NodeId] = set()
+        self._current_logreport: TestReport | None = None
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -634,6 +635,7 @@ class TerminalReporter:
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
+        self._current_logreport = report
         self._tests_ran = True
         rep = report
 
@@ -741,6 +743,13 @@ class TerminalReporter:
         if self._show_progress_info == "times":
             if not collected:
                 return ""
+            from _pytest.subtests import SubtestReport
+
+            if isinstance(self._current_logreport, SubtestReport):
+                if self.showlongtestinfo:
+                    return format_node_duration(self._current_logreport.duration)
+                return ""
+
             all_reports = (
                 self._get_reports_to_display("passed")
                 + self._get_reports_to_display("xpassed")
@@ -750,9 +759,18 @@ class TerminalReporter:
                 + self._get_reports_to_display("error")
                 + self._get_reports_to_display("")
             )
-            current_location = all_reports[-1].location[0]
+
+            report = self._current_logreport
+            if report is not None:
+                current_location = report.location[0]
+            else:
+                current_location = all_reports[-1].location[0] if all_reports else ""
+
             not_reported = [
-                r for r in all_reports if r.id not in self._timing_nodeids_reported
+                r
+                for r in all_reports
+                if not isinstance(r, SubtestReport)
+                and r.id not in self._timing_nodeids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
