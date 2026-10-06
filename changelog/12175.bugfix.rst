@@ -1,0 +1,1 @@
+:meth:`ExceptionInfo.exconly(tryshort=True) <pytest.ExceptionInfo.exconly>` now strips the leading ``AssertionError:`` for assertion failures captured by :func:`pytest.raises`, matching :meth:`ExceptionInfo.from_exc_info <pytest.ExceptionInfo.from_exc_info>`.

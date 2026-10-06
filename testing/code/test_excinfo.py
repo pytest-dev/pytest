@@ -376,6 +376,28 @@ def test_excinfo_for_later() -> None:
     assert "for raises" in str(e)
 
 
+def test_excinfo_for_later_strips_assertion_error() -> None:
+    """Regression test for #12175."""
+    try:
+        assert 1 == 2
+    except AssertionError:
+        exc_info = sys.exc_info()
+    assert exc_info[0] is not None
+    assert exc_info[1] is not None
+    assert exc_info[2] is not None
+    tup = (exc_info[0], exc_info[1], exc_info[2])
+
+    later = ExceptionInfo[AssertionError].for_later()
+    later.fill_unfilled(tup)
+    expected = ExceptionInfo.from_exc_info(tup).exconly(tryshort=True)
+    assert expected == "assert 1 == 2"
+    assert later.exconly(tryshort=True) == expected
+
+    with pytest.raises(AssertionError) as excinfo:
+        assert 1 == 2
+    assert excinfo.exconly(tryshort=True) == "assert 1 == 2"
+
+
 def test_excinfo_errisinstance():
     with pytest.raises(ValueError) as excinfo:
         h()
