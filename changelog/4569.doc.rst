@@ -1,0 +1,1 @@
+``pytest --help``, the :option:`-k` reference entry and :ref:`select-tests` no longer describe :option:`-k` as a Python expression matched against test names only; :ref:`keyword expressions` now shows marker names being matched as well. The examples that looked up a marker use :meth:`Node.get_closest_marker <_pytest.nodes.Node.get_closest_marker>` rather than ``item.keywords``.

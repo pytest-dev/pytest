@@ -973,6 +973,16 @@ class TestNodeKeywords:
         assert "bar" not in mod.keywords
         assert "baz" not in mod.keywords
 
+    def test_added_marks_added_to_keywords(self, pytester: Pytester) -> None:
+        """Dynamically added marks land in keywords as Mark objects, same as
+        marks applied during collection (#4569)."""
+        item = pytester.getitem("def test_method(): pass", "test_method")
+        item.add_marker("foo")
+        item.add_marker(pytest.mark.bar("arg", kwarg=1))
+
+        assert item.keywords["foo"] == pytest.mark.foo.mark
+        assert item.keywords["bar"] == pytest.mark.bar("arg", kwarg=1).mark
+
 
 class TestCollectDirectoryHook:
     def test_custom_directory_example(self, pytester: Pytester) -> None:
