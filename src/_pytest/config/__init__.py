@@ -79,6 +79,7 @@ from _pytest.pathlib import ImportMode
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
+from _pytest.warning_late_error import catching_warnings
 from _pytest.warning_late_error import collect_or_show
 from _pytest.warning_late_error import ERROR_LATER_ACTION
 from _pytest.warning_late_error import install_warning_filter
@@ -1294,7 +1295,7 @@ class Config:
         config_filters = self.getini("filterwarnings")
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
         catcher: contextlib.AbstractContextManager[LateWarningLog | None] = (
-            recording_warnings() if record else warnings.catch_warnings()
+            recording_warnings() if record else catching_warnings()
         )
         with catcher as log:
             if not sys.warnoptions:

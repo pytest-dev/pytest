@@ -1429,6 +1429,91 @@ class TestErrorLaterWarnings:
         assert result.ret == ExitCode.OK
         result.stdout.fnmatch_lines(["*1 passed, 1 warning*"])
 
+    def test_showwarning_hook_that_forwards_keeps_the_verdict(
+        self, pytester: Pytester
+    ) -> None:
+        """#15139: numpy.testing.suppress_warnings forwards like this."""
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_it():
+                orig = warnings.showwarning
+                warnings.showwarning = lambda *a, **k: orig(*a, **k)
+                try:
+                    warnings.warn("forwarded", UserWarning)
+                finally:
+                    warnings.showwarning = orig
+            """
+        )
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        result.assert_outcomes(failed=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            ["*1 warning matched an 'error_later' filter:", "*UserWarning: forwarded"]
+        )
+
+    def test_showwarning_hook_that_discards_leaves_no_verdict(
+        self, pytester: Pytester
+    ) -> None:
+        """A verdict outliving its warning would tag the next one with the same text."""
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_it():
+                orig = warnings.showwarning
+                warnings.showwarning = lambda *a, **k: None
+                try:
+                    warnings.warn("same", UserWarning)
+                finally:
+                    warnings.showwarning = orig
+                with warnings.catch_warnings():
+                    warnings.simplefilter("always")
+                    warnings.warn("same", RuntimeWarning)
+            """
+        )
+        result = pytester.runpytest("-W", "error_later::UserWarning")
+
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines(["*RuntimeWarning: same"])
+
+    def test_showwarning_hook_that_warns_before_forwarding(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_it():
+                orig = warnings.showwarning
+                def hook(*args, **kwargs):
+                    warnings.showwarning = orig
+                    warnings.warn("from the hook", RuntimeWarning)
+                    orig(*args, **kwargs)
+                warnings.showwarning = hook
+                try:
+                    warnings.warn("outer", UserWarning)
+                finally:
+                    warnings.showwarning = orig
+            """
+        )
+        result = pytester.runpytest(
+            "-W", "error_later::UserWarning", "-W", "always::RuntimeWarning"
+        )
+
+        result.assert_outcomes(failed=1, warnings=2)
+        result.stdout.fnmatch_lines(
+            ["*1 warning matched an 'error_later' filter:", "*UserWarning: outer"]
+        )
+
+    def test_showwarnmsg_is_restored_after_the_session(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile("def test_pass(): pass")
+        before = warnings._showwarnmsg  # type: ignore[attr-defined]
+
+        pytester.runpytest_inprocess("-W", "error_later::UserWarning")
+
+        assert warnings._showwarnmsg is before  # type: ignore[attr-defined]
+
     def test_invalid_report_mode_is_a_usage_error(self, pytester: Pytester) -> None:
         pytester.makepyfile("def test_pass(): pass")
 
