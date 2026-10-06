@@ -633,10 +633,6 @@ def _fixture_graph(
         exhausted: bool,
         origin: Literal["declared", "dynamic", "closure"],
     ) -> None:
-        if isinstance(requester, DirectParamFixtureDef):
-            # Direct parameter implementation details are not public graph
-            # nodes and must never escape through an edge.
-            return
         kind: Literal["fixture", "parameter", "request", "unresolved", "exhausted"]
         if exhausted:
             kind = "exhausted"
@@ -647,9 +643,6 @@ def _fixture_graph(
             kind = "request"
         elif target is None:
             kind = "unresolved"
-        elif isinstance(target, DirectParamFixtureDef):
-            kind = "parameter"
-            target = parameter_nodes.setdefault(argname, FixtureGraphParameter(argname))
         else:
             kind = "fixture"
         key = (

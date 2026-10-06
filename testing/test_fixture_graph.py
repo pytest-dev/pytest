@@ -122,6 +122,7 @@ def test_declared_definitions_keep_distinct_identities() -> None:
 
     first = cast(pytest.FixtureDef[Any], EqualDefinition("first", ("second",)))
     second = cast(pytest.FixtureDef[Any], EqualDefinition("second", ()))
+    assert first == second
     graph = _fixture_graph(
         ("first",), getfixturedefs={"first": (first,), "second": (second,)}.get
     )
