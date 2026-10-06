@@ -15,7 +15,33 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
-.. _callspec2-renamed:
+.. _conftest-import-skip:
+
+``pytest.skip()`` while importing a ``conftest.py``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+Calling ``pytest.skip()`` without ``allow_module_level=True`` while a ``conftest.py``
+is being imported skipped the whole directory, although the same call in a test module
+is an error.
+
+It now issues a :class:`~pytest.PytestRemovedIn10Warning` and will be an error in
+pytest 10. To skip a directory from its ``conftest.py``, use
+:ref:`pytest.importorskip ref` or ``pytest.skip(reason, allow_module_level=True)``
+(see :ref:`skip-conftest`):
+
+.. code-block:: python
+
+    # Deprecated
+    if not has_feature():
+        pytest.skip("feature not available")
+
+    # Use instead
+    if not has_feature():
+        pytest.skip("feature not available", allow_module_level=True)
+
+
 
 ``_pytest.python.CallSpec2`` renamed to ``CallSpec``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

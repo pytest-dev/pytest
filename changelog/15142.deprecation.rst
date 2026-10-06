@@ -1,0 +1,3 @@
+Calling ``pytest.skip()`` without ``allow_module_level=True`` while a ``conftest.py`` is imported is deprecated and will be an error in pytest 10.
+Use :func:`pytest.importorskip` or ``pytest.skip(..., allow_module_level=True)`` to skip a directory from its ``conftest.py``.
+See :ref:`conftest-import-skip` for details.
