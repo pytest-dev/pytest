@@ -97,11 +97,15 @@ late_warning_state_key: StashKey[LateWarningState] = StashKey()
 # - if its filter loses on a later field (category and line are checked after
 #   the module in C), the search goes on to the loss probe, which withdraws it.
 #
-# The verdict is handed over through a thread-local and consumed by pytest's
-# recording log or showwarning wrapper. The win probe only records when one of
-# those is where the warning will go, so a warning shown elsewhere (pytest.warns,
-# a test's own catch_warnings, logging.captureWarnings) leaves nothing behind
-# for the next warning to pick up.
+# The verdict is handed over through a thread-local. The win probe cannot
+# know where the warning will be shown: straight to pytest's recording, through
+# a test's showwarning hook that forwards it there (pytest-dev/pytest#15139), or
+# somewhere else entirely (pytest.warns, a test's own catch_warnings,
+# logging.captureWarnings). So the probe only leaves the verdict pending, and a
+# wrapper around ``warnings._showwarnmsg``, which the stdlib calls for every
+# shown warning, makes it current for exactly that call. Whatever reaches
+# pytest's recording log or showwarning wrapper during the call consumes it;
+# when the call returns it is gone, so nothing is left for the next warning.
 
 _verdict = threading.local()
 
@@ -110,10 +114,29 @@ _CONTEXT_AWARE: Final = bool(getattr(sys.flags, "context_aware_warnings", False)
 
 
 def _take_verdict() -> str | None:
-    """The module name of a warning an ``error_later`` filter just won, once."""
-    module: str | None = getattr(_verdict, "module", None)
-    _verdict.module = None
+    """The module name, if an ``error_later`` filter won the warning being shown; once."""
+    module: str | None = getattr(_verdict, "current", None)
+    _verdict.current = None
     return module
+
+
+def _scope_verdicts_to_show_calls() -> None:
+    show = warnings._showwarnmsg  # type: ignore[attr-defined]
+    if getattr(show, "_pytest_scopes_verdicts", False):
+        return
+
+    def show_with_verdict(msg: warnings.WarningMessage) -> None:
+        # Restored rather than cleared: a hook may warn again before forwarding.
+        outer = getattr(_verdict, "current", None)
+        _verdict.current = getattr(_verdict, "pending", None)
+        _verdict.pending = None
+        try:
+            show(msg)
+        finally:
+            _verdict.current = outer
+
+    show_with_verdict._pytest_scopes_verdicts = True  # type: ignore[attr-defined]
+    warnings._showwarnmsg = show_with_verdict  # type: ignore[attr-defined]
 
 
 class LateWarningLog(list[warnings.WarningMessage]):
@@ -159,20 +182,6 @@ def _route_recording_through_verdicts() -> None:
             warnings._showwarnmsg_impl = log._record  # type: ignore[attr-defined]
 
 
-def _pytest_receives_shown_warnings() -> bool:
-    showwarning = warnings.showwarning
-    if showwarning is not warnings._showwarning_orig:  # type: ignore[attr-defined]
-        return getattr(showwarning, "_pytest_error_later_sink", False)
-    if _CONTEXT_AWARE:
-        import _py_warnings
-
-        return warnings._showwarnmsg_impl is _py_warnings._showwarnmsg_impl and (  # type: ignore[attr-defined]
-            isinstance(warnings._get_context().log, _ContextSink)  # type: ignore[attr-defined]
-        )
-    sink = getattr(warnings._showwarnmsg_impl, "__func__", None)  # type: ignore[attr-defined]
-    return sink is LateWarningLog._record
-
-
 class _WinProbe:
     __slots__ = ("_regex", "pattern")
 
@@ -183,8 +192,8 @@ class _WinProbe:
 
     def match(self, module: str) -> object:
         matched = True if self._regex is None else self._regex.match(module)
-        if matched and _pytest_receives_shown_warnings():
-            _verdict.module = module
+        if matched:
+            _verdict.pending = module
         return matched
 
     def __repr__(self) -> str:
@@ -196,7 +205,7 @@ class _LossProbe:
     pattern = None
 
     def match(self, module: str) -> None:
-        _verdict.module = None
+        _verdict.pending = None
 
     def __repr__(self) -> str:
         return "<error_later lost>"
@@ -218,6 +227,7 @@ def _install_error_later(
         filters.insert(0, ("always", regex, category, _WinProbe(module), lineno))
     warnings._filters_mutated()  # type: ignore[attr-defined]
     _route_recording_through_verdicts()
+    _scope_verdicts_to_show_calls()
 
 
 def install_warning_filter(filter_: WarningFilter) -> None:
@@ -230,9 +240,27 @@ def install_warning_filter(filter_: WarningFilter) -> None:
 
 
 @contextlib.contextmanager
+def _keeping_showwarnmsg() -> Iterator[None]:
+    # catch_warnings() restores showwarning, but not the _showwarnmsg that an
+    # error_later filter wraps.
+    show = warnings._showwarnmsg  # type: ignore[attr-defined]
+    try:
+        yield
+    finally:
+        warnings._showwarnmsg = show  # type: ignore[attr-defined]
+
+
+@contextlib.contextmanager
+def catching_warnings() -> Iterator[None]:
+    """``catch_warnings()``, for contexts that may install ``error_later`` filters."""
+    with _keeping_showwarnmsg(), warnings.catch_warnings():
+        yield
+
+
+@contextlib.contextmanager
 def recording_warnings() -> Iterator[LateWarningLog]:
     """``catch_warnings(record=True)``, recording into a :class:`LateWarningLog`."""
-    with warnings.catch_warnings(record=True):
+    with _keeping_showwarnmsg(), warnings.catch_warnings(record=True):
         log = LateWarningLog()
         if _CONTEXT_AWARE:
             warnings._get_context().log = log  # type: ignore[attr-defined]
@@ -262,7 +290,6 @@ def collect_or_show(
         else:
             showwarning(message, category, filename, lineno, file, line)
 
-    show._pytest_error_later_sink = True  # type: ignore[attr-defined]
     return show
 
 
