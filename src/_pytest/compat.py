@@ -162,6 +162,7 @@ def getfuncargnames(
         # Not using `getattr` because we don't want to resolve the staticmethod.
         # Not using `cls.__dict__` because we want to check the entire MRO.
         cls
+        and not inspect.ismethod(function)
         and not isinstance(
             inspect.getattr_static(cls, name, default=None), staticmethod
         )

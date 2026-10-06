@@ -69,6 +69,52 @@ def test_getfuncargnames_methods():
     assert getfuncargnames(A().k) == ("arg1", "arg2")
 
 
+def test_bound_method_fixtures_custom_collector(pytester: Pytester) -> None:
+    """Custom collectors can supply already-bound methods (#6750)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_pycollect_makeitem(collector, name, obj):
+            if isinstance(collector, pytest.Class) and name.startswith("test_"):
+                return pytest.Function.from_parent(
+                    collector,
+                    name=name,
+                    callobj=getattr(collector.newinstance(), name),
+                )
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def value():
+            return 42
+
+        class TestBound:
+            def test_instance(self, value):
+                assert value == 42
+
+            def test_positional_only_receiver(self, /, value):
+                assert value == 42
+
+            def test_keyword_only_fixture(self, *, value):
+                assert value == 42
+
+            @classmethod
+            def test_classmethod(cls, value):
+                assert value == 42
+
+            @staticmethod
+            def test_staticmethod(value):
+                assert value == 42
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=5)
+
+
 def test_getfuncargnames_staticmethod():
     """Test getfuncargnames for staticmethods"""
 

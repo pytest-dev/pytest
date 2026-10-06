@@ -1,0 +1,1 @@
+Fix fixture argument discovery for custom collectors that pass bound methods to :class:`pytest.Function`.
