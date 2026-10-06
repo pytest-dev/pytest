@@ -42,6 +42,7 @@ pytest 10. To skip a directory from its ``conftest.py``, use
         pytest.skip("feature not available", allow_module_level=True)
 
 
+.. _callspec2-renamed:
 
 ``_pytest.python.CallSpec2`` renamed to ``CallSpec``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
