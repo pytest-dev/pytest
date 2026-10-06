@@ -248,9 +248,9 @@ def pytest_collection(session: Session) -> object | None:
 
       1. ``pytest_deselected(items)`` for any deselected items (may be called multiple times)
 
-    3. Set ``session.items`` to the list of collected items
+    3. Set ``session.items`` to the list of collected items (not including deselected items)
     4. ``pytest_collection_finish(session)``
-    5. Set ``session.testscollected`` to the number of collected items
+    5. Set ``session.testscollected`` to the number of collected items (not including deselected items)
 
     You can implement this hook to only perform some action before collection,
     for example the terminal plugin uses it to start displaying the collection
