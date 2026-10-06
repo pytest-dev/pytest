@@ -761,8 +761,7 @@ def _import_module_using_spec(
         except BaseException:
             # Like importlib itself, do not leave a half-executed module
             # behind, a later import would silently return it (#15142).
-            if sys.modules.get(module_name) is mod:
-                del sys.modules[module_name]
+            sys.modules.pop(module_name, None)
             raise
 
         # Set this module as an attribute of the parent module (#12194).
