@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     # Imported here due to circular import.
+    from _pytest.fixtures import FixtureGraph
     from _pytest.main import Session
 
 
@@ -713,6 +714,15 @@ class Item(Node, abc.ABC):
         self.user_properties: list[tuple[str, object]] = []
 
         self._check_item_and_collector_diamond_inheritance()
+
+    def fixture_graph(self) -> FixtureGraph:
+        """Return a snapshot of this item's static fixture relationships.
+
+        .. versionadded:: 9.2
+        """
+        from _pytest.fixtures import _fixture_graph_for_item
+
+        return _fixture_graph_for_item(self)
 
     def _check_item_and_collector_diamond_inheritance(self) -> None:
         """
