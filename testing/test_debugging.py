@@ -1398,6 +1398,7 @@ def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(str(p1))
     result.stdout.fnmatch_lines(["E *BdbQuit", "*Interrupted: Debugger quit*"])
+    result.assert_outcomes(failed=1)
     assert result.ret == 2
 
 
