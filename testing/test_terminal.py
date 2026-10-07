@@ -240,6 +240,8 @@ class TestTerminal:
         a2_lines = [line for line in lines if "test_a2 PASSED" in line]
         assert len(a2_lines) == 1
         # The teardown duration of test_a1 (300ms) should not leak into test_a2.
+        # A leak shows up as at least 0.3s; anything below that is test_a2's own
+        # time, which can reach ~0.25s on slow CI runners (Windows).
         duration_str = a2_lines[0].split()[-1]
         if duration_str.endswith("us"):
             dur_seconds = float(duration_str[:-2]) / 1_000_000
@@ -249,7 +251,7 @@ class TestTerminal:
             dur_seconds = float(duration_str[:-1])
         else:
             dur_seconds = 0.0
-        assert dur_seconds < 0.1
+        assert dur_seconds < 0.3
 
     def test_progress_information_message_no_current_report(
         self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
