@@ -521,8 +521,8 @@ def test_captures_once_when_nested_non_propagating_logger_starts_propagating(
 def test_captures_when_propagation_barrier_moves_to_ancestor(
     pytester: Pytester,
 ) -> None:
-    """The ancestor is not non-propagating at capture start, so nothing of
-    pytest's is attached to it; the record must still be captured once."""
+    """The ancestor is not non-propagating at capture start; the record must
+    still be captured once."""
     pytester.makepyfile(
         """
         import logging
@@ -536,6 +536,52 @@ def test_captures_when_propagation_barrier_moves_to_ancestor(
             parent.propagate = False
             child.warning("stops at parent")
             assert caplog.messages == ["stops at parent"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_captures_sibling_when_ancestor_becomes_non_propagating(
+    pytester: Pytester,
+) -> None:
+    """An ancestor of a logger that was non-propagating at capture start
+    becomes non-propagating; a sibling's record now stops there."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        parent = logging.getLogger("ancestor_flip.parent")
+        child = logging.getLogger("ancestor_flip.parent.child")
+        sibling = logging.getLogger("ancestor_flip.parent.sibling")
+        child.propagate = False
+
+        def test_ancestor_flips(caplog):
+            parent.propagate = False
+            sibling.warning("stops at parent")
+            parent.warning("from parent")
+            assert caplog.messages == ["stops at parent", "from parent"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_captures_once_from_loggers_sharing_a_handlers_list(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+
+        a = logging.getLogger("shared_list.a")
+        b = logging.getLogger("shared_list.b")
+        b.handlers = a.handlers
+        a.propagate = b.propagate = False
+
+        def test_shared(caplog):
+            b.warning("from b")
+            assert caplog.messages == ["from b"]
         """
     )
     result = pytester.runpytest()

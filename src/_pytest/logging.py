@@ -336,7 +336,7 @@ _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 
 class _PropagationEndHandler(logging.Handler):
     """Stands in for a pytest handler on a logger which did not propagate when
-    capture started.
+    capture started, or on one of its ancestors.
 
     It forwards a record only if the propagation walk, as it stands at emit
     time, ends below root at a logger that does not otherwise deliver to the
@@ -401,16 +401,32 @@ class catching_logs(Generic[_HandlerType]):
         # `propagate` values, whether root will see the record.
         # Loggers that *become* non-propagating after `__enter__` are missed
         # unless a logger in this set lies below them.
-        ends = [
-            logger
-            for logger in root_logger.manager.loggerDict.values()
-            if isinstance(logger, logging.Logger)
-            and not logger.propagate
-            and logger is not root_logger
-        ]
+        # Their ancestors get one too, so a record stopped at an ancestor
+        # which becomes non-propagating mid-test is still captured.
+        ends: dict[int, logging.Logger] = {}
+        for logger in root_logger.manager.loggerDict.values():
+            if (
+                isinstance(logger, logging.Logger)
+                and not logger.propagate
+                and logger is not root_logger
+            ):
+                while logger is not root_logger and id(logger) not in ends:
+                    ends[id(logger)] = logger
+                    logger = logger.parent  # type: ignore[assignment]
         if ends:
-            delivered_at = frozenset(map(id, [root_logger, *ends]))
-            for logger in ends:
+            delivered_at = frozenset([id(root_logger), *ends])
+            by_list: dict[int, list[logging.Logger]] = {}
+            for logger in ends.values():
+                by_list.setdefault(id(logger.handlers), []).append(logger)
+            for loggers in by_list.values():
+                logger = loggers[0]
+                if len(loggers) > 1:
+                    # Loggers sharing one handlers list cannot tell their
+                    # records apart; attach the pytest handler itself, as
+                    # before #15064.
+                    logger.addHandler(self.handler)
+                    self.attached.append((logger, self.handler))
+                    continue
                 stand_in = _PropagationEndHandler(logger, self.handler, delivered_at)
                 logger.addHandler(stand_in)
                 self.attached.append((logger, stand_in))
