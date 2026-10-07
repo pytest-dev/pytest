@@ -69,15 +69,36 @@ def bin_xml_escape(arg: object) -> str:
     return re.sub(illegal_xml_re, repl, str(arg))
 
 
-# Maximum length of the escaped message attribute of <failure> and <error>
-# elements; the complete report is still written to the element body.
-_MAX_FAILURE_MESSAGE_LENGTH = 1000
+# Whole-line budget for the raw ``message`` attribute of <failure> and <error>.
+# Applied before XML escaping so a cut cannot split an escape. The complete
+# report is still written to the element body.
+_MESSAGE_BUDGET = 500
 
 
-def _truncate_failure_message(message: str) -> str:
-    if len(message) <= _MAX_FAILURE_MESSAGE_LENGTH:
-        return message
-    return message[:_MAX_FAILURE_MESSAGE_LENGTH] + "..."
+def _shorten_message(msg: str) -> str:
+    """Keep whole lines of ``msg`` within ``_MESSAGE_BUDGET``.
+
+    A single line longer than the budget is cut. When anything is dropped, the
+    result notes that the element body still has the full report.
+    """
+    lines = msg.splitlines() or [""]
+    kept: list[str] = []
+    size = 0
+    for line in lines:
+        # The extra ``+ 1`` accounts for the newline ``str.join`` will insert.
+        if kept and size + len(line) + 1 > _MESSAGE_BUDGET:
+            break
+        kept.append(line)
+        size += len(line) + 1
+    out = "\n".join(kept)
+    cut = len(out) > _MESSAGE_BUDGET
+    if cut:
+        out = out[:_MESSAGE_BUDGET] + "..."
+    rest = len(lines) - len(kept)
+    if not cut and not rest:
+        return out
+    note = f"+{rest} more lines" if rest else "truncated"
+    return f"{out}\n[{note}; full report in element text]"
 
 
 def merge_family(left, right) -> None:
@@ -224,7 +245,7 @@ class _NodeReporter:
                 message = reprcrash.message
             else:
                 message = str(report.longrepr)
-            message = _truncate_failure_message(bin_xml_escape(message))
+            message = bin_xml_escape(_shorten_message(message))
             self._add_simple("failure", message, str(report.longrepr))
 
     def append_collect_error(self, report: CollectReport) -> None:
@@ -249,7 +270,7 @@ class _NodeReporter:
             msg = f'failed on setup with "{reason}"'
         self._add_simple(
             "error",
-            _truncate_failure_message(bin_xml_escape(msg)),
+            bin_xml_escape(_shorten_message(msg)),
             str(report.longrepr),
         )
 

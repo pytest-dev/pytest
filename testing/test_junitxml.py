@@ -16,6 +16,8 @@ from _pytest.config import Config
 from _pytest.junitxml import _JunitDurationReport
 from _pytest.junitxml import _JunitFamily
 from _pytest.junitxml import _JunitLogging
+from _pytest.junitxml import _MESSAGE_BUDGET
+from _pytest.junitxml import _shorten_message
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
 from _pytest.monkeypatch import MonkeyPatch
@@ -203,6 +205,38 @@ class TestJunitHelpers:
 
         assert repr(item) == item.toxml()
         assert item.toxml() == '<item name="a"/>'
+
+
+class TestShortenFailureMessage:
+    def test_keeps_short_multiline_message(self) -> None:
+        msg = (
+            "Regex pattern did not match.\n"
+            "  Expected regex: 'expected'\n"
+            "  Actual message: 'actual'"
+        )
+        assert _shorten_message(msg) == msg
+
+    def test_cuts_on_line_boundary(self) -> None:
+        line = "x" * 100
+        msg = "\n".join([line] * 10)
+        out = _shorten_message(msg)
+        content, note = out.rsplit("\n", 1)
+        assert note == "[+6 more lines; full report in element text]"
+        assert content.split("\n") == [line] * 4
+        assert not content.endswith("...")
+
+    def test_cuts_overlong_first_line(self) -> None:
+        out = _shorten_message("z" * 5000)
+        assert out == (
+            "z" * _MESSAGE_BUDGET + "...\n[truncated; full report in element text]"
+        )
+
+    def test_shorten_before_xml_escape_keeps_escape_intact(self) -> None:
+        raw = ("a" * (_MESSAGE_BUDGET - 1)) + "\x1b" + ("b" * 50)
+        escaped = bin_xml_escape(_shorten_message(raw))
+        assert "#x1B" in escaped
+        assert "#x1..." not in escaped
+        assert escaped.endswith("[truncated; full report in element text]")
 
 
 parametrize_families = pytest.mark.parametrize("xunit_family", ["xunit1", "xunit2"])
@@ -672,14 +706,59 @@ class TestPython:
         message = fnode["message"]
         assert message.startswith("AssertionError: assert ['x', 'x', ")
         if verbosity == "-q":
-            assert len(message) < 1000
-            assert not message.endswith("...")
+            assert "full report in element text" not in message
         else:
-            assert len(message) == 1000 + len("...")
-            assert message.endswith("...")
+            note = message.splitlines()[-1]
+            assert note.startswith("[+")
+            assert note.endswith(" more lines; full report in element text]")
             assert len(fnode.text) > 10 * len(message)
             assert "Full diff:" in fnode.text
             assert "'x\\n'," in fnode.text
+
+    def test_failure_message_cuts_on_line_boundary(
+        self, pytester: Pytester, run_and_parse: RunAndParse
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_fail():
+                text = "\\n".join(f"row-{i:03d}-" + ("x" * 40) for i in range(30))
+                raise ValueError(text)
+        """
+        )
+        result, dom = run_and_parse()
+        assert result.ret == 1
+        fnode = dom.get_first_by_tag("failure")
+        message = fnode["message"]
+        content, note = message.rsplit("\n", 1)
+        assert note.startswith("[+")
+        assert note.endswith(" more lines; full report in element text]")
+        assert not content.endswith("...")
+        assert content.startswith("ValueError: row-000-")
+        for line in content.splitlines():
+            assert "row-" in line
+            assert not line.endswith("...")
+        assert "row-029-" in fnode.text
+
+    def test_raises_match_message_is_not_shortened(
+        self, pytester: Pytester, run_and_parse: RunAndParse
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import re
+            import pytest
+
+            def test_fail():
+                with pytest.raises(ValueError, match=re.compile("expected")):
+                    raise ValueError("actual")
+        """
+        )
+        result, dom = run_and_parse()
+        assert result.ret == 1
+        message = dom.get_first_by_tag("failure")["message"]
+        assert "Regex pattern did not match." in message
+        assert "Expected regex:" in message
+        assert "Actual message:" in message
+        assert "full report in element text" not in message
 
     def test_error_message_is_truncated(
         self, pytester: Pytester, run_and_parse: RunAndParse
@@ -699,7 +778,10 @@ class TestPython:
         assert result.ret
         fnode = dom.get_first_by_tag("error")
         prefix = 'failed on setup with "ValueError: '
-        assert fnode["message"] == prefix + "a" * (1000 - len(prefix)) + "..."
+        raw = prefix + "a" * 2000 + '"'
+        assert fnode["message"] == (
+            raw[:_MESSAGE_BUDGET] + "...\n[truncated; full report in element text]"
+        )
         assert "a" * 2000 in fnode.text
 
     @parametrize_families
