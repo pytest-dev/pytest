@@ -356,6 +356,19 @@ def test_excinfo_exconly_tryshort_assert() -> None:
         raise AssertionError("message")
     assert excinfo.exconly(tryshort=True) == "AssertionError: message"
 
+    # A legacy ``msg`` attribute is checked instead of the repr.
+    exc = AssertionError("assert 1 == 2")
+    exc.msg = "custom"  # type: ignore[attr-defined]
+    with pytest.raises(AssertionError) as excinfo:
+        raise exc
+    assert excinfo.exconly(tryshort=True) == "AssertionError: assert 1 == 2"
+
+    # An explicit exprinfo disables stripping.
+    with pytest.raises(AssertionError) as excinfo:
+        assert x == 2
+    info = ExceptionInfo.from_exception(excinfo.value, exprinfo="assert x == 2")
+    assert info.exconly(tryshort=True) == "AssertionError: assert 1 == 2"
+
 
 def test_excinfo_exconly():
     with pytest.raises(ValueError) as excinfo:
