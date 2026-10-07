@@ -173,9 +173,8 @@ TERMINAL_WRITE_LINE_BYTES = UnformattedWarning(
 CONFTEST_IMPORT_SKIP = UnformattedWarning(
     PytestRemovedIn10Warning,
     "{path} called pytest.skip() while being imported.\n"
-    "A conftest.py may only skip its directory with pytest.importorskip() or "
-    "pytest.skip(..., allow_module_level=True); a plain pytest.skip() will be "
-    "an error in pytest 10.\n"
+    "A conftest.py may only skip its directory with pytest.importorskip(); "
+    "pytest.skip() will be an error in pytest 10.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#conftest-import-skip",
 )
 

@@ -1588,16 +1588,20 @@ def test_module_level_skip_with_node_id(pytester: Pytester) -> None:
 
 
 def test_module_level_skips_raise_skipped_module() -> None:
+    from _pytest.outcomes import SkippedImport
     from _pytest.outcomes import SkippedModule
 
     with pytest.raises(SkippedModule) as excinfo:
         pytest.skip("reason", allow_module_level=True)
     assert excinfo.value.allow_module_level
+    assert not isinstance(excinfo.value, SkippedImport)
     # Reported like any other skip.
     assert excinfo.exconly() == "Skipped: reason"
 
-    with pytest.raises(SkippedModule):
+    with pytest.raises(SkippedImport) as imported:
         pytest.importorskip("no_such_module_xyz")
+    assert imported.value.allow_module_level
+    assert imported.exconly().startswith("Skipped: could not import")
 
     with pytest.raises(pytest.skip.Exception) as plain:
         pytest.skip("reason")

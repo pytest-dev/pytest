@@ -1105,10 +1105,12 @@ class TestConftestImportOutcome:
 
     @pytest.mark.usefixtures("layout")
     @pytest.mark.parametrize(
-        "statement",
+        ("statement", "deprecated"),
         [
-            'pytest.importorskip("no_such_module_xyz")',
-            'pytest.skip("opt is off", allow_module_level=True)',
+            ('pytest.importorskip("no_such_module_xyz")', False),
+            ('pytest.importorskip("pytest", minversion="9999")', False),
+            # Still skips, but will be an error in pytest 10.
+            ('pytest.skip("opt is off", allow_module_level=True)', True),
         ],
     )
     @pytest.mark.parametrize("import_mode", ["prepend", "importlib"])
@@ -1126,6 +1128,7 @@ class TestConftestImportOutcome:
         self,
         pytester: Pytester,
         statement: str,
+        deprecated: bool,
         import_mode: str,
         args: tuple[str, ...],
         outcome: dict[str, int],
@@ -1146,17 +1149,25 @@ class TestConftestImportOutcome:
         assert "found no collectors" not in result.stderr.str()
         # Imported once, even when it is also an initial conftest.
         assert result.stdout.str().count("conftest executed") == 1
+        assert ("PytestRemovedIn10Warning" in result.stdout.str()) == deprecated
 
     @pytest.mark.usefixtures("layout")
+    @pytest.mark.parametrize(
+        "statement",
+        [
+            'pytest.skip("opt is off")',
+            'pytest.skip("opt is off", allow_module_level=True)',
+        ],
+    )
     @pytest.mark.parametrize("args", [(), ("tests/opt",)])
-    def test_plain_skip_is_deprecated(
-        self, pytester: Pytester, args: tuple[str, ...]
+    def test_skip_is_deprecated(
+        self, pytester: Pytester, statement: str, args: tuple[str, ...]
     ) -> None:
         self.write_conftest(
             pytester,
-            """\
+            f"""\
             import pytest
-            pytest.skip("opt is off")
+            {statement}
             """,
         )
         result = pytester.runpytest("-rs", *args)
