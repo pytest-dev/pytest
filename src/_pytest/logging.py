@@ -351,7 +351,14 @@ class _PropagationEndHandler(logging.Handler):
         handler: logging.Handler,
         delivered_at: AbstractSet[int],
     ) -> None:
-        super().__init__()
+        # Not Handler.__init__(): registering each short-lived stand-in in
+        # logging's global handler list dominated the cost of entering.
+        self._name = None
+        self.level = logging.NOTSET
+        self.filters = []
+        self.formatter = None
+        self._closed = False
+        self.lock = None
         self.logger = logger
         self.handler = handler
         self.delivered_at = delivered_at
