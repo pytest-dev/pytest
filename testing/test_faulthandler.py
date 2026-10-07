@@ -219,3 +219,22 @@ def test_get_stderr_fileno_invalid_fd() -> None:
         # Even when the stderr wrapper signals an invalid file descriptor,
         # ``_get_stderr_fileno()`` should return the real one.
         assert get_stderr_fileno() == 2
+
+
+def test_timeout_accepts_native_toml_numbers(pytester: Pytester) -> None:
+    """faulthandler_timeout is float-typed, so native TOML numbers work (#15132)."""
+    pytester.makepyprojecttoml(
+        """
+        [tool.pytest]
+        faulthandler_timeout = 5
+        """
+    )
+    assert pytester.parseconfig().getini("faulthandler_timeout") == 5.0
+
+    pytester.makepyprojecttoml(
+        """
+        [tool.pytest]
+        faulthandler_timeout = 2.5
+        """
+    )
+    assert pytester.parseconfig().getini("faulthandler_timeout") == 2.5

@@ -24,7 +24,7 @@ def pytest_addoption(parser: Parser) -> None:
         "Exit the test process if a test takes more than "
         "faulthandler_timeout seconds to finish"
     )
-    parser.addini("faulthandler_timeout", help_timeout, default=0.0)
+    parser.addini("faulthandler_timeout", help_timeout, type="float", default=0.0)
     parser.addini(
         "faulthandler_exit_on_timeout", help_exit_on_timeout, type="bool", default=False
     )

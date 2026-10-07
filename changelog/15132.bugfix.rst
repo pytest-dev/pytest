@@ -1,0 +1,3 @@
+``faulthandler_timeout`` is now registered with type ``float``, so native TOML
+integers and floats (e.g. ``faulthandler_timeout = 5`` in ``pytest.toml``)
+are accepted instead of being rejected with ``expects a string, got int``.
