@@ -59,9 +59,8 @@ class Skipped(OutcomeException):
 class SkippedModule(Skipped):
     """A skip that stops the execution of a module while it is imported.
 
-    Raised by ``pytest.skip(..., allow_module_level=True)`` and
-    :func:`pytest.importorskip`. Besides test modules, this is the only outcome
-    a ``conftest.py`` may raise while it is imported.
+    Raised by ``pytest.skip(..., allow_module_level=True)``, and as
+    :class:`SkippedImport` by :func:`pytest.importorskip`.
     """
 
     # Render as plain "Skipped" in reports, like any other skip.
@@ -81,6 +80,16 @@ class SkippedModule(Skipped):
             allow_module_level=True,
             _use_item_location=_use_item_location,
         )
+
+
+class SkippedImport(SkippedModule):
+    """A module-level skip raised by :func:`pytest.importorskip`.
+
+    The only outcome a ``conftest.py`` may raise while it is imported.
+    """
+
+    __module__ = "builtins"
+    __qualname__ = "Skipped"
 
 
 class Failed(OutcomeException):
@@ -295,7 +304,7 @@ def importorskip(
             # Do not raise or issue warnings inside the catch_warnings() block.
             if reason is None:
                 reason = f"could not import {modname!r}: {exc}"
-            skipped = SkippedModule(reason)
+            skipped = SkippedImport(reason)
     if skipped:
         raise skipped
 
@@ -308,7 +317,7 @@ def importorskip(
         from packaging.version import Version
 
         if verattr is None or Version(verattr) < Version(minversion):
-            raise SkippedModule(
+            raise SkippedImport(
                 f"module {modname!r} has __version__ {verattr!r}, required is: {minversion!r}"
             )
     return mod

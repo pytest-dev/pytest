@@ -73,7 +73,7 @@ from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
-from _pytest.outcomes import SkippedModule
+from _pytest.outcomes import SkippedImport
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
@@ -821,10 +821,9 @@ class PytestPluginManager(PluginManager):
                 consider_namespace_packages=consider_namespace_packages,
             )
         except Skipped as e:
-            # A conftest may skip its directory at import time, but only as a
-            # module-level skip: pytest.importorskip() or
-            # pytest.skip(allow_module_level=True) (#15142).
-            if not isinstance(e, SkippedModule):
+            # A conftest may skip its directory at import time, but only with
+            # pytest.importorskip(); any pytest.skip() is deprecated (#15142).
+            if not isinstance(e, SkippedImport):
                 try:
                     _warn_conftest_import_skip(conftestpath, e)
                 except Exception as warning:

@@ -199,8 +199,7 @@ Skipping a whole directory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A ``conftest.py`` may skip its directory, and every directory below it, while it is
-imported, with a module-level skip: :ref:`pytest.importorskip ref` or
-``pytest.skip(reason, allow_module_level=True)``.
+imported, with :ref:`pytest.importorskip ref`.
 This also makes the module available to the fixtures in the ``conftest.py``:
 
 .. code-block:: python
@@ -221,7 +220,7 @@ a path or node id below it is given on the command line.
 
 No other outcome may be raised while a ``conftest.py`` is imported:
 ``pytest.fail()`` and ``pytest.xfail()`` are reported as errors, and
-``pytest.skip()`` without ``allow_module_level=True`` is deprecated
+``pytest.skip()``, with or without ``allow_module_level=True``, is deprecated
 (see :ref:`conftest-import-skip`).
 
 Summary

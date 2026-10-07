@@ -1,4 +1,4 @@
-A ``conftest.py`` that skips its directory while being imported, with :func:`pytest.importorskip` or ``pytest.skip(..., allow_module_level=True)``, now skips it consistently: also when a path or node id below that directory is given on the command line, which previously crashed with a raw ``Skipped`` traceback.
+A ``conftest.py`` that skips its directory while being imported now skips it consistently: also when a path or node id below that directory is given on the command line, which previously crashed with a raw ``Skipped`` traceback.
 
 ``pytest.fail()`` and ``pytest.xfail()`` while a ``conftest.py`` is imported are now reported as a conftest import error instead of crashing pytest.
 

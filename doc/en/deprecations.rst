@@ -22,24 +22,26 @@ Below is a complete list of all pytest features which are considered deprecated.
 
 .. deprecated:: 9.2
 
-Calling ``pytest.skip()`` without ``allow_module_level=True`` while a ``conftest.py``
-is being imported skipped the whole directory, although the same call in a test module
-is an error.
+Calling ``pytest.skip()`` while a ``conftest.py`` is being imported skips the whole
+directory, even without ``allow_module_level=True``. A ``conftest.py`` is a plugin,
+not a test module, so it has no skip outcome of its own.
 
-It now issues a :class:`~pytest.PytestRemovedIn10Warning` and will be an error in
-pytest 10. To skip a directory from its ``conftest.py``, use
-:ref:`pytest.importorskip ref` or ``pytest.skip(reason, allow_module_level=True)``
-(see :ref:`skip-conftest`):
+It now issues a :class:`~pytest.PytestRemovedIn10Warning`, with or without
+``allow_module_level=True``, and will be an error in pytest 10.
+The one supported way to skip a directory from its ``conftest.py`` is
+:ref:`pytest.importorskip ref` (see :ref:`skip-conftest`).
+For other conditions, skip the tests themselves, for example with a
+``pytestmark`` in each module or a ``pytest_collection_modifyitems`` hook,
+or exclude the directory with ``collect_ignore_glob``:
 
 .. code-block:: python
 
-    # Deprecated
-    if not has_feature():
-        pytest.skip("feature not available")
-
-    # Use instead
+    # Deprecated, in tests/feature/conftest.py
     if not has_feature():
         pytest.skip("feature not available", allow_module_level=True)
+
+    # Use instead, in tests/conftest.py (not collected, not reported as skipped)
+    collect_ignore_glob = [] if has_feature() else ["feature/*"]
 
 
 .. _callspec2-renamed:
