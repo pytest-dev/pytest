@@ -340,6 +340,36 @@ class TestTraceback_f_g_h:
         assert excinfo._getreprcrash() is None
 
 
+def test_excinfo_exconly_tryshort_assert() -> None:
+    """Rewritten asserts lose their 'AssertionError: ' prefix, also when the
+    ExceptionInfo comes from pytest.raises (#12175)."""
+    x = 1
+    with pytest.raises(AssertionError) as excinfo:
+        assert x == 2
+    assert excinfo.exconly(tryshort=True) == "assert 1 == 2"
+    assert ExceptionInfo.from_exception(excinfo.value).exconly(tryshort=True) == (
+        "assert 1 == 2"
+    )
+
+    # Explicit AssertionErrors keep their type name.
+    with pytest.raises(AssertionError) as excinfo:
+        raise AssertionError("message")
+    assert excinfo.exconly(tryshort=True) == "AssertionError: message"
+
+    # A legacy ``msg`` attribute is checked instead of the repr.
+    exc = AssertionError("assert 1 == 2")
+    exc.msg = "custom"  # type: ignore[attr-defined]
+    with pytest.raises(AssertionError) as excinfo:
+        raise exc
+    assert excinfo.exconly(tryshort=True) == "AssertionError: assert 1 == 2"
+
+    # An explicit exprinfo disables stripping.
+    with pytest.raises(AssertionError) as excinfo:
+        assert x == 2
+    info = ExceptionInfo.from_exception(excinfo.value, exprinfo="assert x == 2")
+    assert info.exconly(tryshort=True) == "AssertionError: assert 1 == 2"
+
+
 def test_excinfo_exconly():
     with pytest.raises(ValueError) as excinfo:
         h()
