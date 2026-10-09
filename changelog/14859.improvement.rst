@@ -1,0 +1,2 @@
+Pytest's uses of ``pprint`` now consistently expand nested data structures on
+all supported Python versions.

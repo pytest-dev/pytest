@@ -15,7 +15,6 @@ from decimal import Decimal
 from decimal import FloatOperation
 import math
 from numbers import Complex
-import pprint
 import sys
 from typing import Any
 from typing import Generic
@@ -26,6 +25,8 @@ from typing import TypeVar
 import warnings
 
 from _pytest.warning_types import PytestApproxDecimalToleranceWarning
+
+from _pytest._io.pprint import PrettyPrinter
 
 
 if TYPE_CHECKING:
@@ -301,7 +302,9 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         for key, value in expected.items():
             if _is_nested_container(value):
                 msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
-                raise TypeError(msg.format(key, value, pprint.pformat(expected)))
+                raise TypeError(
+                    msg.format(key, value, PrettyPrinter().pformat(expected))
+                )
 
         super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 
@@ -403,7 +406,7 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         for index, x in enumerate(expected):
             if _is_nested_container(x):
                 msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
-                raise TypeError(msg.format(x, index, pprint.pformat(expected)))
+                raise TypeError(msg.format(x, index, PrettyPrinter().pformat(expected)))
 
         super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 

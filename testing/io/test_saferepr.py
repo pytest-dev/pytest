@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
+from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import SafeRepr
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
@@ -11,6 +12,19 @@ import pytest
 def test_simple_repr():
     assert saferepr(1) == "1"
     assert saferepr(None) == "None"
+
+
+def test_safeformat_expands_nested_collections() -> None:
+    assert safeformat({"outer": [1, {"inner": 2}]}) == (
+        "{\n"
+        "    'outer': [\n"
+        "        1,\n"
+        "        {\n"
+        "            'inner': 2,\n"
+        "        },\n"
+        "    ],\n"
+        "}"
+    )
 
 
 def test_maxsize():
