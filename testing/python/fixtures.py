@@ -4638,6 +4638,46 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
     )
 
 
+def test_fixture_post_finalizer_sees_teardown_exception(pytester: Pytester) -> None:
+    """The teardown error is visible via sys.exc_info() in the hook (#12306)."""
+    pytester.makeconftest(
+        """
+        import sys
+        import pytest
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            if fixturedef.argname in ("failing", "passing"):
+                print(f"\\n{fixturedef.argname}: exc_info={sys.exc_info()[1]!r}")
+
+        @pytest.fixture
+        def failing():
+            yield
+            raise RuntimeError("teardown failed")
+
+        @pytest.fixture
+        def passing():
+            yield
+        """
+    )
+    pytester.makepyfile(
+        """
+        def test_failing(failing):
+            pass
+
+        def test_passing(passing):
+            pass
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=2, errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "failing: exc_info=RuntimeError('teardown failed')",
+            "*passing: exc_info=None",
+        ]
+    )
+
+
 class TestParamValueKey:
     """Unit tests for the equivalence key used by `reorder_items` (#8914)."""
 

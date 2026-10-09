@@ -1,0 +1,1 @@
+Exceptions raised during fixture teardown are once again available via :func:`sys.exc_info` inside :hook:`pytest_fixture_post_finalizer`, as they were before pytest 8.1.
