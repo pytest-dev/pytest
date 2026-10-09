@@ -1,0 +1,2 @@
+The :confval:`verbosity_assertions`, :confval:`verbosity_test_cases`, :confval:`verbosity_subtests`, :confval:`tmp_path_retention_count`, :confval:`log_level`, :confval:`log_cli_level`, :confval:`log_file_level` and :confval:`log_auto_indent` configuration options now accept native integer (and, for ``log_auto_indent``, boolean) values in TOML configuration files, while still accepting strings for backward compatibility.
+:confval:`log_file_mode` and :confval:`parametrize_long_str_id_strategy` now report invalid values as a usage error.

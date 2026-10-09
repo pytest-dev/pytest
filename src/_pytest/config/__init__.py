@@ -2236,7 +2236,7 @@ class Config:
         parser.addini(
             Config._verbosity_ini_name(verbosity_type),
             help=help,
-            type="string",
+            type=int | Literal["auto"],
             default=Config._VERBOSITY_INI_DEFAULT,
         )
 
