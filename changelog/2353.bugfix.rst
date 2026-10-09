@@ -1,0 +1,1 @@
+``pytest_plugins`` entries imported as a side effect of another plugin now also get assertion rewriting.
