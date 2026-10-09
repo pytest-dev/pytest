@@ -140,6 +140,149 @@ class TestTerminal:
         combined = "\n".join(result.stdout.lines + result.stderr.lines)
         assert "INTERNALERROR" not in combined
 
+    def test_console_output_style_times_with_subtests(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                def test_subtests(subtests):
+                    for i in range(2):
+                        with subtests.test(i=i):
+                            pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-v",
+            "-o",
+            "console_output_style=times",
+            "-o",
+            "verbosity_subtests=1",
+        )
+
+        # Check that we got positive/non-zero timing info for subtests and the parent PASSED line.
+        # We check that it does not show "0.000us".
+        lines = result.stdout.lines
+        subpassed_lines = [
+            line_content for line_content in lines if "SUBPASSED" in line_content
+        ]
+        passed_lines = [
+            line_content
+            for line_content in lines
+            if "PASSED" in line_content and "SUBPASSED" not in line_content
+        ]
+        assert len(subpassed_lines) == 2
+        assert len(passed_lines) == 1
+        for line in subpassed_lines + passed_lines:
+            assert "0.000us" not in line
+
+    def test_console_output_style_times_with_subtests_xdist(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        pytester.makepyfile(
+            test_repro="""
+                def test_subtests(subtests):
+                    for i in range(2):
+                        with subtests.test(i=i):
+                            pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-n2",
+            "-v",
+            "-o",
+            "console_output_style=times",
+            "-o",
+            "verbosity_subtests=1",
+        )
+
+        lines = result.stdout.lines
+        subpassed_lines = [
+            line_content for line_content in lines if "SUBPASSED" in line_content
+        ]
+        passed_lines = [
+            line_content
+            for line_content in lines
+            if "PASSED" in line_content and "SUBPASSED" not in line_content
+        ]
+        assert len(subpassed_lines) == 2
+        assert len(passed_lines) == 1
+        for line in subpassed_lines + passed_lines:
+            assert "0.000us" not in line
+
+    def test_console_output_style_times_slow_teardown_does_not_leak(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                import time, pytest
+
+                @pytest.fixture
+                def slow_td():
+                    yield
+                    time.sleep(0.3)
+
+                def test_a1(slow_td):
+                    pass
+
+                def test_a2():
+                    pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-v",
+            "-o",
+            "console_output_style=times",
+        )
+        lines = result.stdout.lines
+        a2_lines = [line for line in lines if "test_a2 PASSED" in line]
+        assert len(a2_lines) == 1
+        # The teardown duration of test_a1 (300ms) should not leak into test_a2.
+        # A leak shows up as at least 0.3s; anything below that is test_a2's own
+        # time, which can reach ~0.25s on slow CI runners (Windows).
+        duration_str = a2_lines[0].split()[-1]
+        if duration_str.endswith("us"):
+            dur_seconds = float(duration_str[:-2]) / 1_000_000
+        elif duration_str.endswith("ms"):
+            dur_seconds = float(duration_str[:-2]) / 1_000
+        elif duration_str.endswith("s"):
+            dur_seconds = float(duration_str[:-1])
+        else:
+            dur_seconds = 0.0
+        assert dur_seconds < 0.3
+
+    def test_progress_information_message_no_current_report(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        item = pytester.getitem("def test_func(): pass")
+        tr = TerminalReporter(item.config)
+        monkeypatch.setattr(tr.config, "get_verbosity", lambda *args, **kwargs: 1)
+        tr._show_progress_info = "times"
+
+        class MockSession:
+            testscollected = 1
+            items = [item]
+
+        tr._session = MockSession()  # type: ignore[assignment]
+
+        from _pytest.reports import TestReport
+
+        rep = TestReport(
+            nodeid=item.nodeid,
+            location=item.location,
+            keywords={},
+            outcome="passed",
+            longrepr=None,
+            when="call",
+            duration=0.123,
+        )
+        tr.stats.setdefault("passed", []).append(rep)
+
+        msg = tr._get_progress_information_message()
+        assert msg == " 123.0ms"
+
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)

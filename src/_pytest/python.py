@@ -129,7 +129,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "parametrize_long_str_id_strategy",
-        type="string",
+        type=LongStrIdStrategy,
         default="short",
         help="strategy for long str/bytes parameter values in auto-generated ids\n"
         "- short (default): values over 100 chars fall back to argname+index\n"
@@ -1852,6 +1852,6 @@ class FunctionDefinition(Function):
 
 def __getattr__(name: str) -> object:
     if name == "CallSpec2":
-        warnings.warn(CALLSPEC2_RENAMED, stacklevel=2)
+        warnings.warn(CALLSPEC2_RENAMED.format(), stacklevel=2)
         return CallSpec
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
