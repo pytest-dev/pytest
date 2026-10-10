@@ -1,0 +1,1 @@
+Allow ``--fixtures``, ``--funcargs``, ``--fixtures-per-test``, and ``--markers`` to run without supplying required plugin options. Required options remain enforced when running tests.

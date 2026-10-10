@@ -506,3 +506,48 @@ class TestSplitHelpText:
 
     def test_empty_help(self) -> None:
         assert parseopt._split_help_text("", 40) == []
+
+
+@pytest.mark.parametrize("args", [["--list"], ["--list", "--required", "value"]])
+def test_informational_action_restores_required_options(parser, args):
+    parser.addoption("--list", action=parseopt.InformationalAction)
+    parser.addoption("--required", required=True)
+    namespace = parser.parse(args)
+    assert namespace.list is True
+    with pytest.raises(
+        UsageError, match="the following arguments are required: --required"
+    ):
+        parser.parse([])
+    assert parser.parse(["--required", "value"]).required == "value"
+
+
+@pytest.mark.parametrize(
+    "args", [["--list", "--choice", "bad"], ["--choice", "bad", "--list"]]
+)
+def test_informational_action_keeps_value_validation(parser, args):
+    parser.addoption("--list", action=parseopt.InformationalAction)
+    parser.addoption("--required", required=True)
+    parser.addoption("--choice", choices=["good"])
+    with pytest.raises(UsageError, match="invalid choice"):
+        parser.parse(args)
+    with pytest.raises(
+        UsageError, match="the following arguments are required: --required"
+    ):
+        parser.parse([])
+
+
+def test_informational_action_after_option_terminator(parser):
+    parser.addoption("--list", action=parseopt.InformationalAction)
+    parser.addoption("--required", required=True)
+    with pytest.raises(
+        UsageError, match="the following arguments are required: --required"
+    ):
+        parser.parse(["--", "--list"])
+
+
+def test_informational_action_from_argument_file(parser, tmp_path):
+    parser.addoption("--list", action=parseopt.InformationalAction)
+    parser.addoption("--required", required=True)
+    args_file = tmp_path / "args.txt"
+    args_file.write_text("--list\n", encoding="utf-8")
+    assert parser.parse([f"@{args_file}"]).list is True

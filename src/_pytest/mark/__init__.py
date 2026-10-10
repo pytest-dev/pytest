@@ -25,6 +25,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.config.argparsing import InformationalAction
 from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
 
@@ -118,7 +119,7 @@ def pytest_addoption(parser: Parser) -> None:
 
     group.addoption(
         "--markers",
-        action="store_true",
+        action=InformationalAction,
         help="show markers (builtin, plugin and per-project ones).",
     )
 
