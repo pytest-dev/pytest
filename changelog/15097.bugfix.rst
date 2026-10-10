@@ -1,0 +1,3 @@
+``WarningsRecorder.pop()`` (and therefore ``pytest.warns().pop()`` and ``recwarn.pop()``) again returns the first recorded warning when the recorded warning categories are unrelated to each other.
+
+Since pytest 8.0 the best-match loop added in #11160 could settle on a later warning than the documented first one: a later unrelated category replaced the current best match, and a more general category recorded after an unrelated sibling could hide that sibling. So popping from a list of e.g. a :class:`UserWarning`, a :class:`RuntimeWarning` and a :class:`DeprecationWarning` returned the last one. The documented behaviour -- the first match which is not a child class of any other match -- is restored.
