@@ -545,6 +545,8 @@ def test_informational_action_after_option_terminator(parser):
         parser.parse(["--", "--list"])
 
 
+# Older argparse versions read argument files without an explicit encoding.
+@pytest.mark.filterwarnings("ignore:'encoding' argument not specified:EncodingWarning")
 def test_informational_action_from_argument_file(parser, tmp_path):
     parser.addoption("--list", action=parseopt.InformationalAction)
     parser.addoption("--required", required=True)
