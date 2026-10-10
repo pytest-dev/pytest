@@ -1227,6 +1227,33 @@ class TestTerminalFunctional:
             ]
         )
 
+    def test_showlocals_no_duplicate_funcargs(self, pytester: Pytester) -> None:
+        """Helper params must not render twice with --showlocals (#5675)."""
+        p1 = pytester.makepyfile(
+            """
+            class LargeRepr:
+                def __repr__(self):
+                    return "X" * 10000
+
+            def helper(data, flag):
+                assert flag is False
+
+            def test_failure():
+                helper(LargeRepr(), True)
+            """
+        )
+        # Without --showlocals the funcargs block stays (truncated).
+        result = pytester.runpytest(p1)
+        result.stdout.fnmatch_lines(["data = X*"])
+        # With --showlocals params show once, in the padded locals block.
+        result = pytester.runpytest(p1, "--showlocals")
+        result.stdout.no_fnmatch_line("data = X*")
+        result.stdout.fnmatch_lines(["data  *= X*"])
+        # Same at higher verbosity; locals keep their existing behavior.
+        result = pytester.runpytest(p1, "--showlocals", "-vv")
+        result.stdout.no_fnmatch_line("data = X*")
+        result.stdout.fnmatch_lines(["data  *= X*"])
+
     @pytest.fixture
     def verbose_testfile(self, pytester: Pytester) -> Path:
         return pytester.makepyfile(
