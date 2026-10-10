@@ -15,7 +15,10 @@ def _set_one_sided_diff(
     set2: AbstractSet[object],
     highlighter: _HighlightFunc,
 ) -> Iterator[str]:
-    diff = set1 - set2
+    # Use a membership test rather than set difference: set views such as
+    # dict.items() are Sets whose elements may be unhashable, in which case
+    # computing `set1 - set2` raises TypeError.
+    diff = [item for item in set1 if item not in set2]
     if diff:
         yield f"Extra items in the {posn} set:"
         for item in diff:
