@@ -1,0 +1,2 @@
+Conftest files directly in an explicitly configured root directory are now
+loaded as initial conftests.
