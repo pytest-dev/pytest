@@ -1228,7 +1228,12 @@ if TYPE_CHECKING:
 
 
 def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
-    return request.param
+    try:
+        return request.param
+    except AttributeError:
+        # Empty parameter set under --runxfail has no value to run with:
+        # fail cleanly instead of crashing (#4497).
+        fail("no direct parameter (empty parameter set)")
 
 
 class DirectParamFixtureDef(FixtureDef[FixtureValue]):
