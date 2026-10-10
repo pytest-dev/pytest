@@ -1,0 +1,2 @@
+Fixed ``filterwarnings`` marks on classes and modules overriding marks on individual tests or parameters.
+More specific filters now take precedence, while the ordering of filters within the same scope is unchanged.

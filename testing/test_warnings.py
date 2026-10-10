@@ -209,6 +209,102 @@ def test_filterwarnings_mark(pytester: Pytester, default_config) -> None:
     result.stdout.fnmatch_lines(["*= 1 failed, 2 passed, 1 warning in *"])
 
 
+@pytest.mark.parametrize(
+    "outer_scope,inner_scope",
+    [
+        ("module", "class"),
+        ("module", "function"),
+        ("module", "parameter"),
+        ("class", "function"),
+        ("class", "parameter"),
+        ("function", "parameter"),
+    ],
+)
+@pytest.mark.parametrize(
+    "outer_action,inner_action", [("error", "ignore"), ("ignore", "error")]
+)
+def test_filterwarnings_mark_scope_precedence(
+    pytester: Pytester,
+    outer_scope: str,
+    inner_scope: str,
+    outer_action: str,
+    inner_action: str,
+) -> None:
+    """More specific filters override class and module defaults (#10406)."""
+    marks = dict.fromkeys(("module", "class", "function", "parameter"), "")
+    marks[outer_scope] = f'pytest.mark.filterwarnings("{outer_action}")'
+    marks[inner_scope] = f'pytest.mark.filterwarnings("{inner_action}")'
+    pytester.makepyfile(
+        f"""
+        import warnings
+        import pytest
+
+        pytestmark = [{marks["module"]}]
+
+        {"@" + marks["class"] if marks["class"] else ""}
+        class TestWarnings:
+            {"@" + marks["function"] if marks["function"] else ""}
+            @pytest.mark.parametrize("value", [
+                pytest.param(None, marks=[{marks["parameter"]}]),
+            ])
+            def test_warning(self, value):
+                warnings.warn("marker precedence", UserWarning)
+        """
+    )
+    result = pytester.runpytest()
+    if inner_action == "ignore":
+        result.assert_outcomes(passed=1)
+    else:
+        result.assert_outcomes(failed=1)
+        result.stdout.fnmatch_lines(["*UserWarning: marker precedence"])
+
+
+@pytest.mark.parametrize(
+    "marks",
+    [
+        '@pytest.mark.filterwarnings("ignore")\n@pytest.mark.filterwarnings("error")',
+        '@pytest.mark.filterwarnings("error", "ignore")',
+        'pytestmark = [pytest.mark.filterwarnings("error"), pytest.mark.filterwarnings("ignore")]',
+    ],
+)
+def test_filterwarnings_mark_same_scope_precedence(
+    pytester: Pytester, marks: str
+) -> None:
+    """Keep the documented ordering of decorators, arguments, and pytestmark lists."""
+    pytester.makepyfile(
+        "import warnings\nimport pytest\n"
+        f"{marks}\n"
+        "def test_warning():\n"
+        '    warnings.warn("marker precedence", UserWarning)\n'
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize("parametrize_first", [True, False])
+def test_filterwarnings_param_mark_precedence(
+    pytester: Pytester, parametrize_first: bool
+) -> None:
+    decorators = [
+        '@pytest.mark.filterwarnings("error")',
+        '@pytest.mark.parametrize("value", ['
+        'pytest.param(None, marks=pytest.mark.filterwarnings("ignore"), id="ignore"), '
+        'pytest.param(None, id="error")])',
+    ]
+    if parametrize_first:
+        decorators.reverse()
+    pytester.makepyfile(
+        "import warnings\nimport pytest\n"
+        + "\n".join(decorators)
+        + '\ndef test_warning(value):\n    warnings.warn("marker precedence", UserWarning)\n'
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1, failed=1)
+    result.stdout.fnmatch_lines(
+        ["*test_warning[[]ignore] PASSED*", "*test_warning[[]error] FAILED*"],
+    )
+
+
 def test_non_string_warning_argument(pytester: Pytester) -> None:
     """Non-str argument passed to warning breaks pytest (#2956)"""
     pytester.makepyfile(
