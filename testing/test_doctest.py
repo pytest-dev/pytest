@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import doctest
 import inspect
 from pathlib import Path
 import sys
 import textwrap
 
 from _pytest.doctest import _get_checker
+from _pytest.doctest import _get_number_flag
 from _pytest.doctest import _is_main_py
 from _pytest.doctest import _is_mocked
 from _pytest.doctest import _is_setup_py
@@ -1233,6 +1235,125 @@ class TestLiterals:
             >>> 'abc' {comment}
             'abc'
             >>> None {comment}
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    @pytest.mark.parametrize(
+        ("actual", "expected"),
+        [
+            ("value=1.0001, hidden=2.0", "value=1.0, ..."),
+            ("prefix hidden=2.0 final=3.0001", "prefix ... final=3.0"),
+            (
+                "prefix final=2.0 hidden final=3.0001 extra suffix",
+                "prefix ... final=3.0 ... suffix",
+            ),
+            (
+                "prefix middle=2.0 hidden middle=2.99 suffix",
+                "prefix...middle=3.0...suffix",
+            ),
+        ],
+    )
+    def test_number_and_ellipsis(
+        self, pytester: Pytester, actual: str, expected: str
+    ) -> None:
+        pytester.maketxtfile(
+            test_doc=f"""
+            >>> print({actual!r})  # doctest: +NUMBER, +ELLIPSIS
+            {expected}
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    @pytest.mark.parametrize(
+        ("actual", "expected"),
+        [
+            ("prefix", "prefix ... value=1.0"),
+            ("prefix hidden=2.0 final=4.0", "prefix ... final=3.0"),
+            ("prefix=2.0 hidden suffix", "prefix=3.0 ... suffix"),
+            ("wrong hidden=2.0 final=3.0001", "prefix ... final=3.0"),
+            ("prefix hidden=2.0 wrong=3.0001", "prefix ... final=3.0"),
+            (
+                "prefix middle=2.0 hidden middle=4.0 suffix",
+                "prefix ... middle=3.0 ... suffix",
+            ),
+        ],
+    )
+    def test_number_and_ellipsis_non_match(
+        self, pytester: Pytester, actual: str, expected: str
+    ) -> None:
+        pytester.maketxtfile(
+            test_doc=f"""
+            >>> print({actual!r})  # doctest: +NUMBER, +ELLIPSIS
+            {expected}
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(failed=1)
+
+    @pytest.mark.parametrize(
+        ("want", "got"),
+        [
+            ("... value=3.0", "hidden=2.0 value=2.99"),
+            ("value=3.0 ...", "value=2.99 hidden=2.0"),
+        ],
+    )
+    def test_number_and_ellipsis_edge_chunks(self, want: str, got: str) -> None:
+        checker = _get_checker()
+        optionflags = doctest.ELLIPSIS | _get_number_flag()
+
+        assert checker.check_output(want, got, optionflags)
+
+    def test_number_and_ellipsis_blankline(self) -> None:
+        checker = _get_checker()
+        optionflags = doctest.ELLIPSIS | _get_number_flag()
+
+        assert checker.check_output(
+            "value=1.0\n<BLANKLINE>\n...\nfinal=3.0\n",
+            "value=1.0001\n\nhidden=2.0\nfinal=3.0001\n",
+            optionflags,
+        )
+
+    def test_number_and_ellipsis_ascii_canonicalization(self) -> None:
+        checker = _get_checker()
+        optionflags = doctest.ELLIPSIS | _get_number_flag()
+
+        assert checker.check_output(
+            r"\u1234 value=1.0 ...",
+            "\u1234 value=1.0001 hidden=2.0",
+            optionflags,
+        )
+
+    def test_number_and_ellipsis_dont_accept_blankline(self) -> None:
+        checker = _get_checker()
+        optionflags = (
+            doctest.ELLIPSIS | doctest.DONT_ACCEPT_BLANKLINE | _get_number_flag()
+        )
+
+        assert not checker.check_output(
+            "value=1.0\n<BLANKLINE>\n...\nfinal=3.0\n",
+            "value=1.0001\n\nhidden=2.0\nfinal=3.0001\n",
+            optionflags,
+        )
+
+    def test_number_and_ellipsis_marker_collision(self) -> None:
+        checker = _get_checker()
+        optionflags = doctest.ELLIPSIS | _get_number_flag()
+
+        assert checker.check_output(
+            "prefix\0 value=1.0 ...\n",
+            "prefix\0 value=1.0001 hidden=2.0\n",
+            optionflags,
+        )
+
+    def test_number_ellipsis_and_normalize_whitespace(self, pytester: Pytester) -> None:
+        pytester.maketxtfile(
+            test_doc="""
+            >>> text = "left   = 1.0001 hidden=2.0 right   = 3.0001"
+            >>> print(text)  # doctest: +NUMBER, +ELLIPSIS, +NORMALIZE_WHITESPACE
+            left = 1.0 ... right = 3.0
             """
         )
         reprec = pytester.inline_run()

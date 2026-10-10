@@ -1,0 +1,1 @@
+The ``NUMBER`` doctest option now works with ``ELLIPSIS`` when ellipsized output contains additional numeric values.
