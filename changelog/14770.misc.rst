@@ -1,0 +1,3 @@
+Moved `FixtureDef.cached_result` to `SetupState`.
+
+This is part of the effort to add thread safety in pytest.
