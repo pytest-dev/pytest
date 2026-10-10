@@ -56,6 +56,42 @@ class Skipped(OutcomeException):
         self._use_item_location = _use_item_location
 
 
+class SkippedModule(Skipped):
+    """A skip that stops the execution of a module while it is imported.
+
+    Raised by ``pytest.skip(..., allow_module_level=True)``, and as
+    :class:`SkippedImport` by :func:`pytest.importorskip`.
+    """
+
+    # Render as plain "Skipped" in reports, like any other skip.
+    __module__ = "builtins"
+    __qualname__ = "Skipped"
+
+    def __init__(
+        self,
+        msg: str | None = None,
+        pytrace: bool = True,
+        *,
+        _use_item_location: bool = False,
+    ) -> None:
+        super().__init__(
+            msg=msg,
+            pytrace=pytrace,
+            allow_module_level=True,
+            _use_item_location=_use_item_location,
+        )
+
+
+class SkippedImport(SkippedModule):
+    """A module-level skip raised by :func:`pytest.importorskip`.
+
+    The only outcome a ``conftest.py`` may raise while it is imported.
+    """
+
+    __module__ = "builtins"
+    __qualname__ = "Skipped"
+
+
 class Failed(OutcomeException):
     """Raised from an explicit call to pytest.fail()."""
 
@@ -135,7 +171,9 @@ class _Skip:
 
     def __call__(self, reason: str = "", allow_module_level: bool = False) -> NoReturn:
         __tracebackhide__ = True
-        raise Skipped(msg=reason, allow_module_level=allow_module_level)
+        if allow_module_level:
+            raise SkippedModule(msg=reason)
+        raise Skipped(msg=reason)
 
 
 skip: _Skip = _Skip()
@@ -266,7 +304,7 @@ def importorskip(
             # Do not raise or issue warnings inside the catch_warnings() block.
             if reason is None:
                 reason = f"could not import {modname!r}: {exc}"
-            skipped = Skipped(reason, allow_module_level=True)
+            skipped = SkippedImport(reason)
     if skipped:
         raise skipped
 
@@ -279,8 +317,7 @@ def importorskip(
         from packaging.version import Version
 
         if verattr is None or Version(verattr) < Version(minversion):
-            raise Skipped(
-                f"module {modname!r} has __version__ {verattr!r}, required is: {minversion!r}",
-                allow_module_level=True,
+            raise SkippedImport(
+                f"module {modname!r} has __version__ {verattr!r}, required is: {minversion!r}"
             )
     return mod

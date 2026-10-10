@@ -164,6 +164,14 @@ CALLSPEC2_RENAMED = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed",
 )
 
+CONFTEST_IMPORT_SKIP = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "{path} called pytest.skip() while being imported.\n"
+    "A conftest.py may only skip its directory with pytest.importorskip(); "
+    "pytest.skip() will be an error in pytest 10.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#conftest-import-skip",
+)
+
 
 def check_ispytest(ispytest: bool) -> None:
     if not ispytest:

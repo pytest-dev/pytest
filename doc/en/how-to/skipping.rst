@@ -193,6 +193,36 @@ the test. You can also skip based on the version number of a library:
 The version will be read from the specified
 module's ``__version__`` attribute.
 
+.. _skip-conftest:
+
+Skipping a whole directory
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A ``conftest.py`` may skip its directory, and every directory below it, while it is
+imported, with :ref:`pytest.importorskip ref`.
+This also makes the module available to the fixtures in the ``conftest.py``:
+
+.. code-block:: python
+
+    # content of tests/pytables/conftest.py
+    import pytest
+
+    tables = pytest.importorskip("tables")
+
+
+    @pytest.fixture
+    def h5file(tmp_path):
+        with tables.open_file(tmp_path / "data.h5", "w") as f:
+            yield f
+
+The directory is reported as skipped no matter how pytest was invoked, including when
+a path or node id below it is given on the command line.
+
+No other outcome may be raised while a ``conftest.py`` is imported:
+``pytest.fail()`` and ``pytest.xfail()`` are reported as errors, and
+``pytest.skip()``, with or without ``allow_module_level=True``, is deprecated
+(see :ref:`conftest-import-skip`).
+
 Summary
 ~~~~~~~
 
