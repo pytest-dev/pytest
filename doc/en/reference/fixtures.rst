@@ -141,6 +141,19 @@ You can have multiple nested directories/packages containing your tests, and
 each directory can have its own ``conftest.py`` with its own fixtures, adding on
 to the ones provided by the ``conftest.py`` files in parent directories.
 
+.. warning::
+
+    Do not ``import`` a fixture in order to reuse it. Importing binds the
+    fixture in the importing module as well, so if the module it came from is
+    itself a plugin or a collected module, the fixture ends up registered
+    *twice*: a session-scoped fixture registered twice runs twice, and neither
+    file shows why. pytest emits
+    :class:`~pytest.PytestImportedFixtureWarning` when two modules register the
+    same fixture function.
+
+    Reach the fixture through a ``conftest.py``, or make its module a plugin by
+    listing it in :globalvar:`pytest_plugins`, and drop the import.
+
 For example, given a test file structure like this:
 
 ::

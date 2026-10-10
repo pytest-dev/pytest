@@ -83,6 +83,17 @@ class PytestReturnNotNoneWarning(PytestWarning):
 
 
 @final
+class PytestImportedFixtureWarning(PytestWarning):
+    """Warning emitted when two modules register the same fixture function,
+    which happens when one of them imported it from the other.
+
+    See :ref:`conftest` for details.
+    """
+
+    __module__ = "pytest"
+
+
+@final
 class PytestUnknownMarkWarning(PytestWarning):
     """Warning emitted on use of unknown markers.
 

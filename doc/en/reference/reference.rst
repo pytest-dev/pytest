@@ -1311,6 +1311,9 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestExperimentalApiWarning
    :show-inheritance:
 
+.. autoclass:: pytest.PytestImportedFixtureWarning
+   :show-inheritance:
+
 .. autoclass:: pytest.PytestReturnNotNoneWarning
   :show-inheritance:
 
