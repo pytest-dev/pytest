@@ -1,0 +1,1 @@
+Grouped collection reporting hooks with the other collection hooks in the reference documentation.
