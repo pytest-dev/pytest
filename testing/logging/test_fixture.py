@@ -502,6 +502,46 @@ def test_captures_despite_exception(pytester: Pytester) -> None:
     assert result.ret == 1
 
 
+def test_caplog_survives_earlier_hookwrapper_raising_in_teardown(
+    pytester: Pytester,
+) -> None:
+    """#9236: pluggy < 1.6 skipped the remaining teardowns once an old-style
+    hookwrapper raised in its own, leaving the logging plugin's wrapper
+    suspended. Finalising it later detached the handler ``caplog`` of the
+    next test was recording through."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_runtest_call(item):
+            outcome = yield
+            outcome.get_result()
+        """
+    )
+    pytester.makepyfile(
+        """
+        import gc
+        import logging
+
+        def test_fails():
+            assert False
+
+        def test_caplog(caplog):
+            gc.collect()
+            logging.getLogger().error("TEST")
+            assert caplog.messages == ["TEST"]
+        """
+    )
+    # In-process, the HookRecorder keeps the failing call's CallInfo, whose
+    # traceback keeps the suspended wrapper reachable: it is never finalised
+    # and the test would pass on the affected pluggy versions too.
+    result = pytester.runpytest_subprocess(
+        "-W", "ignore::pluggy.PluggyTeardownRaisedWarning"
+    )
+    result.assert_outcomes(passed=1, failed=1)
+
+
 def test_log_report_captures_according_to_config_option_upon_failure(
     pytester: Pytester,
 ) -> None:

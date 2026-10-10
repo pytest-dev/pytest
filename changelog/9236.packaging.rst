@@ -1,0 +1,6 @@
+``pluggy>=1.6`` is now required.
+
+Older pluggy versions stopped running the remaining hook wrapper teardowns once an
+old-style ``hookwrapper`` raised in its own teardown. The logging plugin's wrapper was
+left suspended, and when it was finalised later it detached the handler that
+:fixture:`caplog` of a subsequent test was recording through, so that test saw no records.
