@@ -1,0 +1,1 @@
+Fixed captured ``sys.stdout`` and ``sys.stderr`` reporting ``UTF-8`` instead of the original encoding.
