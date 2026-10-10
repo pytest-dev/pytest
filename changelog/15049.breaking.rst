@@ -1,0 +1,2 @@
+When :option:`--fixtures` or :option:`--fixtures-per-test` are used, the :hook:`pytest_collection` hook is now called to perform the collection.
+Previously, these two modes performed the collection directly, bypassing the hook.
