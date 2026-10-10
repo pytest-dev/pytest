@@ -1413,6 +1413,31 @@ def test_large_option_breaks_initial_conftests(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_collect_files_outside_rootdir(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    rootdir = pytester.mkdir("root")
+    testfiles = []
+    for name in ("one", "two"):
+        testfile = pytester.mkdir(name).joinpath("test_example.py")
+        testfile.write_text("def test_example(): pass", encoding="utf-8")
+        testfiles.append(testfile)
+
+    monkeypatch.chdir(rootdir)
+    args = ("--rootdir", rootdir, "--import-mode=importlib")
+    result = pytester.runpytest(*args, "--collect-only", "-q", *testfiles)
+    result.stdout.fnmatch_lines(
+        [
+            "../one/test_example.py::test_example",
+            "../two/test_example.py::test_example",
+        ]
+    )
+    assert result.ret == ExitCode.OK
+
+    result = pytester.runpytest(*args, "../one/test_example.py::test_example")
+    result.assert_outcomes(passed=1)
+
+
 def test_collect_symlink_file_arg(pytester: Pytester) -> None:
     """Collect a direct symlink works even if it does not match python_files (#4325)."""
     real = pytester.makepyfile(
