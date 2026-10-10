@@ -54,6 +54,7 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config.argparsing import InformationalAction
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import CLASS_FIXTURE_INSTANCE_METHOD
@@ -1658,7 +1659,7 @@ def pytest_addoption(parser: Parser) -> None:
     group.addoption(
         "--fixtures",
         "--funcargs",
-        action="store_true",
+        action=InformationalAction,
         dest="showfixtures",
         default=False,
         help="Show available fixtures, sorted by plugin appearance "
@@ -1666,7 +1667,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group.addoption(
         "--fixtures-per-test",
-        action="store_true",
+        action=InformationalAction,
         dest="show_fixtures_per_test",
         default=False,
         help="Show fixtures per test",

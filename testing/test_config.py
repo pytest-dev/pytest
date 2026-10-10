@@ -3645,3 +3645,53 @@ class TestNativeTomlOptionTypes:
         pytester.maketoml("[pytest]\nverbosity_assertions = 2\n")
         config = pytester.parseconfig()
         assert config.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2
+
+
+@pytest.mark.parametrize(
+    "flag", ["--fixtures", "--funcargs", "--fixtures-per-test", "--markers"]
+)
+@pytest.mark.parametrize("action", ["store", "store_true"])
+def test_information_with_required_option(
+    pytester: Pytester, flag: str, action: str
+) -> None:
+    pytester.makeconftest(
+        f"""
+        import pytest
+
+        def pytest_addoption(parser):
+            parser.addoption("--required", action="{action}", required=True)
+
+        @pytest.fixture
+        def example_fixture():
+            return 1
+        """
+    )
+    pytester.makepyfile(
+        """
+        def test_example(example_fixture):
+            assert example_fixture == 1
+        """
+    )
+    result = pytester.runpytest(flag)
+    assert result.ret == pytest.ExitCode.OK
+    expected = "@pytest.mark.skip" if flag == "--markers" else "example_fixture"
+    assert expected in result.stdout.str()
+
+
+@pytest.mark.parametrize("args", [[], ["--required", "present"]])
+def test_required_option_still_enforced(pytester: Pytester, args: list[str]) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addoption("--required", required=True)
+        """
+    )
+    pytester.makepyfile("def test_example(): pass")
+    result = pytester.runpytest(*args)
+    if args:
+        result.assert_outcomes(passed=1)
+    else:
+        assert result.ret == pytest.ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            ["*the following arguments are required: --required*"]
+        )

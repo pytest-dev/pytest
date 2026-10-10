@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
 from collections.abc import Sequence
+import contextlib
 import dataclasses
 import os
 import re
@@ -512,6 +515,42 @@ class PytestArgumentParser(argparse.ArgumentParser):
         # an usage error to provide more contextual information to the user.
         self.extra_info = extra_info
 
+    def parse_known_args(
+        self,
+        args: Iterable[str] | None = None,
+        namespace: Any = None,
+    ) -> tuple[Any, list[str]]:
+        with self._restore_required_options(namespace):
+            return super().parse_known_args(args, namespace)
+
+    def parse_known_intermixed_args(
+        self,
+        args: Iterable[str] | None = None,
+        namespace: Any = None,
+    ) -> tuple[Any, list[str]]:
+        with self._restore_required_options(namespace):
+            return super().parse_known_intermixed_args(args, namespace)
+
+    @contextlib.contextmanager
+    def _restore_required_options(
+        self, namespace: argparse.Namespace | None
+    ) -> Iterator[None]:
+        # Informational actions temporarily relax required options. Restore
+        # them even if parsing fails, so subsequent parses still enforce them.
+        required_actions = [action for action in self._actions if action.required]
+        if namespace is not None and any(
+            isinstance(action, InformationalAction)
+            and getattr(namespace, action.dest, False)
+            for action in self._actions
+        ):
+            for action in required_actions:
+                action.required = False
+        try:
+            yield
+        finally:
+            for action in required_actions:
+                action.required = True
+
     def error(self, message: str) -> NoReturn:
         """Transform argparse error message into UsageError."""
         # TODO(py313): Replace with `exit_on_error=False`. Note that while it
@@ -657,3 +696,15 @@ class OverrideIniAction(argparse.Action):
             current_overrides = []
         current_overrides.append(f"{self.ini_option}={self.ini_value}")
         setattr(namespace, "override_ini", current_overrides)
+
+
+class InformationalAction(argparse.Action):
+    """Set a listing flag without requiring options used to run tests."""
+
+    def __init__(self, option_strings, dest, default=False, **kwargs):
+        super().__init__(option_strings, dest, nargs=0, default=default, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, True)
+        for action in parser._actions:
+            action.required = False
