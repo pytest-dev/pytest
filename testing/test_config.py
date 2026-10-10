@@ -3506,3 +3506,58 @@ class TestProgName:
             match="pytest.console_main.*is deprecated",
         ):
             console_main()
+
+
+class TestNativeTomlOptionTypes:
+    """Built-in options accept the native TOML types their values naturally have."""
+
+    @pytest.mark.parametrize(
+        ("name", "toml_value", "ini_value", "expected"),
+        [
+            ("verbosity_assertions", "2", "2", 2),
+            ("verbosity_assertions", '"auto"', "auto", "auto"),
+            ("verbosity_test_cases", "-1", "-1", -1),
+            ("tmp_path_retention_count", "0", "0", 0),
+            ("log_level", "10", "10", 10),
+            ("log_level", '"INFO"', "INFO", "INFO"),
+            ("log_cli_level", "20", "20", 20),
+            ("log_file_level", "30", "30", 30),
+            ("log_auto_indent", "true", "true", True),
+            ("log_auto_indent", "4", "4", 4),
+            ("log_file_mode", '"a"', "a", "a"),
+            ("parametrize_long_str_id_strategy", '"sha256"', "sha256", "sha256"),
+        ],
+    )
+    def test_getini(
+        self,
+        pytester: Pytester,
+        name: str,
+        toml_value: str,
+        ini_value: str,
+        expected: object,
+    ) -> None:
+        pytester.maketoml(f"[pytest]\n{name} = {toml_value}\n")
+        assert pytester.parseconfig().getini(name) == expected
+
+        pytester.path.joinpath("pytest.toml").unlink()
+        pytester.makeini(f"[pytest]\n{name} = {ini_value}\n")
+        assert pytester.parseconfig().getini(name) == expected
+
+    @pytest.mark.parametrize(
+        ("name", "value"),
+        [
+            ("verbosity_assertions", '"loud"'),
+            ("log_file_mode", '"x"'),
+            ("parametrize_long_str_id_strategy", '"bogus"'),
+        ],
+    )
+    def test_invalid_value(self, pytester: Pytester, name: str, value: str) -> None:
+        pytester.maketoml(f"[pytest]\n{name} = {value}\n")
+        config = pytester.parseconfig()
+        with pytest.raises(UsageError, match=name):
+            config.getini(name)
+
+    def test_get_verbosity(self, pytester: Pytester) -> None:
+        pytester.maketoml("[pytest]\nverbosity_assertions = 2\n")
+        config = pytester.parseconfig()
+        assert config.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2

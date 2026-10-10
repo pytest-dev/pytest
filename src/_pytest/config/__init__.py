@@ -303,7 +303,7 @@ def console_main() -> int:
 
     from _pytest.deprecated import CONSOLE_MAIN
 
-    warnings.warn(CONSOLE_MAIN, stacklevel=2)
+    warnings.warn(CONSOLE_MAIN.format(), stacklevel=2)
     return _console_main()
 
 
@@ -1241,7 +1241,7 @@ class Config:
         @property
         def inicfg(self) -> _DeprecatedInicfgProxy:
             warnings.warn(
-                _pytest.deprecated.CONFIG_INICFG,
+                _pytest.deprecated.CONFIG_INICFG.format(),
                 stacklevel=2,
             )
             return _DeprecatedInicfgProxy(self)
@@ -2236,7 +2236,7 @@ class Config:
         parser.addini(
             Config._verbosity_ini_name(verbosity_type),
             help=help,
-            type="string",
+            type=int | Literal["auto"],
             default=Config._VERBOSITY_INI_DEFAULT,
         )
 

@@ -121,6 +121,53 @@ def test_log_cli_level_log_level_interaction(pytester: Pytester) -> None:
     result.stdout.no_re_match_line("DEBUG")
 
 
+@pytest.mark.parametrize("level", ["20", '"20"', '"INFO"'])
+def test_log_cli_level_toml(pytester: Pytester, level: str) -> None:
+    """log_cli_level accepts a native TOML int as well as strings."""
+    pytester.maketoml(
+        f"""
+        [pytest]
+        log_cli = true
+        log_cli_level = {level}
+        """
+    )
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test_foo():
+            logging.getLogger().debug("debug text")
+            logging.getLogger().info("info text")
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*INFO*info text"])
+    result.stdout.no_fnmatch_line("*debug text*")
+
+
+def test_log_level_toml_zero(pytester: Pytester) -> None:
+    """A native TOML ``log_level = 0`` (NOTSET) counts as set, like ``"0"``."""
+    pytester.maketoml(
+        """
+        [pytest]
+        log_level = 0
+        """
+    )
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test_foo(caplog):
+            assert caplog.handler.level == logging.NOTSET
+            logging.getLogger().debug("debug text")
+            assert caplog.messages == ["debug text"]
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+
+
 def test_setup_logging(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
