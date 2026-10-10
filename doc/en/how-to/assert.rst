@@ -499,6 +499,16 @@ the conftest file:
    FAILED test_foocompare.py::test_compare - assert Comparing Foo instances:
    1 failed in 0.12s
 
+.. note::
+
+   The ``conftest.py`` above imports the test module at the top level. That is
+   safe here only because ``test_foocompare.py`` matches the ``python_files``
+   patterns, so pytest rewrites it whoever imports it first. Importing a module
+   that pytest would only recognise as a test module for another reason -- because
+   it was named on the command line, for instance -- costs that module its
+   assertion introspection; see :ref:`assert-details` below. Moving the import
+   inside the hook body avoids the question entirely.
+
 .. _`return-not-none`:
 
 Returning non-None value in test functions
@@ -559,6 +569,14 @@ supporting modules which are not themselves test modules will not be rewritten**
 You can manually enable assertion rewriting for an imported module by calling
 :ref:`register_assert_rewrite <assertion-rewriting>`
 before you import it (a good place to do that is in your root ``conftest.py``).
+
+Rewriting happens on import, so a module which has *already* been imported by the
+time collection reaches it cannot be rewritten any more, even if it is a test
+module. The usual cause is a top-level ``import`` in a ``conftest.py`` or a
+plugin. pytest emits a :class:`pytest.PytestAssertRewriteWarning` when it
+collects such a module; either delay the import until after collection -- moving
+it into the hook or fixture that needs it -- or call
+:func:`pytest.register_assert_rewrite` before it.
 
 For further information, Benjamin Peterson wrote up `Behind the scenes of pytest's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_.
 
