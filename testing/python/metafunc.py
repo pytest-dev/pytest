@@ -11,6 +11,7 @@ import textwrap
 from typing import Any
 from typing import cast
 from typing import ClassVar
+import warnings
 
 import hypothesis
 from hypothesis import strategies
@@ -26,6 +27,7 @@ from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
 from _pytest.scope import Scope
+from _pytest.warning_types import PytestWarning
 import pytest
 
 
@@ -453,6 +455,21 @@ class TestMetafunc:
         """
         assert IdMaker([], [], None, None, None, None)._idval(NOTSET, "a", 0) == "a0"
 
+    def test_idmaker_does_not_warn_for_unselectable_builtin_id(self) -> None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", PytestWarning)
+
+            result = IdMaker(
+                ("arg",),
+                [pytest.param(complex(-0.0, -2))],
+                None,
+                None,
+                None,
+                None,
+            ).make_unique_parameterset_ids()
+
+        assert result == ["(-0-2j)"]
+
     def test_idmaker_autoname(self) -> None:
         """#250"""
         result = IdMaker(
@@ -544,17 +561,20 @@ class TestMetafunc:
         assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4", "\\t-5", "\\t-6"]
 
     def test_idmaker_manual_ids_must_be_printable(self) -> None:
-        result = IdMaker(
-            ("s",),
-            [
-                pytest.param("x00", id="hello \x00"),
-                pytest.param("x05", id="hello \x05"),
-            ],
-            None,
-            None,
-            None,
-            None,
-        ).make_unique_parameterset_ids()
+        with pytest.warns(PytestWarning) as warnings_record:
+            result = IdMaker(
+                ("s",),
+                [
+                    pytest.param("x00", id="hello \x00"),
+                    pytest.param("x05", id="hello \x05"),
+                ],
+                None,
+                None,
+                None,
+                None,
+            ).make_unique_parameterset_ids()
+
+        assert len(warnings_record) == 2
         assert result == ["hello \\x00", "hello \\x05"]
 
     def test_idmaker_enum(self) -> None:
@@ -573,18 +593,21 @@ class TestMetafunc:
                 return repr(val)
             return None
 
-        result = IdMaker(
-            ("a", "b"),
-            [
-                pytest.param(10.0, IndexError()),
-                pytest.param(20, KeyError()),
-                pytest.param("three", [1, 2, 3]),
-            ],
-            ids,
-            None,
-            None,
-            None,
-        ).make_unique_parameterset_ids()
+        with pytest.warns(PytestWarning) as warnings_record:
+            result = IdMaker(
+                ("a", "b"),
+                [
+                    pytest.param(10.0, IndexError()),
+                    pytest.param(20, KeyError()),
+                    pytest.param("three", [1, 2, 3]),
+                ],
+                ids,
+                None,
+                None,
+                None,
+            ).make_unique_parameterset_ids()
+
+        assert len(warnings_record) == 2
         assert result == ["10.0-IndexError()", "20-KeyError()", "three-b2"]
 
     def test_idmaker_idfn_unique_names(self) -> None:
@@ -606,6 +629,74 @@ class TestMetafunc:
             None,
         ).make_unique_parameterset_ids()
         assert result == ["a-a0", "a-a1", "a-a2"]
+
+    def test_idmaker_warns_for_unselectable_callable_id(self) -> None:
+        with pytest.warns(
+            PytestWarning,
+            match=r"parametrization ID '\(1, 1\)' contains characters that prevent selecting",
+        ):
+            result = IdMaker(
+                ("arg",),
+                [pytest.param((1, 1))],
+                repr,
+                None,
+                None,
+                None,
+            ).make_unique_parameterset_ids()
+
+        assert result == ["(1, 1)"]
+
+    def test_idmaker_does_not_warn_for_selectable_custom_ids(self) -> None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", PytestWarning)
+
+            result = IdMaker(
+                ("arg",),
+                [
+                    pytest.param(1, id="and"),
+                    pytest.param(2, id="or"),
+                    pytest.param(3, id="not"),
+                    pytest.param(4, id=""),
+                ],
+                None,
+                None,
+                None,
+                None,
+            ).make_unique_parameterset_ids()
+
+        assert result == ["and", "or", "not", ""]
+
+    def test_idmaker_warns_for_unselectable_explicit_param_id(self) -> None:
+        with pytest.warns(
+            PytestWarning,
+            match=r"parametrization ID 'foo\(bar\)' contains characters that prevent selecting",
+        ):
+            result = IdMaker(
+                ("arg",),
+                [pytest.param(1, id="foo(bar)")],
+                None,
+                None,
+                None,
+                None,
+            ).make_unique_parameterset_ids()
+
+        assert result == ["foo(bar)"]
+
+    def test_idmaker_warns_for_unselectable_ids_list(self) -> None:
+        with pytest.warns(
+            PytestWarning,
+            match=r"parametrization ID 'foo,bar' contains characters that prevent selecting",
+        ):
+            result = IdMaker(
+                ("arg",),
+                [pytest.param(1)],
+                None,
+                ["foo,bar"],
+                None,
+                None,
+            ).make_unique_parameterset_ids()
+
+        assert result == ["foo,bar"]
 
     def test_idmaker_with_idfn_and_config(self) -> None:
         """Unit test for expected behavior to create ids with idfn and
@@ -2320,6 +2411,34 @@ class TestMarkersWithParametrization:
         )
         result = pytester.runpytest("-v")
         result.stdout.fnmatch_lines(["*test_func*0*PASS*", "*test_func*2*PASS*"])
+
+    def test_pytest_make_parametrize_id_warns_for_unselectable_id(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_make_parametrize_id(config, val):
+                return "foo(bar)"
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("x", [1])
+            def test_func(x):
+                pass
+            """
+        )
+
+        result = pytester.runpytest("-W", "default")
+
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestWarning: *parametrization ID 'foo(bar)' contains characters that prevent selecting*"
+            ]
+        )
+        result.assert_outcomes(passed=1, warnings=1)
 
     def test_pytest_make_parametrize_id_with_argname(self, pytester: Pytester) -> None:
         pytester.makeconftest(
