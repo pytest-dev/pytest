@@ -1474,7 +1474,8 @@ class ReprEntry(TerminalRepr):
                 self.reprlocals.toterminal(tw, indent=" " * 8)
             return
 
-        if self.reprfuncargs:
+        # Locals already include the arguments; skip the separate block.
+        if self.reprfuncargs and self.reprlocals is None:
             self.reprfuncargs.toterminal(tw)
 
         self._write_entry_lines(tw)
