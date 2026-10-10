@@ -1,0 +1,1 @@
+pytest.mark.skipif() now raises an error when passed unexpected keyword arguments instead of silently ignoring them.
