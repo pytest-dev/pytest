@@ -82,8 +82,8 @@ def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
         except ValueError:
             pass
         else:
-            return f"{relfn}:{lineno + 1}"
-    return f"{fn}:{lineno + 1}"
+            return f"{relfn}:{lineno}"
+    return f"{fn}:{lineno}"
 
 
 def num_mock_patch_args(function) -> int:
@@ -162,6 +162,7 @@ def getfuncargnames(
         # Not using `getattr` because we don't want to resolve the staticmethod.
         # Not using `cls.__dict__` because we want to check the entire MRO.
         cls
+        and not inspect.ismethod(function)
         and not isinstance(
             inspect.getattr_static(cls, name, default=None), staticmethod
         )

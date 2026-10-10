@@ -1290,6 +1290,9 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestWarning
    :show-inheritance:
 
+.. autoclass:: pytest.PytestApproxDecimalToleranceWarning
+   :show-inheritance:
+
 .. autoclass:: pytest.PytestAssertRewriteWarning
    :show-inheritance:
 
@@ -1506,7 +1509,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: parametrize_long_str_id_strategy
-   :type: ``str``
+   :type: ``"short" | "sha256" | "legacy" | "disallow"``
    :default: ``"short"``
 
    .. versionadded:: 9.1
@@ -1865,8 +1868,11 @@ passed multiple times. The expected format is ``name=value``. For example::
             junit_suite_name = my_suite
 
 .. confval:: log_auto_indent
-    :type: ``str``
+    :type: ``int | bool | str``
     :default: ``"false"``
+
+    .. versionchanged:: 9.2
+        Added support for specifying the value as a boolean or an integer in TOML configuration.
 
     Allow selective auto-indentation of multiline log messages.
 
@@ -1884,7 +1890,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         .. code-block:: toml
 
             [pytest]
-            log_auto_indent = "false"
+            log_auto_indent = false
 
     .. tab:: ini
 
@@ -1964,12 +1970,14 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: log_cli_level
-    :type: ``str``
+    :type: ``int | str``
     :default: Fallback to ``log_level``
 
+    .. versionchanged:: 9.2
+        Added support for specifying the value as an integer in TOML configuration.
+
     Sets the minimum log message level that should be captured for live logging. The integer value or
-    the names of the levels can be used. Note in TOML the integer must be quoted, as there is no support
-    for config parameters of mixed type.
+    the names of the levels can be used.
 
     .. tab:: toml
 
@@ -1977,7 +1985,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_cli_level = "INFO"
-            log_cli_level = "10"
+            log_cli_level = 10
 
     .. tab:: ini
 
@@ -2081,11 +2089,14 @@ passed multiple times. The expected format is ``name=value``. For example::
     For more information, see :ref:`logging`.
 
 .. confval:: log_file_level
-    :type: ``str``
+    :type: ``int | str``
     :default: Fallback to ``log_level``
 
+    .. versionchanged:: 9.2
+        Added support for specifying the value as an integer in TOML configuration.
+
     Sets the minimum log message level that should be captured for the logging file.
-    The integer value (in TOML, as a string) or the names of the levels can be used.
+    The integer value or the names of the levels can be used.
 
     .. tab:: toml
 
@@ -2093,7 +2104,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_file_level = "INFO"
-            log_cli_level = "10"
+            log_file_level = 10
 
     .. tab:: ini
 
@@ -2101,13 +2112,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_file_level = INFO
-            log_cli_level = 10
+            log_file_level = 10
 
     For more information, see :ref:`logging`.
 
 
 .. confval:: log_file_mode
-    :type: ``str``
+    :type: ``"w" | "a"``
     :default: ``"w"``
 
     Sets the mode that the logging file is opened with.
@@ -2154,12 +2165,15 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: log_level
-    :type: ``str``
+    :type: ``int | str``
+
+    .. versionchanged:: 9.2
+        Added support for specifying the value as an integer in TOML configuration.
 
     Sets the minimum log message level that should be captured for logging capture.
     Not set by default, so it depends on the root/parent log handler's effective level,
     where it is ``"WARNING"`` by default.
-    The integer value (in TOML, as a string) or the names of the levels can be used.
+    The integer value or the names of the levels can be used.
 
     .. tab:: toml
 
@@ -2167,7 +2181,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_level = "INFO"
-            log_cli_level = "10"
+            log_level = 10
 
     .. tab:: ini
 
@@ -2175,7 +2189,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_level = INFO
-            log_cli_level = 10
+            log_level = 10
 
     For more information, see :ref:`logging`.
 
@@ -2219,7 +2233,7 @@ passed multiple times. The expected format is ``name=value``. For example::
        .. code-block:: toml
 
             [pytest]
-            minversion = 3.0  # will fail if we run with pytest-2.8
+            minversion = "3.0"  # will fail if we run with pytest-2.8
 
    .. tab:: ini
 
@@ -2621,8 +2635,11 @@ passed multiple times. The expected format is ``name=value``. For example::
        pytest testing doc
 
 .. confval:: tmp_path_retention_count
-   :type: ``str``
-   :default: ``"3"``
+   :type: ``int | str``
+   :default: ``3``
+
+   .. versionchanged:: 9.2
+        Added support for specifying the value as an integer in TOML configuration.
 
    How many sessions should pytest keep the `tmp_path` directories,
    according to :confval:`tmp_path_retention_policy`.
@@ -2632,7 +2649,7 @@ passed multiple times. The expected format is ``name=value``. For example::
        .. code-block:: toml
 
             [pytest]
-            tmp_path_retention_count = "3"
+            tmp_path_retention_count = 3
 
    .. tab:: ini
 
@@ -2750,8 +2767,11 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: verbosity_assertions
-    :type: ``str``
+    :type: ``int | "auto"``
     :default: ``"auto"``
+
+    .. versionchanged:: 9.2
+        Added support for specifying the value as an integer in TOML configuration.
 
     Set a verbosity level specifically for assertion related output, overriding the application wide level.
 
@@ -2760,7 +2780,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         .. code-block:: toml
 
             [pytest]
-            verbosity_assertions = "2"
+            verbosity_assertions = 2
 
     .. tab:: ini
 
@@ -2799,8 +2819,11 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: verbosity_subtests
-    :type: ``str``
+    :type: ``int | "auto"``
     :default: ``"auto"``
+
+    .. versionchanged:: 9.2
+        Added support for specifying the value as an integer in TOML configuration.
 
     Set the verbosity level specifically for **passed** subtests.
 
@@ -2809,7 +2832,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         .. code-block:: toml
 
             [pytest]
-            verbosity_subtests = "1"
+            verbosity_subtests = 1
 
     .. tab:: ini
 
@@ -2827,8 +2850,11 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: verbosity_test_cases
-    :type: ``str``
+    :type: ``int | "auto"``
     :default: ``"auto"``
+
+    .. versionchanged:: 9.2
+        Added support for specifying the value as an integer in TOML configuration.
 
     Set a verbosity level specifically for test case execution related output, overriding the application wide level.
 
@@ -2837,7 +2863,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         .. code-block:: toml
 
             [pytest]
-            verbosity_test_cases = "2"
+            verbosity_test_cases = 2
 
     .. tab:: ini
 
@@ -2867,19 +2893,26 @@ Test Selection
 
 .. option:: -k EXPRESSION
 
-    Only run tests which match the given substring expression.
-    An expression is a Python evaluable expression where all names are substring-matched against test names and their parent classes.
+    Only run tests which match the given keyword expression.
+    An expression is made of names combined with ``and``, ``or``, ``not`` and parentheses.
+    Each name is matched case-insensitively as a substring of any of the test's keywords.
 
     Examples::
 
-        pytest -k "test_method or test_other"  # matches names containing 'test_method' OR 'test_other'
-        pytest -k "not test_method"            # matches names NOT containing 'test_method'
+        pytest -k "test_method or test_other"  # matches keywords containing 'test_method' OR 'test_other'
+        pytest -k "not test_method"            # matches keywords NOT containing 'test_method'
         pytest -k "not test_method and not test_other"  # excludes both
 
-    The matching is case-insensitive.
-    Keywords are also matched to classes and functions containing extra names in their ``extra_keyword_matches`` set.
+    The keywords of a test are:
 
-    See :ref:`select-tests` for more information and examples.
+    * its own name, including any parametrization id;
+    * the names of its parent class, module and directories;
+    * the names of the markers applied to it or to any of its parents, as bare names:
+      unlike :option:`-m`, ``-k`` matches them as substrings and cannot match their arguments;
+    * attributes assigned directly to the test function, as in the legacy ``test_func.slow = True`` style;
+    * any names added to the :attr:`~_pytest.nodes.Node.extra_keyword_matches` set of it or of a parent.
+
+    See :ref:`keyword expressions` for more information and examples.
 
 .. option:: -m MARKEXPR
 
@@ -2888,9 +2921,12 @@ Test Selection
 
     Examples::
 
-        pytest -m slow                  # run tests marked with @pytest.mark.slow
-        pytest -m "not slow"            # run tests NOT marked slow
-        pytest -m "mark1 and not mark2" # run tests marked mark1 but not mark2
+        pytest -m slow                   # run tests marked with @pytest.mark.slow
+        pytest -m "not slow"             # run tests NOT marked slow
+        pytest -m "mark1 and not mark2"  # run tests marked mark1 but not mark2
+        pytest -m "device(serial='123')" # run tests marked device with that argument
+
+    Marker names are matched exactly and case-sensitively.
 
     See :ref:`mark` for more information on markers.
 
@@ -3438,21 +3474,19 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       file_or_dir
 
     general:
-      -k EXPRESSION         Only run tests which match the given substring
-                            expression. An expression is a Python evaluable
-                            expression where all names are substring-matched
-                            against test names and their parent classes.
-                            Example: -k 'test_method or test_other' matches all
-                            test functions and classes whose name contains
-                            'test_method' or 'test_other', while -k 'not
-                            test_method' matches those that don't contain
-                            'test_method' in their names. -k 'not test_method
-                            and not test_other' will eliminate the matches.
-                            Additionally keywords are matched to classes and
-                            functions containing extra names in their
-                            'extra_keyword_matches' set, as well as functions
-                            which have names assigned directly to them. The
-                            matching is case-insensitive.
+      -k EXPRESSION         Only run tests matching the given keyword expression,
+                            e.g. -k 'test_method or test_other', -k 'not (slow or
+                            network)'.
+                            Names in the expression are matched case-insensitively
+                            as substrings of the test's keywords, which are:
+                            - its own name, including any parametrization id
+                            - the names of its class, module and directories
+                            - the names of the markers applied to it or to its
+                              parents
+                            - attributes assigned directly to the test function
+                            - any names in its 'extra_keyword_matches' set
+                            Use -m to match marker names exactly, including their
+                            arguments.
       -m MARKEXPR           Only run tests matching given mark expression. For
                             example: -m 'mark1 and not mark2'.
       --markers             show markers (builtin, plugin and per-project ones).
@@ -3706,7 +3740,7 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             progress information ("progress" (percentage) |
                             "count" | "times" | "progress-even-when-capture-no"
                             (forces progress even when capture=no)
-      verbosity_test_cases (string):
+      verbosity_test_cases (int | 'auto'):
                             Specify a verbosity level for test case execution,
                             overriding the main level. Higher levels will
                             provide more detailed information about each test
@@ -3714,7 +3748,7 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       strict_xfail (bool):  Default for the strict parameter of xfail markers
                             when not given explicitly (default: False) (alias:
                             xfail_strict)
-      tmp_path_retention_count (string):
+      tmp_path_retention_count (int | string):
                             How many sessions should we keep the `tmp_path`
                             directories, according to
                             `tmp_path_retention_policy`.
@@ -3733,7 +3767,7 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       assertion_text_diff_style ('ndiff' | 'block'):
                             Choose how pytest renders diffs for string equality
                             assertions
-      verbosity_assertions (string):
+      verbosity_assertions (int | 'auto'):
                             Specify a verbosity level for assertions, overriding
                             the main level. Higher levels will provide more
                             detailed explanation when an assertion fails.
@@ -3753,36 +3787,37 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       doctest_encoding (string):
                             Encoding used for doctest files
       cache_dir (string):   Cache directory path
-      log_level (string):   Default value for --log-level
+      log_level (int | string):
+                            Default value for --log-level
       log_format (string):  Default value for --log-format
       log_date_format (string):
                             Default value for --log-date-format
       log_cli (bool):       Enable log display during test run (also known as
                             "live logging")
-      log_cli_level (string):
+      log_cli_level (int | string):
                             Default value for --log-cli-level
       log_cli_format (string):
                             Default value for --log-cli-format
       log_cli_date_format (string):
                             Default value for --log-cli-date-format
       log_file (string):    Default value for --log-file
-      log_file_mode (string):
+      log_file_mode ('w' | 'a'):
                             Default value for --log-file-mode
-      log_file_level (string):
+      log_file_level (int | string):
                             Default value for --log-file-level
       log_file_format (string):
                             Default value for --log-file-format
       log_file_date_format (string):
                             Default value for --log-file-date-format
-      log_auto_indent (string):
+      log_auto_indent (int | bool | string):
                             Default value for --log-auto-indent
-      faulthandler_timeout (string):
+      faulthandler_timeout (float | string):
                             Dump the traceback of all threads if a test takes
                             more than TIMEOUT seconds to finish
       faulthandler_exit_on_timeout (bool):
                             Exit the test process if a test takes more than
                             faulthandler_timeout seconds to finish
-      verbosity_subtests (string):
+      verbosity_subtests (int | 'auto'):
                             Specify verbosity level for subtests. Higher levels
                             will generate output for passed subtests. Failed
                             subtests are always reported.

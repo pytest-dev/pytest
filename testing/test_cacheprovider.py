@@ -4,10 +4,12 @@ from collections.abc import Generator
 from collections.abc import Sequence
 from enum import auto
 from enum import Enum
+import errno
 import os
 from pathlib import Path
 import shutil
 from typing import Any
+from unittest.mock import mock_open
 
 from _pytest.compat import assert_never
 from _pytest.config import ExitCode
@@ -103,6 +105,30 @@ class TestNewAPI:
         cache = config.cache
         assert cache is not None
         cache.set("test/broken", [])
+
+    @pytest.mark.parametrize("failure", ["open", "write", "close"])
+    def test_cache_writefail_warns(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch, failure: str
+    ) -> None:
+        config = pytester.parseconfigure()
+        cache = config.cache
+        assert cache is not None
+        cache.set("test/broken", [])
+        mocked_open = mock_open()
+        failing_operation = {
+            "open": mocked_open,
+            "write": mocked_open.return_value.write,
+            "close": mocked_open.return_value.__exit__,
+        }[failure]
+        failing_operation.side_effect = OSError(errno.ENOSPC, "No space left on device")
+
+        with monkeypatch.context() as m:
+            m.setattr(Path, "open", mocked_open)
+            with pytest.warns(
+                pytest.PytestCacheWarning,
+                match="cache could not write path .*: .*No space left on device",
+            ):
+                cache.set("test/broken", [])
 
     @pytest.fixture
     def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path]:

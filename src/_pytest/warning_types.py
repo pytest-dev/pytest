@@ -135,6 +135,14 @@ class UnformattedWarning(Generic[_W]):
 
 
 @final
+class PytestApproxDecimalToleranceWarning(PytestWarning):
+    """Warning emitted when :func:`pytest.approx` is given a float tolerance
+    for a :class:`~decimal.Decimal` comparison."""
+
+    __module__ = "pytest"
+
+
+@final
 class PytestFDWarning(PytestWarning):
     """When the lsof plugin finds leaked fds."""
 
