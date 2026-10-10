@@ -352,9 +352,78 @@ class TestClass:
                 def abstract2(self): pass
             """
         )
-        result = pytester.runpytest()
+        result = pytester.runpytest("-Wignore::pytest.PytestCollectionWarning")
         assert result.ret == ExitCode.OK
         result.assert_outcomes(passed=1)
+
+    def test_abstract_class_missing_implementation_warns(
+        self, pytester: Pytester
+    ) -> None:
+        """A class that inherits tests but no longer instantiates says so (#13546).
+
+        ``TestForgot`` looks like a leaf test class and carries an inherited
+        test, but is still abstract, so its tests never run.
+        """
+        pytester.makepyfile(
+            """
+            import abc
+
+            class TestBase(abc.ABC):
+                @abc.abstractmethod
+                def impl(self): pass
+
+                def test_it(self):
+                    assert self.impl() == 1
+
+            class TestForgot(TestBase):
+                pass
+
+            class TestOk(TestBase):
+                def impl(self):
+                    return 1
+            """
+        )
+        result = pytester.runpytest("-Wdefault::pytest.PytestCollectionWarning")
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestCollectionWarning: cannot collect test class 'TestForgot'"
+                " because it is abstract: it does not implement 'impl'"
+                " (declared abstract in 'TestBase')*"
+            ]
+        )
+
+    def test_abstract_base_class_is_not_warned_about(self, pytester: Pytester) -> None:
+        """A class declaring blanks of its own means to be a base class (#13546).
+
+        ``__test__`` in the class body opts a class out of the warning even when
+        it declares no blanks of its own.
+        """
+        pytester.makepyfile(
+            """
+            import abc
+
+            class TestBase(abc.ABC):
+                @abc.abstractmethod
+                def impl(self): pass
+
+                def test_it(self):
+                    assert self.impl() == 1
+
+            class TestStillAbstract(TestBase):
+                __test__ = False
+
+            class TestNoTests(abc.ABC):
+                @abc.abstractmethod
+                def impl(self): pass
+
+            class TestOk(TestBase):
+                def impl(self):
+                    return 1
+            """
+        )
+        result = pytester.runpytest("-Wdefault::pytest.PytestCollectionWarning")
+        result.assert_outcomes(passed=1, warnings=0)
 
 
 class TestFunction:
