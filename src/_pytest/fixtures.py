@@ -403,6 +403,19 @@ def traverse_fixture_closure(
     initialnames: Iterable[str],
     *,
     getfixturedefs: Callable[[str], Sequence[FixtureDef[Any]] | None],
+    _on_resolve: Callable[
+        [
+            FixtureDef[Any] | None,
+            str,
+            FixtureDef[Any] | None,
+            bool,
+            Literal["declared", "dynamic", "closure"],
+        ],
+        None,
+    ]
+    | None = None,
+    _root_origins: Mapping[str, Literal["declared", "closure"]] | None = None,
+    _include_dynamic: bool = False,
 ) -> Iterator[str]:
     """Statically traverse the fixture dependency closure in DFS order starting
     from initialnames, yielding all requested fixture names (argnames).
@@ -416,11 +429,24 @@ def traverse_fixture_closure(
     # last, etc.
     current_indices: dict[str, int] = {}
 
-    def process_argname(argname: str) -> Iterator[str]:
+    def process_argname(
+        argname: str,
+        requester: FixtureDef[Any] | None = None,
+        origin: Literal["declared", "dynamic", "closure"] = "declared",
+    ) -> Iterator[str]:
         index = current_indices.get(argname)
 
         # Optimization: already processed this argname.
         if index == -1:
+            if _on_resolve is not None:
+                fixturedefs = getfixturedefs(argname)
+                _on_resolve(
+                    requester,
+                    argname,
+                    fixturedefs[-1] if fixturedefs else None,
+                    False,
+                    origin,
+                )
             return
 
         # Only yield each argname once.
@@ -430,24 +456,279 @@ def traverse_fixture_closure(
 
         fixturedefs = getfixturedefs(argname)
         if not fixturedefs:
+            if _on_resolve is not None:
+                _on_resolve(requester, argname, None, False, origin)
             return
 
         index = current_indices.get(argname, -1)
         if -index > len(fixturedefs):
             # Exhausted the override chain (will error during runtest).
+            if _on_resolve is not None:
+                _on_resolve(requester, argname, None, True, origin)
             return
         fixturedef = fixturedefs[index]
+        if _on_resolve is not None:
+            _on_resolve(requester, argname, fixturedef, False, origin)
 
         current_indices[argname] = index - 1
         for dep in fixturedef.argnames:
-            yield from process_argname(dep)
+            yield from process_argname(dep, fixturedef)
+
+        # An overriding fixture which accepts ``request`` can dynamically
+        # retrieve the fixture it shadows. This is the one dynamic lookup
+        # whose target pytest can determine without executing user code.
+        # Keep it out of the ordinary closure walk so collection semantics
+        # remain unchanged; graph observers opt into this conservative edge.
+        if (
+            _include_dynamic
+            and "request" in fixturedef.argnames
+            and fixturedef.argname not in fixturedef.argnames
+            and -index < len(fixturedefs)
+        ):
+            # A possible call must not mark dependencies as processed for a
+            # later real root, or alter its override-resolution context.
+            saved_indices = current_indices.copy()
+            try:
+                yield from process_argname(fixturedef.argname, fixturedef, "dynamic")
+            finally:
+                current_indices.clear()
+                current_indices.update(saved_indices)
         current_indices[argname] = index
 
     for argname in initialnames:
-        yield from process_argname(argname)
+        origin = _root_origins.get(argname, "declared") if _root_origins else "declared"
+        yield from process_argname(argname, origin=origin)
+
+
+@dataclasses.dataclass(frozen=True, eq=False)
+class FixtureGraphParameter:
+    """A direct parameter represented as a node in a fixture graph.
+
+    .. versionadded:: 9.2
+    """
+
+    #: The parameter name.
+    name: str
 
 
 @dataclasses.dataclass(frozen=True)
+class FixtureGraphEdge:
+    """A requested fixture relationship in a :class:`FixtureGraph` snapshot.
+
+    .. versionadded:: 9.2
+    """
+
+    #: The fixture or parameter making the request, or ``None`` for a root.
+    requester: FixtureDef[Any] | FixtureGraphParameter | None
+    #: The requested fixture name.
+    name: str
+    #: The resolved fixture or parameter node, or ``None`` for special edges.
+    target: FixtureDef[Any] | FixtureGraphParameter | None
+    #: The resolution result: fixture, parameter, request, unresolved, or exhausted.
+    kind: Literal["fixture", "parameter", "request", "unresolved", "exhausted"]
+    #: The source of the relationship: declared, dynamic, or closure.
+    origin: Literal["declared", "dynamic", "closure"]
+
+
+@dataclasses.dataclass(frozen=True)
+class FixtureGraph:
+    """A structural snapshot of discoverable fixture relationships.
+
+    Fixture definitions referenced by the snapshot remain live objects, while
+    edges and roots are immutable tuples. The graph reports declared
+    dependencies and a conservative same-name override edge when an
+    overriding fixture accepts ``request``. Arbitrary dynamic fixture lookup
+    and effective parametrization scopes are outside the graph contract.
+
+    .. versionadded:: 9.2
+    """
+
+    #: All discovered relationships in traversal order.
+    edges: tuple[FixtureGraphEdge, ...]
+    #: Relationships whose requester is ``None``, representing the test.
+    roots: tuple[FixtureGraphEdge, ...]
+    _declared_fixturedefs: tuple[FixtureDef[Any], ...] = dataclasses.field(
+        default=(), repr=False
+    )
+
+    @property
+    def fixturedefs(self) -> tuple[FixtureDef[Any], ...]:
+        """Return all reached fixture definitions, excluding parameter stubs.
+
+        The returned tuple preserves first edge-discovery order.
+        """
+        seen: set[int] = set()
+        result: list[FixtureDef[Any]] = []
+        for edge in self.edges:
+            if edge.kind == "fixture" and edge.target is not None:
+                target = cast(FixtureDef[Any], edge.target)
+                if id(target) not in seen:
+                    seen.add(id(target))
+                    result.append(target)
+        return tuple(result)
+
+    @property
+    def declared_fixturedefs(self) -> tuple[FixtureDef[Any], ...]:
+        """Return definitions reached from declared roots through declarations.
+
+        Dynamic same-name bases and closure roots are excluded. This property
+        is intended for consumers that need a strict declared dependency view.
+        """
+        return self._declared_fixturedefs
+
+    def dependencies(
+        self, node: FixtureDef[Any] | FixtureGraphParameter
+    ) -> tuple[FixtureGraphEdge, ...]:
+        """Return outgoing edges for ``node`` in graph order.
+
+        .. versionadded:: 9.2
+        """
+        return tuple(edge for edge in self.edges if edge.requester is node)
+
+    def dependents(
+        self, node: FixtureDef[Any] | FixtureGraphParameter
+    ) -> tuple[FixtureGraphEdge, ...]:
+        """Return incoming edges for ``node`` in graph order.
+
+        .. versionadded:: 9.2
+        """
+        return tuple(edge for edge in self.edges if edge.target is node)
+
+
+def _fixture_graph(
+    initialnames: Iterable[str],
+    *,
+    getfixturedefs: Callable[[str], Sequence[FixtureDef[Any]] | None],
+    direct_parametrize_args: AbstractSet[str] = frozenset(),
+    root_origins: Mapping[str, Literal["declared", "closure"]] | None = None,
+) -> FixtureGraph:
+    """Observe the existing static resolver without executing fixtures."""
+    from _pytest.python import DirectParamFixtureDef
+
+    roots = tuple(initialnames)
+    edges: list[FixtureGraphEdge] = []
+    parameter_nodes: dict[str, FixtureGraphParameter] = {}
+    seen_edges: set[tuple[int | None, str, int | None, str, str]] = set()
+
+    def is_direct_parameter(argname: str) -> bool:
+        if argname in direct_parametrize_args:
+            return True
+        fixturedefs = getfixturedefs(argname)
+        return bool(fixturedefs and isinstance(fixturedefs[-1], DirectParamFixtureDef))
+
+    def get_graph_fixturedefs(
+        argname: str,
+    ) -> Sequence[FixtureDef[Any]] | None:
+        # A direct parameter shadows any same-name fixture and is terminal for
+        # the static graph. In particular, do not walk a shadowed fixture's
+        # dependencies before the builtin generation hook creates its stub.
+        if is_direct_parameter(argname):
+            return None
+        return getfixturedefs(argname)
+
+    def resolved(
+        requester: FixtureDef[Any] | None,
+        argname: str,
+        target: FixtureDef[Any] | FixtureGraphParameter | None,
+        exhausted: bool,
+        origin: Literal["declared", "dynamic", "closure"],
+    ) -> None:
+        kind: Literal["fixture", "parameter", "request", "unresolved", "exhausted"]
+        if exhausted:
+            kind = "exhausted"
+        elif is_direct_parameter(argname):
+            kind = "parameter"
+            target = parameter_nodes.setdefault(argname, FixtureGraphParameter(argname))
+        elif argname == "request" and target is None:
+            kind = "request"
+        elif target is None:
+            kind = "unresolved"
+        else:
+            kind = "fixture"
+        key = (
+            id(requester) if requester is not None else None,
+            argname,
+            id(target) if target is not None else None,
+            kind,
+            origin,
+        )
+        if key not in seen_edges:
+            seen_edges.add(key)
+            edges.append(FixtureGraphEdge(requester, argname, target, kind, origin))
+
+    # The union graph can contain edges discovered with different active
+    # override chains. Inferring certainty from reachability in that union
+    # would allow a speculative context to create a false declared path.
+    declared_defs: list[FixtureDef[Any]] = []
+    seen_declared: set[int] = set()
+
+    def declared_resolved(
+        requester: FixtureDef[Any] | None,
+        name: str,
+        target: FixtureDef[Any] | None,
+        exhausted: bool,
+        origin: Literal["declared", "dynamic", "closure"],
+    ) -> None:
+        if target is not None and id(target) not in seen_declared:
+            seen_declared.add(id(target))
+            declared_defs.append(target)
+
+    declared_roots = (
+        name
+        for name in roots
+        if root_origins is None or root_origins.get(name, "declared") == "declared"
+    )
+    for _name in traverse_fixture_closure(
+        declared_roots,
+        getfixturedefs=get_graph_fixturedefs,
+        _on_resolve=declared_resolved,
+    ):
+        pass
+    for _name in traverse_fixture_closure(
+        roots,
+        getfixturedefs=get_graph_fixturedefs,
+        _on_resolve=resolved,
+        _root_origins=root_origins,
+        _include_dynamic=True,
+    ):
+        pass
+    root_edges = tuple(edge for edge in edges if edge.requester is None)
+    return FixtureGraph(tuple(edges), root_edges, tuple(declared_defs))
+
+
+def _fixture_graph_for_item(item: nodes.Item) -> FixtureGraph:
+    """Read an item's declared dependencies from its collected fixture info."""
+    fixture_info: FuncFixtureInfo | None = getattr(item, "_fixtureinfo", None)
+    if fixture_info is None:
+        return FixtureGraph((), ())
+
+    def getfixturedefs(argname: str) -> Sequence[FixtureDef[Any]] | None:
+        if argname in fixture_info.name2fixturedefs:
+            return fixture_info.name2fixturedefs[argname]
+        return item.session._fixturemanager.getfixturedefs(argname, item)
+
+    declared = frozenset(
+        traverse_fixture_closure(
+            fixture_info.initialnames,
+            getfixturedefs=getfixturedefs,
+        )
+    )
+    fixturenames = getattr(item, "fixturenames", ())
+    roots = tuple(fixture_info.initialnames) + tuple(
+        name for name in fixturenames if name not in declared
+    )
+    root_origins: dict[str, Literal["declared", "closure"]] = dict.fromkeys(
+        fixture_info.initialnames, "declared"
+    )
+    root_origins.update({name: "closure" for name in roots if name not in root_origins})
+    return _fixture_graph(
+        roots,
+        getfixturedefs=getfixturedefs,
+        root_origins=root_origins,
+    )
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
 class FuncFixtureInfo:
     """Fixture-related information for a fixture-requesting item (e.g. test
     function).
@@ -460,8 +741,6 @@ class FuncFixtureInfo:
     An item may also request fixtures dynamically (using `request.getfixturevalue`);
     these are not reflected here.
     """
-
-    __slots__ = ("argnames", "initialnames", "name2fixturedefs", "names_closure")
 
     # Fixture names that the item requests directly by function parameters.
     argnames: tuple[str, ...]
@@ -477,6 +756,10 @@ class FuncFixtureInfo:
     # There may be multiple overriding fixtures with the same name. The
     # sequence is ordered from furthest to closes to the item.
     name2fixturedefs: dict[str, Sequence[FixtureDef[Any]]]
+    # Initial decorator directness, captured alongside the declared closure.
+    direct_parametrize_args: frozenset[str] = dataclasses.field(
+        default_factory=frozenset
+    )
 
     def prune_dependency_tree(self) -> None:
         """Recompute names_closure from initialnames and name2fixturedefs.
@@ -1854,7 +2137,13 @@ class FixtureManager:
             ignore_args=direct_parametrize_args,
         )
 
-        return FuncFixtureInfo(argnames, initialnames, names_closure, arg2fixturedefs)
+        return FuncFixtureInfo(
+            argnames,
+            initialnames,
+            names_closure,
+            arg2fixturedefs,
+            frozenset(direct_parametrize_args),
+        )
 
     def pytest_plugin_registered(self, plugin: _PluggyPlugin, plugin_name: str) -> None:
         # Fixtures defined in conftest plugins are only visible to within the
