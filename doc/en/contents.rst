@@ -89,6 +89,7 @@ Further topics
 
    contributing
    development_guide
+   maintenance
 
    sponsor
    tidelift
