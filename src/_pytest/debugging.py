@@ -22,9 +22,16 @@ from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
+from _pytest.nodes import Item
 from _pytest.nodes import Node
+from _pytest.python import Function
 from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
+
+
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
 
 
 def _validate_usepdb_cls(value: str) -> tuple[str, str]:
@@ -302,9 +309,15 @@ class PdbInvoke:
 
 
 class PdbTrace:
-    @hookimpl(wrapper=True)
-    def pytest_pyfunc_call(self, pyfuncitem) -> Generator[None, object, object]:
-        wrap_pytest_function_for_tracing(pyfuncitem)
+    # trylast so this is the innermost wrapper, i.e. runs inside
+    # CaptureManager's - _init_pdb() suspends capturing, and an outer wrapper
+    # would have that undone again by the capture manager.
+    @hookimpl(wrapper=True, trylast=True)
+    def pytest_runtest_call(self, item: Item) -> Generator[None, object, object]:
+        # Not every item is function-backed (doctests, custom items), and
+        # TestCaseFunction never reaches pytest_pyfunc_call at all.
+        if isinstance(item, Function):
+            wrap_pytest_function_for_tracing(item)
         return (yield)
 
 
@@ -327,23 +340,18 @@ def wrap_pytest_function_for_tracing(pyfuncitem) -> None:
     pyfuncitem.obj = wrapper
 
 
-def maybe_wrap_pytest_function_for_tracing(pyfuncitem) -> None:
-    """Wrap the given pytestfunct item for tracing support if --trace was given in
-    the command line."""
-    if pyfuncitem.config.getvalue("trace"):
-        wrap_pytest_function_for_tracing(pyfuncitem)
-
-
 def _enter_pdb(
     node: Node, excinfo: ExceptionInfo[BaseException], rep: BaseReport
 ) -> BaseReport:
     # XXX we reuse the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
-    # for not completely clear reasons.
-    tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
+    # for not completely clear reasons. Falls back to a plain writer when
+    # nothing is reporting, rather than crashing on entry to the debugger.
+    tw = node.config.get_terminal_writer()
     tw.line()
 
-    showcapture = node.config.option.showcapture
+    # Registered by the terminal plugin; default to its default when absent.
+    showcapture = node.config.getoption("showcapture", "all")
 
     for sectionname, content in (
         ("stdout", rep.capstdout),
