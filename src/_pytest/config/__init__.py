@@ -81,6 +81,16 @@ from _pytest.pathlib import ImportMode
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
+from _pytest.warning_late_error import catching_warnings
+from _pytest.warning_late_error import collect_or_show
+from _pytest.warning_late_error import ERROR_LATER_ACTION
+from _pytest.warning_late_error import install_warning_filter
+from _pytest.warning_late_error import late_warning_state_key
+from _pytest.warning_late_error import LateWarningLog
+from _pytest.warning_late_error import LateWarningState
+from _pytest.warning_late_error import recording_warnings
+from _pytest.warning_late_error import select_late_warnings
+from _pytest.warning_late_error import WarningFilter
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
@@ -127,6 +137,8 @@ class ExitCode(enum.IntEnum):
     NO_TESTS_COLLECTED = 5
     #: All tests pass, but maximum number of warnings exceeded.
     MAX_WARNINGS_ERROR = 6
+    #: All tests pass, but warnings matching an ``error_later`` filter were emitted.
+    LATE_WARNING_ERROR = 7
 
     __module__ = "pytest"
 
@@ -1316,7 +1328,7 @@ class Config:
         self,
         *,
         record: bool,
-    ) -> Generator[list[warnings.WarningMessage] | None]:
+    ) -> Generator[LateWarningLog | None]:
         """Apply configured filters in a warnings-catching context.
 
         Defined here instead of _pytest.warnings as _do_configure uses
@@ -1325,7 +1337,10 @@ class Config:
         """
         config_filters = self.getini("filterwarnings")
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
-        with warnings.catch_warnings(record=record) as log:
+        catcher: contextlib.AbstractContextManager[LateWarningLog | None] = (
+            recording_warnings() if record else catching_warnings()
+        )
+        with catcher as log:
             if not sys.warnoptions:
                 # If user is not explicitly configuring warning filters, show deprecation warnings by default (#2908).
                 warnings.filterwarnings("always", category=DeprecationWarning)
@@ -1335,6 +1350,12 @@ class Config:
             # warnings.filterwarnings("error", category=pytest.PytestRemovedIn10Warning)
 
             apply_warning_filters(config_filters, cmdline_filters)
+            state = self.stash.setdefault(late_warning_state_key, LateWarningState())
+            if log is None:
+                # Nothing records here, so an 'error_later' warning would just be
+                # printed. Collect it instead; nested recording contexts swap
+                # showwarning out and back, so this only sees unrecorded warnings.
+                warnings.showwarning = collect_or_show(state, warnings.showwarning)
             yield log
 
     @contextlib.contextmanager
@@ -1346,6 +1367,8 @@ class Config:
             try:
                 yield
             finally:
+                state = self.stash[late_warning_state_key]
+                state.collected.extend(select_late_warnings(records, 0, nodeid=""))
                 for warning_message in records:
                     self.hook.pytest_warning_recorded.call_historic(
                         kwargs=dict(
@@ -1834,12 +1857,14 @@ class Config:
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
         config_filters = self.getini("filterwarnings")
 
-        with warnings.catch_warnings(record=True) as records:
+        with recording_warnings() as records:
             warnings.simplefilter("always", type(warning))
             apply_warning_filters(config_filters, cmdline_filters)
             warnings.warn(warning, stacklevel=stacklevel)
 
         if records:
+            state = self.stash.setdefault(late_warning_state_key, LateWarningState())
+            state.collected.extend(select_late_warnings(records, 0, nodeid=""))
             frame = sys._getframe(stacklevel - 1)
             location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
             self.hook.pytest_warning_recorded.call_historic(
@@ -2374,9 +2399,7 @@ def _strtobool(val: str) -> bool:
 
 
 @lru_cache(maxsize=50)
-def parse_warning_filter(
-    arg: str, *, escape: bool
-) -> tuple[warnings._ActionKind, str, type[Warning], str, int]:
+def parse_warning_filter(arg: str, *, escape: bool) -> WarningFilter:
     """Parse a warnings filter string.
 
     This is copied from warnings._setoption with the following changes:
@@ -2417,10 +2440,14 @@ def parse_warning_filter(
     while len(parts) < 5:
         parts.append("")
     action_, message, category_, module, lineno_ = (s.strip() for s in parts)
-    try:
-        action: warnings._ActionKind = warnings._getaction(action_)  # type: ignore[attr-defined]
-    except warnings._OptionError as e:
-        raise UsageError(error_template.format(error=str(e))) from None
+    action: warnings._ActionKind | Literal["error_later"]
+    if action_ == ERROR_LATER_ACTION:
+        action = ERROR_LATER_ACTION
+    else:
+        try:
+            action = warnings._getaction(action_)  # type: ignore[attr-defined]
+        except warnings._OptionError as e:
+            raise UsageError(error_template.format(error=str(e))) from None
     try:
         category: type[Warning] = _resolve_warning_category(category_)
     except ImportError:
@@ -2478,24 +2505,35 @@ def _resolve_warning_category(category: str) -> type[Warning]:
 
 def apply_warning_filters(
     config_filters: Iterable[str], cmdline_filters: Iterable[str]
-) -> None:
-    """Applies pytest-configured filters to the warnings module"""
+) -> list[WarningFilter]:
+    """Applies pytest-configured filters to the warnings module.
+
+    Returns the filters that were applied, in application order, so that the
+    ``error_later`` action can resolve precedence the way ``warnings.filters`` does.
+    """
+    applied: list[WarningFilter] = []
     # Filters should have this precedence: cmdline options, config.
     # Filters should be applied in the inverse order of precedence.
     for arg in config_filters:
         try:
-            warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
+            parsed = parse_warning_filter(arg, escape=False)
         except ImportError as e:
             warnings.warn(
                 f"Failed to import filter module '{e.name}': {arg}", PytestConfigWarning
             )
             continue
+        install_warning_filter(parsed)
+        applied.append(parsed)
 
     for arg in cmdline_filters:
         try:
-            warnings.filterwarnings(*parse_warning_filter(arg, escape=True))
+            parsed = parse_warning_filter(arg, escape=True)
         except ImportError as e:
             warnings.warn(
                 f"Failed to import filter module '{e.name}': {arg}", PytestConfigWarning
             )
             continue
+        install_warning_filter(parsed)
+        applied.append(parsed)
+
+    return applied

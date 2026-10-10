@@ -53,6 +53,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+from _pytest.warning_late_error import LATE_WARNING_ERRORS_STAT
 
 
 if TYPE_CHECKING:
@@ -70,6 +71,7 @@ KNOWN_TYPES = (
     "xpassed",
     "warnings",
     "error",
+    LATE_WARNING_ERRORS_STAT,
     "subtests passed",
     "subtests failed",
     "subtests skipped",
@@ -1436,7 +1438,7 @@ class TerminalReporter:
 
     def _determine_main_color(self, unknown_type_seen: bool) -> str:
         stats = self.stats
-        if "failed" in stats or "error" in stats:
+        if "failed" in stats or "error" in stats or LATE_WARNING_ERRORS_STAT in stats:
             main_color = "red"
         elif "warnings" in stats or "xpassed" in stats or unknown_type_seen:
             main_color = "yellow"
@@ -1641,6 +1643,7 @@ def _folded_skips(
 _color_for_type = {
     "failed": "red",
     "error": "red",
+    LATE_WARNING_ERRORS_STAT: "red",
     "warnings": "yellow",
     "passed": "green",
     "subtests passed": "green",
@@ -1651,13 +1654,13 @@ _color_for_type_default = "yellow"
 
 def pluralize(count: int, noun: str) -> tuple[int, str]:
     # No need to pluralize words such as `failed` or `passed`.
-    if noun not in ["error", "warnings", "test"]:
+    if noun not in ["error", "warnings", "test", LATE_WARNING_ERRORS_STAT]:
         return count, noun
 
     # The `warnings` key is plural. To avoid API breakage, we keep it that way but
     # set it to singular here so we can determine plurality in the same way as we do
-    # for `error`.
-    noun = noun.replace("warnings", "warning")
+    # for `error`. The late warning errors key follows the same pattern.
+    noun = noun.replace("warnings", "warning").replace("errors", "error")
 
     return count, noun + "s" if count != 1 else noun
 

@@ -327,6 +327,78 @@ See :ref:`@pytest.mark.filterwarnings <filterwarnings>` and
     by calling :func:`warnings.simplefilter` (see :issue:`2430` for an example of that).
 
 
+.. _`error-later-warnings`:
+
+Erroring on warnings after the test instead of during it
+---------------------------------------------------------
+
+.. versionadded:: 9.2
+
+The ``error`` action raises at the :func:`warnings.warn` call site. That aborts the
+code under test halfway through, and the failure is reported at the frame that emitted
+the warning rather than where the test was going.
+
+pytest adds an ``error_later`` action for the cases where that is not what you want.
+The warning still becomes an error, but it is recorded first: the code under test runs
+to completion, and pytest raises afterwards.
+
+.. tab:: pyproject.toml
+
+    .. code-block:: toml
+
+        [tool.pytest.ini_options]
+        filterwarnings = [
+            'error_later::DeprecationWarning',
+        ]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        filterwarnings =
+            error_later::DeprecationWarning
+
+``error_later`` is valid anywhere a warning filter is, including :option:`-W` and
+:ref:`@pytest.mark.filterwarnings <filterwarnings>`, and follows the same precedence
+rules as every other action: the last matching filter wins.
+
+The :confval:`error_later_report` option decides what fails:
+
+* ``test`` (the default) fails the test that emitted the warning, once the setup, call
+  or teardown phase that emitted it finishes. If that phase failed on its own, the
+  warnings are added to its failure report instead of failing it a second time.
+* ``session`` lets the tests pass, lists the warnings in a ``late warning errors``
+  section at the end of the run, and exits with :class:`pytest.ExitCode`
+  ``LATE_WARNING_ERROR`` (code ``7``), unless the run already failed for another reason.
+
+Warnings emitted where there is no test to fail end up in that end-of-run section in
+either mode: during collection, while plugins and ``conftest.py`` files are loaded, in
+``pytest_configure`` and ``pytest_sessionfinish``, and in a test that is skipped. Warnings
+emitted after the end-of-run report, in ``pytest_unconfigure`` for example, are too
+late to fail the run and are shown as usual.
+
+With :pypi:`pytest-xdist`, the workers pass their late warnings to the controller,
+which reports them and sets the exit code.
+
+.. note::
+
+    Python's own filter matching decides whether ``error_later`` applies, exactly as it
+    decides for ``error``. The message, category, module and line fields all work, and
+    module and line match the way :mod:`warnings` matches them::
+
+        filterwarnings = error_later::DeprecationWarning:some\.module
+
+    For the same reason, filters that the code under test installs itself, with
+    :func:`warnings.simplefilter` or :class:`warnings.catch_warnings` for example, take
+    precedence over an ``error_later`` filter, just as they take precedence over ``error``.
+    Warnings re-emitted by :func:`pytest.warns` carry a module name derived from the
+    file path, so a filter restricted to a module does not match them.
+
+    ``error_later`` is a pytest action: :envvar:`python:PYTHONWARNINGS` and ``python -W`` do
+    not accept it.
+
+
 .. _`ensuring a function triggers a deprecation warning`:
 
 .. _ensuring_function_triggers:
