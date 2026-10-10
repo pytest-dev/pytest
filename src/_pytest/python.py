@@ -81,6 +81,7 @@ from _pytest.scope import Scope
 from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 
 
@@ -574,6 +575,11 @@ def importtestmodule(
     return mod
 
 
+# Test modules collected so far, used to decide whether to warn about
+# ``pytest_plugins`` in a test module (#13030).
+_collected_modules_key = StashKey[list["Module"]]()
+
+
 class Module(nodes.File, PyCollector):
     """Collector for test classes and functions in a Python module."""
 
@@ -584,7 +590,30 @@ class Module(nodes.File, PyCollector):
         self._register_setup_module_fixture()
         self._register_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
+        self._warn_pytest_plugins_in_test_module()
         return super().collect()
+
+    def _warn_pytest_plugins_in_test_module(self) -> None:
+        """Warn when a test module defines ``pytest_plugins`` (#13030).
+
+        Such plugins affect the entire test suite rather than only the
+        declaring module. A single-file suite (common for plugin tests) cannot
+        be affected, so the warning is held back until a second test module
+        is collected.
+        """
+        modules = self.config.stash.setdefault(_collected_modules_key, [])
+        modules.append(self)
+        if len(modules) < 2:
+            return
+        for module in modules if len(modules) == 2 else (self,):
+            if hasattr(module.obj, "pytest_plugins"):
+                module.warn(
+                    PytestConfigWarning(
+                        f"Defining 'pytest_plugins' in test module {module.nodeid} "
+                        "affects the entire test suite instead of just this module.\n"
+                        "Please move it to a top level conftest file at the rootdir."
+                    )
+                )
 
     def _register_setup_module_fixture(self) -> None:
         """Register an autouse, module-scoped fixture for the collected module object

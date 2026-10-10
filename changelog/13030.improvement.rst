@@ -1,0 +1,1 @@
+A :class:`~pytest.PytestConfigWarning` is now emitted when :globalvar:`pytest_plugins` is defined in a test module and more than one test file is collected, since the plugins affect the entire test suite rather than only that module.

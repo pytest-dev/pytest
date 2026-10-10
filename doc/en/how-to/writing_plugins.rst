@@ -278,6 +278,10 @@ of the variable will also be loaded as plugins, and so on.
     :globalvar:`pytest_plugins` in any ``conftest.py`` file which is not located in the
     tests root directory is deprecated, and will raise a warning.
 
+    Likewise, defining :globalvar:`pytest_plugins` in a test module affects the
+    entire test suite, so pytest emits a :class:`~pytest.PytestConfigWarning`
+    when it finds one while collecting more than one test file.
+
 This mechanism makes it easy to share fixtures within applications or even
 external applications without the need to create external plugins using the
 :std:doc:`entry point packaging metadata
