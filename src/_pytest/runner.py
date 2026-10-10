@@ -252,6 +252,10 @@ def call_and_report(
         reraise=get_reraise_exceptions(item.config),
     )
     report: TestReport = ihook.pytest_runtest_makereport(item=item, call=call)
+    # A BdbQuit (e.g. from Ctrl+D in pdb) should stop the session, not just
+    # fail the current test. See #13453.
+    if call.excinfo is not None and isinstance(call.excinfo.value, bdb.BdbQuit):
+        item.session.shouldstop = "Debugger quit (BdbQuit)"
     if log:
         ihook.pytest_runtest_logreport(report=report)
     if check_interactive_exception(call, report):
