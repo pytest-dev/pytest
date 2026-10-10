@@ -12,6 +12,7 @@ from typing import Literal
 
 from typing_extensions import assert_type
 
+from _pytest.compat import ItemLocation
 import pytest
 from pytest import MonkeyPatch
 from pytest import ScopeName
@@ -58,7 +59,7 @@ def check_raises_is_a_context_manager(val: bool) -> None:
 # Issue #12941.
 def check_testreport_attributes(report: TestReport) -> None:
     assert_type(report.when, Literal["setup", "call", "teardown"])
-    assert_type(report.location, tuple[str, int | None, str])
+    assert_type(report.location, ItemLocation)
 
 
 # Issue #14234.
