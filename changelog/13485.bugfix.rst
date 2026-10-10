@@ -1,0 +1,3 @@
+Fixed warning filters installed during collection (for example a module-level
+``warnings.filterwarnings()`` call in a test module or conftest) being reset
+before test execution, so they apply during the test run again.
