@@ -71,6 +71,7 @@ jobs:
           "ubuntu-py311-pluggy",
           "ubuntu-py311-freeze",
           "ubuntu-py311-xdist",
+          "ubuntu-py311-floor",
           "ubuntu-py312",
           "ubuntu-py313-pexpect",
           "ubuntu-py314",
@@ -169,6 +170,14 @@ jobs:
             python: "3.11"
             os: ubuntu-latest
             tox_env: "py311-xdist"
+            use_coverage: true
+
+          # Oldest supported patch release (Debian 12 ships 3.11.2): exercises the doctest
+          # `_find_lineno` workaround, which the latest patch releases never hit.
+          - name: "ubuntu-py311-floor"
+            python: "3.11.2"
+            os: ubuntu-latest
+            tox_env: "py311-floor"
             use_coverage: true
 
           - name: "ubuntu-py312"
