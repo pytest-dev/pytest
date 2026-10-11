@@ -245,6 +245,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-level",
         dest="log_level",
         default=None,
+        type=int | str,
         metavar="LEVEL",
         help=(
             "Level of messages to catch/display."
@@ -271,7 +272,11 @@ def pytest_addoption(parser: Parser) -> None:
         help='Enable log display during test run (also known as "live logging")',
     )
     add_option_ini(
-        "--log-cli-level", dest="log_cli_level", default=None, help="CLI logging level"
+        "--log-cli-level",
+        dest="log_cli_level",
+        default=None,
+        type=int | str,
+        help="CLI logging level",
     )
     add_option_ini(
         "--log-cli-format",
@@ -295,6 +300,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-file-mode",
         dest="log_file_mode",
         default="w",
+        type=Literal["w", "a"],
         choices=["w", "a"],
         help="Log file open mode",
     )
@@ -302,6 +308,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-file-level",
         dest="log_file_level",
         default=None,
+        type=int | str,
         help="Log file logging level",
     )
     add_option_ini(
@@ -320,6 +327,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-auto-indent",
         dest="log_auto_indent",
         default=None,
+        type=int | bool | str,
         help="Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
     )
     group.addoption(
@@ -632,13 +640,15 @@ def get_log_level_for_setting(config: Config, *setting_names: str) -> int | None
         log_level = config.getoption(setting_name)
         if log_level is None:
             log_level = config.getini(setting_name)
-        if log_level:
+        # An int 0 (NOTSET) is a valid level, only None and "" mean unset.
+        if log_level is not None and log_level != "":
             break
     else:
         return None
 
-    if isinstance(log_level, str):
-        log_level = log_level.upper()
+    if isinstance(log_level, int):
+        return log_level
+    log_level = log_level.upper()
     try:
         return int(getattr(logging, log_level, log_level))
     except ValueError as e:
