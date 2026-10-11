@@ -1252,19 +1252,34 @@ class TestApprox:
         explanation = approx(expected)._repr_compare(other)
         assert explanation[1:3] == wanted
 
-    def test_mapping_relative_diff_undefined(self) -> None:
-        """A zero expected value that does not compare equal to 0.
+    @pytest.mark.parametrize(
+        ("actual", "expected"),
+        (
+            pytest.param(
+                [datetime.timedelta(0), datetime.timedelta(seconds=5)],
+                [datetime.timedelta(seconds=10), datetime.timedelta(seconds=10)],
+                id="sequence",
+            ),
+            pytest.param(
+                {
+                    "a": datetime.timedelta(seconds=10),
+                    "b": datetime.timedelta(seconds=5),
+                },
+                {"a": datetime.timedelta(0), "b": datetime.timedelta(seconds=10)},
+                id="mapping",
+            ),
+        ),
+    )
+    def test_zero_timedelta_relative_difference(self, actual, expected) -> None:
+        """Zero durations retain the mismatch table and an infinite relative diff."""
+        with pytest.raises(AssertionError) as exc_info:
+            assert actual == approx(expected, rel=0.01)
 
-        timedelta(0) != 0, so the divide-by-zero guard does not catch it and
-        the relative difference stays unknown.
-        """
-        explanation = approx({"a": datetime.timedelta(0)}, rel=0.01)._repr_compare(
-            {"a": datetime.timedelta(seconds=1)}
-        )
-        assert explanation[1:3] == [
-            "Max absolute difference: 0:00:01",
-            "Max relative difference: -inf",
-        ]
+        message = str(exc_info.value)
+        assert "Mismatched elements: 2 / 2" in message
+        assert "Max absolute difference: 0:00:10" in message
+        assert "Max relative difference: inf" in message
+        assert "Index" in message
 
     def test_mixed_decimal_and_float_sequence_does_not_hide_float_operation(
         self, monkeypatch
