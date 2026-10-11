@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-import sys
-
-from typing_extensions import assert_type
+from typing import assert_type
 
 from _pytest.main import Failed as main_Failed
 from _pytest.outcomes import Failed
@@ -17,10 +15,6 @@ assert_type(raises.Exception, Failed)  # type: ignore[assert-type, attr-defined]
 
 # FIXME: these are different for some reason(?)
 assert Failed is not main_Failed  # type: ignore[comparison-overlap]
-
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-    from exceptiongroup import ExceptionGroup
 
 # split into functions to isolate the different scopes
 

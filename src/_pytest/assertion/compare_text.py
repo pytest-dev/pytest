@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from typing import assert_never
 
 from _pytest._io.saferepr import saferepr
 from _pytest.assertion._typing import _AssertionTextDiffStyle
@@ -8,7 +9,6 @@ from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.highlight import dummy_highlighter
-from _pytest.compat import assert_never
 
 
 def _compare_eq_text(

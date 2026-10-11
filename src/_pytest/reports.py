@@ -9,7 +9,6 @@ import dataclasses
 from io import StringIO
 import os
 from pprint import pprint
-import sys
 from typing import Any
 from typing import cast
 from typing import final
@@ -38,12 +37,8 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-
-
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
     from _pytest.runner import CallInfo
 
