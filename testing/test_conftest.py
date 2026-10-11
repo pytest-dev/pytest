@@ -1069,6 +1069,7 @@ def test_fixture_closure_order_independence_with_parametrize(
     assert result.ret == ExitCode.OK
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestRemovedIn11Warning")
 def test_required_option_help(pytester: Pytester) -> None:
     pytester.makeconftest("assert 0")
     x = pytester.mkdir("x")
