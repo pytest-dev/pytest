@@ -202,12 +202,10 @@ class ParameterSet(NamedTuple):
         nodeid: str,
     ) -> tuple[Sequence[str], list[ParameterSet]]:
         if not isinstance(argvalues, Collection):
-            warnings.warn(
-                PARAMETRIZE_NON_COLLECTION_ITERABLE.format(
-                    nodeid=nodeid,
-                    type_name=type(argvalues).__name__,
-                ),
+            PARAMETRIZE_NON_COLLECTION_ITERABLE.warn(
                 stacklevel=3,
+                nodeid=nodeid,
+                type_name=type(argvalues).__name__,
             )
 
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
