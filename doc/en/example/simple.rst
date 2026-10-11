@@ -276,7 +276,7 @@ To refuse to start the test run, like ``required=True`` did, raise
     def server(request):
         return request.config.getoption("server")
 
-pytest then exits with :attr:`ExitCode.USAGE_ERROR <pytest.ExitCode.USAGE_ERROR>`
+pytest then exits with code ``4`` (:class:`~pytest.ExitCode` ``USAGE_ERROR``)
 and prints the message before any test runs, also with :pypi:`pytest-xdist`.
 
 :hook:`pytest_runtestloop` is the first hook that only runs when tests are
