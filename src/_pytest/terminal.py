@@ -21,6 +21,7 @@ import platform
 import sys
 import textwrap
 from typing import Any
+from typing import assert_never
 from typing import ClassVar
 from typing import final
 from typing import Literal
@@ -442,7 +443,7 @@ class TerminalReporter:
             case "classic":
                 return False
             case unreachable:
-                compat.assert_never(unreachable)
+                assert_never(unreachable)
 
     @property
     def verbosity(self) -> int:
