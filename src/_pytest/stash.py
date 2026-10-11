@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Generator
+import contextlib
 from typing import Any
 from typing import cast
 from typing import Generic
@@ -90,6 +92,33 @@ class Stash:
             return self[key]
         except KeyError:
             return default
+
+    @contextlib.contextmanager
+    def replaced(self, key: StashKey[T], value: T) -> Generator[None]:
+        """Context manager which sets key to value for the duration of the block.
+
+        On exit the previous value is restored, or the key is deleted again if
+        it had no value before. Nested replacements of the same key restore the
+        value of the enclosing block.
+
+        .. code-block:: python
+
+            with config.stash.replaced(some_str_key, "value"):
+                ...
+
+        .. versionadded:: 9.2
+        """
+        absent = key not in self
+        previous = self._storage.get(key)
+        self[key] = value
+        try:
+            yield
+        finally:
+            if absent:
+                # The block may have deleted the key itself.
+                self._storage.pop(key, None)
+            else:
+                self._storage[key] = previous
 
     def setdefault(self, key: StashKey[T], default: T) -> T:
         """Return the value of key if already set, otherwise set the value

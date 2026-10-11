@@ -26,6 +26,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deselect import deselect_items
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -403,7 +404,9 @@ class LFPlugin:
             else:
                 if self.config.getoption("lf"):
                     items[:] = previously_failed
-                    config.hook.pytest_deselected(items=previously_passed)
+                    deselect_items(
+                        config, previously_passed, "passed in the last run (--lf)"
+                    )
                 else:  # --failedfirst
                     items[:] = previously_failed + previously_passed
 
@@ -420,7 +423,12 @@ class LFPlugin:
             self._report_status = "no previously failed tests, "
             if self.config.getoption("last_failed_no_failures") == "none":
                 self._report_status += "deselecting all items."
-                config.hook.pytest_deselected(items=items[:])
+                deselect_items(
+                    config,
+                    items[:],
+                    "no test failed in the last run"
+                    " (--lf --last-failed-no-failures=none)",
+                )
                 items[:] = []
             else:
                 self._report_status += "not deselecting items."

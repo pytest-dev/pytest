@@ -1,0 +1,3 @@
+New :meth:`Stash.replaced() <pytest.Stash.replaced>` context manager, which sets a
+key to a value for the duration of a block and restores the previous value -- or
+removes the key again if it had none -- on exit.
