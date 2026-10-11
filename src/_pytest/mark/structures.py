@@ -682,6 +682,14 @@ class NodeKeywords(MutableMapping[str, Any]):
             self._markers = markers
         return markers
 
+    def _obj_dict(self) -> dict[str, Any] | None:
+        # Only test functions contribute their attributes, as the eager
+        # `keywords.update(self.obj.__dict__)` in Function did. A module or class
+        # would leak every global, `pytestmark` included, into its items.
+        if not getattr(self.node, "_keywords_from_obj_dict", False):
+            return None
+        return getattr(getattr(self.node, "_obj", None), "__dict__", None)
+
     def _lookup_derived(self, key: str) -> Any:
         """Return a derived keyword value or raise ``KeyError``."""
         if key == self.node.name:
@@ -689,11 +697,9 @@ class NodeKeywords(MutableMapping[str, Any]):
         callspec = getattr(self.node, "callspec", None)
         if callspec is not None and key == callspec.id:
             return True
-        obj = getattr(self.node, "_obj", None)
-        if obj is not None:
-            obj_dict = getattr(obj, "__dict__", None)
-            if obj_dict is not None and key in obj_dict:
-                return obj_dict[key]
+        obj_dict = self._obj_dict()
+        if obj_dict is not None and key in obj_dict:
+            return obj_dict[key]
         # Scanned in reverse: the eager `keywords.update(...)` this replaces let
         # later markers win, and `own_markers` holds MRO-inherited markers base
         # class first, so the closest marker is the last one with a given name.
@@ -768,11 +774,9 @@ class NodeKeywords(MutableMapping[str, Any]):
         callspec = getattr(self.node, "callspec", None)
         if callspec is not None and callspec._idlist:
             yield callspec.id, True
-        obj = getattr(self.node, "_obj", None)
-        if obj is not None:
-            obj_dict = getattr(obj, "__dict__", None)
-            if obj_dict is not None:
-                yield from obj_dict.items()
+        obj_dict = self._obj_dict()
+        if obj_dict is not None:
+            yield from obj_dict.items()
         for mark in getattr(self.node, "own_markers", ()):
             yield mark.name, mark
 

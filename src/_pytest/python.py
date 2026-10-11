@@ -1741,6 +1741,7 @@ class Function(PyobjMixin, nodes.Item):
 
     # Disable since functions handle it themselves.
     _ALLOW_MARKERS = False
+    _keywords_from_obj_dict = True
 
     def __init__(
         self,
