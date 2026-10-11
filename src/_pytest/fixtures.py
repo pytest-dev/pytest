@@ -1186,6 +1186,9 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
+        # The request the fixture is currently set up with, if any; passed to
+        # pytest_fixture_post_finalizer on teardown.
+        self._setup_request: SubRequest | None = None
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1204,10 +1207,14 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
-        if self.cached_result is None:
-            # Already finished. It is assumed that finalizers cannot be added in
-            # this state.
+        if self.cached_result is None and self._setup_request is None:
+            # Already finished (or never set up). It is assumed that finalizers
+            # cannot be added in this state.
             return
+        # The hook must see the request that set the fixture up, not the one
+        # that may be tearing it down to switch to a new param (#12306).
+        request = self._setup_request or request
+        self._setup_request = None
 
         exceptions: list[BaseException] = []
         while self._finalizers:
@@ -1217,16 +1224,26 @@ class FixtureDef(Generic[FixtureValue]):
             except BaseException as e:
                 exceptions.append(e)
         node = request.node
-        # Even if finalization fails, we invalidate the cached fixture
-        # value and remove all finalizers because they may be bound methods
-        # which will keep instances alive.
-        self.cached_result = None
-        self._finalizers.clear()
+        teardown_exception: BaseException | None = None
         if len(exceptions) == 1:
-            raise exceptions[0]
+            teardown_exception = exceptions[0]
         elif len(exceptions) > 1:
             msg = f'errors while tearing down fixture "{self.argname}" of {node}'
-            raise BaseExceptionGroup(msg, exceptions[::-1])
+            teardown_exception = BaseExceptionGroup(msg, exceptions[::-1])
+        try:
+            # An exception raised by the hook itself is a plugin bug and
+            # propagates as-is.
+            node.ihook.pytest_fixture_post_finalizer(
+                fixturedef=self, request=request, teardown_exception=teardown_exception
+            )
+        finally:
+            # Even if finalization fails, we invalidate the cached fixture
+            # value and remove all finalizers because they may be bound methods
+            # which will keep instances alive.
+            self.cached_result = None
+            self._finalizers.clear()
+        if teardown_exception is not None:
+            raise teardown_exception
 
     def execute(self, request: SubRequest) -> FixtureValue:
         """Return the value of this fixture, executing it if not cached."""
@@ -1264,10 +1281,11 @@ class FixtureDef(Generic[FixtureValue]):
                     raise exc.with_traceback(exc_tb)
                 else:
                     return self.cached_result[0]
-            # We have a previous but differently parametrized fixture instance
-            # so we need to tear it down before creating a new one.
-            self.finish(request)
-            assert self.cached_result is None
+        # We may have a previous but differently parametrized fixture instance,
+        # or a setup that failed before caching a result; tear it down before
+        # creating a new one (no-op if there is nothing to tear down).
+        self.finish(request)
+        assert self.cached_result is None
 
         # Add finalizer to requested fixtures we saved previously.
         # We make sure to do this after checking for cached value to avoid
@@ -1276,16 +1294,8 @@ class FixtureDef(Generic[FixtureValue]):
         for parent_fixture in requested_fixtures_that_should_finalize_us:
             parent_fixture.addfinalizer(finalizer)
 
-        # Register the pytest_fixture_post_finalizer as the first finalizer,
-        # which is executed last.
-        assert not self._finalizers
-        self.addfinalizer(
-            lambda: request.node.ihook.pytest_fixture_post_finalizer(
-                fixturedef=self, request=request
-            )
-        )
-
         ihook = request.node.ihook
+        self._setup_request = request
         try:
             # Setup the fixture, run the code in it, and cache the value
             # in self.cached_result.
