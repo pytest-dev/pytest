@@ -13,6 +13,7 @@ import dataclasses
 import enum
 import inspect
 from typing import Any
+from typing import assert_never
 from typing import final
 from typing import Literal
 from typing import NamedTuple
@@ -24,7 +25,6 @@ import warnings
 from .._code import getfslineno
 from ..compat import NOTSET
 from ..compat import NotSetType
-from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE

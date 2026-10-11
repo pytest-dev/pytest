@@ -17,8 +17,8 @@ from typing import TypeVar
 
 
 if TYPE_CHECKING:
-    from typing_extensions import ParamSpec
-    from typing_extensions import Self
+    from typing import ParamSpec
+    from typing import Self
 
     P = ParamSpec("P")
 

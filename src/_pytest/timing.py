@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 from datetime import datetime
-from datetime import timezone
+from datetime import UTC
 from time import perf_counter
 from time import sleep
 from time import time
@@ -48,7 +48,7 @@ class Instant:
 
     def as_utc(self) -> datetime:
         """Instant as UTC datetime."""
-        return datetime.fromtimestamp(self.time, timezone.utc)
+        return datetime.fromtimestamp(self.time, UTC)
 
 
 @dataclasses.dataclass(frozen=True)

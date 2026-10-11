@@ -16,7 +16,7 @@ from _pytest.reports import TestReport
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 STEPWISE_CACHE_DIR = "cache/stepwise"
 

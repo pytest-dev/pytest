@@ -29,11 +29,7 @@ if sys.version_info >= (3, 12):
     from importlib.resources.abc import TraversableResources
 else:
     from importlib.abc import TraversableResources
-if sys.version_info < (3, 11):
-    from importlib.readers import FileReader
-else:
-    from importlib.resources.readers import FileReader
-
+from importlib.resources.readers import FileReader
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr

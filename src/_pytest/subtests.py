@@ -41,7 +41,7 @@ from _pytest.stash import StashKey
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
 def pytest_addoption(parser: Parser) -> None:

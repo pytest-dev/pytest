@@ -8,9 +8,8 @@ none of the code triggers any mypy errors.
 from __future__ import annotations
 
 import contextlib
+from typing import assert_type
 from typing import Literal
-
-from typing_extensions import assert_type
 
 import pytest
 from pytest import MonkeyPatch

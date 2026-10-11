@@ -85,7 +85,7 @@ from _pytest.warning_types import PytestReturnNotNoneWarning
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 LongStrIdStrategy = Literal["short", "sha256", "legacy", "disallow"]
 _LONG_STR_STRATEGIES: frozenset[LongStrIdStrategy] = frozenset(
