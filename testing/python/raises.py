@@ -426,7 +426,7 @@ class TestRaises:
     def test_issue_11872(self) -> None:
         """Regression test for #11872.
 
-        urllib.error.HTTPError on some Python 3.10/11 minor releases raises
+        urllib.error.HTTPError on some Python 3.11 minor releases raises
         KeyError instead of AttributeError on invalid attribute access.
 
         https://github.com/python/cpython/issues/98778
