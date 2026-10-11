@@ -414,8 +414,17 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     else:
         skip_exceptions = [Skipped]
         unittest = sys.modules.get("unittest")
-        if unittest is not None:
-            skip_exceptions.append(unittest.SkipTest)
+        if unittest is not None and isinstance(call.excinfo.value, unittest.SkipTest):
+            tb = call.excinfo.value.__traceback__
+            while tb and tb.tb_next is not None:
+                tb = tb.tb_next
+            frame = tb.tb_frame if tb else None
+            if not (
+                frame
+                and frame.f_code.co_name == "skip_wrapper"
+                and frame.f_globals.get("__name__") == "unittest.case"
+            ):
+                skip_exceptions.append(unittest.SkipTest)
         if isinstance(call.excinfo.value, tuple(skip_exceptions)):
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")
