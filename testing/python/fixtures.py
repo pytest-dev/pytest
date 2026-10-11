@@ -3894,9 +3894,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
+                "tmp_path_factory -> TempPathFactory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -- .../_pytest/tmpdir.py:*",
+                "tmp_path -> Generator[[]Path[]] -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3905,9 +3905,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
+                "tmp_path_factory -> TempPathFactory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -- .../_pytest/tmpdir.py:*",
+                "tmp_path -> Generator[[]Path[]] -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3927,13 +3927,114 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
             """
-            *tmp_path -- *
+            *tmp_path -> Generator[[]Path[]] -- *
             *fixtures defined from*
             *arg1 -- test_show_fixtures_testmodule.py:5*
             *hello world*
         """
         )
         result.stdout.no_fnmatch_line("*arg0*")
+
+    def test_show_fixtures_return_annotation(self, pytester: Pytester) -> None:
+        # No ``from __future__ import annotations`` here, so before Python 3.14
+        # the annotations are objects rather than strings.
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            class Answer:
+                pass
+
+            @pytest.fixture
+            def number() -> int:
+                return 42
+
+            @pytest.fixture
+            def nothing() -> None:
+                pass
+
+            @pytest.fixture
+            def answer() -> Answer:
+                return Answer()
+
+            @pytest.fixture(scope="session")
+            def numbers() -> list[int]:
+                return []
+
+            @pytest.fixture
+            def plain():
+                pass
+            """
+        )
+        result = pytester.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines_random(
+            [
+                "number -> int -- test_show_fixtures_return_annotation.py:*",
+                "nothing -> None -- test_show_fixtures_return_annotation.py:*",
+                "answer -> Answer -- test_show_fixtures_return_annotation.py:*",
+                "numbers -> list[[]int[]] [[]session scope[]] -- test_show_fixtures_return_annotation.py:*",
+                "plain -- test_show_fixtures_return_annotation.py:*",
+            ]
+        )
+
+    def test_show_fixtures_return_annotation_unresolvable(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makepyfile(
+            """
+            from __future__ import annotations
+
+            from typing import TYPE_CHECKING
+
+            import pytest
+
+            if TYPE_CHECKING:
+                from decimal import Decimal
+
+            @pytest.fixture
+            def price() -> Decimal:
+                ...
+            """
+        )
+        result = pytester.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines(
+            [
+                "price -> Decimal -- test_show_fixtures_return_annotation_unresolvable.py:*"
+            ]
+        )
+        assert result.ret == 0
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 14),
+        reason="annotations are evaluated lazily only on Python 3.14+",
+    )
+    def test_show_fixtures_return_annotation_lazy_unresolvable(
+        self, pytester: Pytester
+    ) -> None:
+        # Without the __future__ import, Python 3.14 evaluates annotations
+        # lazily, and reading them must not evaluate a name that is only
+        # imported when checking types.
+        p = pytester.makepyfile(
+            """
+            from typing import TYPE_CHECKING
+
+            import pytest
+
+            if TYPE_CHECKING:
+                from decimal import Decimal
+
+            @pytest.fixture
+            def price() -> Decimal:
+                ...
+            """
+        )
+        result = pytester.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines(
+            [
+                "price -> Decimal -- test_show_fixtures_return_annotation_lazy_unresolvable.py:*"
+            ]
+        )
+        assert result.ret == 0
 
     @pytest.mark.parametrize("testmod", [True, False])
     def test_show_fixtures_conftest(self, pytester: Pytester, testmod) -> None:
