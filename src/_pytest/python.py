@@ -77,6 +77,7 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import scandir
+from _pytest.reports import CollectReport
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
@@ -617,7 +618,7 @@ class Module(nodes.File, PyCollector):
             return
         if collected.first is not None:
             first, collected.first = collected.first, None
-            first._warn_if_pytest_plugins()
+            first._warn_pytest_plugins_retroactively()
         self._warn_if_pytest_plugins()
 
     def _warn_if_pytest_plugins(self) -> None:
@@ -629,6 +630,19 @@ class Module(nodes.File, PyCollector):
                     "Please move it to a top level conftest file at the rootdir."
                 )
             )
+
+    def _warn_pytest_plugins_retroactively(self) -> None:
+        """Warn about this already collected module while another one is collected.
+
+        If the warning is turned into an error, report it as a collection error
+        of this module instead of the module currently being collected.
+        """
+        try:
+            self._warn_if_pytest_plugins()
+        except PytestConfigWarning:
+            longrepr = self.repr_failure(ExceptionInfo.from_current())
+            report = CollectReport(self.nodeid, "failed", longrepr, [])
+            self.ihook.pytest_collectreport(report=report)
 
     def _register_setup_module_fixture(self) -> None:
         """Register an autouse, module-scoped fixture for the collected module object

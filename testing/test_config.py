@@ -3036,23 +3036,34 @@ class TestPytestPluginsVariable:
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         assert msg not in res.stdout.str()
 
+    @pytest.mark.parametrize("module", ["test_a", "test_b"])
     @pytest.mark.filterwarnings("default")
-    def test_pytest_plugins_in_test_module_warns(self, pytester: Pytester) -> None:
-        """Using pytest_plugins in a test module affects the whole suite (#13030)."""
+    def test_pytest_plugins_in_test_module_warns(
+        self, pytester: Pytester, module: str
+    ) -> None:
+        """Using pytest_plugins in a test module affects the whole suite (#13030).
+
+        Covers both the first collected module (warned retroactively) and a later one.
+        """
         pytester.makepyfile(
             test_a="def test_a(): pass",
-            test_b="""
-                pytest_plugins = ['capture']
+            test_b="def test_b(): pass",
+        )
+        pytester.makepyfile(
+            **{
+                module: f"""
+                    pytest_plugins = ['capture']
 
-                def test_b(): pass
-            """,
+                    def {module}(): pass
+                """
+            }
         )
         res = pytester.runpytest()
         assert res.ret == 0
         res.stdout.fnmatch_lines(
             [
-                "*test_b.py:1: PytestConfigWarning: Defining 'pytest_plugins' "
-                "in test module test_b.py affects the entire test suite*",
+                f"*{module}.py:1: PytestConfigWarning: Defining 'pytest_plugins' "
+                f"in test module {module}.py affects the entire test suite*",
                 "*2 passed, 1 warning*",
             ]
         )
@@ -3072,21 +3083,35 @@ class TestPytestPluginsVariable:
         assert res.ret == 0
         assert "Defining 'pytest_plugins' in test module" not in res.stdout.str()
 
-    def test_pytest_plugins_in_test_module_as_error(self, pytester: Pytester) -> None:
-        """Turned into an error, the warning is a regular collection error (#13030)."""
+    @pytest.mark.parametrize("module", ["test_a", "test_b"])
+    def test_pytest_plugins_in_test_module_as_error(
+        self, pytester: Pytester, module: str
+    ) -> None:
+        """As an error, it is a collection error of the defining module (#13030)."""
         pytester.makepyfile(
             test_a="def test_a(): pass",
-            test_b="""
-                pytest_plugins = ['capture']
+            test_b="def test_b(): pass",
+        )
+        pytester.makepyfile(
+            **{
+                module: f"""
+                    pytest_plugins = ['capture']
 
-                def test_b(): pass
-            """,
+                    def {module}(): pass
+                """
+            }
         )
         res = pytester.runpytest("-W", "error::pytest.PytestConfigWarning")
         assert res.ret == pytest.ExitCode.INTERRUPTED
         res.stdout.fnmatch_lines(
-            ["*ERROR collecting test_b.py*", "*in test module test_b.py affects*"]
+            [
+                f"*ERROR collecting {module}.py*",
+                f"*in test module {module}.py affects*",
+                "*1 error*",
+            ]
         )
+        other = "test_b" if module == "test_a" else "test_a"
+        res.stdout.no_fnmatch_line(f"*ERROR collecting {other}.py*")
 
 
 def test_conftest_import_error_repr(tmp_path: Path) -> None:
