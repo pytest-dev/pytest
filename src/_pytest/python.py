@@ -575,9 +575,16 @@ def importtestmodule(
     return mod
 
 
-# Test modules collected so far, used to decide whether to warn about
-# ``pytest_plugins`` in a test module (#13030).
-_collected_modules_key = StashKey[list["Module"]]()
+@dataclasses.dataclass
+class _CollectedTestModules:
+    """Test modules collected so far, to warn about ``pytest_plugins`` (#13030)."""
+
+    count: int = 0
+    # Held only until the second test module is collected.
+    first: Module | None = None
+
+
+_collected_test_modules_key = StashKey[_CollectedTestModules]()
 
 
 class Module(nodes.File, PyCollector):
@@ -601,19 +608,27 @@ class Module(nodes.File, PyCollector):
         be affected, so the warning is held back until a second test module
         is collected.
         """
-        modules = self.config.stash.setdefault(_collected_modules_key, [])
-        modules.append(self)
-        if len(modules) < 2:
+        collected = self.config.stash.setdefault(
+            _collected_test_modules_key, _CollectedTestModules()
+        )
+        collected.count += 1
+        if collected.count == 1:
+            collected.first = self
             return
-        for module in modules if len(modules) == 2 else (self,):
-            if hasattr(module.obj, "pytest_plugins"):
-                module.warn(
-                    PytestConfigWarning(
-                        f"Defining 'pytest_plugins' in test module {module.nodeid} "
-                        "affects the entire test suite instead of just this module.\n"
-                        "Please move it to a top level conftest file at the rootdir."
-                    )
+        if collected.first is not None:
+            first, collected.first = collected.first, None
+            first._warn_if_pytest_plugins()
+        self._warn_if_pytest_plugins()
+
+    def _warn_if_pytest_plugins(self) -> None:
+        if hasattr(self.obj, "pytest_plugins"):
+            self.warn(
+                PytestConfigWarning(
+                    f"Defining 'pytest_plugins' in test module {self.nodeid} "
+                    "affects the entire test suite instead of just this module.\n"
+                    "Please move it to a top level conftest file at the rootdir."
                 )
+            )
 
     def _register_setup_module_fixture(self) -> None:
         """Register an autouse, module-scoped fixture for the collected module object
