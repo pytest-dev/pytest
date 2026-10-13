@@ -636,7 +636,7 @@ class Module(nodes.File, PyCollector):
             self._warn_if_pytest_plugins()
         except PytestDeprecationWarning:
             longrepr = self.repr_failure(ExceptionInfo.from_current())
-            report = CollectReport(self.nodeid, "failed", longrepr, [])
+            report = CollectReport(self.id, "failed", longrepr, [])
             self.ihook.pytest_collectreport(report=report)
 
     def _register_setup_module_fixture(self) -> None:
