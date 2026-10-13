@@ -785,9 +785,7 @@ class TestRmRf:
 
         with warnings.catch_warnings(record=True) as w:
             exc = OSError(errno.ENOTEMPTY, "Directory not empty")
-            result = on_rm_rf_error(
-                os.rmdir, str(parent_dir), exc, start_path=tmp_path
-            )
+            result = on_rm_rf_error(os.rmdir, str(parent_dir), exc, start_path=tmp_path)
             assert result is True
             assert not parent_dir.exists()
             assert not [x.message for x in w]
