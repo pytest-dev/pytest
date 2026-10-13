@@ -516,6 +516,22 @@ class TestNumberedDir:
         attempt_symlink_to(the_symlink, tmp_path / (self.PREFIX + "5"))
         self._do_cleanup(tmp_path)
 
+    def test_cleanup_dead_symlink_removed_concurrently(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        the_symlink = tmp_path / (self.PREFIX + "current")
+        attempt_symlink_to(the_symlink, tmp_path / (self.PREFIX + "5"))
+        resolve = Path.resolve
+
+        def resolve_after_concurrent_unlink(path: Path, strict: bool = False) -> Path:
+            assert path == the_symlink
+            path.unlink()  # another session removes the dead symlink first
+            return resolve(path, strict)
+
+        monkeypatch.setattr(Path, "resolve", resolve_after_concurrent_unlink)
+        pathlib.cleanup_dead_symlinks(tmp_path)
+        assert not the_symlink.is_symlink()
+
     def test_removal_accepts_lock(self, tmp_path):
         dir = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
         create_cleanup_lock(dir)
