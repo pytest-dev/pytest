@@ -3062,7 +3062,7 @@ class TestPytestPluginsVariable:
         assert res.ret == 0
         res.stdout.fnmatch_lines(
             [
-                f"*{module}.py:1: PytestConfigWarning: Defining 'pytest_plugins' "
+                f"*{module}.py:1: PytestDeprecationWarning: Defining 'pytest_plugins' "
                 f"in test module {module}.py affects the entire test suite*",
                 "*2 passed, 1 warning*",
             ]
@@ -3101,7 +3101,7 @@ class TestPytestPluginsVariable:
                 """
             }
         )
-        res = pytester.runpytest("-W", "error::pytest.PytestConfigWarning")
+        res = pytester.runpytest("-W", "error::pytest.PytestDeprecationWarning")
         assert res.ret == pytest.ExitCode.INTERRUPTED
         res.stdout.fnmatch_lines(
             [

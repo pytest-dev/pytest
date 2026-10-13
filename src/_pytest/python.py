@@ -57,6 +57,7 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import CALLSPEC2_RENAMED
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import PYTEST_PLUGINS_IN_TEST_MODULE
 from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
@@ -82,7 +83,7 @@ from _pytest.scope import Scope
 from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
-from _pytest.warning_types import PytestConfigWarning
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 
 
@@ -623,13 +624,7 @@ class Module(nodes.File, PyCollector):
 
     def _warn_if_pytest_plugins(self) -> None:
         if hasattr(self.obj, "pytest_plugins"):
-            self.warn(
-                PytestConfigWarning(
-                    f"Defining 'pytest_plugins' in test module {self.nodeid} "
-                    "affects the entire test suite instead of just this module.\n"
-                    "Please move it to a top level conftest file at the rootdir."
-                )
-            )
+            self.warn(PYTEST_PLUGINS_IN_TEST_MODULE.format(nodeid=self.nodeid))
 
     def _warn_pytest_plugins_retroactively(self) -> None:
         """Warn about this already collected module while another one is collected.
@@ -639,7 +634,7 @@ class Module(nodes.File, PyCollector):
         """
         try:
             self._warn_if_pytest_plugins()
-        except PytestConfigWarning:
+        except PytestDeprecationWarning:
             longrepr = self.repr_failure(ExceptionInfo.from_current())
             report = CollectReport(self.nodeid, "failed", longrepr, [])
             self.ihook.pytest_collectreport(report=report)

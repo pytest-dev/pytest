@@ -279,8 +279,9 @@ of the variable will also be loaded as plugins, and so on.
     tests root directory is deprecated, and will raise a warning.
 
     Likewise, defining :globalvar:`pytest_plugins` in a test module affects the
-    entire test suite, so pytest emits a :class:`~pytest.PytestConfigWarning`
-    when it finds one while collecting more than one test file.
+    entire test suite, so it is deprecated and pytest emits a
+    :class:`~pytest.PytestDeprecationWarning` when it finds one while collecting
+    more than one test file. See :ref:`pytest-plugins-in-test-modules`.
 
 This mechanism makes it easy to share fixtures within applications or even
 external applications without the need to create external plugins using the

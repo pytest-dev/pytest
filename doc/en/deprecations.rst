@@ -15,6 +15,30 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _pytest-plugins-in-test-modules:
+
+``pytest_plugins`` in test modules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+Defining :globalvar:`pytest_plugins` in a test module is deprecated, because the
+plugins it lists are activated for the *entire* test suite, not only for that
+module. This is surprising, and the outcome of other test modules can depend on
+whether that module happens to be collected.
+
+To keep single-file test suites (common for testing plugins) working, the
+:class:`~pytest.PytestDeprecationWarning` is only emitted when more than one
+test file is collected. There is no removal version yet.
+
+Move the variable to a ``conftest.py`` file at the rootdir instead:
+
+.. code-block:: python
+
+    # content of conftest.py
+    pytest_plugins = ["myapp.testsupport.myplugin"]
+
+
 .. _callspec2-renamed:
 
 ``_pytest.python.CallSpec2`` renamed to ``CallSpec``
