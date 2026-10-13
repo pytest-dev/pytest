@@ -464,6 +464,29 @@ class TestUnittestSubTest:
             ]
         )
 
+    def test_assert_crash_line(self, pytester: pytest.Pytester) -> None:
+        """Rewritten asserts in subtests report without 'AssertionError: ',
+        like regular tests do (#12175)."""
+        pytester.makepyfile(
+            """
+            from unittest import TestCase
+
+            class T(TestCase):
+                def test_foo(self):
+                    x = 1
+                    with self.subTest("foo subtest"):
+                        assert x == 2
+            """
+        )
+        result = pytester.runpytest("-rf")
+        result.stdout.fnmatch_lines(
+            [
+                "E * assert 1 == 2",
+                "SUBFAILED*test_foo - assert 1 == 2",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*AssertionError: assert*")
+
     def test_passes(
         self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:
