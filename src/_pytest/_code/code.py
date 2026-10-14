@@ -23,6 +23,7 @@ from types import CodeType
 from types import FrameType
 from types import TracebackType
 from typing import Any
+from typing import cast
 from typing import ClassVar
 from typing import Final
 from typing import final
@@ -496,6 +497,49 @@ def stringify_exception(
 E = TypeVar("E", bound=BaseException, covariant=True)
 
 
+@dataclasses.dataclass(frozen=True)
+class ExceptionRecord:
+    """Serializable snapshot of an exception and its traceback."""
+
+    type_name: str
+    type_module: str
+    message: str
+    frames: tuple[dict[str, object], ...]
+    cause: ExceptionRecord | None = None
+    context: ExceptionRecord | None = None
+    suppress_context: bool = False
+    children: tuple[ExceptionRecord, ...] = ()
+    notes: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible representation of this record."""
+        return dataclasses.asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, object]) -> ExceptionRecord:
+        """Rebuild a record produced by :meth:`to_dict`."""
+        cause = data.get("cause")
+        context = data.get("context")
+        frames = data["frames"]
+        children = data.get("children", ())
+        return cls(
+            type_name=str(data["type_name"]),
+            type_module=str(data["type_module"]),
+            message=str(data["message"]),
+            frames=tuple(
+                dict(frame) for frame in cast(Iterable[Mapping[str, object]], frames)
+            ),
+            cause=cls.from_dict(cause) if isinstance(cause, Mapping) else None,
+            context=cls.from_dict(context) if isinstance(context, Mapping) else None,
+            suppress_context=bool(data["suppress_context"]),
+            children=tuple(
+                cls.from_dict(child)
+                for child in cast(Iterable[Mapping[str, object]], children)
+            ),
+            notes=tuple(data["notes"]),  # type: ignore[arg-type]
+        )
+
+
 @final
 @dataclasses.dataclass
 class ExceptionInfo(Generic[E]):
@@ -689,6 +733,44 @@ class ExceptionInfo(Generic[E]):
         if tryshort:
             text = text.removeprefix(self._get_striptext())
         return text
+
+    def record(self) -> ExceptionRecord:
+        """Capture this exception as immutable, serializable data."""
+
+        def build(exception: BaseException) -> ExceptionRecord:
+            frames = tuple(
+                {
+                    "filename": frame.filename,
+                    "lineno": frame.lineno,
+                    "name": frame.name,
+                    "line": frame.line,
+                }
+                for frame in extract_tb(exception.__traceback__)
+            )
+            children = tuple(
+                build(child)
+                for child in getattr(exception, "exceptions", ())
+                if isinstance(child, BaseException)
+            )
+            cause = build(exception.__cause__) if exception.__cause__ else None
+            context = (
+                build(exception.__context__)
+                if exception.__context__ and not exception.__suppress_context__
+                else None
+            )
+            return ExceptionRecord(
+                type_name=type(exception).__qualname__,
+                type_module=type(exception).__module__,
+                message=str(exception),
+                frames=cast(tuple[dict[str, object], ...], frames),
+                cause=cause,
+                context=context,
+                suppress_context=exception.__suppress_context__,
+                children=children,
+                notes=tuple(getattr(exception, "__notes__", ())),
+            )
+
+        return build(self.value)
 
     def errisinstance(self, exc: EXCEPTION_OR_MORE) -> bool:
         """Return True if the exception is an instance of exc.

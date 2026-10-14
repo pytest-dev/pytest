@@ -1,0 +1,1 @@
+Add a serializable exception record API for capturing exception data.

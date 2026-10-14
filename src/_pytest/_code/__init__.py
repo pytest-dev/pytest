@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .code import Code
 from .code import ExceptionInfo
+from .code import ExceptionRecord
 from .code import filter_traceback
 from .code import Frame
 from .code import getfslineno
@@ -16,6 +17,7 @@ from .source import Source
 __all__ = [
     "Code",
     "ExceptionInfo",
+    "ExceptionRecord",
     "Frame",
     "Source",
     "Traceback",

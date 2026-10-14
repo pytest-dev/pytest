@@ -69,6 +69,38 @@ def test_excinfo_from_exception_simple() -> None:
     assert info.type == ValueError
 
 
+def test_excinfo_record_round_trip() -> None:
+    try:
+        raise ValueError("broken")
+    except ValueError:
+        info = _pytest._code.ExceptionInfo.from_current()
+
+    record = info.record()
+    restored = _pytest._code.ExceptionRecord.from_dict(record.to_dict())
+
+    assert restored == record
+    assert restored.type_name == "ValueError"
+    assert restored.message == "broken"
+    assert restored.frames[-1]["name"] == "test_excinfo_record_round_trip"
+
+
+def test_excinfo_record_preserves_exception_chain() -> None:
+    try:
+        try:
+            raise KeyError("missing")
+        except KeyError as error:
+            raise RuntimeError("failed") from error
+    except RuntimeError:
+        info = _pytest._code.ExceptionInfo.from_current()
+
+    record = info.record()
+
+    assert record.type_name == "RuntimeError"
+    assert record.cause is not None
+    assert record.cause.type_name == "KeyError"
+    assert record.cause.message == "'missing'"
+
+
 def test_excinfo_from_exception_missing_traceback_assertion() -> None:
     with pytest.raises(AssertionError, match=r"must have.*__traceback__"):
         _pytest._code.ExceptionInfo.from_exception(ValueError())
