@@ -2916,6 +2916,16 @@ def test_format_session_duration(seconds, expected):
         (0.0001236, " 123.6us"),
         (0.00001236, " 12.36us"),
         (0.000001236, " 1.236us"),
+        # Values that round up to the next unit.
+        (0.0000099996, " 10.00us"),
+        (0.000099996, " 100.0us"),
+        (0.00099996, " 1.000ms"),
+        (0.0099996, " 10.00ms"),
+        (0.099996, " 100.0ms"),
+        (0.99996, " 1.000s"),
+        (59.9996, " 1m 0s"),
+        (119.6, " 2m 0s"),
+        (3599.6, " 1h 0m"),
     ],
 )
 def test_format_node_duration(seconds: float, expected: str) -> None:

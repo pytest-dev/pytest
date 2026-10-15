@@ -1688,23 +1688,24 @@ def format_node_duration(seconds: float) -> str:
     """Format the given seconds in a human readable manner to show in the test progress."""
     # The formatting is designed to be compact and readable, with at most 7 characters
     # for durations below 100 hours.
-    if seconds < 0.00001:
-        return f" {seconds * 1000000:.3f}us"
-    if seconds < 0.0001:
-        return f" {seconds * 1000000:.2f}us"
-    if seconds < 0.001:
-        return f" {seconds * 1000000:.1f}us"
-    if seconds < 0.01:
-        return f" {seconds * 1000:.3f}ms"
-    if seconds < 0.1:
-        return f" {seconds * 1000:.2f}ms"
-    if seconds < 1:
-        return f" {seconds * 1000:.1f}ms"
-    if seconds < 60:
-        return f" {seconds:.3f}s"
-    if seconds < 3600:
-        return f" {seconds // 60:.0f}m {seconds % 60:.0f}s"
-    return f" {seconds // 3600:.0f}h {(seconds % 3600) // 60:.0f}m"
+    # Pick the unit based on the rounded value, so that e.g. 999.96us is shown
+    # as "1.000ms" instead of "1000.0us".
+    for scale, unit, precision, limit in (
+        (1000000, "us", 3, 10),
+        (1000000, "us", 2, 100),
+        (1000000, "us", 1, 1000),
+        (1000, "ms", 3, 10),
+        (1000, "ms", 2, 100),
+        (1000, "ms", 1, 1000),
+        (1, "s", 3, 60),
+    ):
+        text = f"{seconds * scale:.{precision}f}"
+        if float(text) < limit:
+            return f" {text}{unit}"
+    whole_seconds = round(seconds)
+    if whole_seconds < 3600:
+        return f" {whole_seconds // 60}m {whole_seconds % 60}s"
+    return f" {whole_seconds // 3600}h {(whole_seconds % 3600) // 60}m"
 
 
 def _get_raw_skip_reason(report: TestReport) -> str:
