@@ -372,16 +372,16 @@ def wrap_session(
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
                 sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
-            try:
-                config._ensure_unconfigure()
-            except exit.Exception as exc:
-                if exc.returncode is not None:
-                    session.exitstatus = exc.returncode
-                sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
-            except Exception:
-                session.exitstatus = ExitCode.INTERNAL_ERROR
-                excinfo = _pytest._code.ExceptionInfo.from_current()
-                config.notify_exception(excinfo, config.option)
+        try:
+            config._ensure_unconfigure()
+        except exit.Exception as exc:
+            if exc.returncode is not None:
+                session.exitstatus = exc.returncode
+            sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
+        except Exception:
+            session.exitstatus = ExitCode.INTERNAL_ERROR
+            excinfo = _pytest._code.ExceptionInfo.from_current()
+            config.notify_exception(excinfo, config.option)
     return session.exitstatus
 
 
