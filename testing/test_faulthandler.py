@@ -172,11 +172,13 @@ def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
     assert result.ret == 1
 
 
-@pytest.mark.parametrize("hook_name", ["pytest_enter_pdb", "pytest_exception_interact"])
-def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
-    """Make sure that we are cancelling any scheduled traceback dumping due
-    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any
-    other interactive exception (pytest-dev/pytest-faulthandler#14)."""
+def test_cancel_timeout_on_pdb(monkeypatch) -> None:
+    """Cancel a scheduled traceback dump before entering pdb.
+
+    Ordinary failures must not cancel it: fixture teardown and the rest of
+    the test still need the timeout (#15180). The debugger goes through
+    ``pytest_enter_pdb`` (pytest-dev/pytest-faulthandler#12).
+    """
     import faulthandler
 
     from _pytest import faulthandler as faulthandler_plugin
@@ -187,11 +189,41 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
         faulthandler, "cancel_dump_traceback_later", lambda: called.append(1)
     )
 
-    # call our hook explicitly, we can trust that pytest will call the hook
-    # for us at the appropriate moment
-    hook_func = getattr(faulthandler_plugin, hook_name)
-    hook_func()
+    faulthandler_plugin.pytest_enter_pdb()
     assert called == [1]
+
+
+def test_timeout_covers_teardown_after_failure(pytester: Pytester) -> None:
+    """A failed test must not disarm faulthandler before fixture teardown (#15180).
+
+    The timeout is longer than failure reporting and shorter than the
+    teardown sleep, so a dump that only races the assertion does not count.
+    """
+    pytester.makepyfile(
+        """
+        import time
+
+        import pytest
+
+        @pytest.fixture
+        def slow_teardown():
+            yield
+            time.sleep(4)
+
+        def test_fails(slow_teardown):
+            assert False
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        faulthandler_timeout = 1
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.stderr.fnmatch_lines(["*Timeout*", "*slow_teardown*"])
+    result.stdout.fnmatch_lines(["*1 failed*"])
+    assert result.ret == 1
 
 
 def test_already_initialized_crash(pytester: Pytester) -> None:

@@ -1,0 +1,3 @@
+``faulthandler_timeout`` now stays armed after a test fails, so fixture
+teardown and later subtests are still covered. Entering pdb still cancels
+the timer.
