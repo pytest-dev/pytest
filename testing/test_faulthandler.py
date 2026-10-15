@@ -172,11 +172,41 @@ def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
     assert result.ret == 1
 
 
-@pytest.mark.parametrize("hook_name", ["pytest_enter_pdb", "pytest_exception_interact"])
-def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
+def test_timeout_dumps_after_test_failure(pytester: Pytester) -> None:
+    """A failing test must not cancel the faulthandler timeout, so a hang that
+    happens afterwards (e.g. in fixture teardown) still dumps the traceback
+    (see #15180)."""
+    pytester.makepyfile(
+        """
+        import os
+        import time
+
+        import pytest
+
+        @pytest.fixture
+        def slow_teardown():
+            yield
+            time.sleep(3 if "CI" in os.environ else 1)
+
+        def test_fails_then_teardown_hangs(slow_teardown):
+            assert False
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        faulthandler_timeout = 0.5
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.stderr.fnmatch_lines(["*Timeout*", "*most recent call first*"])
+    result.stdout.fnmatch_lines(["*1 failed*"])
+    assert result.ret != 0
+
+
+def test_cancel_timeout_on_hook(monkeypatch) -> None:
     """Make sure that we are cancelling any scheduled traceback dumping due
-    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any
-    other interactive exception (pytest-dev/pytest-faulthandler#14)."""
+    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12)."""
     import faulthandler
 
     from _pytest import faulthandler as faulthandler_plugin
@@ -189,8 +219,7 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
 
     # call our hook explicitly, we can trust that pytest will call the hook
     # for us at the appropriate moment
-    hook_func = getattr(faulthandler_plugin, hook_name)
-    hook_func()
+    faulthandler_plugin.pytest_enter_pdb()
     assert called == [1]
 
 

@@ -1,0 +1,4 @@
+Fixed ``faulthandler_timeout`` not dumping tracebacks for hangs that happen
+after a test failure (e.g. in fixture teardown or a later subtest): the
+traceback timer was being cancelled on any interactive exception instead of
+only when entering the debugger.
