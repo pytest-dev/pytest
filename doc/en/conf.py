@@ -65,6 +65,9 @@ nitpicky = True
 nitpick_ignore = [
     # TODO (fix in pluggy?)
     ("py:class", "HookCaller"),
+    # pluggy 1.6 qualifies these inherited members; RTD treats the warnings as errors.
+    ("py:class", "pluggy._hooks.HookCaller"),
+    ("py:class", "pluggy._hooks.HookRelay"),
     ("py:class", "HookspecMarker"),
     ("py:exc", "PluginValidationError"),
     # Might want to expose/TODO (https://github.com/pytest-dev/pytest/issues/7469)
