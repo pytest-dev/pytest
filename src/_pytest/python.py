@@ -1670,7 +1670,8 @@ class Function(PyobjMixin, nodes.Item):
         If given, the object which will be called when the Function is invoked,
         otherwise the callobj will be obtained from ``parent`` using ``originalname``.
     :param keywords:
-        Keywords bound to the function object for "-k" matching.
+        Extra entries for :attr:`~_pytest.nodes.Node.keywords`, taking
+        precedence over the function's attributes and markers.
     :param session:
         The pytest Session object.
     :param fixtureinfo:
