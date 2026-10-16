@@ -271,13 +271,8 @@ class MonkeyPatch:
             if isinstance(target_dict, Mapping):
                 oldval = target_dict.get(name, NOTSET)
         setattr(target, name, value)
-        if is_class and not in_class_dict:
-            if name in target.__dict__:
-                # setattr() created a new entry shadowing an inherited
-                # attribute: undo() must remove it with delattr() (#156).
-                oldval = NOTSET
-            # setattr() did not add a __dict__ entry: undo() restores the old
-            # value via setattr() (#1938).
+        if is_class and not in_class_dict and name in target.__dict__:
+            oldval = NOTSET
         self._setattr.append((target, name, oldval))
 
     def delattr(
