@@ -274,7 +274,7 @@ line option to control skipping of ``pytest.mark.slow`` marked tests:
             return
         skip_slow = pytest.mark.skip(reason="need --runslow option to run")
         for item in items:
-            if "slow" in item.keywords:
+            if item.get_closest_marker("slow"):
                 item.add_marker(skip_slow)
 
 We can now write a test module like this:
@@ -560,7 +560,7 @@ an ``incremental`` marker which is to be used on classes:
 
 
     def pytest_runtest_makereport(item, call):
-        if "incremental" in item.keywords:
+        if item.get_closest_marker("incremental"):
             # incremental marker is used
             if call.excinfo is not None:
                 # the test has failed
@@ -581,7 +581,7 @@ an ``incremental`` marker which is to be used on classes:
 
 
     def pytest_runtest_setup(item):
-        if "incremental" in item.keywords:
+        if item.get_closest_marker("incremental"):
             # retrieve the class name of the test
             cls_name = str(item.cls)
             # check if a previous test has failed for this class
