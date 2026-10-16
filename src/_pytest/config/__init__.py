@@ -84,6 +84,7 @@ from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
+
 if TYPE_CHECKING:
     from _pytest.assertion.rewrite import AssertionRewritingHook
     from _pytest.cacheprovider import Cache
