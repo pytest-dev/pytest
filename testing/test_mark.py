@@ -1498,6 +1498,40 @@ def test_pytest_param_id_allows_none_or_string(s) -> None:
     assert pytest.param(id=s)
 
 
+def test_parameterset_public_api() -> None:
+    from pytest import ParameterSet
+
+    assert pytest.ParameterSet is ParameterSet
+    assert ParameterSet.__module__ == "pytest"
+
+    p = pytest.param(1, 2, id="custom_id", marks=pytest.mark.skip)
+    assert isinstance(p, ParameterSet)
+    assert p.values == (1, 2)
+    assert len(p.marks) == 1
+    (mark,) = p.marks
+    assert mark.name == "skip"
+    assert p.id == "custom_id"
+
+    # Direct construction
+    direct = ParameterSet((1, 2), (), "custom_id")
+    assert isinstance(direct, ParameterSet)
+    assert direct.values == (1, 2)
+    assert direct.id == "custom_id"
+
+
+def test_parameterset_pickle() -> None:
+    import pickle
+
+    p = pytest.param("hello", 42, id="test_id")
+    pickled = pickle.dumps(p)
+    unpickled = pickle.loads(pickled)
+
+    assert isinstance(unpickled, pytest.ParameterSet)
+    assert unpickled == p
+    assert unpickled.values == ("hello", 42)
+    assert unpickled.id == "test_id"
+
+
 @pytest.mark.parametrize("expr", ("NOT internal_err", "NOT (internal_err)", "bogus="))
 def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     foo = pytester.makepyfile(
