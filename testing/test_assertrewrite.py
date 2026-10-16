@@ -1173,9 +1173,7 @@ def test_rewritten():
         The rewritten pyc is reused: filenames are corrected in memory, not by
         rewriting the cache.
         """
-        from _pytest.assertion.rewrite import (  # type: ignore[attr-defined]
-            _imp_fix_co_filename,
-        )
+        from _pytest.assertion.rewrite import _imp_fix_co_filename  # type: ignore[attr-defined]
 
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
@@ -1568,7 +1566,7 @@ class TestAssertionRewriteHookDetails:
         assert _read_pyc(source, pyc, print) is None
 
     def test_rewrite_picks_up_edit_within_one_mtime_second(
-        self, pytester: Pytester
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Regression test for #13292.
 
@@ -1576,6 +1574,9 @@ class TestAssertionRewriteHookDetails:
         edited twice within the same second used to be served from a stale
         pyc. Hashing the source instead sidesteps the resolution problem.
         """
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+
         source = pytester.path / "test_edited.py"
         pyc_dir = source.parent / "__pycache__"
 
