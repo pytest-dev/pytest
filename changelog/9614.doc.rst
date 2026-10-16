@@ -1,0 +1,1 @@
+Clarified that ``session.items`` and ``session.testscollected`` exclude deselected tests in the :hook:`pytest_collection` documentation.
