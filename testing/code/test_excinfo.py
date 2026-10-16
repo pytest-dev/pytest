@@ -1231,7 +1231,7 @@ raise ValueError()
         """
         )
         result = pytester.runpytest("--tb=long")
-        result.stdout.fnmatch_lines(["*.py:2: SyntaxError"])
+        result.stdout.fnmatch_lines(['*File "file.py", line 1*', "*.py:2: SyntaxError"])
 
     def test_syntax_error_default_tb_short(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1273,12 +1273,23 @@ raise ValueError()
     def test_syntax_error_collection(self, pytester: Pytester) -> None:
         pytester.makepyfile("def broken(:\n    pass\n")
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*.py:1:*: SyntaxError*"])
+        result.stdout.fnmatch_lines(["*def broken(:*", "*^*", "*.py:1:*: SyntaxError*"])
+        result.stdout.no_fnmatch_line('*File "*", line 1*')
 
     def test_indentation_error_collection(self, pytester: Pytester) -> None:
         pytester.makepyfile("def f():\n    x = 1\n  y = 2\n")
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*.py:3:*: IndentationError*"])
+        result.stdout.no_fnmatch_line('*File "*", line 3*')
+
+    def test_syntax_error_collection_no_offset_keeps_file_header(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            'raise SyntaxError("custom", ("weird.py", 3, None, "src", 3, None))\n'
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(['*File "weird.py", line 3*'])
 
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(

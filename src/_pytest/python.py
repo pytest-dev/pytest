@@ -39,6 +39,7 @@ from _pytest import nodes
 from _pytest._code import filter_traceback
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._io.saferepr import saferepr
@@ -518,6 +519,14 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
                 )
 
 
+def _without_syntax_error_header(
+    exception_repr: ExceptionRepr, filename: str, lineno: int
+) -> None:
+    header = f'File "{filename}", line {lineno}'
+    entry = exception_repr.reprtraceback.reprentries[-1]
+    entry.lines = [line for line in entry.lines if header not in line]
+
+
 def importtestmodule(
     path: Path,
     config: Config,
@@ -535,11 +544,13 @@ def importtestmodule(
         excinfo = ExceptionInfo.from_current()
         repr_ = excinfo.getrepr(style="short")
         reprcrash = excinfo._getreprcrash()
-        msg = str(repr_)
         # A column is present only when the SyntaxError carried its own
         # location; a fallback crash line would just repeat the last entry.
         if reprcrash is not None and reprcrash.column is not None:
-            msg += "\n" + str(reprcrash)
+            _without_syntax_error_header(repr_, reprcrash.path, reprcrash.lineno)
+            msg = f"{repr_}\n{reprcrash}"
+        else:
+            msg = str(repr_)
         raise nodes.Collector.CollectError(msg) from e
     except ImportPathMismatchError as e:
         raise nodes.Collector.CollectError(
