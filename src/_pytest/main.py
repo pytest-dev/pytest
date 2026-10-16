@@ -992,11 +992,21 @@ class Session(nodes.Collector):
                 else:
                     # For backward compat, files given directly multiple
                     # times on the command line should not be deduplicated.
-                    handle_dupes = not (
+                    # That intent applies to File nodes (handled in genitems);
+                    # Directory/Package parents must still use the collection
+                    # cache, otherwise N file args from the same directory
+                    # re-walk the directory N times (#15187). Keep the cache
+                    # off under --keep-duplicates so a file named twice still
+                    # gets two Module nodes.
+                    file_arg_leaf = (
                         len(matchparts) == 1
                         and isinstance(matchparts[0], Path)
                         and matchparts[0].is_file()
                     )
+                    handle_dupes = (
+                        isinstance(matchnode, nodes.Directory)
+                        and not self.config.option.keepduplicates
+                    ) or not file_arg_leaf
                     rep, duplicate = self._collect_one_node(matchnode, handle_dupes)
                     if not duplicate and not rep.passed:
                         # Report collection failures here to avoid failing to
