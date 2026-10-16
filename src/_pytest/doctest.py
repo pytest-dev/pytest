@@ -312,7 +312,7 @@ class DoctestItem(Item):
         """Disable output capturing. Otherwise, stdout is lost to doctest (#985)."""
         if platform.system() != "Darwin":
             return
-        capman = self.config.pluginmanager.getplugin("capturemanager")
+        capman = self.config.pluginmanager.get_plugin("capturemanager")
         if capman:
             capman.suspend_global_capture(in_=True)
             out, err = capman.read_global_capture()

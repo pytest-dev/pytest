@@ -289,7 +289,7 @@ class _SubTestContextManager:
 def capturing_output(request: SubRequest) -> Iterator[Captured]:
     option = request.config.getoption("capture", None)
 
-    capman = request.config.pluginmanager.getplugin("capturemanager")
+    capman = request.config.pluginmanager.get_plugin("capturemanager")
     if getattr(capman, "_capture_fixture", None):
         # capsys or capfd are active, subtest should not capture.
         fixture = None
@@ -318,7 +318,7 @@ def capturing_output(request: SubRequest) -> Iterator[Captured]:
 def capturing_logs(
     request: SubRequest,
 ) -> Iterator[CapturedLogs | None]:
-    logging_plugin: LoggingPlugin | None = request.config.pluginmanager.getplugin(
+    logging_plugin: LoggingPlugin | None = request.config.pluginmanager.get_plugin(
         "logging-plugin"
     )
     if logging_plugin is None:

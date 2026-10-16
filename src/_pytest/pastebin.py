@@ -38,7 +38,7 @@ def pytest_configure(config: Config) -> None:
         config.issue_config_time_warning(PASTEBIN.format(), 2)
 
     if config.option.pastebin == "all":
-        tr = config.pluginmanager.getplugin("terminalreporter")
+        tr = config.pluginmanager.get_plugin("terminalreporter")
         # If no terminal reporter plugin is present, nothing we can do here;
         # this can happen when this function executes in a worker node
         # when using pytest-xdist, for example.
@@ -65,7 +65,7 @@ def pytest_unconfigure(config: Config) -> None:
         pastebinfile.close()
         del config.stash[pastebinfile_key]
         # Undo our patching in the terminal reporter.
-        tr = config.pluginmanager.getplugin("terminalreporter")
+        tr = config.pluginmanager.get_plugin("terminalreporter")
         del tr._tw.__dict__["write"]
         # Write summary.
         tr.write_sep("=", "Sending information to Paste Service")

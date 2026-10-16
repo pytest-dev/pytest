@@ -15,7 +15,7 @@ class TestPasteCapture:
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request) -> list[str | bytes]:
         pastebinlist: list[str | bytes] = []
-        plugin = request.config.pluginmanager.getplugin("pastebin")
+        plugin = request.config.pluginmanager.get_plugin("pastebin")
         monkeypatch.setattr(plugin, "create_new_paste", pastebinlist.append)
         return pastebinlist
 
@@ -106,7 +106,7 @@ class TestPasteCapture:
 class TestPaste:
     @pytest.fixture
     def pastebin(self, request):
-        return request.config.pluginmanager.getplugin("pastebin")
+        return request.config.pluginmanager.get_plugin("pastebin")
 
     @pytest.fixture
     def mocked_urlopen_invalid(self, monkeypatch: MonkeyPatch):

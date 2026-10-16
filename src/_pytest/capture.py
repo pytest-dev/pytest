@@ -999,7 +999,7 @@ class CaptureFixture(Generic[AnyStr]):
     @contextlib.contextmanager
     def disabled(self) -> Generator[None]:
         """Temporarily disable capturing while inside the ``with`` block."""
-        capmanager: CaptureManager = self.request.config.pluginmanager.getplugin(
+        capmanager: CaptureManager = self.request.config.pluginmanager.get_plugin(
             "capturemanager"
         )
         with capmanager.global_and_fixture_disabled():
@@ -1028,7 +1028,7 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str]]:
             captured = capsys.readouterr()
             assert captured.out == "hello\n"
     """
-    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.get_plugin("capturemanager")
     capture_fixture = CaptureFixture(SysCapture, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
@@ -1061,7 +1061,7 @@ def capteesys(request: SubRequest) -> Generator[CaptureFixture[str]]:
             captured = capteesys.readouterr()
             assert captured.out == "hello\n"
     """
-    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.get_plugin("capturemanager")
     capture_fixture = CaptureFixture(
         SysCapture, request, config=dict(tee=True), _ispytest=True
     )
@@ -1091,7 +1091,7 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes]]:
             captured = capsysbinary.readouterr()
             assert captured.out == b"hello\n"
     """
-    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.get_plugin("capturemanager")
     capture_fixture = CaptureFixture(SysCaptureBinary, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
@@ -1119,7 +1119,7 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str]]:
             captured = capfd.readouterr()
             assert captured.out == "hello\n"
     """
-    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.get_plugin("capturemanager")
     capture_fixture = CaptureFixture(FDCapture, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
@@ -1148,7 +1148,7 @@ def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes]]:
             assert captured.out == b"hello\n"
 
     """
-    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.get_plugin("capturemanager")
     capture_fixture = CaptureFixture(FDCaptureBinary, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()

@@ -1749,7 +1749,7 @@ def test_libedit_workaround(pytester: Pytester) -> None:
 
 
     def pytest_terminal_summary(config):
-        capture = config.pluginmanager.getplugin("capturemanager")
+        capture = config.pluginmanager.get_plugin("capturemanager")
         capture.suspend_global_capture(in_=True)
 
         print("Enter 'hi'")

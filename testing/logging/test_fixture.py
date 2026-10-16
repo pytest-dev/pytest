@@ -385,7 +385,7 @@ def test_ini_controls_global_log_level(pytester: Pytester) -> None:
         import pytest
         import logging
         def test_log_level_override(request, caplog):
-            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            plugin = request.config.pluginmanager.get_plugin('logging-plugin')
             assert plugin.log_level == logging.ERROR
             logger = logging.getLogger('catchlog')
             logger.warning("WARNING message won't be shown")
@@ -413,7 +413,7 @@ def test_can_override_global_log_level(pytester: Pytester) -> None:
         import logging
         def test_log_level_override(request, caplog):
             logger = logging.getLogger('catchlog')
-            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            plugin = request.config.pluginmanager.get_plugin('logging-plugin')
             assert plugin.log_level == logging.WARNING
 
             logger.info("INFO message won't be shown")
@@ -479,7 +479,7 @@ def test_captures_despite_exception(pytester: Pytester) -> None:
         import logging
         def test_log_level_override(request, caplog):
             logger = logging.getLogger('catchlog')
-            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            plugin = request.config.pluginmanager.get_plugin('logging-plugin')
             assert plugin.log_level == logging.WARNING
 
             logger.error("ERROR message " + "will be shown")
@@ -522,7 +522,7 @@ def test_log_report_captures_according_to_config_option_upon_failure(
             print('Print ' + 'message')
 
         def test_that_fails(request, caplog):
-            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            plugin = request.config.pluginmanager.get_plugin('logging-plugin')
             assert plugin.log_level == logging.INFO
 
             with caplog.at_level(logging.DEBUG):

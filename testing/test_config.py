@@ -1917,7 +1917,7 @@ def test_preparse_ordering_with_setuptools(
     )
     monkeypatch.setenv("PYTEST_PLUGINS", "mytestplugin")
     config = pytester.parseconfig()
-    plugin = config.pluginmanager.getplugin("mytestplugin")
+    plugin = config.pluginmanager.get_plugin("mytestplugin")
     assert plugin.x == 42
 
 
@@ -2317,6 +2317,18 @@ def test_collect_pytest_prefix_bug(pytestconfig):
 
     pm = pytestconfig.pluginmanager
     assert pm.parse_hookimpl_opts(Dummy(), "pytest_something") is None
+
+
+def test_getplugin_is_deprecated() -> None:
+    from _pytest.config import PytestPluginManager
+
+    pluginmanager = PytestPluginManager()
+
+    with pytest.warns(
+        DeprecationWarning,
+        match=r"PytestPluginManager\.getplugin\(\) is deprecated",
+    ):
+        pluginmanager.getplugin("missing_plugin")  # type: ignore[deprecated]
 
 
 class TestRootdir:

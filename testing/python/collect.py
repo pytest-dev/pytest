@@ -1290,7 +1290,7 @@ class TestReportInfo:
         """
         )
         item = pytester.getitem("def test_func(): pass")
-        item.config.pluginmanager.getplugin("runner")
+        item.config.pluginmanager.get_plugin("runner")
         assert item.location == ("ABCDE", 42, "custom")
 
     def test_func_reportinfo(self, pytester: Pytester) -> None:

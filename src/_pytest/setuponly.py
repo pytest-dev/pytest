@@ -64,7 +64,7 @@ def pytest_fixture_post_finalizer(
 def _show_fixture_action(
     fixturedef: FixtureDef[object], config: Config, msg: str
 ) -> None:
-    capman = config.pluginmanager.getplugin("capturemanager")
+    capman = config.pluginmanager.get_plugin("capturemanager")
     if capman:
         capman.suspend_global_capture()
 

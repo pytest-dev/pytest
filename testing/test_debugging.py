@@ -114,7 +114,7 @@ class TestPDB:
         def mypdb(*args):
             pdblist.append(args)
 
-        plugin = request.config.pluginmanager.getplugin("debugging")
+        plugin = request.config.pluginmanager.get_plugin("debugging")
         monkeypatch.setattr(plugin, "post_mortem", mypdb)
         return pdblist
 

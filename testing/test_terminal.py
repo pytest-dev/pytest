@@ -1625,7 +1625,7 @@ def test_terminalreporter_reportopt_addopts(pytester: Pytester) -> None:
 
         @pytest.fixture
         def tr(request):
-            tr = request.config.pluginmanager.getplugin("terminalreporter")
+            tr = request.config.pluginmanager.get_plugin("terminalreporter")
             return tr
         def test_opt(tr):
             assert tr.hasopt('skipped')

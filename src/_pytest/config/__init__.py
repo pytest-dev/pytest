@@ -84,7 +84,6 @@ from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
-
 if TYPE_CHECKING:
     from _pytest.assertion.rewrite import AssertionRewritingHook
     from _pytest.cacheprovider import Cache
@@ -615,8 +614,10 @@ class PytestPluginManager(PluginManager):
                 self.consider_module(plugin)
         return plugin_name
 
+    @deprecated(
+        "PytestPluginManager.getplugin() is deprecated, use get_plugin() instead."
+    )
     def getplugin(self, name: str):
-        # Support deprecated naming because plugins (xdist e.g.) use it.
         plugin: _PluggyPlugin | None = self.get_plugin(name)
         return plugin
 
