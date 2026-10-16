@@ -2373,11 +2373,6 @@ def _strtobool(val: str) -> bool:
         raise ValueError(f"invalid truth value {val!r}")
 
 
-WARNING_FILTER_DOC_URL = (
-    "https://docs.python.org/3/library/warnings.html#describing-warning-filters"
-)
-
-
 @lru_cache(maxsize=50)
 def parse_warning_filter(
     arg: str, *, escape: bool
@@ -2413,7 +2408,7 @@ def parse_warning_filter(
 
               action:message:category:module:line
 
-            For more information please consult: {WARNING_FILTER_DOC_URL}
+            For more information please consult: https://docs.python.org/3/library/warnings.html#describing-warning-filters
             """
         )
         raise UsageError(error_template.format(error=error))
@@ -2426,7 +2421,7 @@ def parse_warning_filter(
     except warnings._OptionError as e:
         hint = (
             " (choose from: default, error, ignore, always, all, module, once)."
-            f" See {WARNING_FILTER_DOC_URL}"
+            " See https://docs.python.org/3/library/warnings.html#describing-warning-filters"
         )
         if action_.lower() == "ait":
             hint = (
