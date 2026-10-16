@@ -69,6 +69,41 @@ def bin_xml_escape(arg: object) -> str:
     return re.sub(illegal_xml_re, repl, str(arg))
 
 
+# Budget for the ``message`` attribute of <failure> and <error> elements.
+# The full report is always written as the element text.
+MESSAGE_ATTR_BUDGET = 500
+
+
+def shorten_message(msg: str, budget: int = MESSAGE_ATTR_BUDGET) -> str:
+    """Shorten ``msg`` for use in a ``message`` attribute.
+
+    Whole lines are kept while they fit in ``budget`` characters; a first
+    line that is longer than ``budget`` on its own is cut. If anything was
+    dropped, a final line points readers to the element text, which holds
+    the full report.
+    """
+    lines = msg.splitlines() or [""]
+    kept: list[str] = []
+    size = 0
+    for line in lines:
+        if kept and size + len(line) + 1 > budget:
+            break
+        kept.append(line)
+        size += len(line) + 1
+    shortened = "\n".join(kept)
+    first_line_cut = len(shortened) > budget
+    if first_line_cut:
+        shortened = shortened[:budget] + "..."
+    remaining = len(lines) - len(kept)
+    if remaining:
+        note = f"+{remaining} more line{'s' if remaining > 1 else ''}"
+    elif first_line_cut:
+        note = "truncated"
+    else:
+        return msg
+    return f"{shortened}\n[{note}; full report in element text]"
+
+
 def merge_family(left, right) -> None:
     result = {}
     for kl, vl in left.items():
@@ -213,7 +248,7 @@ class _NodeReporter:
                 message = reprcrash.message
             else:
                 message = str(report.longrepr)
-            message = bin_xml_escape(message)
+            message = bin_xml_escape(shorten_message(message))
             self._add_simple("failure", message, str(report.longrepr))
 
     def append_collect_error(self, report: CollectReport) -> None:
@@ -236,7 +271,9 @@ class _NodeReporter:
             msg = f'failed on teardown with "{reason}"'
         else:
             msg = f'failed on setup with "{reason}"'
-        self._add_simple("error", bin_xml_escape(msg), str(report.longrepr))
+        self._add_simple(
+            "error", bin_xml_escape(shorten_message(msg)), str(report.longrepr)
+        )
 
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):

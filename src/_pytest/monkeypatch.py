@@ -385,7 +385,7 @@ class MonkeyPatch:
                     ns_pkg_path = path_obj / ns_pkg.replace(".", os.sep)
                     if ns_pkg_path.is_dir():
                         warnings.warn(
-                            MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES, stacklevel=2
+                            MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES.format(), stacklevel=2
                         )
                         break
 
@@ -440,12 +440,12 @@ class MonkeyPatch:
             if value is NOTSET:
                 try:
                     # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
-                    del dictionary[key]  # type: ignore[attr-defined]
+                    del dictionary[key]
                 except KeyError:
                     pass  # Was already deleted, so we have the desired state.
             else:
                 # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
-                dictionary[key] = value  # type: ignore[index]
+                dictionary[key] = value
         self._setitem[:] = []
         if self._savesyspath is not None:
             sys.path[:] = self._savesyspath
