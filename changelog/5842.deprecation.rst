@@ -1,0 +1,1 @@
+﻿The ``PytestPluginManager.getplugin()`` method has been removed. Use ``PytestPluginManager.get_plugin()`` instead.
