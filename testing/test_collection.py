@@ -2825,7 +2825,12 @@ def test_directory_collection_cached_for_multiple_file_args(pytester: Pytester) 
 
     files = [pytester.path / f"test_{i:04d}.py" for i in range(5)]
     result = pytester.runpytest(
-        "--collect-only", "-q", "-p", "no:cacheprovider", *map(str, files), plugins=[Plugin()]
+        "--collect-only",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        *map(str, files),
+        plugins=[Plugin()],
     )
     assert result.ret == 0
     # Each file offered once (plus possibly non-test files; assert the repeated ones)
