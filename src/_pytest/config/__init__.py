@@ -614,13 +614,6 @@ class PytestPluginManager(PluginManager):
                 self.consider_module(plugin)
         return plugin_name
 
-    @deprecated(
-        "PytestPluginManager.getplugin() is deprecated, use get_plugin() instead."
-    )
-    def getplugin(self, name: str):
-        plugin: _PluggyPlugin | None = self.get_plugin(name)
-        return plugin
-
     def hasplugin(self, name: str) -> bool:
         """Return whether a plugin with the given name is registered."""
         return bool(self.get_plugin(name))

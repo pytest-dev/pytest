@@ -2319,18 +2319,6 @@ def test_collect_pytest_prefix_bug(pytestconfig):
     assert pm.parse_hookimpl_opts(Dummy(), "pytest_something") is None
 
 
-def test_getplugin_is_deprecated() -> None:
-    from _pytest.config import PytestPluginManager
-
-    pluginmanager = PytestPluginManager()
-
-    with pytest.warns(
-        DeprecationWarning,
-        match=r"PytestPluginManager\.getplugin\(\) is deprecated",
-    ):
-        pluginmanager.getplugin("missing_plugin")  # type: ignore[deprecated]
-
-
 class TestRootdir:
     def test_simple_noini(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         assert get_common_ancestor(Path.cwd(), [tmp_path]) == tmp_path
