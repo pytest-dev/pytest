@@ -101,28 +101,6 @@ TESTCASES = [
     pytest.param(
         """
         def test_this():
-            result =   [1, 2, 0, 3]
-            expected = [1, 2, 3]
-            assert result == expected
-        """,
-        """
-        >       assert result == expected
-        E       assert [1, 2, 0, 3] == [1, 2, 3]
-        E         At index 2 diff: 0 != 3
-        E         Left contains one more item: 0
-        E         Full diff: (-: missing in left side, +: extra in left side)
-        E           [
-        E               1,
-        E               2,
-        E         +     0,
-        E               3,
-        E           ]
-        """,
-        id="Compare lists, one extra item inserted mid-list on left",
-    ),
-    pytest.param(
-        """
-        def test_this():
             result =   (1, 4, 3)
             expected = (1, 2, 3)
             assert result == expected

@@ -43,20 +43,6 @@ def _compare_eq_iterable(
         yield highlighter(line.rstrip(), lexer="diff")
 
 
-def _tails_align(
-    left: Sequence[object],
-    left_start: int,
-    right: Sequence[object],
-    right_start: int,
-) -> bool:
-    # Slicing may fail on exotic sequences, as may __eq__.
-    # Return False so the caller keeps the default message.
-    try:
-        return bool(left[left_start:] == right[right_start:])
-    except Exception:
-        return False
-
-
 def _compare_eq_sequence(
     left: Sequence[object],
     right: Sequence[object],
@@ -101,17 +87,14 @@ def _compare_eq_sequence(
     if len_diff:
         if len_diff > 0:
             dir_with_more = "Left"
-            # If the longer side has exactly one extra item and the tails after
-            # the first differing index align (offset by one), that item is the
-            # insertion.
-            if found_diff and len_diff == 1 and _tails_align(left, i + 1, right, i):
+            if found_diff and len_diff == 1:
                 extra = saferepr(left[i])
             else:
                 extra = saferepr(left[len_right])
         else:
             len_diff = 0 - len_diff
             dir_with_more = "Right"
-            if found_diff and len_diff == 1 and _tails_align(right, i + 1, left, i):
+            if found_diff and len_diff == 1:
                 extra = saferepr(right[i])
             else:
                 extra = saferepr(right[len_left])
