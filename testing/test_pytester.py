@@ -276,7 +276,34 @@ class TestInlineRunModulesCleanup:
         assert not spy._spy_preserve("black_knight")
         assert spy._spy_preserve("zope")
         assert spy._spy_preserve("zope.interface")
-        assert spy._spy_preserve("zopelicious")
+        assert spy._spy_preserve("multiprocessing.resource_tracker")
+        # Preservation follows package boundaries, it is not a plain prefix.
+        assert not spy._spy_preserve("zopelicious")
+
+    def test_inline_run_sys_modules_snapshot_keeps_process_global_modules(
+        self, pytester: Pytester
+    ) -> None:
+        """Modules owning process global state outlive the restore (#14841).
+
+        Destroying ``multiprocessing.resource_tracker`` orphans its tracker
+        server process, which then fails at interpreter shutdown because a
+        re-imported copy tracks the same resources a second time.
+        """
+        name = "multiprocessing.resource_tracker"
+        before = sys.modules.get(name)
+        pytester.makepyfile(
+            """
+            pytest_plugins = "pytester"
+
+            def test_inner(pytester):
+                import multiprocessing.resource_tracker
+            """
+        )
+        result = pytester.runpytest_inprocess()
+        result.assert_outcomes(passed=1)
+        assert name in sys.modules
+        if before is not None:
+            assert sys.modules[name] is before
 
     def test_external_test_module_imports_not_cleaned_up(
         self, pytester: Pytester
