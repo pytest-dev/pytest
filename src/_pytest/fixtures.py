@@ -2466,6 +2466,8 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             return
         prettypath = _pretty_fixture_path(invocation_dir, fixture_def.func)
         tw.write(f"{argname}", green=True)
+        if return_annotation := _format_return_annotation(fixture_def.func):
+            tw.write(f" -> {return_annotation}", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
         fixture_doc = inspect.getdoc(fixture_def.func)
@@ -2535,6 +2537,8 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if verbose <= 0 and argname.startswith("_"):
             continue
         tw.write(f"{argname}", green=True)
+        if return_annotation := _format_return_annotation(fixturedef.func):
+            tw.write(f" -> {return_annotation}", cyan=True)
         if fixturedef.scope != "function":
             tw.write(f" [{fixturedef.scope} scope]", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
@@ -2547,6 +2551,30 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         else:
             tw.line("    no docstring available", red=True)
         tw.line()
+
+
+def _format_return_annotation(func: Callable[..., object]) -> str:
+    """Return the return annotation of a fixture function as text, or ``""``
+    if it has none."""
+    if sys.version_info >= (3, 14):
+        import annotationlib
+
+        # Read the annotation as written instead of evaluating it, so names the
+        # fixture's module cannot resolve at runtime, such as imports made only
+        # under TYPE_CHECKING, are shown rather than raising.
+        annotations = annotationlib.get_annotations(
+            func, format=annotationlib.Format.STRING
+        )
+    else:
+        annotations = inspect.get_annotations(func)
+    if "return" not in annotations:
+        return ""
+    annotation = annotations["return"]
+    if isinstance(annotation, str):
+        # Already as written: always on 3.14+, and before that with
+        # ``from __future__ import annotations``.
+        return annotation
+    return inspect.formatannotation(annotation, base_module=func.__module__)
 
 
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
