@@ -532,9 +532,15 @@ def importtestmodule(
             consider_namespace_packages=config.getini("consider_namespace_packages"),
         )
     except SyntaxError as e:
-        raise nodes.Collector.CollectError(
-            ExceptionInfo.from_current().getrepr(style="short")
-        ) from e
+        excinfo = ExceptionInfo.from_current()
+        repr_ = excinfo.getrepr(style="short")
+        reprcrash = excinfo._getreprcrash()
+        msg = str(repr_)
+        # A column is present only when the SyntaxError carried its own
+        # location; a fallback crash line would just repeat the last entry.
+        if reprcrash is not None and reprcrash.column is not None:
+            msg += "\n" + str(reprcrash)
+        raise nodes.Collector.CollectError(msg) from e
     except ImportPathMismatchError as e:
         raise nodes.Collector.CollectError(
             "import file mismatch:\n"
