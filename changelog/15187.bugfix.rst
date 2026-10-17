@@ -1,0 +1,3 @@
+Directory collection is now cached when multiple file path arguments share a
+parent directory (unless ``--keep-duplicates`` is set), avoiding repeated
+directory scans during collection.
