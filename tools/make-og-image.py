@@ -8,8 +8,15 @@ Output: doc/en/_static/og-image.png
 Design: white ground, the project's own pytest1.png logo scaled on top,
 official tagline, section pills, docs.pytest.org domain chip.
 """
+
+from __future__ import annotations
+
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
+
 
 ROOT = Path(__file__).resolve().parents[1]
 LOGO = ROOT / "doc" / "en" / "_static" / "pytest1.png"
@@ -17,7 +24,7 @@ OUT = ROOT / "doc" / "en" / "_static" / "og-image.png"
 
 W, H = 1200, 630
 GROUND = (255, 255, 255)
-ACCENT = (250, 179, 14)      # pytest yellow
+ACCENT = (250, 179, 14)  # pytest yellow
 INK = (34, 34, 34)
 GREY = (110, 110, 110)
 PILL_BG = (245, 245, 245)
@@ -57,11 +64,18 @@ def main():
     # Tagline.
     tagline = "helps you write better programs"
     f_tag = font(FONT_REG, 40)
-    draw.text(((W - text_w(draw, tagline, f_tag)) / 2, 430), tagline,
-              font=f_tag, fill=GREY)
+    draw.text(
+        ((W - text_w(draw, tagline, f_tag)) / 2, 430), tagline, font=f_tag, fill=GREY
+    )
 
     # Section pills.
-    pills = ["Getting started", "How-to guides", "Reference", "Explanations", "Examples"]
+    pills = [
+        "Getting started",
+        "How-to guides",
+        "Reference",
+        "Explanations",
+        "Examples",
+    ]
     f_pill = font(FONT_BOLD, 26)
     gap = 16
     pw = [text_w(draw, p, f_pill) + 40 for p in pills]
