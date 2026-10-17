@@ -1,0 +1,1 @@
+Assertion diffs now pretty-print the built-in `frozendict` type on Python 3.15 and later.
