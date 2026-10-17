@@ -1,0 +1,1 @@
+:class:`~pytest.PytestWarning` instances defined in ``_pytest.deprecated`` are no longer reused across ``warnings.warn`` calls, so warnings raised as errors (e.g. with ``-W error``) no longer accumulate stale traceback frames from previous raises.

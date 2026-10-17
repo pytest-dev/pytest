@@ -1,1 +1,8 @@
 *.bat  text eol=crlf
+
+# setuptools-scm reads the version out of this file when the source tree is a
+# ``git archive`` (a GitHub source download) rather than a checkout.
+# Deliberately the "stable" template: it records describe output but not
+# ``ref-names``, so the archive of a given commit does not change its content
+# -- and therefore its checksum -- when a branch that points at it later moves.
+.git_archival.txt  export-subst

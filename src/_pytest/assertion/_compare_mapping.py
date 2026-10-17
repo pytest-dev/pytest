@@ -20,9 +20,13 @@ def _compare_eq_mapping(
     verbose: int = 0,
     truncation_budget: TruncationBudget = NO_TRUNCATION_BUDGET,
 ) -> Iterator[str]:
-    set_left = set(left)
-    set_right = set(right)
-    common = set_left.intersection(set_right)
+    # Use the key views rather than ``set(left)``/``set(right)``: their set
+    # operations resolve membership through the mappings themselves, so a
+    # mapping with its own key equivalence (case-insensitive keys, for
+    # example) is compared the way it compares itself.
+    keys_left = left.keys()
+    keys_right = right.keys()
+    common = keys_left & keys_right
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
         yield f"Omitting {len(same)} identical items, use -vv to show"
@@ -38,12 +42,12 @@ def _compare_eq_mapping(
                 + " != "
                 + highlighter(saferepr({k: right[k]}))
             )
-    extra_left = set_left - set_right
+    extra_left = keys_left - keys_right
     len_extra_left = len(extra_left)
     if len_extra_left:
         yield f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
         yield from _format_extra_items(left, extra_left, highlighter, truncation_budget)
-    extra_right = set_right - set_left
+    extra_right = keys_right - keys_left
     len_extra_right = len(extra_right)
     if len_extra_right:
         yield f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
