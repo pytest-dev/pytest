@@ -820,8 +820,13 @@ class LoggingPlugin:
         if session.config.option.collectonly:
             return (yield)
 
-        if self._log_cli_enabled() and self._config.get_verbosity() < 1:
+        if (
+            session.items
+            and self._log_cli_enabled()
+            and self._config.get_verbosity() < 1
+        ):
             # The verbose flag is needed to avoid messy test progress output.
+            # A distributed controller has no local items whose logs need it.
             self._config.option.verbose = 1
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
