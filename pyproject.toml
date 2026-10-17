@@ -24,7 +24,7 @@ authors = [
     { name = "Others (See AUTHORS)" },
     { name = "Ronny Pfannschmidt" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
@@ -33,7 +33,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -48,12 +47,10 @@ dynamic = [
 ]
 dependencies = [
     "colorama>=0.4; sys_platform=='win32'",
-    "exceptiongroup>=1; python_version<'3.11'",
     "iniconfig>=2",
     "packaging>=24",
     "pluggy>=1.5,<2",
     "pygments>=2.15",
-    "tomli>=2; python_version<'3.11'",
 ]
 # Kept as a published extra because many external repos still install
 # `pytest[dev]` / `.[dev]`. Prefer the `dev` dependency group for local
@@ -61,7 +58,6 @@ dependencies = [
 optional-dependencies.dev = [
     # Core test dependencies
     "argcomplete",
-    "asynctest; python_version<'3.11'",
     "attrs>=23.1",
     # Test execution and coverage
     "coverage>=7.5",
@@ -107,10 +103,10 @@ write_to_source = true
 
 [tool.black]
 # See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#t-target-version
-target-version = [ "py310", "py311", "py312", "py313" ]
+target-version = [ "py311", "py312", "py313" ]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 88
 src = [
     "src",
@@ -640,7 +636,7 @@ files = [
 mypy_path = [
     "src",
 ]
-python_version = "3.10"
+python_version = "3.11"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true
@@ -664,7 +660,7 @@ include = [
 extraPaths = [
     "src",
 ]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 typeCheckingMode = "basic"
 reportMissingImports = "none"
 reportMissingModuleSource = "none"

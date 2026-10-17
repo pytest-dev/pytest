@@ -1,14 +1,11 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-import enum
 from functools import cached_property
 from functools import partial
 from functools import wraps
-from typing import Literal
 import warnings
 
-from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
 from _pytest.compat import safe_getattr
@@ -138,58 +135,6 @@ def test_cached_property() -> None:
     assert ncalls == 1
     assert c2.prop == 2
     assert c1.prop == 1
-
-
-def test_assert_never_union() -> None:
-    x: int | str = 10
-
-    if isinstance(x, int):
-        pass
-    else:
-        with pytest.raises(AssertionError):
-            assert_never(x)  # type: ignore[arg-type]
-
-    if isinstance(x, int):
-        pass
-    elif isinstance(x, str):
-        pass
-    else:
-        assert_never(x)
-
-
-def test_assert_never_enum() -> None:
-    E = enum.Enum("E", "a b")
-    x: E = E.a
-
-    if x is E.a:
-        pass
-    else:
-        with pytest.raises(AssertionError):
-            assert_never(x)  # type: ignore[arg-type]
-
-    if x is E.a:
-        pass
-    elif x is E.b:
-        pass
-    else:
-        assert_never(x)
-
-
-def test_assert_never_literal() -> None:
-    x: Literal["a", "b"] = "a"
-
-    if x == "a":
-        pass
-    else:
-        with pytest.raises(AssertionError):
-            assert_never(x)  # type: ignore[arg-type]
-
-    if x == "a":
-        pass
-    elif x == "b":
-        pass
-    else:
-        assert_never(x)
 
 
 def test_deprecated() -> None:
