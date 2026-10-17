@@ -82,6 +82,75 @@ class TestSubclassWarningPop:
         _warn = record.pop(self.ParentWarning)
         assert _warn.category is self.ChildWarning
 
+    def test_pop_finds_first_of_unrelated_categories(self):
+        """Unrelated categories do not replace each other, the first one wins.
+
+        See #15097.
+        """
+        rec = WarningsRecorder(_ispytest=True)
+        with rec:
+            warnings.warn("first", UserWarning)
+            warnings.warn("second", RuntimeWarning)
+            warnings.warn("third", DeprecationWarning)
+
+        assert str(rec.pop().message) == "first"
+        assert str(rec.pop().message) == "second"
+        assert str(rec.pop().message) == "third"
+
+    def test_pop_finds_first_of_repeated_category(self):
+        """A repeated category does not replace the earlier match.
+
+        See #15097.
+        """
+        rec = WarningsRecorder(_ispytest=True)
+        with rec:
+            warnings.warn("first", self.ChildWarning)
+            warnings.warn("second", self.ChildWarning)
+
+        assert str(rec.pop(self.ParentWarning).message) == "first"
+        assert str(rec.pop(self.ParentWarning).message) == "second"
+
+    def test_pop_skips_child_of_another_match(self):
+        """A match which is a child class of another match is not returned.
+
+        See #15097.
+        """
+        rec = WarningsRecorder(_ispytest=True)
+        with rec:
+            warnings.warn("child first", self.ChildWarning)
+            warnings.warn("parent", self.ParentWarning)
+            warnings.warn("grandchild", self.ChildOfChildWarning)
+
+        assert str(rec.pop(self.ParentWarning).message) == "parent"
+        assert str(rec.pop(self.ParentWarning).message) == "child first"
+
+    def test_pop_ignores_ancestor_recorded_after_unrelated_sibling(self):
+        """An ancestor recorded after an unrelated sibling does not hide it.
+
+        ``ChildOfSubA`` at index 0 is a child of ``SubA`` at index 2, so it is
+        not the best match, and it must not prevent the unrelated ``SubB`` at
+        index 1 -- recorded before ``SubA`` -- from being returned.
+
+        See #15097.
+        """
+
+        class SubB(TestSubclassWarningPop.ParentWarning):
+            pass
+
+        class SubA(TestSubclassWarningPop.ParentWarning):
+            pass
+
+        class ChildOfSubA(SubA):
+            pass
+
+        rec = WarningsRecorder(_ispytest=True)
+        with rec:
+            warnings.warn("first", ChildOfSubA)
+            warnings.warn("second", SubB)
+            warnings.warn("third", SubA)
+
+        assert str(rec.pop(self.ParentWarning).message) == "second"
+
 
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:
