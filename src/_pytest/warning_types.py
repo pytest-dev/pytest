@@ -118,20 +118,47 @@ _W = TypeVar("_W", bound=PytestWarning)
 
 
 @final
-@dataclasses.dataclass
-class UnformattedWarning(Generic[_W]):
-    """A warning meant to be formatted during runtime.
+@dataclasses.dataclass(frozen=True)
+class WarningTemplate(Generic[_W]):
+    """A warning category paired with its message template.
 
-    This is used to hold warnings that need to format their message at runtime,
-    as opposed to a direct message.
+    Emitting a warning goes through this type so that a *fresh* warning instance
+    is built every time.
+
+    Warning instances must never be kept around and reused: under an ``error``
+    filter ``warnings.warn(instance)`` raises that very object, so CPython
+    appends to its existing ``__traceback__`` instead of replacing it, and
+    ``__context__`` picks up whatever exception happened to be in flight. A
+    shared instance therefore grows a traceback without bound, pins the locals
+    of unrelated frames, and shows frames of earlier, unrelated code in failure
+    reports (#14912).
     """
 
     category: type[_W]
     template: str
 
     def format(self, **kwargs: Any) -> _W:
-        """Return an instance of the warning category, formatted with given kwargs."""
+        """Return a new instance of the warning category.
+
+        The template is only run through :meth:`str.format` when ``kwargs`` are
+        given, so constant messages may contain literal braces unescaped.
+        """
+        if not kwargs:
+            return self.category(self.template)
         return self.category(self.template.format(**kwargs))
+
+    def warn(self, *, stacklevel: int = 1, **kwargs: Any) -> None:
+        """Emit the warning, with ``stacklevel`` relative to the caller.
+
+        The extra level compensates for this method's own frame, so callers pass
+        the same ``stacklevel`` they would pass to :func:`warnings.warn`.
+        """
+        __tracebackhide__ = True
+        warnings.warn(self.format(**kwargs), stacklevel=stacklevel + 1)
+
+
+#: Kept for third-party code that reached into this private module.
+UnformattedWarning = WarningTemplate
 
 
 @final
