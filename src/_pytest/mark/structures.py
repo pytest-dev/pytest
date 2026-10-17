@@ -23,7 +23,6 @@ import warnings
 
 from .._code import getfslineno
 from ..compat import NOTSET
-from ..compat import NotSetType
 from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
