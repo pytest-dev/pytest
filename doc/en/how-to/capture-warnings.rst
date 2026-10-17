@@ -182,6 +182,11 @@ You can also pass multiple filters to a single mark by providing multiple argume
 Filters applied using a mark take precedence over filters passed on the command line or configured
 by the :confval:`filterwarnings` configuration option.
 
+Filters on a test function or method take precedence over filters on its class or module,
+and filters on a class take precedence over filters on its module.
+Filters applied to an individual parameter with :func:`pytest.param` take precedence
+over filters on the test function or method.
+
 You may apply a filter to all tests of a class by using the :ref:`filterwarnings <pytest.mark.filterwarnings ref>` mark as a class
 decorator or to all tests in a module by setting the :globalvar:`pytestmark` variable:
 
