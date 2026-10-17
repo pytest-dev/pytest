@@ -960,6 +960,30 @@ def test_rootdir_conftest_visible_outside_rootdir(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*test_uses_rootdir*PASSED*", "*1 passed*"])
 
 
+def test_rootdir_conftest_with_pytest_plugins_is_initial(
+    pytester: Pytester,
+) -> None:
+    """A conftest directly in an explicit rootdir is an initial conftest.
+
+    Regression test for #11071.
+    """
+    root = pytester.path
+    package_root = root / "package_root"
+    package_root.mkdir()
+
+    package_root.joinpath("conftest.py").write_text(
+        'pytest_plugins = ""\n',
+        encoding="utf-8",
+    )
+
+    result = pytester.runpytest(
+        "--rootdir",
+        str(package_root),
+    )
+
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+
 def test_fixture_closure_order_independence_with_parametrize(
     pytester: Pytester,
 ) -> None:
