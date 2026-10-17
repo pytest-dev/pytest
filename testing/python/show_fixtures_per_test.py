@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
 
@@ -324,5 +325,35 @@ def test_should_show_parametrized_fixtures_used_by_test(pytester: Pytester) -> N
             "*(test_should_show_parametrized_fixtures_used_by_test.py:16)*",
             "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:8",
             "    indirectly parametrized fixture",
+        ]
+    )
+
+
+def test_paths_relative_to_invocation_dir(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """A regression guard for #8056, which briefly showed an absolute path for
+    a fixture outside the invocation directory and a rootdir-relative header."""
+    pytester.makeini("[pytest]")
+    pytester.makeconftest(
+        """
+        import pytest
+        @pytest.fixture
+        def shared():
+            pass
+        """
+    )
+    sub = pytester.mkdir("sub")
+    sub.joinpath("test_sub.py").write_text(
+        "def test_it(shared):\n    pass\n", encoding="utf-8"
+    )
+    monkeypatch.chdir(sub)
+    result = pytester.runpytest("--fixtures-per-test")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(
+        [
+            "*fixtures used by test_it*",
+            "*(test_sub.py:1)*",
+            "shared -- ../conftest.py:2",
         ]
     )
