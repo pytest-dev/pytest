@@ -1,0 +1,1 @@
+Fixed an internal ``AssertionError`` when a :hook:`pytest_fixture_setup` hookimpl raises during the setup of a parametrized fixture: the remaining parameters of the same fixture now run normally instead of erroring out with a stale-finalizer assertion. This was a regression in pytest 9.1.0.
