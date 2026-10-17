@@ -1090,6 +1090,63 @@ def test_current_test_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> N
     assert "PYTEST_CURRENT_TEST" not in os.environ
 
 
+@pytest.mark.parametrize(
+    ("utf8_mode", "expected_name"),
+    [("0", r"test_caf\xe9_\u4e2d\u6587"), ("1", "test_café_中文")],
+)
+def test_current_test_env_var_non_ascii(
+    pytester: Pytester,
+    monkeypatch: MonkeyPatch,
+    utf8_mode: str,
+    expected_name: str,
+) -> None:
+    monkeypatch.setenv("LC_ALL", "C")
+    monkeypatch.setenv("PYTHONCOERCECLOCALE", "0")
+    monkeypatch.setenv("PYTHONUTF8", utf8_mode)
+    expected_encoding = "utf-8" if utf8_mode == "1" else "ascii"
+    probe = pytester.runpython_c("import sys; print(sys.getfilesystemencoding())")
+    assert probe.ret == ExitCode.OK
+    if probe.stdout.str().strip() != expected_encoding:
+        pytest.skip(f"{expected_encoding} filesystem encoding is unavailable")
+    expected_nodeid = "test_current_test_env_var_non_ascii.py::" + expected_name
+    pytester.makeconftest(
+        """
+        import os
+
+        def pytest_unconfigure():
+            assert "PYTEST_CURRENT_TEST" not in os.environ
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import os
+        import subprocess
+        import sys
+        import pytest
+
+        expected_nodeid = {expected_nodeid!r}
+
+        @pytest.fixture
+        def check_current_test():
+            assert os.environ["PYTEST_CURRENT_TEST"] == expected_nodeid + " (setup)"
+            yield
+            assert os.environ["PYTEST_CURRENT_TEST"] == expected_nodeid + " (teardown)"
+
+        def test_café_中文(check_current_test):
+            assert sys.getfilesystemencoding() == {expected_encoding!r}
+            assert os.environ["PYTEST_CURRENT_TEST"] == expected_nodeid + " (call)"
+            inherited = subprocess.check_output(
+                [sys.executable, "-c", "import os\\nprint(os.environ['PYTEST_CURRENT_TEST'])"],
+                encoding=sys.getfilesystemencoding(),
+            )
+            assert inherited.strip() == expected_nodeid + " (call)"
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.assert_outcomes(passed=1, warnings=0)
+    assert result.ret == ExitCode.OK
+
+
 class TestReportContents:
     """Test user-level API of ``TestReport`` objects."""
 
