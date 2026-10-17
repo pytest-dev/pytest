@@ -17,6 +17,7 @@ from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn10Warning
+from _pytest.warning_types import PytestRemovedIn11Warning
 from _pytest.warning_types import UnformattedWarning
 
 
@@ -104,6 +105,14 @@ PASTEBIN = UnformattedWarning(
     "The --pastebin option is deprecated. "
     "The functionality is now available in an external plugin package, pytest-pastebin.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#the-pastebin-option",
+)
+
+REQUIRED_OPTION = UnformattedWarning(
+    PytestRemovedIn11Warning,
+    "Registering command line options with required=True is deprecated: {names}\n"
+    "Required options break informational modes like --fixtures and --markers.\n"
+    "Check for the missing value where it is used and raise pytest.UsageError or call pytest.fail() instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#required-command-line-options",
 )
 
 INI_STRING_TYPE_NON_STR_VALUE = PytestRemovedIn10Warning(

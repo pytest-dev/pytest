@@ -401,3 +401,36 @@ def test_deprecation_warning_instance_not_shared_across_raises() -> None:
 
     # The traceback of a shared instance would grow with every raise.
     assert second <= first
+
+
+@pytest.mark.parametrize("use_group", [False, True])
+def test_required_option_deprecated(pytester: Pytester, use_group: bool) -> None:
+    target = 'parser.getgroup("custom")' if use_group else "parser"
+    pytester.makeconftest(
+        f"""
+        def pytest_addoption(parser):
+            {target}.addoption("--server", required=True)
+        """
+    )
+    pytester.makepyfile("def test_it(): pass")
+    result = pytester.runpytest("--server", "x")
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "conftest.py:2",
+            "*PytestRemovedIn11Warning: Registering command line options with "
+            "required=True is deprecated: --server",
+        ]
+    )
+
+
+def test_required_option_not_required_no_warning(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addoption("--server", required=False)
+        """
+    )
+    pytester.makepyfile("def test_it(): pass")
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn11Warning")
+    result.assert_outcomes(passed=1)

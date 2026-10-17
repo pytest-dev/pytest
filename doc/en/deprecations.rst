@@ -15,6 +15,25 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _required-command-line-options:
+
+Registering command line options with ``required=True``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+Passing ``required=True`` to :meth:`Parser.addoption <pytest.Parser.addoption>` or
+:meth:`OptionGroup.addoption <pytest.OptionGroup.addoption>` is deprecated and
+will be removed in pytest 11.
+
+pytest was never designed for required options; they only worked because argparse
+supports them. argparse rejects every invocation that misses them, so
+``pytest --fixtures`` and ``pytest --markers`` fail too (:issue:`3042`).
+
+Register the option without ``required`` and check for the missing value where
+it is needed instead, see :ref:`required command line options`.
+
+
 .. _callspec2-renamed:
 
 ``_pytest.python.CallSpec2`` renamed to ``CallSpec``
