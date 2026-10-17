@@ -175,7 +175,7 @@ objects, they are still using the default pytest representation:
 
     ======================== 8 tests collected in 0.12s ========================
 
-In ``test_timedistance_v3``, we used ``pytest.param`` to specify the test IDs
+In ``test_timedistance_v3``, we used :func:`pytest.param` to specify the test IDs
 together with the actual data, instead of listing them separately.
 
 A quick port of "testscenarios"
