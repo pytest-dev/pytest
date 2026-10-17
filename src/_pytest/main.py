@@ -1004,6 +1004,10 @@ class Session(nodes.Collector):
                         # the module could not be imported (#134).
                         matchnode.ihook.pytest_collectreport(report=rep)
                     if not rep.passed:
+                        if rep.skipped:
+                            # The argument is accounted for by the skip, e.g.
+                            # a module or conftest skipping at import (#15142).
+                            any_matched_in_initial_part = True
                         continue
                     subnodes = rep.result
 
