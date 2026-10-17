@@ -478,6 +478,15 @@ wheels = [
 ]
 
 [[package]]
+name = "platformdirs"
+version = "4.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/9b/560e4be8e26f6fd133a03630a8df0c663b9e8d61b4ade152b72005aec83b/platformdirs-4.11.0.tar.gz", hash = "sha256:0555d18370482847566ffabcaa53ad7c6c1c29f195989ae1ed634a05f76ea1e0", size = 31953, upload-time = "2026-07-21T13:09:36.565Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7d/68/d8d58938dfb1370b266a1a729e6d77a985be23689a0496498ee17b2cbf90/platformdirs-4.11.0-py3-none-any.whl", hash = "sha256:360ccded2b7fce0af0ff80cc8f5942a1c5d99b0e856033acb030bfc634709e74", size = 23247, upload-time = "2026-07-21T13:09:35.422Z" },
+]
+
+[[package]]
 name = "pluggy"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -534,10 +543,13 @@ dev = [
     { name = "setuptools" },
     { name = "xmlschema" },
 ]
+xdg = [
+    { name = "platformdirs" },
+]
 
 [package.dev-dependencies]
 dev = [
-    { name = "pytest", extra = ["dev"] },
+    { name = "pytest", extra = ["dev", "xdg"] },
 ]
 
 [package.metadata]
@@ -554,6 +566,7 @@ requires-dist = [
     { name = "numpy", marker = "extra == 'dev'", specifier = ">=1.26" },
     { name = "packaging", specifier = ">=24" },
     { name = "pexpect", marker = "extra == 'dev'", specifier = ">=4.9" },
+    { name = "platformdirs", marker = "extra == 'xdg'", specifier = ">=4" },
     { name = "pluggy", specifier = ">=1.5,<2" },
     { name = "pygments", specifier = ">=2.15" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.5" },
@@ -563,10 +576,10 @@ requires-dist = [
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2" },
     { name = "xmlschema", marker = "extra == 'dev'" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev", "xdg"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", extras = ["dev"] }]
+dev = [{ name = "pytest", extras = ["dev", "xdg"] }]
 
 [[package]]
 name = "pytest-xdist"

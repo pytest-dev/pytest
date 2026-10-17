@@ -1,0 +1,14 @@
+Under tox, the cache no longer moves to ``$TOX_ENV_DIR/.pytest_cache``; it lives in the project's
+``.pytest_cache`` like everywhere else.
+
+That location existed because ``--lf``, ``--nf`` and ``--sw`` state is not valid across interpreters, so
+a tox matrix would otherwise have each environment overwrite the previous one's. pytest now keeps that
+state apart on its own using :attr:`CacheScope.ENV <pytest.CacheScope.ENV>`, for every tool rather than
+only for tox.
+
+The first run after upgrading starts without the previous ``--lf``/``--nf``/``--sw`` state. When an
+older pytest's cache is found in the tox environment, the header says it is being ignored. To keep the
+cache in the tox environment anyway, spell out the old location::
+
+    [pytest]
+    cache_dir = $TOX_ENV_DIR/.pytest_cache
