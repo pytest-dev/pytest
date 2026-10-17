@@ -79,14 +79,13 @@ def resolve(name: str) -> object:
         # We use explicit un-nesting of the handling block in order
         # to avoid nested exceptions.
         try:
-            importlib.import_module(used)
+            found = importlib.import_module(used)
         except ImportError as ex:
             expected = str(ex).split()[-1]
             if expected == used:
                 raise
             else:
                 raise ImportError(f"import error in {used}: {ex}") from ex
-        found = annotated_getattr(found, part, used)
     return found
 
 
