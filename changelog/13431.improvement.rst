@@ -1,0 +1,2 @@
+Exposed :class:`pytest.ParameterSet` as the type of the return value of :func:`pytest.param()`.
+This can be used in type annotations and ``isinstance`` checks.

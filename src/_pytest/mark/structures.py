@@ -23,7 +23,6 @@ import warnings
 
 from .._code import getfslineno
 from ..compat import NOTSET
-from ..compat import NotSetType
 from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
@@ -81,8 +80,12 @@ def get_empty_parameterset_mark(
 
 
 class ParameterSet(NamedTuple):
-    """A set of values for a set of parameters along with associated marks and
+    """The return type of :func:`pytest.param`.
+
+    A set of values for a set of parameters along with associated marks and
     an optional ID for the set.
+
+    .. versionadded:: 9.2
 
     Examples::
 
@@ -108,7 +111,7 @@ class ParameterSet(NamedTuple):
         # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
     """
 
-    values: Sequence[object | NotSetType]
+    values: Sequence[object]
     marks: Collection[MarkDecorator | Mark]
     id: str | _HiddenParam | None
 
@@ -119,6 +122,7 @@ class ParameterSet(NamedTuple):
         marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
         id: str | _HiddenParam | None = None,
     ) -> ParameterSet:
+        """:meta private:"""
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
@@ -144,6 +148,8 @@ class ParameterSet(NamedTuple):
         force_tuple: bool = False,
     ) -> ParameterSet:
         """Extract from an object or objects.
+
+        :meta private:
 
         :param parameterset:
             A legacy style parameterset that may or may not be a tuple,
@@ -257,6 +263,9 @@ class ParameterSet(NamedTuple):
                 )
             )
         return argnames, parameters
+
+
+ParameterSet.__module__ = "pytest"
 
 
 @final
