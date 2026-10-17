@@ -211,6 +211,21 @@ class pytestPDB:
             do_q = do_quit
             do_exit = do_quit
 
+            def do_EOF(self, arg):
+                # Restore the EOF semantics of pdb before 3.14: raise BdbQuit
+                # instead of going through do_quit() above.
+                #
+                # Since 3.14, pdb's own do_EOF() delegates to do_quit(), which
+                # would route Ctrl+D into the Exit outcome below rather than
+                # failing the current test. See #13453.
+                self.message("")
+                self._user_requested_quit = True
+                self.set_quit()
+                return 1
+
+            if hasattr(pdb_cls, "do_EOF"):
+                do_EOF.__doc__ = pdb_cls.do_EOF.__doc__
+
             def setup(self, f, tb):
                 """Suspend on setup().
 
