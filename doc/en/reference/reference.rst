@@ -1707,6 +1707,35 @@ passed multiple times. The expected format is ``name=value``. For example::
    into errors. For more information please refer to :ref:`warnings`.
 
 
+.. confval:: error_later_report
+   :type: ``"test" | "session"``
+   :default: ``"test"``
+
+   .. versionadded:: 9.2
+
+   What a warning matching an ``error_later`` filter fails.
+
+   ``test`` fails the test that emitted the warning, once the phase that emitted it
+   finishes. ``session`` lets the tests pass, lists the warnings at the end of the run
+   and exits with :class:`pytest.ExitCode` ``LATE_WARNING_ERROR`` (code ``7``).
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+            [tool.pytest.ini_options]
+            error_later_report = "session"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            error_later_report = session
+
+   See :ref:`error-later-warnings` for more information.
+
+
 .. confval:: max_warnings
    :type: ``int | str``
 
