@@ -202,7 +202,12 @@ class _NodeReporter:
         self.append(node)
 
     def write_captured_output(self, report: TestReport) -> None:
-        if not self.xml.log_passing_tests and report.passed:
+        # A passing teardown does not make a test with a setup error pass.
+        if (
+            not self.xml.log_passing_tests
+            and report.passed
+            and not any(node.tag == "error" for node in self.nodes)
+        ):
             return
 
         content_out = report.capstdout
