@@ -186,6 +186,19 @@ def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
 class EncodedFile(io.TextIOWrapper):
     __slots__ = ()
 
+    def __init__(
+        self, *args: Any, reported_encoding: str | None = None, **kwargs: Any
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self._reported_encoding = reported_encoding
+
+    @property
+    def encoding(self) -> str:  # type: ignore[override]
+        # Report original encoding, keep construction codec for readouterr() (#4389).
+        if self._reported_encoding is not None:
+            return self._reported_encoding
+        return super().encoding
+
     @property
     def name(self) -> str:
         # Ensure that file.name is a string. Workaround for a Python bug
@@ -201,8 +214,16 @@ class EncodedFile(io.TextIOWrapper):
 
 
 class CaptureIO(io.TextIOWrapper):
-    def __init__(self) -> None:
+    def __init__(self, reported_encoding: str | None = None) -> None:
         super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
+        self._reported_encoding = reported_encoding
+
+    @property
+    def encoding(self) -> str:  # type: ignore[override]
+        # Report original encoding, keep UTF-8 buffer for readouterr() (#4389).
+        if self._reported_encoding is not None:
+            return self._reported_encoding
+        return super().encoding
 
     def getvalue(self) -> str:
         assert isinstance(self.buffer, io.BytesIO)
@@ -210,9 +231,9 @@ class CaptureIO(io.TextIOWrapper):
 
 
 class TeeCaptureIO(CaptureIO):
-    def __init__(self, other: TextIO) -> None:
+    def __init__(self, other: TextIO, reported_encoding: str | None = None) -> None:
         self._other = other
-        super().__init__()
+        super().__init__(reported_encoding=reported_encoding)
 
     def write(self, s: str) -> int:
         super().write(s)
@@ -359,6 +380,16 @@ class NoCapture(CaptureBase[str]):
         pass
 
 
+def _original_encoding(stream: object) -> str | None:
+    """Best-effort original encoding of the stream capture replaces.
+
+    Nested layers chain through reported encodings, so the
+    process-original propagates inward (#4389).
+    """
+    encoding = getattr(stream, "encoding", None)
+    return encoding if isinstance(encoding, str) else None
+
+
 class SysCaptureBase(CaptureBase[AnyStr]):
     def __init__(
         self, fd: int, tmpfile: TextIO | None = None, *, tee: bool = False
@@ -370,7 +401,13 @@ class SysCaptureBase(CaptureBase[AnyStr]):
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = CaptureIO() if not tee else TeeCaptureIO(self._old)
+                reported_encoding = _original_encoding(self._old)
+                if tee:
+                    tmpfile = TeeCaptureIO(
+                        self._old, reported_encoding=reported_encoding
+                    )
+                else:
+                    tmpfile = CaptureIO(reported_encoding=reported_encoding)
         self.tmpfile = tmpfile
         self._state = "initialized"
 
@@ -489,12 +526,15 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             self.tmpfile = open(os.devnull, encoding="utf-8")
             self.syscapture: CaptureBase[str] = SysCapture(targetfd)
         else:
+            # Only fds 0/1/2 map to sys streams; others keep the real codec (#4389).
+            orig_stream = getattr(sys, patchsysdict.get(targetfd, ""), None)
             self.tmpfile = EncodedFile(
                 TemporaryFile(buffering=0),
                 encoding="utf-8",
                 errors="replace",
                 newline="",
                 write_through=True,
+                reported_encoding=_original_encoding(orig_stream),
             )
             if targetfd in patchsysdict:
                 self.syscapture = SysCapture(targetfd, self.tmpfile)
