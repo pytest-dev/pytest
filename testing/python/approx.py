@@ -1283,6 +1283,57 @@ class TestApprox:
         with pytest.raises(decimal.FloatOperation):
             approx(expected)._repr_compare(other)
 
+    def test_mixed_decimal_and_float_mapping_does_not_hide_float_operation(
+        self, monkeypatch
+    ) -> None:
+        """The mapping path must re-raise FloatOperation like the sequence one.
+
+        Catching TypeError to skip non-numbers also catches
+        decimal.FloatOperation, and the reported maximum then silently becomes
+        the smaller of the two differences. Insertion order decides which,
+        so the wrong number is not even stable.
+        """
+        expected = {"a": Decimal(9), "b": 9.0}
+        other = {"a": Decimal(1), "b": 2.0}
+        assert approx(expected)._repr_compare(other)[1] == "Max absolute difference: 8"
+
+        monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
+        with pytest.raises(decimal.FloatOperation):
+            approx(expected)._repr_compare(other)
+
+    def test_mixed_mapping(self, assert_approx_raises_regex) -> None:
+        """Approx should work on mappings that also contain non-numbers (#15009)."""
+        assert_approx_raises_regex(
+            {"a": 1.1, "b": 2, "c": "word"},
+            {"a": 1.0, "b": 2, "c": "different"},
+            [
+                r"",
+                r"  comparison failed. Mismatched elements: 2 / 3:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected\s*",
+                r"\s*a\s*\|\s*1\.1\s*\|\s*1\.0\s*±\s*1\.0e\-06\s*",
+                r"\s*c\s*\|\s*word\s*\|\s*different\s*",
+            ],
+            verbosity_level=2,
+        )
+
+    def test_mapping_of_only_strings(self, assert_approx_raises_regex) -> None:
+        """A mapping whose values are all non-numeric still reports mismatches (#15009)."""
+        assert_approx_raises_regex(
+            {"item": "a"},
+            {"item": "b"},
+            [
+                r"",
+                r"  comparison failed. Mismatched elements: 1 / 1:",
+                r"  Max absolute difference: -inf",
+                r"  Max relative difference: -inf",
+                r"  Index \| Obtained\s*\| Expected\s*",
+                r"\s*item\s*\|\s*a\s*\|\s*b\s*",
+            ],
+            verbosity_level=2,
+        )
+
     def test_decimal_nan_tolerance_raises_value_error(self) -> None:
         """A Decimal NaN tolerance must not escape as decimal.InvalidOperation."""
         nan_abs = approx(Decimal(1), abs=Decimal("NaN"))
