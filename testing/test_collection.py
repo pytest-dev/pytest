@@ -2807,3 +2807,32 @@ def test_strict_parametrization_ids_with_hidden_param(pytester: Pytester) -> Non
             "Duplicates:     a",
         ]
     )
+
+
+def test_directory_collection_cached_for_multiple_file_args(pytester: Pytester) -> None:
+    """File args from one directory must not re-collect that directory each time.
+
+    See https://github.com/pytest-dev/pytest/issues/15187
+    """
+    calls: dict[str, int] = {}
+
+    class Plugin:
+        def pytest_collect_file(self, file_path: Path) -> None:
+            calls[file_path.name] = calls.get(file_path.name, 0) + 1
+
+    for i in range(5):
+        pytester.makepyfile(**{f"test_{i:04d}": "def test_x():\n    pass\n"})
+
+    files = [pytester.path / f"test_{i:04d}.py" for i in range(5)]
+    result = pytester.runpytest(
+        "--collect-only",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        *map(str, files),
+        plugins=[Plugin()],
+    )
+    assert result.ret == 0
+    # Each file offered once (plus possibly non-test files; assert the repeated ones)
+    for i in range(5):
+        assert calls.get(f"test_{i:04d}.py", 0) == 1, calls
