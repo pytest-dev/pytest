@@ -57,6 +57,7 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import CALLSPEC2_RENAMED
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import PYTEST_PLUGINS_IN_TEST_MODULE
 from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
@@ -77,10 +78,12 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import scandir
+from _pytest.reports import CollectReport
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 
 
@@ -574,6 +577,18 @@ def importtestmodule(
     return mod
 
 
+@dataclasses.dataclass
+class _CollectedTestModules:
+    """Test modules collected so far, to warn about ``pytest_plugins`` (#13030)."""
+
+    count: int = 0
+    # Held only until the second test module is collected.
+    first: Module | None = None
+
+
+_collected_test_modules_key = StashKey[_CollectedTestModules]()
+
+
 class Module(nodes.File, PyCollector):
     """Collector for test classes and functions in a Python module."""
 
@@ -584,7 +599,45 @@ class Module(nodes.File, PyCollector):
         self._register_setup_module_fixture()
         self._register_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
+        self._warn_pytest_plugins_in_test_module()
         return super().collect()
+
+    def _warn_pytest_plugins_in_test_module(self) -> None:
+        """Warn when a test module defines ``pytest_plugins`` (#13030).
+
+        Such plugins affect the entire test suite rather than only the
+        declaring module. A single-file suite (common for plugin tests) cannot
+        be affected, so the warning is held back until a second test module
+        is collected.
+        """
+        collected = self.config.stash.setdefault(
+            _collected_test_modules_key, _CollectedTestModules()
+        )
+        collected.count += 1
+        if collected.count == 1:
+            collected.first = self
+            return
+        if collected.first is not None:
+            first, collected.first = collected.first, None
+            first._warn_pytest_plugins_retroactively()
+        self._warn_if_pytest_plugins()
+
+    def _warn_if_pytest_plugins(self) -> None:
+        if hasattr(self.obj, "pytest_plugins"):
+            self.warn(PYTEST_PLUGINS_IN_TEST_MODULE.format(nodeid=self.nodeid))
+
+    def _warn_pytest_plugins_retroactively(self) -> None:
+        """Warn about this already collected module while another one is collected.
+
+        If the warning is turned into an error, report it as a collection error
+        of this module instead of the module currently being collected.
+        """
+        try:
+            self._warn_if_pytest_plugins()
+        except PytestDeprecationWarning:
+            longrepr = self.repr_failure(ExceptionInfo.from_current())
+            report = CollectReport(self.id, "failed", longrepr, [])
+            self.ihook.pytest_collectreport(report=report)
 
     def _register_setup_module_fixture(self) -> None:
         """Register an autouse, module-scoped fixture for the collected module object
