@@ -1,0 +1,16 @@
+{% extends "!page.html" %}
+
+{% block extrahead %}
+{{ super() }}
+<meta property="og:site_name" content="pytest documentation" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="{{ title }} — pytest documentation" />
+<meta property="og:description" content="pytest: helps you write better programs" />
+<meta property="og:image" content="https://docs.pytest.org/en/stable/_static/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{{ title }} — pytest documentation" />
+<meta name="twitter:description" content="pytest: helps you write better programs" />
+<meta name="twitter:image" content="https://docs.pytest.org/en/stable/_static/og-image.png" />
+{% endblock extrahead %}
