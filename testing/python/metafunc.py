@@ -6,6 +6,7 @@ from collections.abc import Sequence
 import dataclasses
 import itertools
 import re
+import sqlite3
 import sys
 import textwrap
 from typing import Any
@@ -1275,6 +1276,54 @@ class TestMetafunc:
 
 
 class TestMetafuncFunctional:
+    @pytest.mark.parametrize("mode", ["run", "collect", "fail", "configure-error"])
+    def test_resource_plugin_example(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch, mode: str
+    ) -> None:
+        pytester.copy_example("parametrize_resources")
+        pytester.makepyfile(test_unrelated="def test_unrelated(): pass")
+        connections = []
+        connect = sqlite3.connect
+
+        def track_connection(*args, **kwargs):
+            connection = connect(*args, **kwargs)
+            connections.append(connection)
+            if mode == "configure-error":
+                connection.execute("CREATE TABLE greetings (language TEXT)")
+            return connection
+
+        monkeypatch.setattr(sqlite3, "connect", track_connection)
+        if mode == "fail":
+            pytester.makepyfile(
+                test_greetings="def test_greeting(greeting): assert False"
+            )
+
+        args = ["-v"]
+        if mode == "collect":
+            args.append("--collect-only")
+        result = pytester.runpytest(*args)
+
+        if mode == "run":
+            result.assert_outcomes(passed=3)
+            result.stdout.fnmatch_lines(
+                [
+                    "*test_greeting[[]english[]] PASSED*",
+                    "*test_greeting[[]french[]] PASSED*",
+                ]
+            )
+        elif mode == "collect":
+            assert result.ret == pytest.ExitCode.OK
+            result.stdout.fnmatch_lines(["*3 tests collected*"])
+        elif mode == "fail":
+            result.assert_outcomes(passed=1, failed=2)
+        else:
+            assert result.ret == pytest.ExitCode.INTERNAL_ERROR
+            result.stderr.fnmatch_lines(["*table greetings already exists*"])
+
+        assert len(connections) == 1
+        with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+            connections[0].execute("SELECT 1")
+
     def test_attributes(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """

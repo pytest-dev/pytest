@@ -349,6 +349,40 @@ And then when we run the test:
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
+Managing a resource needed for parametrization
+---------------------------------------------------
+
+Usually, resources should be created in fixtures, as in the previous example.
+However, a plugin may need a resource during collection to discover which
+parameters are available. In that case, it can create the resource in
+:hook:`pytest_configure` and release it in :hook:`pytest_unconfigure`.
+
+The following plugin uses an in-memory SQLite database to discover languages
+during collection. The same connection supplies the greeting for each language
+when the parametrized fixture runs. No external database server is needed.
+
+.. literalinclude:: ../../../testing/example_scripts/parametrize_resources/conftest.py
+    :caption: conftest.py
+
+Registering a plugin instance lets its hook implementations and fixture methods
+share the connection through ``self``. The plugin is registered before the table
+is populated so that its cleanup hook also runs if populating the database fails.
+The cleanup hook runs after fixture teardown, including when tests fail or when
+using :option:`--collect-only`.
+
+``pytest_generate_tests`` only parametrizes tests requesting ``greeting``.
+With ``indirect=True``, each language is passed to the fixture as
+``request.param`` instead of being passed directly to the test function.
+
+.. literalinclude:: ../../../testing/example_scripts/parametrize_resources/test_greetings.py
+    :caption: test_greetings.py
+
+Save both files in the same directory and run ``pytest -v``. The test runs twice,
+with the IDs ``test_greeting[english]`` and ``test_greeting[french]``.
+The connection is created once per pytest invocation and closed when pytest
+unconfigures the plugin. It is also created for collection-only runs, so use
+this pattern only when discovering parameters requires the resource.
+
 Indirect parametrization
 ---------------------------------------------------
 
