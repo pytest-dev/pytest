@@ -1,0 +1,2 @@
+Tests with Unicode names no longer fail when the environment encoding cannot represent their names.
+``PYTEST_CURRENT_TEST`` uses readable backslash escapes for those names.
