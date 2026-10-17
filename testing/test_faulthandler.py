@@ -118,6 +118,69 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
     assert result.ret == 0
 
 
+@pytest.mark.parametrize("failing_phase", ["setup", "call"])
+def test_timeout_keeps_covering_the_teardown_of_a_failed_item(
+    pytester: Pytester, failing_phase: str
+) -> None:
+    """A failure does not disarm the timeout for the rest of the item.
+
+    ``pytest_exception_interact`` used to cancel the timer as well. That hook
+    runs for every setup, call and teardown exception whether or not the
+    debugger is involved, so failing disarmed the timeout for everything after
+    it: a teardown hanging behind a failed test was no longer reported
+    (#15180). The timeout has to stay below the teardown and above the failing
+    phase, otherwise the timer has already fired during that phase and the
+    cancel is a no-op either way.
+    """
+    if failing_phase == "setup":
+        body = """
+    import time
+
+    import pytest
+
+
+    @pytest.fixture
+    def slow_teardown():
+        yield
+        time.sleep(1.5)
+
+
+    @pytest.fixture
+    def failing_setup(slow_teardown):
+        raise RuntimeError("setup failed")
+
+
+    def test_it(failing_setup):
+        pass
+    """
+    else:
+        body = """
+    import time
+
+    import pytest
+
+
+    @pytest.fixture
+    def slow_teardown():
+        yield
+        time.sleep(1.5)
+
+
+    def test_it(slow_teardown):
+        assert False
+    """
+    pytester.makepyfile(body)
+    pytester.makeini(
+        """
+        [pytest]
+        faulthandler_timeout = 0.4
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    assert "most recent call first" in result.stderr.str()
+    assert result.ret != 0
+
+
 @pytest.mark.parametrize(
     ("value", "expected"), [(5, 5), (0.01, 0.01), ('"0.01"', "0.01")]
 )
@@ -172,11 +235,15 @@ def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
     assert result.ret == 1
 
 
-@pytest.mark.parametrize("hook_name", ["pytest_enter_pdb", "pytest_exception_interact"])
-def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
+def test_cancel_timeout_on_hook(monkeypatch) -> None:
     """Make sure that we are cancelling any scheduled traceback dumping due
-    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any
-    other interactive exception (pytest-dev/pytest-faulthandler#14)."""
+    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12).
+
+    ``pytest_exception_interact`` used to do the same for any interactive
+    exception (pytest-dev/pytest-faulthandler#14), but that hook also runs on
+    every ordinary setup, call and teardown failure, which disarmed the timeout
+    for the rest of the item. ``pytest_enter_pdb`` covers the debugger case, so
+    the hook is gone (#15180)."""
     import faulthandler
 
     from _pytest import faulthandler as faulthandler_plugin
@@ -189,7 +256,7 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
 
     # call our hook explicitly, we can trust that pytest will call the hook
     # for us at the appropriate moment
-    hook_func = getattr(faulthandler_plugin, hook_name)
+    hook_func = faulthandler_plugin.pytest_enter_pdb
     hook_func()
     assert called == [1]
 
