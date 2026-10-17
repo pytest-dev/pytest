@@ -128,6 +128,7 @@ def runtestprotocol(
         # This only happens if the item is re-run, as is done by
         # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
+    reports: list[TestReport] = []
     try:
         rep = call_and_report(item, "setup", log)
         reports = [rep]
@@ -137,17 +138,23 @@ def runtestprotocol(
                 show_test_item(item, add_space=not setup_only)
             if not setup_only:
                 reports.append(call_and_report(item, "call", log))
+    finally:
         # If the session is about to fail or stop, teardown everything - this is
         # necessary to correctly report fixture teardown errors (see #11706)
         if item.session.shouldfail or item.session.shouldstop:
             nextitem = None
-        reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
-    finally:
-        # After all teardown hooks have been called (or an exception was reraised)
-        # want funcargs and request info to go away.
-        if hasrequest:
-            item._request = False  # type: ignore[attr-defined]
-            item.funcargs = None  # type: ignore[attr-defined]
+        # Teardown must run even when setup (or call) re-raised an interruptible
+        # exception such as KeyboardInterrupt, so that finalizers registered
+        # before the interruption are still executed (see #15067). The request
+        # cleanup must run regardless of whether teardown itself re-raises.
+        try:
+            reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
+        finally:
+            # After all teardown hooks have been called (or an exception was reraised)
+            # want funcargs and request info to go away.
+            if hasrequest:
+                item._request = False  # type: ignore[attr-defined]
+                item.funcargs = None  # type: ignore[attr-defined]
     return reports
 
 
