@@ -144,6 +144,5 @@ def test_deprecated() -> None:
     def old_way() -> str:
         return "human intelligence"
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
+    with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
         assert old_way() == "human intelligence"  # type: ignore[deprecated]

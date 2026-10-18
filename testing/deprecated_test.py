@@ -211,8 +211,7 @@ class TestFixtureNodeidDeprecations:
                 mod_none = types.ModuleType("plugin_none")
                 mod_none.fix_b = fix_b
 
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter("always")
+                with warnings.catch_warnings(record=True, action="always") as w:
                     fm.parsefactories(mod_with_path, "some/nodeid")
                     fm.parsefactories(mod_none, None)
 
@@ -270,8 +269,7 @@ class TestFixtureNodeidDeprecations:
                     return
                 _done = True
                 fm = collector.session._fixturemanager
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter("always")
+                with warnings.catch_warnings(record=True, action="always") as w:
                     fm._register_fixture(
                         name="legacy_autouse",
                         func=lambda: None,
@@ -305,8 +303,7 @@ class TestFixtureNodeidDeprecations:
 
             def pytest_collection_modifyitems(session, items):
                 fm = session._fixturemanager
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
+                with warnings.catch_warnings(action="ignore"):
                     fm._register_fixture(
                         name="global_legacy", func=lambda: "ok", nodeid=""
                     )
@@ -390,8 +387,7 @@ def test_deprecation_warning_instance_not_shared_across_raises() -> None:
         return n
 
     def raise_and_count() -> int:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", PytestDeprecationWarning)
+        with warnings.catch_warnings(action="error", category=PytestDeprecationWarning):
             with pytest.raises(PytestDeprecationWarning) as excinfo:
                 PrivateClass()
         return count_frames(excinfo.value.__traceback__)

@@ -1828,8 +1828,9 @@ class Config:
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
         config_filters = self.getini("filterwarnings")
 
-        with warnings.catch_warnings(record=True) as records:
-            warnings.simplefilter("always", type(warning))
+        with warnings.catch_warnings(
+            record=True, action="always", category=type(warning)
+        ) as records:
             apply_warning_filters(config_filters, cmdline_filters)
             warnings.warn(warning, stacklevel=stacklevel)
 
