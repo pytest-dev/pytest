@@ -364,14 +364,37 @@ class CallInfo(Generic[TResult]):
             if reraise is not None and isinstance(excinfo.value, reraise):
                 raise
             result = None
-        duration = instant.elapsed()
+        return cls._from_duration(
+            result=result,
+            excinfo=excinfo,
+            duration=instant.elapsed(),
+            when=when,
+        )
+
+    @classmethod
+    def _from_duration(
+        cls,
+        result: TResult | None,
+        excinfo: ExceptionInfo[BaseException] | None,
+        duration: timing.Duration,
+        when: Literal["collect", "setup", "call", "teardown"],
+    ) -> CallInfo[TResult]:
+        """Create a CallInfo whose timing comes from a single
+        :class:`_pytest.timing.Duration`.
+
+        Internal code should construct CallInfo through this (or
+        :meth:`from_call`) instead of passing ``start``/``stop``/``duration``
+        by hand, so all three always come from the same measurement and from
+        :mod:`_pytest.timing`, which is immune to tests mocking :mod:`time`
+        (#185).
+        """
         return cls(
+            result=result,
+            excinfo=excinfo,
             start=duration.start.time,
             stop=duration.stop.time,
             duration=duration.seconds,
             when=when,
-            result=result,
-            excinfo=excinfo,
             _ispytest=True,
         )
 

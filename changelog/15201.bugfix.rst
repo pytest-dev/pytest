@@ -1,0 +1,3 @@
+Subtest timing (start, stop and duration) no longer breaks when the test under ``subtests.test()`` mocks :func:`time.time` or :func:`time.perf_counter`; it now uses pytest's internal timing like regular test phases do.
+
+``unittest`` subtests are now reported with their real timestamp and a duration of zero, instead of a start and stop time of ``0`` (the epoch).

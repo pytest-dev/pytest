@@ -1040,6 +1040,58 @@ def test_nested(pytester: pytest.Pytester) -> None:
     )
 
 
+def test_timing_unaffected_by_mocked_time(pytester: pytest.Pytester) -> None:
+    """Subtest timing uses _pytest.timing, so tests mocking ``time`` do not
+    corrupt the reported start/stop/duration (#15201, #185)."""
+    reprec = pytester.inline_runsource(
+        """
+        import time
+
+        def test(subtests, monkeypatch):
+            with subtests.test("mocked"):
+                monkeypatch.setattr(time, "time", lambda: 0.0)
+                monkeypatch.setattr(time, "perf_counter", lambda: -1e9)
+        """
+    )
+    reports = [
+        r
+        for r in reprec.getreports("pytest_runtest_logreport")
+        if isinstance(r, SubtestReport)
+    ]
+    assert len(reports) == 1
+    [report] = reports
+    assert report.passed
+    assert report.start > 0
+    assert report.duration >= 0
+    assert report.stop - report.start == pytest.approx(report.duration, abs=1)
+
+
+def test_unittest_subtest_timing(pytester: pytest.Pytester) -> None:
+    """Unittest does not tell us when a subtest started: it is reported as a
+    zero-length call at a real timestamp instead of at the epoch."""
+    reprec = pytester.inline_runsource(
+        """
+        from unittest import TestCase
+
+        class T(TestCase):
+            def test(self):
+                with self.subTest("a"):
+                    assert False
+        """
+    )
+    reports = [
+        r
+        for r in reprec.getreports("pytest_runtest_logreport")
+        if isinstance(r, SubtestReport)
+    ]
+    assert len(reports) == 1
+    [report] = reports
+    assert report.failed
+    assert report.start > 0
+    assert report.stop == report.start
+    assert report.duration == 0
+
+
 class MyEnum(Enum):
     """Used in test_serialization, needs to be declared at the module level to be pickled."""
 
