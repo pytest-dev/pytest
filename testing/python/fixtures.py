@@ -1137,6 +1137,28 @@ class TestRequestBasic:
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(failed=1, passed=1)
 
+    def test_request_addfinalizer_isolation_between_tests(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+            finalized = []
+
+            @pytest.fixture
+            def fix(request):
+                request.addfinalizer(lambda: finalized.append(request.node.name))
+            def test_first(fix):
+                pass
+            def test_second(fix):
+                pass
+            def test_verify():
+                assert finalized == ["test_first", "test_second"]
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=3)
+
     def test_request_addfinalizer_failing_setup_module(
         self, pytester: Pytester
     ) -> None:

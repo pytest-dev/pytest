@@ -18,6 +18,7 @@ import functools
 import inspect
 import os
 from pathlib import Path
+from contextlib import ExitStack
 import sys
 import types
 from typing import Any
@@ -1185,7 +1186,7 @@ class FixtureDef(Generic[FixtureValue]):
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
-        self._finalizers: Final[list[Callable[[], object]]] = []
+        self._finalizers = ExitStack()
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1201,7 +1202,24 @@ class FixtureDef(Generic[FixtureValue]):
         return self._has_location
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
-        self._finalizers.append(finalizer)
+        self._finalizers.callback(finalizer)
+
+    def _call_finalizers(self) -> list[BaseException]:
+        exceptions: list[BaseException] = []
+        finalizers = self._finalizers.pop_all()
+        callbacks = cast(Any, finalizers)._exit_callbacks
+        while callbacks:
+            callback = callbacks.pop()
+            if isinstance(callback, tuple):
+                callback = callback[1]
+            try:
+                callback(None, None, None)
+            except BaseException as e:
+                exceptions.append(e)
+        return exceptions
+
+    def _has_finalizers(self) -> bool:
+        return bool(cast(Any, self._finalizers)._exit_callbacks)
 
     def finish(self, request: SubRequest) -> None:
         if self.cached_result is None:
@@ -1209,19 +1227,12 @@ class FixtureDef(Generic[FixtureValue]):
             # this state.
             return
 
-        exceptions: list[BaseException] = []
-        while self._finalizers:
-            fin = self._finalizers.pop()
-            try:
-                fin()
-            except BaseException as e:
-                exceptions.append(e)
+        exceptions = self._call_finalizers()
         node = request.node
         # Even if finalization fails, we invalidate the cached fixture
         # value and remove all finalizers because they may be bound methods
         # which will keep instances alive.
         self.cached_result = None
-        self._finalizers.clear()
         if len(exceptions) == 1:
             raise exceptions[0]
         elif len(exceptions) > 1:
@@ -1278,7 +1289,7 @@ class FixtureDef(Generic[FixtureValue]):
 
         # Register the pytest_fixture_post_finalizer as the first finalizer,
         # which is executed last.
-        assert not self._finalizers
+        assert not self._has_finalizers()
         self.addfinalizer(
             lambda: request.node.ihook.pytest_fixture_post_finalizer(
                 fixturedef=self, request=request
