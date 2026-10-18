@@ -652,8 +652,6 @@ def test_simplenamespace_subclass_uses_class_name() -> None:
     assert pp.pformat(MyNamespace(one=1)) == "MyNamespace(\n    one=1,\n)"
 
 
-
-
 @pytest.mark.skipif(
     sys.version_info < (3, 15), reason="frozendict is a builtin since Python 3.15"
 )
@@ -678,8 +676,6 @@ def test_frozendict() -> None:
                 'one': 1,
             })"""
         )
-
-
 
 
 def test_safe_tuple_sorts_unorderable_pairs() -> None:
