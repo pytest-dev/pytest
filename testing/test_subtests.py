@@ -5,6 +5,7 @@ import json
 import sys
 from typing import Literal
 
+from _pytest import timing
 from _pytest._io.saferepr import saferepr
 from _pytest.subtests import SubtestContext
 from _pytest.subtests import SubtestReport
@@ -1067,8 +1068,7 @@ def test_timing_unaffected_by_mocked_time(pytester: pytest.Pytester) -> None:
 
 
 def test_unittest_subtest_timing(pytester: pytest.Pytester) -> None:
-    """Unittest does not tell us when a subtest started: it is reported as a
-    zero-length call at a real timestamp instead of at the epoch."""
+    """Unittest reports subtests without timing: they carry timing.UNMEASURED."""
     reprec = pytester.inline_runsource(
         """
         from unittest import TestCase
@@ -1087,9 +1087,9 @@ def test_unittest_subtest_timing(pytester: pytest.Pytester) -> None:
     assert len(reports) == 1
     [report] = reports
     assert report.failed
-    assert report.start > 0
-    assert report.stop == report.start
-    assert report.duration == 0
+    assert report.start == timing.UNMEASURED.start.time
+    assert report.stop == timing.UNMEASURED.stop.time
+    assert report.duration == timing.UNMEASURED.seconds
 
 
 class MyEnum(Enum):

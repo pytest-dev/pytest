@@ -64,6 +64,15 @@ class Duration:
         return self.stop.perf_count - self.start.perf_count
 
 
+#: Placeholder timing for calls pytest cannot measure, e.g. unittest subtests,
+#: which unittest reports only after the fact without a start time.
+#: Shows up as ``start == stop == duration == 0``.
+UNMEASURED = Duration(
+    start=Instant(time=0.0, perf_count=0.0),
+    stop=Instant(time=0.0, perf_count=0.0),
+)
+
+
 @dataclasses.dataclass
 class MockTiming:
     """Mocks _pytest.timing with a known object that can be used to control timing in tests

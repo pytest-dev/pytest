@@ -442,13 +442,11 @@ class TestCaseFunction(Function):
             case unreachable:
                 assert_never(unreachable)
 
-        # unittest does not tell us when a subtest started, so report it as a
-        # zero-length call at the time unittest notified us about it.
-        now = timing.Instant()
+        # unittest reports subtests after the fact, without timing.
         call_info = CallInfo[None]._from_duration(
             result=None,
             excinfo=exception_info,
-            duration=timing.Duration(start=now, stop=now),
+            duration=timing.UNMEASURED,
             when="call",
         )
         msg = None if test._message is _subtest_msg_sentinel else str(test._message)  # type: ignore[attr-defined]
