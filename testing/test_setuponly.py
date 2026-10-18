@@ -33,7 +33,7 @@ def test_setup_show_announces_fixture_before_body(
     assert "TEARDOWN F slow['sample']" in output
     assert output.index("SETUP START F slow") < output.index("BODY-ENTERED")
     assert output.index("BODY-ENTERED") < output.index("SETUP    F slow")
-    assert "SETUP START F slow\\n" in output
+    assert "SETUP START F slow\n" in output
 
 
 def test_setup_show_announces_failed_fixture(pytester: Pytester) -> None:
