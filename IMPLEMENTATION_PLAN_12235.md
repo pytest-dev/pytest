@@ -57,10 +57,9 @@ protects its propagation through an `except Exception` handler.
    public API reference does not directly render this internal class docstring.
 
 4. **Review and prepare the patch.** Check that the final diff contains the
-   rationale and no runtime changes. A changelog fragment can be omitted under
-   `CONTRIBUTING.rst` because this clarification does not change documented
-   behavior. If a documentation release note is requested during review, use
-   `changelog/12235.doc.rst`. Suggested PR title:
+   rationale and no runtime changes. Include `changelog/12235.doc.rst` to satisfy
+   the PR's changelog check without requiring a maintainer to apply the
+   `skip news` exemption label. Suggested PR title:
    `Explain why OutcomeException inherits from BaseException`.
 
 ## Acceptance criteria
@@ -74,7 +73,8 @@ protects its propagation through an `except Exception` handler.
 
 ## Implementation result
 
-Implemented the docstring clarification on 18 October 2026. The exception hierarchy
+Implemented the docstring clarification on 18 October 2026 and added
+`changelog/12235.doc.rst` for the PR's changelog check. The exception hierarchy
 and runtime behavior are unchanged.
 
 Validation completed:
