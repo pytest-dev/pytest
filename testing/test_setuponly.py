@@ -7,6 +7,7 @@ from _pytest.config import ExitCode
 from _pytest.pytester import Pytester
 import pytest
 
+
 @pytest.mark.parametrize("mode", ["--setup-show", "--setup-only"])
 def test_setup_show_announces_fixture_before_body(
     pytester: Pytester, mode: str
