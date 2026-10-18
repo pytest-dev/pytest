@@ -118,10 +118,15 @@ def test_higher_scope_instance_method_is_deprecated(
                 pass
         """
     )
-    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    category = (
+        "PytestRemovedIn10Warning"
+        if scope is Scope.Class
+        else "PytestRemovedIn11Warning"
+    )
+    result = pytester.runpytest(f"-Werror::pytest.{category}")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*PytestRemovedIn10Warning: *-scoped fixtures defined as instance methods*"]
+        [f"*{category}: *-scoped fixtures defined as instance methods*"]
     )
 
 
@@ -146,7 +151,10 @@ def test_higher_scope_classmethod_fixture_not_deprecated(
                 assert type(self).attr is True
         """
     )
-    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result = pytester.runpytest(
+        "-Werror::pytest.PytestRemovedIn10Warning",
+        "-Werror::pytest.PytestRemovedIn11Warning",
+    )
     result.assert_outcomes(passed=1)
 
 
@@ -167,7 +175,10 @@ def test_staticmethod_fixture_not_deprecated(pytester: Pytester, scope: Scope) -
                 pass
         """
     )
-    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result = pytester.runpytest(
+        "-Werror::pytest.PytestRemovedIn10Warning",
+        "-Werror::pytest.PytestRemovedIn11Warning",
+    )
     result.assert_outcomes(passed=1)
 
 
@@ -360,12 +371,12 @@ def test_callspec2_renamed() -> None:
     import _pytest.python as python_mod
     from _pytest.python import CallSpec
 
-    with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
+    with pytest.warns(pytest.PytestRemovedIn11Warning, match="CallSpec2"):
         from _pytest.python import CallSpec2
 
     assert CallSpec2 is CallSpec
 
-    with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
+    with pytest.warns(pytest.PytestRemovedIn11Warning, match="CallSpec2"):
         assert python_mod.CallSpec2 is CallSpec
 
 
