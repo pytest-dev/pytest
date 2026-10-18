@@ -4626,10 +4626,12 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "test_fixtures.py::test_first ",
+            "        SETUP START F my_fixture",
             "        SETUP    F my_fixture",
             "        test_fixtures.py::test_first (fixtures used: my_fixture, request) PASSED",
             "test_fixtures.py::test_first ERROR",
             "test_fixtures.py::test_second ",
+            "        SETUP START F my_fixture",
             "        SETUP    F my_fixture",
             "        test_fixtures.py::test_second (fixtures used: my_fixture, request) PASSED",
             "        TEARDOWN F my_fixture",
