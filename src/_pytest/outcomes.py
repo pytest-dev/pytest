@@ -11,8 +11,13 @@ from typing import NoReturn
 
 
 class OutcomeException(BaseException):
-    """OutcomeException and its subclass instances indicate and contain info
-    about test and collection outcomes."""
+    """Indicate a test or collection outcome and contain information about it.
+
+    Inherit from BaseException so that ordinary ``except Exception`` handlers
+    do not accidentally suppress pytest outcomes, such as skips, failures,
+    and expected failures. These exceptions need to propagate to pytest so
+    that it can report the intended outcome.
+    """
 
     def __init__(self, msg: str | None = None, pytrace: bool = True) -> None:
         if msg is not None and not isinstance(msg, str):
