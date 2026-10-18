@@ -32,6 +32,9 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_fixture_setup(
     fixturedef: FixtureDef[object], request: SubRequest
 ) -> Generator[None, object, object]:
+    if request.config.option.setupshow:
+        # Report this fixture before entering user code, including if it hangs.
+        _show_fixture_action(fixturedef, request.config, "SETUP START")
     try:
         return (yield)
     finally:
@@ -85,7 +88,11 @@ def _show_fixture_action(
     if hasattr(fixturedef, "cached_param"):
         tw.write(f"[{saferepr(fixturedef.cached_param, maxsize=42)}]")
 
-    tw.flush()
+    # End the early marker before any output from the fixture body.
+    if msg == "SETUP START":
+        tw.line()
+    else:
+        tw.flush()
 
     if capman:
         capman.resume_global_capture()

@@ -7,6 +7,74 @@ from _pytest.config import ExitCode
 from _pytest.pytester import Pytester
 import pytest
 
+@pytest.mark.parametrize("mode", ["--setup-show", "--setup-only"])
+def test_setup_show_announces_fixture_before_body(
+    pytester: Pytester, mode: str
+) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(params=["example"], ids=["sample"])
+        def slow():
+            print("BODY-ENTERED", flush=True)
+            yield "value"
+
+        def test_value(slow):
+            assert slow == "value"
+        """
+    )
+
+    result = pytester.runpytest(mode, "-s", p)
+    assert result.ret == 0
+    output = result.stdout.str()
+    assert "SETUP START F slow" in output
+    assert "SETUP    F slow['sample']" in output
+    assert "TEARDOWN F slow['sample']" in output
+    assert output.index("SETUP START F slow") < output.index("BODY-ENTERED")
+    assert output.index("BODY-ENTERED") < output.index("SETUP    F slow")
+    assert "SETUP START F slow\\n" in output
+
+
+def test_setup_show_announces_failed_fixture(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def broken():
+            raise ValueError("fixture setup failed")
+
+        def test_failure(broken):
+            pass
+        """
+    )
+
+    result = pytester.runpytest("--setup-show", p)
+    assert result.ret == 1
+    output = result.stdout.str()
+    assert "SETUP START F broken" in output
+    assert "SETUP    F broken" in output
+    assert output.index("SETUP START F broken") < output.index("SETUP    F broken")
+
+
+def test_no_setup_start_when_not_requested(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def normal():
+            return 1
+
+        def test_normal(normal):
+            assert normal == 1
+        """
+    )
+    result = pytester.runpytest(p)
+    assert result.ret == 0
+    assert "SETUP START" not in result.stdout.str()
+
 
 @pytest.fixture(params=["--setup-only", "--setup-plan", "--setup-show"], scope="module")
 def mode(request):
