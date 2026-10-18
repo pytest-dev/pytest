@@ -1,0 +1,1 @@
+Parsed source ASTs and their statement indexes are reused across traceback reports in the same session, reducing repeated parsing for large test modules with many failures. The cache is bounded and invalidates entries when source changes.

@@ -25,6 +25,8 @@ from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
+from _pytest._code.source import _source_ast_cache
+from _pytest._code.source import _SourceASTCache
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.nodes import Collector
@@ -106,6 +108,8 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
 
 def pytest_sessionstart(session: Session) -> None:
     session._setupstate = SetupState()
+    token = _source_ast_cache.set(_SourceASTCache())
+    session.config.add_cleanup(lambda: _source_ast_cache.reset(token))
 
 
 def pytest_sessionfinish(session: Session) -> None:

@@ -724,3 +724,36 @@ def test_statement_linenos_are_memoized_per_node() -> None:
     other = ast.parse("z = 3\n")
     assert _statement_linenos(other) == [0]
     assert _statement_linenos(node) is values
+
+
+def test_session_source_ast_cache_source_changes() -> None:
+    from _pytest._code.source import _SourceASTCache
+
+    cache = _SourceASTCache()
+    source = Source("first = 1")
+    first = ast.parse(str(source))
+    cache.put("test.py", source, first)
+    assert cache.get("test.py", Source("first = 1")) is first
+    assert cache.get("other.py", source) is None
+    # The snapshot must not change when a caller mutates the original Source.
+    source.lines[:] = ["second = 2", "third = 3"]
+    assert cache.get("test.py", source) is None
+    second = ast.parse(str(source))
+    cache.put("test.py", source, second)
+    assert cache.get("test.py", source) is second
+    assert cache.get("test.py", Source("first = 1")) is None
+
+
+def test_session_source_ast_cache_eviction() -> None:
+    from _pytest._code.source import _SourceASTCache
+
+    cache = _SourceASTCache(maxsize=2)
+    source = Source("value = 1")
+    node = ast.parse(str(source))
+    cache.put("first.py", source, node)
+    cache.put("second.py", source, node)
+    assert cache.get("first.py", source) is node
+    cache.put("third.py", source, node)
+    assert cache.get("second.py", source) is None
+    assert cache.get("first.py", source) is node
+    assert cache.get("third.py", source) is node

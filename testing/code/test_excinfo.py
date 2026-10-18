@@ -2296,3 +2296,137 @@ def test_check_error_notes_failure(
     with pytest.raises(AssertionError):
         with pytest.raises(type(error), match=match):
             raise error
+
+
+def test_traceback_ast_reused_between_reports(pytester: Pytester) -> None:
+    """Parsing the whole module once per failure is quadratic (#13360)."""
+    pytester.makeconftest(
+        """
+        import ast
+        from unittest.mock import patch
+
+        parses = 0
+        original_parse = ast.parse
+
+        def parse(source, filename='<unknown>', *args, **kwargs):
+            global parses
+            if filename == 'source' and 'TRACEBACK_AST_CACHE_SENTINEL' in source:
+                parses += 1
+            return original_parse(source, filename, *args, **kwargs)
+
+        def pytest_sessionstart(session):
+            patcher = patch.object(ast, 'parse', parse)
+            patcher.start()
+            session.config.add_cleanup(patcher.stop)
+
+        def pytest_sessionfinish():
+            print(f'TRACEBACK_AST_PARSES={parses}')
+        """
+    )
+    pytester.makepyfile(
+        "# TRACEBACK_AST_CACHE_SENTINEL\n"
+        + "\n".join(
+            f'def test_{i}():\n    assert False, "failure {i}"' for i in range(10)
+        )
+    )
+    result = pytester.runpytest("--tb=short")
+    result.assert_outcomes(failed=10)
+    result.stdout.fnmatch_lines(["*TRACEBACK_AST_PARSES=1"])
+    for i in range(10):
+        result.stdout.fnmatch_lines([f"*AssertionError: failure {i}*"])
+
+
+def test_traceback_ast_cache_refreshes_synthetic_source(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    import linecache
+
+    from _pytest._code.source import _source_ast_cache
+    from _pytest._code.source import _SourceASTCache
+
+    filename = "<changing traceback source>"
+    cache = _SourceASTCache()
+    token = _source_ast_cache.set(cache)
+    try:
+        # The second statement has a different end position. Reusing the first
+        # AST would omit the closing parenthesis from the second traceback.
+        for source in (
+            "def fail():\n    raise ValueError('first')\n",
+            "def fail():\n    raise ValueError(\n        'second'\n    )\n",
+        ):
+            lines = source.splitlines(keepends=True)
+            monkeypatch.setitem(
+                linecache.cache, filename, (len(source), None, lines, filename)
+            )
+            namespace: dict[str, Any] = {}
+            exec(compile(source, filename, "exec"), namespace)
+            with pytest.raises(ValueError) as excinfo:
+                namespace["fail"]()
+            entry = excinfo.traceback[-1]
+            assert str(entry.getsource()) == source.rstrip("\n")
+            # Mutating a returned Source must not corrupt the next lookup.
+            extracted = entry.getsource()
+            assert extracted is not None
+            extracted.lines.clear()
+            assert str(entry.getsource()) == source.rstrip("\n")
+    finally:
+        _source_ast_cache.reset(token)
+
+
+def test_traceback_ast_cache_session_lifetime(pytester: Pytester) -> None:
+    from _pytest._code.source import _source_ast_cache
+    from _pytest._code.source import _SourceASTCache
+
+    previous = _source_ast_cache.get()
+    seen: list[_SourceASTCache | None] = []
+
+    class Plugin:
+        @pytest.hookimpl(trylast=True)
+        def pytest_sessionstart(self) -> None:
+            seen.append(_source_ast_cache.get())
+
+    pytester.makepyfile("def test_pass(): pass")
+    for _ in range(2):
+        pytester.inline_run(plugins=[Plugin()]).assertoutcome(passed=1)
+        assert _source_ast_cache.get() is previous
+    assert all(cache is not None and cache is not previous for cache in seen)
+    assert seen[0] is not seen[1]
+
+
+def test_traceback_ast_cache_failed_session_cleanup(pytester: Pytester) -> None:
+    from _pytest._code.source import _source_ast_cache
+
+    previous = _source_ast_cache.get()
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.hookimpl(trylast=True)
+        def pytest_sessionstart():
+            raise RuntimeError('session start failed')
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
+    assert _source_ast_cache.get() is previous
+
+
+def test_traceback_ast_caller_cache_outside_session(monkeypatch: MonkeyPatch) -> None:
+    import ast
+
+    from _pytest._code.source import _source_ast_cache
+
+    token = _source_ast_cache.set(None)
+    try:
+        with pytest.raises(ValueError) as excinfo:
+            raise ValueError("caller owns the cache")
+        entry = excinfo.traceback[-1]
+        cache: dict[str | Path, ast.AST] = {}
+        first = entry.getsource(cache)
+        assert cache
+        monkeypatch.setattr(
+            ast, "parse", lambda *args, **kwargs: pytest.fail("reparsed")
+        )
+        assert entry.getsource(cache) == first
+    finally:
+        _source_ast_cache.reset(token)

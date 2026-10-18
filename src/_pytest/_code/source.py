@@ -3,15 +3,54 @@ from __future__ import annotations
 
 import ast
 from bisect import bisect_right
+from collections import OrderedDict
 from collections.abc import Iterable
 from collections.abc import Iterator
+from contextvars import ContextVar
 import inspect
 import linecache
+from pathlib import Path
 import textwrap
 import tokenize
 import types
 from typing import overload
 import warnings
+
+
+class _SourceASTCache:
+    """A bounded, source-aware cache shared by a session's traceback reports."""
+
+    def __init__(self, maxsize: int = 100) -> None:
+        self._maxsize = maxsize
+        self._entries: OrderedDict[str | Path, tuple[tuple[str, ...], ast.AST]] = (
+            OrderedDict()
+        )
+
+    def get(self, path: str | Path, source: Source) -> ast.AST | None:
+        cached = self._entries.get(path)
+        if cached is None:
+            return None
+        lines, node = cached
+        # Inspect/linecache may refresh a file or a synthetic source between
+        # failures. Never apply statement locations from a different source.
+        if lines != tuple(source.lines):
+            del self._entries[path]
+            return None
+        self._entries.move_to_end(path)
+        return node
+
+    def put(self, path: str | Path, source: Source, node: ast.AST) -> None:
+        self._entries[path] = (tuple(source.lines), node)
+        self._entries.move_to_end(path)
+        if len(self._entries) > self._maxsize:
+            self._entries.popitem(last=False)
+
+
+# No process-global cache: each session installs its own and restores the
+# previous value on cleanup, including nested pytest.main() invocations.
+_source_ast_cache: ContextVar[_SourceASTCache | None] = ContextVar(
+    "pytest_source_ast_cache", default=None
+)
 
 
 class Source:

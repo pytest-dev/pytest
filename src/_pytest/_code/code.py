@@ -36,6 +36,7 @@ from typing import TypeVar
 import pluggy
 
 import _pytest
+from _pytest._code.source import _source_ast_cache
 from _pytest._code.source import findsource
 from _pytest._code.source import getrawcode
 from _pytest._code.source import getstatementrange_ast
@@ -289,17 +290,22 @@ class TracebackEntry:
         self, astcache: dict[str | Path, ast.AST] | None = None
     ) -> Source | None:
         """Return failing source code."""
-        # we use the passed in astcache to not reparse asttrees
-        # within exception info printing
+        # Outside a pytest session the caller's cache still shares ASTs within
+        # one exception. A running session also shares them between reports.
         source = self.frame.code.fullsource
         if source is None:
             return None
         key = astnode = None
-        if astcache is not None:
+        session_cache = _source_ast_cache.get()
+        if session_cache is not None:
+            key = self.frame.code.path
+            astnode = session_cache.get(key, source)
+        elif astcache is not None:
             key = self.frame.code.path
             if key is not None:
                 astnode = astcache.get(key, None)
         start = self.getfirstlinesource()
+        cache_miss = astnode is None
         try:
             astnode, _, end = getstatementrange_ast(
                 self.lineno, source, astnode=astnode
@@ -307,6 +313,8 @@ class TracebackEntry:
         except SyntaxError:
             end = self.lineno + 1
         else:
+            if key is not None and session_cache is not None and cache_miss:
+                session_cache.put(key, source, astnode)
             if key is not None and astcache is not None:
                 astcache[key] = astnode
         return source[start:end]
