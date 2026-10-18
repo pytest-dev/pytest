@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import datetime
-from datetime import UTC
 import decimal
 from decimal import Decimal
 from fractions import Fraction
@@ -1590,6 +1589,7 @@ class TestApproxDatetime:
     def test_datetime_with_timezone(self):
         from datetime import datetime
         from datetime import timedelta
+        from datetime import UTC
 
         tz = UTC
         dt1 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=tz)
