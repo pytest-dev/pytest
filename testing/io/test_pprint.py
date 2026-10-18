@@ -653,6 +653,7 @@ def test_simplenamespace_subclass_uses_class_name() -> None:
 
 
 
+
 @pytest.mark.skipif(
     sys.version_info < (3, 15), reason="frozendict is a builtin since Python 3.15"
 )
@@ -663,8 +664,8 @@ def test_frozendict() -> None:
         assert pp.pformat(frozendict({"one": 1, "two": 2})) == textwrap.dedent(
             """\
             frozendict({
-            'one': 1,
-            'two': 2,
+                'one': 1,
+                'two': 2,
             })"""
         )
 
@@ -674,9 +675,10 @@ def test_frozendict() -> None:
         assert pp.pformat(MyFrozenDict({"one": 1})) == textwrap.dedent(
             """\
             MyFrozenDict({
-            'one': 1,
+                'one': 1,
             })"""
         )
+
 
 
 
