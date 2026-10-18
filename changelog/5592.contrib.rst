@@ -1,0 +1,1 @@
+Refactored fixture addfinalizer to utilize ExitStack.
