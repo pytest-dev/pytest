@@ -12,16 +12,9 @@ from types import TracebackType
 from typing import Any
 from typing import final
 from typing import overload
-from typing import TYPE_CHECKING
+from typing import ParamSpec
+from typing import Self
 from typing import TypeVar
-
-
-if TYPE_CHECKING:
-    from typing import ParamSpec
-    from typing import Self
-
-    P = ParamSpec("P")
-
 import warnings
 
 from _pytest.deprecated import check_ispytest
@@ -31,6 +24,7 @@ from _pytest.outcomes import fail
 
 
 T = TypeVar("T")
+P = ParamSpec("P")
 
 
 @fixture
