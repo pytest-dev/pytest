@@ -23,6 +23,7 @@ import warnings
 
 from .._code import getfslineno
 from ..compat import NOTSET
+from ..compat import NotSetType
 from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
@@ -86,32 +87,32 @@ class ParameterSet(NamedTuple):
     an optional ID for the set.
 
     .. versionadded:: 9.2
-
-    Examples::
-
-        pytest.param(1, 2, 3)
-        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
-
-        pytest.param("hello", id="greeting")
-        # ParameterSet(values=("hello",), marks=(), id="greeting")
-
-        # Parameter set with marks
-        pytest.param(42, marks=pytest.mark.xfail)
-        # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
-
-        # From parametrize mark (parameter names + list of parameter sets)
-        pytest.mark.parametrize(
-            ("a", "b", "expected"),
-            [
-                (1, 2, 3),
-                pytest.param(40, 2, 42, id="everything"),
-            ],
-        )
-        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
-        # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
     """
 
-    values: Sequence[object]
+    # Examples:
+    #
+    #     pytest.param(1, 2, 3)
+    #     # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+    #
+    #     pytest.param("hello", id="greeting")
+    #     # ParameterSet(values=("hello",), marks=(), id="greeting")
+    #
+    #     # Parameter set with marks
+    #     pytest.param(42, marks=pytest.mark.xfail)
+    #     # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
+    #
+    #     # From parametrize mark (parameter names + list of parameter sets)
+    #     pytest.mark.parametrize(
+    #         ("a", "b", "expected"),
+    #         [
+    #             (1, 2, 3),
+    #             pytest.param(40, 2, 42, id="everything"),
+    #         ],
+    #     )
+    #     # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+    #     # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
+
+    values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
     id: str | _HiddenParam | None
 
@@ -265,6 +266,7 @@ class ParameterSet(NamedTuple):
         return argnames, parameters
 
 
+# mypy doesn't like `__module__` defined inline in the NamedTuple.
 ParameterSet.__module__ = "pytest"
 
 

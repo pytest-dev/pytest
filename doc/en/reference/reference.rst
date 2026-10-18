@@ -1053,7 +1053,6 @@ ParameterSet
 ~~~~~~~~~~~~
 
 .. autoclass:: pytest.ParameterSet()
-    :members:
 
 PytestPluginManager
 ~~~~~~~~~~~~~~~~~~~
