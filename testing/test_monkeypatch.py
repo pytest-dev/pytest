@@ -682,8 +682,7 @@ def test_syspath_prepend_with_namespace_packages(
     # Should invalidate caches via importlib.invalidate_caches.
     # Should not warn for path without namespace packages.
     modules_tmpdir = pytester.mkdir("modules_tmpdir")
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
+    with warnings.catch_warnings(action="error"):
         monkeypatch.syspath_prepend(str(modules_tmpdir))
 
     modules_tmpdir.joinpath("main_app.py").write_text("app = True", encoding="utf-8")
