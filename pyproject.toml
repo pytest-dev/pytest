@@ -101,12 +101,7 @@ version_file = "src/_pytest/_version.py"
 # tree relies on it. The setuptools-scm default flips in a future major.
 write_to_source = true
 
-[tool.black]
-# See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#t-target-version
-target-version = [ "py311", "py312", "py313" ]
-
 [tool.ruff]
-target-version = "py311"
 line-length = 88
 src = [
     "src",
