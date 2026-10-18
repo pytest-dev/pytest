@@ -164,9 +164,10 @@ CALLSPEC2_RENAMED = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed",
 )
 
-TERMINAL_WRITE_LINE_BYTES = PytestRemovedIn10Warning(
+TERMINAL_WRITE_LINE_BYTES = UnformattedWarning(
+    PytestRemovedIn10Warning,
     "Passing bytes to TerminalReporter.write_line() is deprecated, pass a str instead.\n"
-    "See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-write-line-bytes"
+    "See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-write-line-bytes",
 )
 
 

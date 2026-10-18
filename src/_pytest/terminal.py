@@ -546,7 +546,7 @@ class TerminalReporter:
 
     def write_line(self, line: str | bytes, **markup: bool) -> None:
         if not isinstance(line, str):
-            warnings.warn(TERMINAL_WRITE_LINE_BYTES, stacklevel=2)
+            warnings.warn(TERMINAL_WRITE_LINE_BYTES.format(), stacklevel=2)
             line = str(line, errors="replace")
         self.ensure_newline()
         self._tw.line(line, **markup)
