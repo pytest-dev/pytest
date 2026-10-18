@@ -94,6 +94,7 @@ nitpick_ignore = [
     ("py:class", "RewriteHook"),
     # Undocumented third parties
     ("py:class", "_tracing.TagTracerSub"),
+    ("py:class", "pluggy._compat.DistFacade"),
     ("py:class", "warnings.WarningMessage"),
     # Python 3.14+ exposes the C accelerator module name.
     ("py:class", "_py_warnings.WarningMessage"),
