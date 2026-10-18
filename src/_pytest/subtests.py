@@ -11,13 +11,13 @@ from contextlib import contextmanager
 from contextlib import ExitStack
 from contextlib import nullcontext
 import dataclasses
-import time
 from types import TracebackType
 from typing import Any
 from typing import TYPE_CHECKING
 
 import pluggy
 
+from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._io.saferepr import saferepr
 from _pytest.capture import CaptureFixture
@@ -216,8 +216,9 @@ class _SubTestContextManager:
     def __enter__(self) -> None:
         __tracebackhide__ = True
 
-        self._start = time.time()
-        self._precise_start = time.perf_counter()
+        self._instant = timing.Instant()
+        self._start = self._instant.time
+        self._precise_start = self._instant.perf_count
         self._exc_info = None
 
         self._exit_stack = ExitStack()
@@ -242,16 +243,14 @@ class _SubTestContextManager:
 
         self._exit_stack.close()
 
-        precise_stop = time.perf_counter()
-        duration = precise_stop - self._precise_start
-        stop = time.time()
+        duration = self._instant.elapsed()
 
         call_info = CallInfo[None](
             None,
             exc_info,
-            start=self._start,
-            stop=stop,
-            duration=duration,
+            start=duration.start.time,
+            stop=duration.stop.time,
+            duration=duration.seconds,
             when="call",
             _ispytest=True,
         )

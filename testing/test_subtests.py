@@ -1096,3 +1096,26 @@ def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no c
     pytester.syspathinsert()
     result = pytester.runpytest("-n1", "-pxdist.plugin")
     result.assert_outcomes(passed=2)
+
+
+def test_subtest_mocked_time_duration(pytester: pytest.Pytester) -> None:
+    """Ensure subtest duration remains non-negative when time functions are mocked (#15201)."""
+    pytester.makepyfile(
+        """
+        import time
+
+        def test_subtest_mocked_time(subtests, monkeypatch):
+            with subtests.test(msg="frozen clock"):
+                monkeypatch.setattr(time, "perf_counter", lambda: 0.0)
+                monkeypatch.setattr(time, "time", lambda: 0.0)
+                time.sleep(0.01)
+        """
+    )
+    result = pytester.runpytest("-q", "--junitxml=out.xml")
+    result.assert_outcomes(passed=1)
+    import xml.etree.ElementTree as ET
+
+    tree = ET.parse(pytester.path / "out.xml")
+    for tc in tree.iter("testcase"):
+        duration = float(tc.attrib.get("time", 0))
+        assert duration >= 0.0, f"Expected non-negative duration, got {duration}"

@@ -1,0 +1,1 @@
+Subtest durations now use ``_pytest.timing`` functions internally, preventing negative elapsed times and inaccurate stop timestamps when tests mock ``time.time`` or ``time.perf_counter``.
