@@ -1056,8 +1056,8 @@ class TestAssert_reprcompare:
 
     def test_mapping_different_nested_lists_are_not_truncated(self) -> None:
         lines = callequal(
-            {'asdf': [1, 1, 1, 1, 1, 1, 1, 1]},
-            {'asdf': [1, 1, 1, 1, 1, 1, 1, 2]},
+            {"asdf": [1, 1, 1, 1, 1, 1, 1, 1]},
+            {"asdf": [1, 1, 1, 1, 1, 1, 1, 2]},
         )
 
         assert lines is not None

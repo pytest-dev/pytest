@@ -43,11 +43,7 @@ def _compare_eq_mapping(
             except Exception:
                 left_repr = saferepr({k: left[k]})
                 right_repr = saferepr({k: right[k]})
-            yield (
-                highlighter(left_repr)
-                + " != "
-                + highlighter(right_repr)
-            )
+            yield (highlighter(left_repr) + " != " + highlighter(right_repr))
     extra_left = keys_left - keys_right
     len_extra_left = len(extra_left)
     if len_extra_left:
