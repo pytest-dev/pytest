@@ -166,6 +166,23 @@ class TestResolveCollectionArgument:
             original_index=40,
         )
 
+    def test_file_with_brackets_in_name(
+        self, invocation_path: Path, pytester: Pytester
+    ) -> None:
+        path = invocation_path / "src/pkg/test_[helper].py"
+        path.write_text("def test_example(): pass\n", encoding="utf-8")
+
+        assert resolve_collection_argument(invocation_path, str(path), 0) == (
+            CollectionArgument(
+                path=path,
+                parts=[],
+                parametrization=None,
+                module_name=None,
+                original_index=0,
+            )
+        )
+        pytester.runpytest(str(path)).assert_outcomes(passed=1)
+
     def test_dir(self, invocation_path: Path) -> None:
         """Directory and parts."""
         assert resolve_collection_argument(

@@ -1152,11 +1152,19 @@ def resolve_collection_argument(
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
     """
-    base, squacket, rest = arg.partition("[")
-    strpath, *parts = base.split("::")
-    if squacket and not parts:
+    selection_start = arg.find("::")
+    strpath = arg if selection_start == -1 else arg[:selection_start]
+    if "[" in strpath and not safe_exists(absolutepath(invocation_path / strpath)):
         raise UsageError(f"path cannot contain [] parametrization: {arg}")
-    parametrization = f"{squacket}{rest}" if squacket else None
+
+    path_and_parts = arg
+    parametrization = None
+    if selection_start != -1:
+        parametrization_start = arg.find("[", selection_start + 2)
+        if parametrization_start != -1:
+            path_and_parts = arg[:parametrization_start]
+            parametrization = arg[parametrization_start:]
+    strpath, *parts = path_and_parts.split("::")
     module_name = None
     if as_pypath:
         pyarg_strpath = search_pypath(
