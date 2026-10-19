@@ -1,0 +1,1 @@
+Added regression tests for invalid regular expression patterns in RaisesExc and RaisesGroup.
