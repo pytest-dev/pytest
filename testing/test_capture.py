@@ -938,6 +938,76 @@ class TestTeeCaptureIO(TestCaptureIO):
             f.write(b"hello")  # type: ignore[arg-type]
 
 
+class TestClosedCaptureStream:
+    """Writing to a stream which pytest closed reports the test which created it
+    (#5743)."""
+
+    def test_write_to_closed_stream(self) -> None:
+        f = capture.CaptureIO(nodeid="test_foo.py::test_bar")
+        f.close()
+        with pytest.raises(ValueError) as excinfo:
+            f.write("hello")
+        msg = str(excinfo.value)
+        assert "pytest has already closed" in msg
+        assert "created by test 'test_foo.py::test_bar'" in msg
+
+    def test_write_to_closed_stream_without_nodeid(self) -> None:
+        f = capture.CaptureIO()
+        f.close()
+        with pytest.raises(ValueError) as excinfo:
+            f.write("hello")
+        msg = str(excinfo.value)
+        assert "pytest has already closed" in msg
+        assert "created by test" not in msg
+
+    def test_write_to_closed_encoded_file(self, tmpfile: BinaryIO) -> None:
+        f = capture.EncodedFile(tmpfile, encoding="utf-8", nodeid="a.py::test_b")
+        f.close()
+        with pytest.raises(ValueError) as excinfo:
+            f.write("hello")
+        assert "created by test 'a.py::test_b'" in str(excinfo.value)
+
+    def test_encoding_error_is_not_reported_as_closed_stream(self) -> None:
+        """Encoding errors are ValueError subclasses, but are not about the
+        stream being closed, so they are reported as-is."""
+        f = capture.CaptureIO()
+        with pytest.raises(UnicodeEncodeError):
+            f.write("\ud800")
+        f.close()
+
+
+@pytest.mark.parametrize("fixture_name", ["capsys", "capfd"])
+def test_write_to_stream_of_finished_test(
+    pytester: Pytester, fixture_name: str
+) -> None:
+    """A stream which a test leaked through a global object points back at the
+    test it came from (#5743)."""
+    pytester.makepyfile(
+        f"""
+        import sys
+
+        import pytest
+
+        leaked = None
+
+
+        def test_1({fixture_name}):
+            global leaked
+            leaked = sys.stdout
+
+
+        def test_2():
+            with pytest.raises(ValueError) as excinfo:
+                leaked.write("hello")
+            assert "pytest has already closed" in str(excinfo.value)
+            assert "created by test" in str(excinfo.value)
+            assert "test_1" in str(excinfo.value)
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_dontreadfrominput() -> None:
     from _pytest.capture import DontReadFromInput
 

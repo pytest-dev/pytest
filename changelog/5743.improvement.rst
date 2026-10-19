@@ -1,0 +1,1 @@
+Writing to a captured stream (for example ``sys.stdout`` as obtained from the :fixture:`capsys` fixture) after the test which created it has finished now raises an error message which names that test, instead of a bare ``I/O operation on closed file``.

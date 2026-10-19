@@ -183,7 +183,40 @@ def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
 # IO Helpers.
 
 
-class EncodedFile(io.TextIOWrapper):
+class _CaptureStream(io.TextIOWrapper):
+    """Base class for the text streams which capture the output of a test.
+
+    Writing to one of these streams after pytest closed it is a common mistake
+    when a test leaks a reference to it through a global object (a logging
+    handler keeping ``sys.stdout`` for example).  The error raised in that case
+    points at the test which created the stream to make it easier to find.
+    """
+
+    __slots__ = ("_pytest_nodeid",)
+
+    def __init__(self, *args: Any, nodeid: str | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        # Nodeid of the test whose capture created this stream, if any.
+        self._pytest_nodeid = nodeid
+
+    def write(self, s: str) -> int:
+        try:
+            return super().write(s)
+        except ValueError:
+            # Writing to a closed stream raises a ValueError, but so do
+            # encoding errors, which should be reported as-is.
+            if not self.closed:
+                raise
+            msg = "cannot write to a stream that pytest has already closed"
+            if self._pytest_nodeid is not None:
+                msg += f" (created by test {self._pytest_nodeid!r})"
+            raise ValueError(
+                f"{msg}; this usually means that a global object, such as a "
+                "logging handler, kept a reference to it after the test finished"
+            ) from None
+
+
+class EncodedFile(_CaptureStream):
     __slots__ = ()
 
     @property
@@ -200,9 +233,15 @@ class EncodedFile(io.TextIOWrapper):
         return cast(str, self.buffer.mode.replace("b", ""))
 
 
-class CaptureIO(io.TextIOWrapper):
-    def __init__(self) -> None:
-        super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
+class CaptureIO(_CaptureStream):
+    def __init__(self, nodeid: str | None = None) -> None:
+        super().__init__(
+            io.BytesIO(),
+            encoding="UTF-8",
+            newline="",
+            write_through=True,
+            nodeid=nodeid,
+        )
 
     def getvalue(self) -> str:
         assert isinstance(self.buffer, io.BytesIO)
@@ -210,9 +249,9 @@ class CaptureIO(io.TextIOWrapper):
 
 
 class TeeCaptureIO(CaptureIO):
-    def __init__(self, other: TextIO) -> None:
+    def __init__(self, other: TextIO, nodeid: str | None = None) -> None:
         self._other = other
-        super().__init__()
+        super().__init__(nodeid=nodeid)
 
     def write(self, s: str) -> int:
         super().write(s)
@@ -303,7 +342,13 @@ class CaptureBase(abc.ABC, Generic[AnyStr]):
     EMPTY_BUFFER: AnyStr
 
     @abc.abstractmethod
-    def __init__(self, fd: int) -> None:
+    def __init__(self, fd: int, *, nodeid: str | None = None) -> None:
+        """Create a capture for the given file descriptor.
+
+        ``nodeid`` is the test whose capture this is, if any; it is used to
+        report which test created a stream which is written to after the
+        capture was closed (#5743).
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -337,7 +382,7 @@ patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 class NoCapture(CaptureBase[str]):
     EMPTY_BUFFER = ""
 
-    def __init__(self, fd: int) -> None:
+    def __init__(self, fd: int, *, nodeid: str | None = None) -> None:
         pass
 
     def start(self) -> None:
@@ -361,7 +406,12 @@ class NoCapture(CaptureBase[str]):
 
 class SysCaptureBase(CaptureBase[AnyStr]):
     def __init__(
-        self, fd: int, tmpfile: TextIO | None = None, *, tee: bool = False
+        self,
+        fd: int,
+        tmpfile: TextIO | None = None,
+        *,
+        tee: bool = False,
+        nodeid: str | None = None,
     ) -> None:
         name = patchsysdict[fd]
         self._old: TextIO = getattr(sys, name)
@@ -370,7 +420,11 @@ class SysCaptureBase(CaptureBase[AnyStr]):
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = CaptureIO() if not tee else TeeCaptureIO(self._old)
+                tmpfile = (
+                    CaptureIO(nodeid=nodeid)
+                    if not tee
+                    else TeeCaptureIO(self._old, nodeid=nodeid)
+                )
         self.tmpfile = tmpfile
         self._state = "initialized"
 
@@ -462,7 +516,7 @@ class SysCapture(SysCaptureBase[str]):
 
 
 class FDCaptureBase(CaptureBase[AnyStr]):
-    def __init__(self, targetfd: int) -> None:
+    def __init__(self, targetfd: int, *, nodeid: str | None = None) -> None:
         self.targetfd = targetfd
 
         try:
@@ -495,6 +549,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
                 errors="replace",
                 newline="",
                 write_through=True,
+                nodeid=nodeid,
             )
             if targetfd in patchsysdict:
                 self.syscapture = SysCapture(targetfd, self.tmpfile)
@@ -941,10 +996,11 @@ class CaptureFixture(Generic[AnyStr]):
 
     def _start(self) -> None:
         if self._capture is None:
+            nodeid = self.request.node.nodeid
             self._capture = MultiCapture(
                 in_=None,
-                out=self.captureclass(1, **self._config),
-                err=self.captureclass(2, **self._config),
+                out=self.captureclass(1, nodeid=nodeid, **self._config),
+                err=self.captureclass(2, nodeid=nodeid, **self._config),
             )
             self._capture.start_capturing()
 
