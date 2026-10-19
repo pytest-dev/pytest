@@ -44,6 +44,7 @@ from _pytest.reports import CollectReport
 
 
 _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
+_CaptureState = Literal["initialized", "started", "suspended", "done"]
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -303,7 +304,7 @@ class CaptureBase(abc.ABC, Generic[AnyStr]):
     EMPTY_BUFFER: AnyStr
     # Set by stateful subclasses in ``__init__``; left as ``None`` on
     # stateless implementations such as ``NoCapture``.
-    _state: str | None = None
+    _state: _CaptureState | None = None
 
     @abc.abstractmethod
     def __init__(self, fd: int) -> None:
@@ -399,7 +400,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
             self.tmpfile,
         )
 
-    def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
+    def _assert_state(self, op: str, states: tuple[_CaptureState, ...]) -> None:
         assert self._state in states, (
             "cannot {} in state {!r}: expected one of {}".format(
                 op, self._state, ", ".join(states)
@@ -516,7 +517,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             f"_state={self._state!r} tmpfile={self.tmpfile!r}>"
         )
 
-    def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
+    def _assert_state(self, op: str, states: tuple[_CaptureState, ...]) -> None:
         assert self._state in states, (
             "cannot {} in state {!r}: expected one of {}".format(
                 op, self._state, ", ".join(states)
