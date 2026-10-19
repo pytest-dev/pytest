@@ -1259,6 +1259,98 @@ class TestKeywordSelection:
         result.assert_outcomes(deselected=1)
 
 
+class TestDiscardedExpressionsNote:
+    @pytest.mark.parametrize("option", ["-k", "-m"])
+    def test_note_lists_discarded_expressions(
+        self, pytester: Pytester, option: str
+    ) -> None:
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest(option, "a", option, "b", option, "c")
+        result.stdout.fnmatch_lines(
+            [
+                f"note: {option} expressions are not combined; "
+                "discarded 'a', 'b', using 'c'"
+            ]
+        )
+
+    @pytest.mark.parametrize("option", ["-k", "-m"])
+    @pytest.mark.parametrize("args", [[], ["a"], ["a", "a"], ["", "a"]])
+    def test_no_note_without_discarded_expression(
+        self, pytester: Pytester, option: str, args: list[str]
+    ) -> None:
+        pytester.makepyfile("def test_one(): pass")
+        cmdline = [arg for value in args for arg in (option, value)]
+        result = pytester.runpytest(*cmdline)
+        result.stdout.no_fnmatch_line("note: *")
+
+    def test_note_for_expression_overridden_from_addopts(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeini("[pytest]\naddopts = -m slow")
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest("-m", "fast")
+        result.stdout.fnmatch_lines(
+            ["note: -m expressions are not combined; discarded 'slow', using 'fast'"]
+        )
+
+    def test_note_for_expression_overridden_from_pytest_addopts_env(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTEST_ADDOPTS", "-k slow")
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest("-k", "fast")
+        result.stdout.fnmatch_lines(
+            ["note: -k expressions are not combined; discarded 'slow', using 'fast'"]
+        )
+
+    def test_note_when_clearing_expression(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest("-m", "slow", "-m", "")
+        result.stdout.fnmatch_lines(
+            ["note: -m expressions are not combined; discarded 'slow', using ''"]
+        )
+
+    def test_notes_for_both_options(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest("-k", "a", "-m", "x", "-k", "b", "-m", "y")
+        result.stdout.fnmatch_lines(
+            [
+                "note: -k expressions are not combined; discarded 'a', using 'b'",
+                "note: -m expressions are not combined; discarded 'x', using 'y'",
+            ]
+        )
+
+    def test_selection_still_uses_last_expression(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.foo
+            def test_foo(): pass
+
+            @pytest.mark.bar
+            def test_bar(): pass
+            """
+        )
+        result = pytester.runpytest("-v", "-m", "foo", "-m", "bar")
+        result.assert_outcomes(passed=1, deselected=1)
+        result.stdout.fnmatch_lines(["*test_bar PASSED*"])
+
+    def test_note_shown_once_with_xdist(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest("-n", "1", "-m", "a", "-m", "b")
+        assert result.stdout.str().count("note: -m expressions") == 1
+
+    def test_no_note_with_no_header(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest("--no-header", "-k", "a", "-k", "b")
+        result.stdout.no_fnmatch_line("note: *")
+
+
 class TestMarkDecorator:
     @pytest.mark.parametrize(
         "lhs, rhs, expected",

@@ -1,0 +1,1 @@
+The report header now shows a note when an earlier :option:`-k` or :option:`-m` expression is discarded because the option was given more than once. Expressions given multiple times are not combined; only the last one is used.
