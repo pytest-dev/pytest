@@ -34,7 +34,7 @@ def pytest_fixture_setup(
 ) -> Generator[None, object, object]:
     if request.config.option.setupshow:
         # Report this fixture before entering user code, including if it hangs.
-        _show_fixture_action(fixturedef, request.config, "SETUP START")
+        _show_fixture_action(fixturedef, request.config, "SETUP START", end_line=True)
     try:
         return (yield)
     finally:
@@ -65,7 +65,7 @@ def pytest_fixture_post_finalizer(
 
 
 def _show_fixture_action(
-    fixturedef: FixtureDef[object], config: Config, msg: str
+    fixturedef: FixtureDef[object], config: Config, msg: str, *, end_line: bool = False
 ) -> None:
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:
@@ -89,7 +89,7 @@ def _show_fixture_action(
         tw.write(f"[{saferepr(fixturedef.cached_param, maxsize=42)}]")
 
     # End the early marker before any output from the fixture body.
-    if msg == "SETUP START":
+    if end_line:
         tw.line()
     else:
         tw.flush()
