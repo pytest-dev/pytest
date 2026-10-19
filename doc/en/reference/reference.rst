@@ -724,6 +724,17 @@ Initialization hooks called for plugins and ``conftest.py`` files.
 Collection hooks
 ~~~~~~~~~~~~~~~~
 
+.. hook:: pytest_collectstart
+.. autofunction:: pytest_collectstart
+.. hook:: pytest_make_collect_report
+.. autofunction:: pytest_make_collect_report
+.. hook:: pytest_itemcollected
+.. autofunction:: pytest_itemcollected
+.. hook:: pytest_collectreport
+.. autofunction:: pytest_collectreport
+.. hook:: pytest_deselected
+.. autofunction:: pytest_deselected
+
 ``pytest`` calls the following hooks for collecting files and directories:
 
 .. hook:: pytest_collection
@@ -805,16 +816,6 @@ Reporting hooks
 
 Session related reporting hooks:
 
-.. hook:: pytest_collectstart
-.. autofunction:: pytest_collectstart
-.. hook:: pytest_make_collect_report
-.. autofunction:: pytest_make_collect_report
-.. hook:: pytest_itemcollected
-.. autofunction:: pytest_itemcollected
-.. hook:: pytest_collectreport
-.. autofunction:: pytest_collectreport
-.. hook:: pytest_deselected
-.. autofunction:: pytest_deselected
 .. hook:: pytest_report_header
 .. autofunction:: pytest_report_header
 .. hook:: pytest_report_collectionfinish
