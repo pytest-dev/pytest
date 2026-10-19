@@ -1,0 +1,12 @@
+Tests parametrized with higher-than-function scope are now reordered by
+parameter *value* rather than by parameter *index*, so that items using equal
+parameter values are grouped together and share a single fixture setup, even
+when they are parametrized by separate :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>`
+calls. Previously, an expensive higher-scoped fixture could be set up and torn
+down repeatedly for the same parameter value.
+
+Unhashable parameter values (e.g. dicts) keep the previous index-based
+grouping behavior.
+
+As a consequence, the order in which parametrized tests run may change
+(fixture setup/teardown counts can only decrease, not increase).

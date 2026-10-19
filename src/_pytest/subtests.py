@@ -32,6 +32,7 @@ from _pytest.fixtures import SubRequest
 from _pytest.logging import catching_logs
 from _pytest.logging import LogCaptureHandler
 from _pytest.logging import LoggingPlugin
+from _pytest.nodeid import NodeId
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
@@ -266,7 +267,7 @@ class _SubTestContextManager:
 
         if sub_report.failed:
             failed_subtests = self.config.stash[failed_subtests_key]
-            failed_subtests[self.request.node.nodeid] += 1
+            failed_subtests[self.request.node.id] += 1
 
         with self.suspend_capture_ctx():
             self.ihook.pytest_runtest_logreport(report=sub_report)
@@ -354,9 +355,9 @@ def pytest_report_from_serializable(data: dict[str, Any]) -> SubtestReport | Non
     return None
 
 
-# Dict of nodeid -> number of failed subtests.
+# Dict of NodeId -> number of failed subtests.
 # Used to fail top-level tests that passed but contain failed subtests.
-failed_subtests_key = StashKey[defaultdict[str, int]]()
+failed_subtests_key = StashKey[defaultdict[NodeId, int]]()
 
 
 def pytest_configure(config: Config) -> None:
@@ -380,9 +381,8 @@ def pytest_report_teststatus(
             if quiet:
                 return "", "", ""
             elif outcome == "skipped":
-                category = "xfailed"
-                short = "y"  # x letter is used for regular xfail, y for subtest xfail
-                status = "SUBXFAIL"
+                # x letter is used for regular xfail, y for subtest xfail
+                return "xfailed", "y", f"SUBXFAIL{description}"
             # outcome == "passed" in an xfail is only possible via a @pytest.mark.xfail mark, which
             # is not applicable to a subtest, which only handles pytest.xfail().
             else:  # pragma: no cover
@@ -391,24 +391,18 @@ def pytest_report_teststatus(
                 # passed in case of xfail.
                 # Let's pass this report to the next hook.
                 return None
-            return category, short, f"{status}{description}"
 
         if report.failed:
             return outcome, "u", f"SUBFAILED{description}"
-        else:
-            if report.passed:
-                if quiet:
-                    return "", "", ""
-                else:
-                    return f"subtests {outcome}", "u", f"SUBPASSED{description}"
-            elif report.skipped:
-                if quiet:
-                    return "", "", ""
-                else:
-                    return outcome, "-", f"SUBSKIPPED{description}"
+        elif quiet:
+            return "", "", ""
+        elif report.passed:
+            return f"subtests {outcome}", "u", f"SUBPASSED{description}"
+        elif report.skipped:
+            return outcome, "-", f"SUBSKIPPED{description}"
 
     else:
-        failed_subtests_count = config.stash[failed_subtests_key][report.nodeid]
+        failed_subtests_count = config.stash[failed_subtests_key][report.id]
         # Top-level test, fail if it contains failed subtests and it has passed.
         if report.passed and failed_subtests_count > 0:
             report.outcome = "failed"

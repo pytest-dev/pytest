@@ -51,6 +51,65 @@ def test_help(pytester: Pytester) -> None:
     )
 
 
+def test_help_ini_union_and_literal_types(pytester: Pytester) -> None:
+    """Union and Literal ini options display their members/choices in --help."""
+    pytester.makeconftest(
+        """
+        from typing import Literal
+
+        def pytest_addoption(parser):
+            parser.addini("ini_union", "union help", type=int | str, default=None)
+            parser.addini(
+                "ini_literal", "literal help", type=Literal["auto", "long"],
+                default="auto",
+            )
+            parser.addini(
+                "ini_mixed", "mixed help", type=int | Literal["auto"],
+                default="auto",
+            )
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "*ini_union (int | string):*",
+            "*union help*",
+            "*ini_literal ('auto' | 'long'):*",
+            "*literal help*",
+            "*ini_mixed (int | 'auto'):*",
+            "*mixed help*",
+        ]
+    )
+
+
+def test_help_ini_keeps_line_structure(pytester: Pytester) -> None:
+    """Ini help keeps its explicit line breaks and indentation, like option help."""
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini(
+                "ini_list",
+                "strategy for the thing\\n"
+                "- short: values over 100 chars fall back to argname plus index\\n"
+                "- sha256: replace the value with its sha256 hex digest",
+                default=None,
+            )
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "  ini_list (string):    strategy for the thing",
+            "                        - short: values over 100 chars fall back to argname plus",
+            "                          index",
+            "                        - sha256: replace the value with its sha256 hex digest",
+        ],
+        consecutive=True,
+    )
+
+
 def test_none_help_param_raises_exception(pytester: Pytester) -> None:
     """Test that a None help param raises a TypeError."""
     pytester.makeconftest(

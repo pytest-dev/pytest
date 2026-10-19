@@ -1,0 +1,2 @@
+XFAIL reports from teardown phases now include the phase in the short test
+summary.

@@ -64,8 +64,6 @@ it is printed alongside the assertion introspection in the traceback.
 
 See :ref:`assert-details` for more information on assertion introspection.
 
-.. _`assertraises`:
-
 Assertions about approximate equality
 -------------------------------------
 
@@ -92,6 +90,8 @@ errors are common. Instead of using ``assert abs(a - b) < tol`` or
 It also supports comparisons involving NaNs.
 
 See :func:`pytest.approx` for details.
+
+.. _`assertraises`:
 
 Assertions about expected exceptions
 ------------------------------------------
@@ -431,10 +431,6 @@ Special comparisons are done for a number of cases:
 * comparing long strings: a context diff is shown
 * comparing long sequences: first failing indices
 * comparing dicts: different entries
-
-In string context diffs, lines prefixed with ``-`` come from the left-hand side
-of ``assert left == right``, while lines prefixed with ``+`` come from the
-right-hand side.
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 

@@ -161,6 +161,16 @@ Here is the order of execution:
 It's possible to use ``tryfirst`` and ``trylast`` also on hook wrappers
 in which case it will influence the ordering of hook wrappers among each other.
 
+.. note::
+
+    pytest only searches for hook implementations whose names start with
+    ``pytest_``.  The ``specname`` argument to ``@pytest.hookimpl`` can be used
+    to give an implementation a different suffix, for example
+    ``pytest_collection_modifyitems_tryfirst``, but the function name still
+    needs to start with ``pytest_``.  A hook implementation named
+    ``my_collection_modifyitems`` is ignored even if it is decorated with
+    ``@pytest.hookimpl(specname="pytest_collection_modifyitems")``.
+
 .. _`declaringhooks`:
 
 Declaring new hooks
@@ -205,7 +215,7 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
 
 For a real world example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
 
-.. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/974bd566c599dc6a9ea291838c6f226197208b46/xdist/newhooks.py
+.. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/v3.8.0/src/xdist/newhooks.py
 
 Hooks may be called both from fixtures or from other hooks. In both cases, hooks are called
 through the ``hook`` object, available in the ``config`` object. Most hooks receive a
@@ -285,12 +295,38 @@ and use pytest_addoption as follows:
            default=default_value,
        )
 
-The conftest.py that is using myplugin would simply define the hook as follows:
+Another plugin (installed via setuptools entry points, or via the ``-p`` command-line
+option) could then define the hook implementation to provide the default value:
 
 .. code-block:: python
 
+    # contents of third_party_plugin.py
+
+
     def pytest_config_file_default_value():
         return "config.yaml"
+
+.. note::
+
+    **Hook implementations in conftest.py files are not available to other plugins during**
+    **their** ``pytest_addoption()`` **execution**. This is because conftest.py files are
+    discovered and loaded *after* builtin plugins, third-party plugins, and command-line
+    plugins have already been initialized (including the execution of their
+    ``pytest_addoption()`` hooks).
+
+    However, :ref:`initial conftest files <pluginorder>` themselves *can* implement
+    ``pytest_addoption()`` to add their own command-line options. When an initial conftest
+    is loaded, its ``pytest_addoption()`` hook will be called immediately.
+
+    During a plugin's ``pytest_addoption()`` execution, only hook implementations from
+    plugins that were loaded earlier will be available. These include:
+
+    * builtin plugins
+    * plugins explicitly loaded with ``-p`` on the command line
+    * installed third-party plugins (via setuptools entry points)
+    * plugins specified via the ``PYTEST_PLUGINS`` environment variable
+
+    See :ref:`pluginorder` for the complete plugin discovery order.
 
 
 Optionally using hooks from 3rd party plugins

@@ -492,12 +492,21 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             else ""
         )
         if isinstance(self.rawmatch, str):
-            # TODO: it instructs to use `-v` to print leading text, but that doesn't work
-            # I also don't know if this is the proper entry point, or tool to use at all
-            from _pytest.assertion.util import _diff_text
-            from _pytest.assertion.util import dummy_highlighter
+            from _pytest.assertion.compare_text import _diff_text
+            from _pytest.assertion.highlight import dummy_highlighter
+            from _pytest.assertion.util import _config
+            from _pytest.config import Config
 
-            diff = _diff_text(self.rawmatch, stringified_exception, dummy_highlighter)
+            verbose = (
+                _config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
+                if _config is not None
+                else 0
+            )
+            diff = list(
+                _diff_text(
+                    self.rawmatch, stringified_exception, dummy_highlighter, verbose
+                )
+            )
             self._fail_reason = ("\n" if diff[0][0] == "-" else "") + "\n".join(diff)
             return False
 
@@ -1002,30 +1011,27 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         expected: str,
     ) -> type[BaseExcT_co] | RaisesExc[BaseExcT_1] | RaisesGroup[BaseExcT_2]:
         # verify exception type and set `self.is_baseexception`
-        if isinstance(exc, RaisesGroup):
-            if self.flatten_subgroups:
+        match exc:
+            case RaisesGroup() if self.flatten_subgroups:
                 raise ValueError(
                     "You cannot specify a nested structure inside a RaisesGroup with"
                     " `flatten_subgroups=True`. The parameter will flatten subgroups"
                     " in the raised exceptiongroup before matching, which would never"
                     " match a nested structure.",
                 )
-            self.is_baseexception |= exc.is_baseexception
-            exc._nested = True
-            return exc
-        elif isinstance(exc, RaisesExc):
-            self.is_baseexception |= exc.is_baseexception
-            exc._nested = True
-            return exc
-        elif isinstance(exc, tuple):
-            raise TypeError(
-                f"Expected {expected}, but got {type(exc).__name__!r}.\n"
-                "RaisesGroup does not support tuples of exception types when expecting one of "
-                "several possible exception types like RaisesExc.\n"
-                "If you meant to expect a group with multiple exceptions, list them as separate arguments."
-            )
-        else:
-            return super()._parse_exc(exc, expected)
+            case RaisesGroup() | RaisesExc():
+                self.is_baseexception |= exc.is_baseexception
+                exc._nested = True
+                return exc
+            case tuple():
+                raise TypeError(
+                    f"Expected {expected}, but got {type(exc).__name__!r}.\n"
+                    "RaisesGroup does not support tuples of exception types when expecting one of "
+                    "several possible exception types like RaisesExc.\n"
+                    "If you meant to expect a group with multiple exceptions, list them as separate arguments."
+                )
+            case _:
+                return super()._parse_exc(exc, expected)
 
     @overload
     def __enter__(
@@ -1348,7 +1354,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
                 f"\n{indent_1}{self._repr_expected(self.expected_exceptions[i_failed])}"
             )
             for i_actual, actual in enumerate(actual_exceptions):
-                if results.get_result(i_exp, i_actual) is None:
+                if results.get_result(i_failed, i_actual) is None:
                     # we print full repr of match target
                     s += (
                         f"\n{indent_2}It matches {backquote(repr(actual))} which was paired with "
@@ -1426,14 +1432,16 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def expected_type(self) -> str:
         subexcs = []
         for e in self.expected_exceptions:
-            if isinstance(e, RaisesExc):
-                subexcs.append(repr(e))
-            elif isinstance(e, RaisesGroup):
-                subexcs.append(e.expected_type())
-            elif isinstance(e, type):
-                subexcs.append(e.__name__)
-            else:  # pragma: no cover
-                raise AssertionError("unknown type")
+            match e:
+                case RaisesExc():
+                    subexc = repr(e)
+                case RaisesGroup():
+                    subexc = e.expected_type()
+                case type():
+                    subexc = e.__name__
+                case _:  # pragma: no cover
+                    raise AssertionError("unknown type")
+            subexcs.append(subexc)
         group_type = "Base" if self.is_baseexception else ""
         return f"{group_type}ExceptionGroup({', '.join(subexcs)})"
 

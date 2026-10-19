@@ -1,0 +1,1 @@
+:meth:`ExceptionInfo.exconly(tryshort=True) <pytest.ExceptionInfo.exconly>` now strips the ``AssertionError:`` prefix of failed ``assert`` statements for :class:`~pytest.ExceptionInfo` objects created by :func:`pytest.raises`, and failures inside :meth:`unittest.TestCase.subTest` report the same short crash line as regular tests.

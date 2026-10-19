@@ -121,6 +121,53 @@ def test_log_cli_level_log_level_interaction(pytester: Pytester) -> None:
     result.stdout.no_re_match_line("DEBUG")
 
 
+@pytest.mark.parametrize("level", ["20", '"20"', '"INFO"'])
+def test_log_cli_level_toml(pytester: Pytester, level: str) -> None:
+    """log_cli_level accepts a native TOML int as well as strings."""
+    pytester.maketoml(
+        f"""
+        [pytest]
+        log_cli = true
+        log_cli_level = {level}
+        """
+    )
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test_foo():
+            logging.getLogger().debug("debug text")
+            logging.getLogger().info("info text")
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*INFO*info text"])
+    result.stdout.no_fnmatch_line("*debug text*")
+
+
+def test_log_level_toml_zero(pytester: Pytester) -> None:
+    """A native TOML ``log_level = 0`` (NOTSET) counts as set, like ``"0"``."""
+    pytester.maketoml(
+        """
+        [pytest]
+        log_level = 0
+        """
+    )
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test_foo(caplog):
+            assert caplog.handler.level == logging.NOTSET
+            logging.getLogger().debug("debug text")
+            assert caplog.messages == ["debug text"]
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+
+
 def test_setup_logging(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
@@ -1253,6 +1300,38 @@ def test_colored_captured_log(pytester: Pytester) -> None:
             "\x1b[32mINFO    \x1b[0m*text going to logger from call",
         ]
     )
+
+
+def test_log_propagation_false(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        import logging
+
+        logging.getLogger('foo').propagate = False
+
+        def test_log_file():
+            logging.getLogger().warning("log goes to root logger")
+            logging.getLogger('foo').warning("log goes to initially non-propagating logger")
+            logging.getLogger('foo.bar').warning("log goes to initially non-propagating nested logger")
+            assert False, "intentionally fail to trigger report logging output"
+    """
+    )
+
+    reprec = pytester.inline_run()
+    reports = reprec.getfailures()
+    assert len(reports) == 1
+    report = reports[0]
+    sections = list(report.get_sections("Captured log call"))
+    assert len(sections) == 1
+    assert sections[0][1] == "\n".join(
+        [
+            "WARNING  root:test_log_propagation_false.py:7 log goes to root logger",
+            "WARNING  foo:test_log_propagation_false.py:8 log goes to initially non-propagating logger",
+            "WARNING  foo.bar:test_log_propagation_false.py:9 log goes to initially non-propagating nested logger",
+        ]
+    )
+    assert not list(report.get_sections("Captured stderr call"))
 
 
 def test_colored_ansi_esc_caplogtext(pytester: Pytester) -> None:

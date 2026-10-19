@@ -16,6 +16,11 @@ def pdb_env(request):
         # Disable pdb++ with inner tests.
         pytester = request.getfixturevalue("pytester")
         pytester._monkeypatch.setenv("PDBPP_HIJACK_PDB", "0")
+        # Python 3.15+ defaults pdb to PyREPL, which injects ANSI colors and
+        # bracketed-paste sequences into pexpect output and breaks exact
+        # matching in these selftests. Force the classic REPL instead.
+        # https://docs.python.org/3.15/whatsnew/3.15.html#pdb
+        pytester._monkeypatch.setenv("PYTHON_BASIC_REPL", "1")
 
 
 def runpdb(pytester: Pytester, source: str):
@@ -473,6 +478,9 @@ class TestPDB:
         child.expect("test_1")
         child.send("capsys.readouterr()\n")
         child.expect("hello1")
+        # Wait for the next prompt: an EOF sent while pdb is still busy can
+        # get lost, leaving the child waiting for input.
+        child.expect("Pdb")
         child.sendeof()
         child.read()
         self.flush(child)

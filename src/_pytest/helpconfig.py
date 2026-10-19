@@ -13,6 +13,8 @@ from typing import Any
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
+from _pytest.config.argparsing import _ini_type_repr
+from _pytest.config.argparsing import _split_help_text
 from _pytest.config.argparsing import Parser
 from _pytest.terminal import TerminalReporter
 import pytest
@@ -178,8 +180,6 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
 
 
 def showhelp(config: Config) -> None:
-    import textwrap
-
     reporter: TerminalReporter | None = config.pluginmanager.get_plugin(
         "terminalreporter"
     )
@@ -200,31 +200,22 @@ def showhelp(config: Config) -> None:
         help, type, _default = config._parser._inidict[name]
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
-        spec = f"{name} ({type}):"
+        spec = f"{name} ({_ini_type_repr(type)}):"
         tw.write(f"  {spec}")
         spec_len = len(spec)
+        wrapped = _split_help_text(help, columns - indent_len)
         if spec_len > (indent_len - 3):
             # Display help starting at a new line.
             tw.line()
-            helplines = textwrap.wrap(
-                help,
-                columns,
-                initial_indent=indent,
-                subsequent_indent=indent,
-                break_on_hyphens=False,
-            )
-
-            for line in helplines:
-                tw.line(line)
+            for line in wrapped:
+                tw.line(indent + line if line else "")
         else:
             # Display help starting after the spec, following lines indented.
             tw.write(" " * (indent_len - spec_len - 2))
-            wrapped = textwrap.wrap(help, columns - indent_len, break_on_hyphens=False)
-
             if wrapped:
                 tw.line(wrapped[0])
                 for line in wrapped[1:]:
-                    tw.line(indent + line)
+                    tw.line(indent + line if line else "")
 
     tw.line()
     tw.line("Environment variables:")

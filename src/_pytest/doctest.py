@@ -27,10 +27,12 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest.approx import approx
 from _pytest.compat import safe_getattr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import fixture
+from _pytest.fixtures import FixtureFunctionDefinition
 from _pytest.fixtures import TopRequest
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -38,7 +40,6 @@ from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
 from _pytest.python import Module
-from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
 
@@ -296,9 +297,14 @@ class DoctestItem(Item):
         _check_all_skipped(self.dtest)
         self._disable_output_capturing_for_darwin()
         failures: list[doctest.DocTestFailure] = []
-        # Type ignored because we change the type of `out` from what
-        # doctest expects.
-        self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type]
+        optionflags = self.runner.optionflags
+        try:
+            # Type ignored because we change the type of `out` from what
+            # doctest expects.
+            self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type]
+        finally:
+            # Our runner can raise before doctest restores its option flags.
+            self.runner.optionflags = optionflags
         if failures:
             raise MultipleDoctestFailures(failures)
 
@@ -529,6 +535,17 @@ class DoctestModule(Module):
                         obj,
                         source_lines,
                     )
+            elif py_ver_info_minor == (3, 12):
+
+                def _find_lineno(self, obj, source_lines):
+                    if isinstance(obj, FixtureFunctionDefinition):
+                        obj = inspect.unwrap(obj)
+
+                    # Type ignored because this is a private function.
+                    return super()._find_lineno(  # type:ignore[misc]
+                        obj,
+                        source_lines,
+                    )
 
             if sys.version_info < (3, 13):
 
@@ -552,8 +569,7 @@ class DoctestModule(Module):
             else:
                 raise
 
-        # While doctests currently don't support fixtures directly, we still
-        # need to pick up autouse fixtures.
+        # doctests supports fixtures via `getfixture` and autouse.
         self.session._fixturemanager.parsefactories(self)
 
         # Uses internal doctest module parsing mechanism.

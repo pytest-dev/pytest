@@ -45,6 +45,7 @@ c) True breakage should only be considered when a normal transition is unreasona
    After a reasonable amount of time the PR can be merged to base a new major release.
 
    For the PR to mature from POC to acceptance, it must contain:
+
    * Setup of deprecation errors/warnings that help users fix and port their code. If it is possible to introduce a deprecation period under the current series, before the true breakage, it should be introduced in a separate PR and be part of the current release stream.
    * Detailed description of the rationale and examples on how to port code in ``doc/en/deprecations.rst``.
 

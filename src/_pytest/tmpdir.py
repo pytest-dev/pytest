@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import atexit
 from collections.abc import Generator
+from contextlib import ExitStack
 import dataclasses
 import os
 from pathlib import Path
@@ -74,6 +76,9 @@ class TempPathFactory:
         self._retention_count = retention_count
         self._retention_policy = retention_policy
         self._basetemp = basetemp
+        # Register cleanups for session finish. Also called atexit as a last
+        # resort if sessionfinish for some reason doesn't happen.
+        self._exit_stack = ExitStack()
 
     @classmethod
     def from_config(
@@ -93,11 +98,7 @@ class TempPathFactory:
                 f"tmp_path_retention_count must be >= 0. Current input: {count}."
             )
 
-        policy = config.getini("tmp_path_retention_policy")
-        if policy not in ("all", "failed", "none"):
-            raise ValueError(
-                f"tmp_path_retention_policy must be either all, failed, none. Current input: {policy}."
-            )
+        policy: RetentionType = config.getini("tmp_path_retention_policy")
 
         return cls(
             given_basetemp=config.option.basetemp,
@@ -211,7 +212,13 @@ class TempPathFactory:
                 keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
+                register=self._exit_stack.callback,
             )
+            # Ensure that the cleanup is called on exit (#1120 possibly?).
+            # But if the exit stack is closed manually (as it normally should),
+            # unregister the atexit to avoid pile up.
+            atexit.register(self._exit_stack.close)
+            self._exit_stack.callback(atexit.unregister, self._exit_stack.close)
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
         self._trace("new basetemp", basetemp)
@@ -247,16 +254,14 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "tmp_path_retention_count",
         help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
-        default="3",
-        # NOTE: Would have been better as an `int` but can't change it now.
-        type="string",
+        default=3,
+        type=int | str,
     )
 
     parser.addini(
         "tmp_path_retention_policy",
-        help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome. "
-        "(all/failed/none)",
-        type="string",
+        help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome.",
+        type=RetentionType,
         default="all",
     )
 
@@ -324,6 +329,9 @@ def pytest_sessionfinish(session, exitstatus: int | ExitCode):
     # Remove dead symlinks.
     if basetemp.is_dir():
         cleanup_dead_symlinks(basetemp)
+
+    # Run the numbered dirs and lock file cleanups registered on the ExitStack.
+    tmp_path_factory._exit_stack.close()
 
 
 @hookimpl(wrapper=True, tryfirst=True)

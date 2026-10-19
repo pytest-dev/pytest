@@ -1,0 +1,1 @@
+The ``rootdir`` is no longer derived from a configuration file that is not a regular file, such as ``--config-file=/dev/null``.

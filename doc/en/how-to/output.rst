@@ -172,7 +172,7 @@ Now we can increase pytest's verbosity:
     E               'banana',
     E               'apple',...
     E
-    E         ...Full output truncated (7 lines hidden), use '-vv' to show
+    E         ...Full output truncated, use '-vv' to show
 
     test_verbosity_example.py:8: AssertionError
     ____________________________ test_numbers_fail _____________________________
@@ -190,7 +190,7 @@ Now we can increase pytest's verbosity:
     E         {'10': 10, '20': 20, '30': 30, '40': 40}
     E         ...
     E
-    E         ...Full output truncated (16 lines hidden), use '-vv' to show
+    E         ...Full output truncated, use '-vv' to show
 
     test_verbosity_example.py:14: AssertionError
     ___________________________ test_long_text_fail ____________________________
@@ -362,6 +362,13 @@ This is done by setting a verbosity level in the configuration file for the spec
 :confval:`verbosity_assertions`: Controls how verbose the assertion output should be when pytest is executed. Running
 ``pytest --no-header`` with a value of ``2`` would have the same output as the previous example, but each test inside
 the file is shown by a single character in the output.
+
+:confval:`assertion_text_diff_style`: Controls how pytest renders ``str == str`` failures.
+
+  * ``ndiff`` (the default) outputs the differences using inline diff markers.
+  * ``block`` prints string comparisons as separate ``Left:`` and ``Right:`` blocks, which can be easier to read when whitespace or indentation differences dominate.
+
+  Note that it is possible to set this option (as any other configuration option) directly in the command line using ``-o assertion_text_diff_style=block``.
 
 :confval:`verbosity_test_cases`: Controls how verbose the test execution output should be when pytest is executed.
 Running ``pytest --no-header`` with a value of ``2`` would have the same output as the first verbosity example, but each
@@ -616,7 +623,7 @@ To set the name of the root test suite xml item, you can configure the ``junit_s
 
 JUnit XML specification seems to indicate that ``"time"`` attribute
 should report total test execution times, including setup and teardown
-(`1 <http://windyroad.com.au/dl/Open%20Source/JUnit.xsd>`_, `2
+(`1 <https://github.com/windyroad/JUnit-Schema/blob/master/JUnit.xsd>`_, `2
 <https://www.ibm.com/support/knowledgecenter/en/SSQ2R2_14.1.0/com.ibm.rsar.analysis.codereview.cobol.doc/topics/cac_useresults_junit.html>`_).
 It is the default pytest behavior. To report just call durations
 instead, configure the ``junit_duration_report`` option like this:

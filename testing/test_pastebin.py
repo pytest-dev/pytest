@@ -5,6 +5,7 @@ import email.message
 import io
 from unittest import mock
 
+from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 import pytest
@@ -50,7 +51,13 @@ class TestPasteCapture:
                 pytest.skip("")
         """
         )
-        reprec = pytester.inline_run(testpath, "--pastebin=all", "-v")
+        reprec = pytester.inline_run(
+            testpath,
+            "--pastebin=all",
+            "-v",
+            "-W",
+            "ignore:The --pastebin:DeprecationWarning",
+        )
         assert reprec.countoutcomes() == [1, 1, 1]
         assert len(pastebinlist) == 1
         contents = pastebinlist[0].decode("utf-8")
@@ -74,7 +81,11 @@ class TestPasteCapture:
                 assert '☺' == 1
             """
         )
-        result = pytester.runpytest("--pastebin=all")
+        result = pytester.runpytest(
+            "--pastebin=all",
+            "-W",
+            "ignore:The --pastebin:DeprecationWarning",
+        )
         expected_msg = "*assert '☺' == 1*"
         result.stdout.fnmatch_lines(
             [
@@ -84,6 +95,12 @@ class TestPasteCapture:
             ]
         )
         assert len(pastebinlist) == 1
+
+    def test_deprecated(self, pytester: Pytester, pastebinlist) -> None:
+        result = pytester.runpytest("--pastebin=failed")
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
+        result.assert_outcomes()
+        result.stdout.fnmatch_lines(["*The --pastebin option is deprecated*"])
 
 
 class TestPaste:

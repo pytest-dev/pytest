@@ -8,6 +8,7 @@ from typing import Any
 
 import _pytest._code
 from _pytest.config import ExitCode
+from _pytest.config.exceptions import UsageError
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
@@ -80,7 +81,7 @@ class TestModule:
 
     def test_module_considers_pluginmanager_at_import(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol("pytest_plugins='xasdlkj',")
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             modcol.obj()
 
     def test_invalid_test_module_name(self, pytester: Pytester) -> None:
@@ -303,6 +304,31 @@ class TestClass:
         )
         result = pytester.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+    def test_does_not_eval_properties_when_collecting_tests(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #2568.
+
+        Properties on a test class must only be evaluated when a test accesses
+        them, not during collection or fixture parsing.
+        """
+        pytester.makepyfile(
+            """\
+            calls = []
+
+            class TestCase:
+                @property
+                def prop(self):
+                    calls.append(1)
+                    return len(calls)
+
+                def test_prop(self):
+                    assert self.prop == 1
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
 
     def test_abstract_class_is_not_collected(self, pytester: Pytester) -> None:
         """Regression test for #12275 (non-unittest version)."""

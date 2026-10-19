@@ -248,9 +248,9 @@ def pytest_collection(session: Session) -> object | None:
 
       1. ``pytest_deselected(items)`` for any deselected items (may be called multiple times)
 
-    3. Set ``session.items`` to the list of collected items
+    3. Set ``session.items`` to the list of collected items (not including deselected items)
     4. ``pytest_collection_finish(session)``
-    5. Set ``session.testscollected`` to the number of collected items
+    5. Set ``session.testscollected`` to the number of collected items (not including deselected items)
 
     You can implement this hook to only perform some action before collection,
     for example the terminal plugin uses it to start displaying the collection
@@ -508,7 +508,7 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Module | None:
 @hookspec(firstresult=True)
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
-) -> None | Item | Collector | list[Item | Collector]:
+) -> Item | Collector | list[Item | Collector] | None:
     """Return a custom item/collector for a Python object in a module, or None.
 
     Stops at first non-None result, see :ref:`firstresult`.
@@ -799,6 +799,8 @@ def pytest_report_to_serializable(
     :param config: The pytest config object.
     :param report: The report.
 
+    Stops at first non-None result, see :ref:`firstresult`.
+
     Use in conftest plugins
     =======================
 
@@ -816,6 +818,8 @@ def pytest_report_from_serializable(
     :hook:`pytest_report_to_serializable`.
 
     :param config: The pytest config object.
+
+    Stops at first non-None result, see :ref:`firstresult`.
 
     Use in conftest plugins
     =======================
@@ -940,6 +944,11 @@ def pytest_assertrepr_compare(
     of strings. The strings will be joined by newlines but any newlines
     *in* a string will be escaped. Note that all but the first line will
     be indented slightly, the intention is for the first line to be a summary.
+
+    .. note::
+
+        This hook is also called for passing assertions if the
+        :func:`pytest_assertion_pass` hook is implemented.
 
     :param config: The pytest config object.
     :param op: The operator, e.g. `"=="`, `"!="`, `"not in"`.

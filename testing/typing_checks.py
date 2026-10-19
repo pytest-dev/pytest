@@ -67,15 +67,14 @@ def test_hidden_param(x: int) -> None:
     pass
 
 
-# Test @pytest.mark.parametrize iterator argvalues deprecation.
-# Will be complain about unused type ignore if doesn't work.
-@pytest.mark.parametrize("x", iter(range(10)))  # type: ignore[deprecated]
-def test_it(x: int) -> None:
-    pass
-
-
 # Issue #14137.
 def check_scope_typing() -> None:
 
     custom_scope: ScopeName = "function"
     assert_type(custom_scope, ScopeName)
+
+
+# Issue #14606.
+@pytest.mark.parametrize("x", [ImportError, AttributeError])
+def check_mypy_bug_with_argvalues(x) -> None:
+    pass

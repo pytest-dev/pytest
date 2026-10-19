@@ -89,15 +89,18 @@ nitpick_ignore = [
     ("py:class", "_pytest.python_api.RaisesContext"),
     ("py:class", "_pytest.recwarn.WarningsChecker"),
     ("py:class", "_pytest.reports.BaseReport"),
+    ("py:class", "_pytest.nodeid.NodeId"),
     # Sphinx bugs(?)
     ("py:class", "RewriteHook"),
     # Undocumented third parties
     ("py:class", "_tracing.TagTracerSub"),
+    ("py:class", "pluggy._compat.DistFacade"),
     ("py:class", "warnings.WarningMessage"),
     # Python 3.14+ exposes the C accelerator module name.
     ("py:class", "_py_warnings.WarningMessage"),
     # Undocumented type aliases
     ("py:class", "LEGACY_PATH"),
+    ("py:class", "_IniTypeArg"),
     ("py:class", "_PluggyPlugin"),
     # TypeVars
     ("py:class", "_pytest._code.code.E"),
@@ -117,6 +120,8 @@ nitpick_ignore = [
     ("py:class", "ScopeName"),
     ("py:class", "BaseExcT_1"),
     ("py:class", "ExcT_1"),
+    # Deprecated, intentionally not added to reference docs.
+    ("py:func", "pytest.console_main"),
 ]
 
 add_module_names = False

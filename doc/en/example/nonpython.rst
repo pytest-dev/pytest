@@ -48,7 +48,7 @@ now execute the test specification:
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
 interesting interpretation of the yaml-values.  You can easily write
-your own domain specific testing language this way.
+your own domain-specific testing language this way.
 
 .. note::
 
@@ -62,7 +62,7 @@ consulted when reporting in ``verbose`` mode. It should return a tuple
 ``(path, lineno, description)``, where:
 
 * ``path`` is the path shown in reports (usually ``self.path`` or ``self.fspath``).
-* ``lineno`` is a zero-based line number, or ``0`` when no specific line applies.
+* ``lineno`` is the line number, or ``0`` when no specific line applies.
 * ``description`` is a short label shown for the collected item:
 
 .. code-block:: pytest
@@ -89,7 +89,7 @@ consulted when reporting in ``verbose`` mode. It should return a tuple
 .. regendoc:wipe
 
 While developing your custom test collection and execution it's also
-interesting to just look at the collection tree:
+interesting to look at the collection tree:
 
 .. code-block:: pytest
 

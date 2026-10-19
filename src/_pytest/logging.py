@@ -85,7 +85,6 @@ class ColoredLevelFormatter(DatetimeFormatter):
         logging.CRITICAL: {"red"},
         logging.ERROR: {"red", "bold"},
         logging.WARNING: {"yellow"},
-        logging.WARN: {"yellow"},
         logging.INFO: {"green"},
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
@@ -180,27 +179,24 @@ class PercentStyleMultiline(logging.PercentStyle):
             0 (auto-indent turned off) or
             >0 (explicitly set indentation position).
         """
-        if auto_indent_option is None:
-            return 0
-        elif isinstance(auto_indent_option, bool):
-            if auto_indent_option:
+        match auto_indent_option:
+            case None | False:
+                return 0
+            case True:
                 return -1
-            else:
+            case int():
+                return max(auto_indent_option, 0)
+            case str():
+                try:
+                    return max(int(auto_indent_option), 0)
+                except ValueError:
+                    pass
+                try:
+                    if _strtobool(auto_indent_option):
+                        return -1
+                except ValueError:
+                    return 0
                 return 0
-        elif isinstance(auto_indent_option, int):
-            return int(auto_indent_option)
-        elif isinstance(auto_indent_option, str):
-            try:
-                return int(auto_indent_option)
-            except ValueError:
-                pass
-            try:
-                if _strtobool(auto_indent_option):
-                    return -1
-            except ValueError:
-                return 0
-
-        return 0
 
     def format(self, record: logging.LogRecord) -> str:
         if "\n" in record.message:
@@ -249,6 +245,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-level",
         dest="log_level",
         default=None,
+        type=int | str,
         metavar="LEVEL",
         help=(
             "Level of messages to catch/display."
@@ -275,7 +272,11 @@ def pytest_addoption(parser: Parser) -> None:
         help='Enable log display during test run (also known as "live logging")',
     )
     add_option_ini(
-        "--log-cli-level", dest="log_cli_level", default=None, help="CLI logging level"
+        "--log-cli-level",
+        dest="log_cli_level",
+        default=None,
+        type=int | str,
+        help="CLI logging level",
     )
     add_option_ini(
         "--log-cli-format",
@@ -299,6 +300,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-file-mode",
         dest="log_file_mode",
         default="w",
+        type=Literal["w", "a"],
         choices=["w", "a"],
         help="Log file open mode",
     )
@@ -306,6 +308,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-file-level",
         dest="log_file_level",
         default=None,
+        type=int | str,
         help="Log file logging level",
     )
     add_option_ini(
@@ -324,6 +327,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-auto-indent",
         dest="log_auto_indent",
         default=None,
+        type=int | bool | str,
         help="Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
     )
     group.addoption(
@@ -342,18 +346,34 @@ _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 class catching_logs(Generic[_HandlerType]):
     """Context manager that prepares the whole logging machinery properly."""
 
-    __slots__ = ("handler", "level", "orig_level")
+    __slots__ = ("attached_loggers", "handler", "level", "orig_level")
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
         self.handler = handler
         self.level = level
+        self.attached_loggers: list[logging.Logger] = []
 
     def __enter__(self) -> _HandlerType:
         root_logger = logging.getLogger()
         if self.level is not None:
             self.handler.setLevel(self.level)
+        # Attach to root logger.
         root_logger.addHandler(self.handler)
+        self.attached_loggers.append(root_logger)
+        # Attach to all non-propagating loggers (won't reach root).
+        # Note that will miss loggers that *become* non-propagating
+        # after the `__enter__`. Not worth the trouble for now.
+        for logger in root_logger.manager.loggerDict.values():
+            if (
+                isinstance(logger, logging.Logger)
+                and not logger.propagate
+                and logger is not root_logger
+            ):
+                logger.addHandler(self.handler)
+                self.attached_loggers.append(logger)
         if self.level is not None:
+            # Non-propagating loggers still inherit the level (unless a logger
+            # explicitly set level), so only do this on the root logger.
             self.orig_level = root_logger.level
             root_logger.setLevel(min(self.orig_level, self.level))
         return self.handler
@@ -367,7 +387,9 @@ class catching_logs(Generic[_HandlerType]):
         root_logger = logging.getLogger()
         if self.level is not None:
             root_logger.setLevel(self.orig_level)
-        root_logger.removeHandler(self.handler)
+        for logger in self.attached_loggers:
+            logger.removeHandler(self.handler)
+        self.attached_loggers.clear()
 
 
 class LogCaptureHandler(logging_StreamHandler):
@@ -585,11 +607,15 @@ class LogCaptureFixture:
 
         .. versionadded:: 7.5
         """
-        self.handler.addFilter(filter_)
-        try:
+        already_present = filter_ in self.handler.filters
+        if already_present:
             yield
-        finally:
-            self.handler.removeFilter(filter_)
+        else:
+            try:
+                self.handler.addFilter(filter_)
+                yield
+            finally:
+                self.handler.removeFilter(filter_)
 
 
 @fixture
@@ -614,13 +640,15 @@ def get_log_level_for_setting(config: Config, *setting_names: str) -> int | None
         log_level = config.getoption(setting_name)
         if log_level is None:
             log_level = config.getini(setting_name)
-        if log_level:
+        # An int 0 (NOTSET) is a valid level, only None and "" mean unset.
+        if log_level is not None and log_level != "":
             break
     else:
         return None
 
-    if isinstance(log_level, str):
-        log_level = log_level.upper()
+    if isinstance(log_level, int):
+        return log_level
+    log_level = log_level.upper()
     try:
         return int(getattr(logging, log_level, log_level))
     except ValueError as e:

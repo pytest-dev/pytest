@@ -45,6 +45,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.nodeid import NodeId
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.pathlib import absolutepath
@@ -75,6 +76,10 @@ KNOWN_TYPES = (
 )
 
 _REPORTCHARS_DEFAULT = "fE"
+
+_ConsoleOutputStyle = Literal[
+    "classic", "progress", "count", "times", "progress-even-when-capture-no"
+]
 
 
 class MoreQuietAction(argparse.Action):
@@ -274,8 +279,9 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "console_output_style",
         help='Console output: "classic", or with additional progress information '
-        '("progress" (percentage) | "count" | "progress-even-when-capture-no" (forces '
-        "progress even when capture=no)",
+        '("progress" (percentage) | "count" | "times" | "progress-even-when-capture-no" '
+        "(forces progress even when capture=no)",
+        type=_ConsoleOutputStyle,
         default="progress",
     )
     Config._add_verbosity_ini(
@@ -289,6 +295,8 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
+    # Eagerly validate the value; it is only read lazily during reporting.
+    config.getini("console_output_style")
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
@@ -393,15 +401,16 @@ class TerminalReporter:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
-        self.currentfspath: None | Path | str | int = None
+        self.currentfspath: Path | str | int | None = None
         self.reportchars = getreportopt(config)
         self.foldskipped = config.option.fold_skipped
         self.hasmarkup = self._tw.hasmarkup
         # isatty should be a method but was wrongly implemented as a boolean.
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
-        self._progress_nodeids_reported: set[str] = set()
-        self._timing_nodeids_reported: set[str] = set()
+        self._progress_nodeids_reported: set[NodeId] = set()
+        self._timing_nodeids_reported: set[NodeId] = set()
+        self._current_logreport: TestReport | None = None
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -422,15 +431,18 @@ class TerminalReporter:
         # do not show progress if we are showing fixture setup/teardown
         if self.config.getoption("setupshow", False):
             return False
-        cfg: str = self.config.getini("console_output_style")
-        if cfg in {"progress", "progress-even-when-capture-no"}:
-            return "progress"
-        elif cfg == "count":
-            return "count"
-        elif cfg == "times":
-            return "times"
-        else:
-            return False
+        cfg: _ConsoleOutputStyle = self.config.getini("console_output_style")
+        match cfg:
+            case "progress" | "progress-even-when-capture-no":
+                return "progress"
+            case "count":
+                return "count"
+            case "times":
+                return "times"
+            case "classic":
+                return False
+            case unreachable:
+                compat.assert_never(unreachable)
 
     @property
     def verbosity(self) -> int:
@@ -476,7 +488,7 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
-        fspath = self.config.rootpath / nodeid.split("::", maxsplit=1)[0]
+        fspath = self.config.rootpath / NodeId.parse(nodeid).path
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
@@ -615,7 +627,7 @@ class TerminalReporter:
         # Ensure that the path is printed before the
         # 1st test of a module starts running.
         if self.showlongtestinfo:
-            line = self._locationline(nodeid, fspath, lineno, domain)
+            line = self._locationline(NodeId.parse(nodeid), fspath, lineno, domain)
             self.write_ensure_prefix(line, "")
             self.flush()
         elif self.showfspath:
@@ -623,6 +635,7 @@ class TerminalReporter:
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
+        self._current_logreport = report
         self._tests_ran = True
         rep = report
 
@@ -650,7 +663,7 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
-        self._progress_nodeids_reported.add(rep.nodeid)
+        self._progress_nodeids_reported.add(rep.id)
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
@@ -662,7 +675,7 @@ class TerminalReporter:
             if self._show_progress_info and not self._is_last_item:
                 self._write_progress_information_if_past_edge()
         else:
-            line = self._locationline(rep.nodeid, *rep.location)
+            line = self._locationline(rep.id, *rep.location)
             running_xdist = hasattr(rep, "node")
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
@@ -730,6 +743,13 @@ class TerminalReporter:
         if self._show_progress_info == "times":
             if not collected:
                 return ""
+            from _pytest.subtests import SubtestReport
+
+            if isinstance(self._current_logreport, SubtestReport):
+                if self.showlongtestinfo:
+                    return format_node_duration(self._current_logreport.duration)
+                return ""
+
             all_reports = (
                 self._get_reports_to_display("passed")
                 + self._get_reports_to_display("xpassed")
@@ -739,9 +759,18 @@ class TerminalReporter:
                 + self._get_reports_to_display("error")
                 + self._get_reports_to_display("")
             )
-            current_location = all_reports[-1].location[0]
+
+            report = self._current_logreport
+            if report is not None:
+                current_location = report.location[0]
+            else:
+                current_location = all_reports[-1].location[0] if all_reports else ""
+
             not_reported = [
-                r for r in all_reports if r.nodeid not in self._timing_nodeids_reported
+                r
+                for r in all_reports
+                if not isinstance(r, SubtestReport)
+                and r.id not in self._timing_nodeids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
@@ -753,7 +782,7 @@ class TerminalReporter:
             )
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
-                self._timing_nodeids_reported.update(r.nodeid for r in not_reported)
+                self._timing_nodeids_reported.update(r.id for r in not_reported)
                 return format_node_duration(
                     sum(r.duration for r in not_reported if isinstance(r, TestReport))
                 )
@@ -928,7 +957,7 @@ class TerminalReporter:
         test_cases_verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
         if test_cases_verbosity < 0:
             if test_cases_verbosity < -1:
-                counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
+                counts = Counter(item.id.path for item in items)
                 for name, count in sorted(counts.items()):
                     self._tw.line(f"{name}: {count}")
             else:
@@ -968,7 +997,10 @@ class TerminalReporter:
             ExitCode.NO_TESTS_COLLECTED,
             ExitCode.MAX_WARNINGS_ERROR,
         )
-        if exitstatus in summary_exit_codes and not self.no_summary:
+        # Always invoke pytest_terminal_summary so third-party plugins can report
+        # (e.g. coverage). --no-summary only suppresses TerminalReporter's own
+        # built-in summary sections; see TerminalReporter.pytest_terminal_summary.
+        if exitstatus in summary_exit_codes:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
@@ -995,18 +1027,23 @@ class TerminalReporter:
 
     @hookimpl(wrapper=True)
     def pytest_terminal_summary(self) -> Generator[None]:
-        self.summary_errors()
-        self.summary_failures()
-        self.summary_xfailures()
-        self.summary_warnings()
-        self.summary_passes()
-        self.summary_xpasses()
+        # With --no-summary, still yield so other plugins run their terminal
+        # summaries, but skip pytest's own FAILURES/ERRORS/... sections.
+        show_summary = not self.no_summary
+        if show_summary:
+            self.summary_errors()
+            self.summary_failures()
+            self.summary_xfailures()
+            self.summary_warnings()
+            self.summary_passes()
+            self.summary_xpasses()
         try:
             return (yield)
         finally:
-            self.short_test_summary()
-            # Display any extra warnings from teardown here (if any).
-            self.summary_warnings()
+            if show_summary:
+                self.short_test_summary()
+                # Display any extra warnings from teardown here (if any).
+                self.summary_warnings()
 
     def pytest_keyboard_interrupt(self, excinfo: ExceptionInfo[BaseException]) -> None:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
@@ -1032,10 +1069,10 @@ class TerminalReporter:
                 )
 
     def _locationline(
-        self, nodeid: str, fspath: str, lineno: int | None, domain: str
+        self, nodeid: NodeId, fspath: str, lineno: int | None, domain: str
     ) -> str:
-        def mkrel(nodeid: str) -> str:
-            line = self.config.cwd_relative_nodeid(nodeid)
+        def mkrel() -> str:
+            line = str(self.config.cwd_relative_nodeid(nodeid))
             if domain and line.endswith(domain):
                 line = line[: -len(domain)]
                 values = domain.split("[")
@@ -1045,10 +1082,8 @@ class TerminalReporter:
 
         # fspath comes from testid which has a "/"-normalized path.
         if fspath:
-            res = mkrel(nodeid)
-            if self.verbosity >= 2 and (
-                nodeid.split("::", maxsplit=1)[0] != nodes.norm_sep(fspath)
-            ):
+            res = mkrel()
+            if self.verbosity >= 2 and (nodeid.path != nodes.norm_sep(fspath)):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
             res = "[location]"
@@ -1074,10 +1109,10 @@ class TerminalReporter:
         value = self.config.option.max_warnings
         if value is not None:
             return int(value)
-        ini_value = self.config.getini("max_warnings")
-        if ini_value:
+        ini_value: int | str | None = self.config.getini("max_warnings")
+        if isinstance(ini_value, str):
             return int(ini_value)
-        return None
+        return ini_value
 
     #
     # Summaries for sessionfinish.
@@ -1105,12 +1140,7 @@ class TerminalReporter:
                 reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
             def collapsed_location_report(reports: list[WarningReport]) -> str:
-                locations = []
-                for w in reports:
-                    location = w.get_location(self.config)
-                    if location:
-                        locations.append(location)
-
+                locations = [x for w in reports if (x := w.get_location(self.config))]
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
@@ -1159,18 +1189,18 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, green=True, bold=True)
                         self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.nodeid)
+                    self._handle_teardown_sections(rep.id)
 
-    def _get_teardown_reports(self, nodeid: str) -> list[TestReport]:
+    def _get_teardown_reports(self, node_id: NodeId) -> list[TestReport]:
         reports = self.getreports("")
         return [
             report
             for report in reports
-            if report.when == "teardown" and report.nodeid == nodeid
+            if report.when == "teardown" and report.id == node_id
         ]
 
-    def _handle_teardown_sections(self, nodeid: str) -> None:
-        for report in self._get_teardown_reports(nodeid):
+    def _handle_teardown_sections(self, node_id: NodeId) -> None:
+        for report in self._get_teardown_reports(node_id):
             self.print_teardown_sections(report)
 
     def print_teardown_sections(self, rep: TestReport) -> None:
@@ -1219,7 +1249,7 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
-                        self._handle_teardown_sections(rep.nodeid)
+                        self._handle_teardown_sections(rep.id)
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":
@@ -1276,8 +1306,7 @@ class TerminalReporter:
 
         if display_sep:
             markup_for_end_sep = self._tw.markup("", **main_markup)
-            if markup_for_end_sep.endswith("\x1b[0m"):
-                markup_for_end_sep = markup_for_end_sep[:-4]
+            markup_for_end_sep = markup_for_end_sep.removesuffix("\x1b[0m")
             fullwidth += len(markup_for_end_sep)
             msg += markup_for_end_sep
 
@@ -1310,7 +1339,12 @@ class TerminalReporter:
                 )
                 markup_word = self._tw.markup(verbose_word, **verbose_markup)
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
-                line = f"{markup_word} {nodeid}"
+
+                if rep.when == "call":
+                    line = f"{markup_word} {nodeid}"
+                else:
+                    line = f"{markup_word} at {rep.when} of {nodeid}"
+
                 reason = rep.wasxfail
                 if reason:
                     line += " - " + str(reason)
@@ -1342,8 +1376,7 @@ class TerminalReporter:
             markup_word = self._tw.markup(verbose_word, **verbose_markup)
             prefix = "Skipped: "
             for num, fspath, lineno, reason in fskips:
-                if reason.startswith(prefix):
-                    reason = reason[len(prefix) :]
+                reason = reason.removeprefix(prefix)
                 if lineno is not None:
                     lines.append(f"{markup_word} [{num}] {fspath}:{lineno}: {reason}")
                 else:
@@ -1504,14 +1537,13 @@ class TerminalReporter:
         return parts, main_color
 
 
-def _get_node_id_with_markup(tw: TerminalWriter, config: Config, rep: BaseReport):
-    nodeid = config.cwd_relative_nodeid(rep.nodeid)
-    path, *parts = nodeid.split("::")
-    if parts:
-        parts_markup = tw.markup("::".join(parts), bold=True)
-        return path + "::" + parts_markup
-    else:
-        return path
+def _get_node_id_with_markup(
+    tw: TerminalWriter, config: Config, rep: BaseReport
+) -> str:
+    nodeid = config.cwd_relative_nodeid(rep.id)
+    if nodeid.rest is not None:
+        return f"{nodeid.path}::{tw.markup(nodeid.rest, bold=True)}"
+    return nodeid.path
 
 
 def _format_trimmed(format: str, msg: str, available_width: int) -> str | None:
@@ -1636,8 +1668,7 @@ def _plugin_nameversions(plugininfo) -> list[str]:
         # Gets us name and version!
         name = f"{dist.project_name}-{dist.version}"
         # Questionable convenience, but it keeps things short.
-        if name.startswith("pytest-"):
-            name = name[7:]
+        name = name.removeprefix("pytest-")
         # We decided to print python package names they can have more than one plugin.
         if name not in values:
             values.append(name)
@@ -1657,23 +1688,24 @@ def format_node_duration(seconds: float) -> str:
     """Format the given seconds in a human readable manner to show in the test progress."""
     # The formatting is designed to be compact and readable, with at most 7 characters
     # for durations below 100 hours.
-    if seconds < 0.00001:
-        return f" {seconds * 1000000:.3f}us"
-    if seconds < 0.0001:
-        return f" {seconds * 1000000:.2f}us"
-    if seconds < 0.001:
-        return f" {seconds * 1000000:.1f}us"
-    if seconds < 0.01:
-        return f" {seconds * 1000:.3f}ms"
-    if seconds < 0.1:
-        return f" {seconds * 1000:.2f}ms"
-    if seconds < 1:
-        return f" {seconds * 1000:.1f}ms"
-    if seconds < 60:
-        return f" {seconds:.3f}s"
-    if seconds < 3600:
-        return f" {seconds // 60:.0f}m {seconds % 60:.0f}s"
-    return f" {seconds // 3600:.0f}h {(seconds % 3600) // 60:.0f}m"
+    # Pick the unit based on the rounded value, so that e.g. 999.96us is shown
+    # as "1.000ms" instead of "1000.0us".
+    for scale, unit, precision, limit in (
+        (1000000, "us", 3, 10),
+        (1000000, "us", 2, 100),
+        (1000000, "us", 1, 1000),
+        (1000, "ms", 3, 10),
+        (1000, "ms", 2, 100),
+        (1000, "ms", 1, 1000),
+        (1, "s", 3, 60),
+    ):
+        text = f"{seconds * scale:.{precision}f}"
+        if float(text) < limit:
+            return f" {text}{unit}"
+    whole_seconds = round(seconds)
+    if whole_seconds < 3600:
+        return f" {whole_seconds // 60}m {whole_seconds % 60}s"
+    return f" {whole_seconds // 3600}h {(whole_seconds % 3600) // 60}m"
 
 
 def _get_raw_skip_reason(report: TestReport) -> str:
@@ -1683,8 +1715,7 @@ def _get_raw_skip_reason(report: TestReport) -> str:
     """
     if hasattr(report, "wasxfail"):
         reason = report.wasxfail
-        if reason.startswith("reason: "):
-            reason = reason[len("reason: ") :]
+        reason = reason.removeprefix("reason: ")
         return reason
     else:
         assert report.skipped
