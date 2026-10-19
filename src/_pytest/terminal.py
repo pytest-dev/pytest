@@ -18,6 +18,7 @@ from functools import partial
 import inspect
 from pathlib import Path
 import platform
+import re
 import sys
 import textwrap
 from typing import Any
@@ -1571,6 +1572,10 @@ def _format_trimmed(format: str, msg: str, available_width: int) -> str | None:
     return format.format(msg)
 
 
+# Escape sequences added by TerminalWriter.markup(), which take no columns.
+_ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]*m")
+
+
 def _get_line_with_reprcrash_message(
     config: Config, rep: BaseReport, tw: TerminalWriter, word_markup: dict[str, bool]
 ) -> str:
@@ -1582,7 +1587,7 @@ def _get_line_with_reprcrash_message(
     node = _get_node_id_with_markup(tw, config, rep)
 
     line = f"{word} {node}"
-    line_width = wcswidth(line)
+    line_width = wcswidth(_ANSI_ESCAPE_SEQ.sub("", line))
 
     msg: str | None
     try:
