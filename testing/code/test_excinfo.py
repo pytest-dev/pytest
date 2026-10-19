@@ -2421,8 +2421,11 @@ def test_traceback_ast_caller_cache_outside_session(monkeypatch: MonkeyPatch) ->
         with pytest.raises(ValueError) as excinfo:
             raise ValueError("caller owns the cache")
         entry = excinfo.traceback[-1]
+        uncached = entry.getsource()
+        assert uncached is not None
         cache: dict[str | Path, ast.AST] = {}
         first = entry.getsource(cache)
+        assert first == uncached
         assert cache
         monkeypatch.setattr(
             ast, "parse", lambda *args, **kwargs: pytest.fail("reparsed")
