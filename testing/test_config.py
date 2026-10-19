@@ -3633,6 +3633,8 @@ class TestNativeTomlOptionTypes:
             ("verbosity_assertions", '"loud"'),
             ("log_file_mode", '"x"'),
             ("parametrize_long_str_id_strategy", '"bogus"'),
+            ("tmp_path_retention_count", "true"),
+            ("log_auto_indent", "1.5"),
         ],
     )
     def test_invalid_value(self, pytester: Pytester, name: str, value: str) -> None:
