@@ -59,6 +59,7 @@ def test_raises_group() -> None:
         RaisesGroup(ValueError),
     ):
         raise ExceptionGroup("foo", (SyntaxError(),))
+
     # multiple exceptions
     with RaisesGroup(ValueError, SyntaxError):
         raise ExceptionGroup("foo", (ValueError(), SyntaxError()))
