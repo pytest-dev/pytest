@@ -37,10 +37,16 @@ def _compare_eq_mapping(
     if diff:
         yield "Differing items:"
         for k in diff:
+            try:
+                left_repr = pprint.pformat({k: left[k]})
+                right_repr = pprint.pformat({k: right[k]})
+            except Exception:
+                left_repr = saferepr({k: left[k]})
+                right_repr = saferepr({k: right[k]})
             yield (
-                highlighter(saferepr({k: left[k]}))
+                highlighter(left_repr)
                 + " != "
-                + highlighter(saferepr({k: right[k]}))
+                + highlighter(right_repr)
             )
     extra_left = keys_left - keys_right
     len_extra_left = len(extra_left)
