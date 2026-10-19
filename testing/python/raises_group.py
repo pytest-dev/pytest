@@ -59,7 +59,6 @@ def test_raises_group() -> None:
         RaisesGroup(ValueError),
     ):
         raise ExceptionGroup("foo", (SyntaxError(),))
-
     # multiple exceptions
     with RaisesGroup(ValueError, SyntaxError):
         raise ExceptionGroup("foo", (ValueError(), SyntaxError()))
@@ -1368,3 +1367,11 @@ def test_expected_matching_only_on_matching() -> None:
         RaisesGroup(TypeError, ValueError, TypeError),
     ):
         raise ExceptionGroup("", [TypeError()])
+
+
+def test_invalid_match_pattern() -> None:
+    with pytest.raises(Failed, match="Invalid regex pattern provided to 'match'"):
+        RaisesExc(ValueError, match="[")
+
+    with pytest.raises(Failed, match="Invalid regex pattern provided to 'match'"):
+        RaisesGroup(ValueError, match="[")
