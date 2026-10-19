@@ -337,16 +337,12 @@ class CallInfo(Generic[TResult]):
         :meth:`from_call`), measuring with :class:`_pytest.timing.Instant`,
         which is immune to tests mocking :mod:`time` (#185).
         """
-        call = cls(
-            result,
-            excinfo,
-            duration.start.time,
-            duration.stop.time,
-            duration.seconds,
-            when,
-            _ispytest=True,
-        )
+        # Bypass __init__, which only exists to accept the legacy floats.
+        call = cls.__new__(cls)
+        call._result = result
+        call.excinfo = excinfo
         call._duration = duration
+        call.when = when
         return call
 
     @property
