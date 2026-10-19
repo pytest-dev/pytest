@@ -1,0 +1,1 @@
+Fixed test collection for Python files whose names contain square brackets.
