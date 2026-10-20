@@ -2741,9 +2741,6 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
             self.option = Namespace(verbose=0)
 
     class rep:
-        def _get_verbose_word_with_markup(self, *args):
-            return mocked_verbose_word, {}
-
         class longrepr:
             class reprcrash:
                 pass
@@ -2762,6 +2759,7 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
             config(),  # type: ignore[arg-type]
             rep(),  # type: ignore[arg-type]
             DummyTerminalWriter(),  # type: ignore[arg-type]
+            mocked_verbose_word,
             {},
         )
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Mapping
-from collections.abc import Sequence
 import dataclasses
 from io import StringIO
 import os
@@ -34,7 +33,6 @@ from _pytest.nodeid import coerce_node_id
 from _pytest.nodeid import NodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
-from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 
 
@@ -215,27 +213,6 @@ class BaseReport:
             _fspath, _lineno, domain = self.location
             return domain
         return None
-
-    def _get_verbose_word_with_markup(
-        self, config: Config, default_markup: Mapping[str, bool]
-    ) -> tuple[str, Mapping[str, bool]]:
-        _category, _short, verbose = config.hook.pytest_report_teststatus(
-            report=self, config=config
-        )
-
-        if isinstance(verbose, str):
-            return verbose, default_markup
-
-        if isinstance(verbose, Sequence) and len(verbose) == 2:
-            word, markup = verbose
-            if isinstance(word, str) and isinstance(markup, Mapping):
-                return word, markup
-
-        fail(  # pragma: no cover
-            "pytest_report_teststatus() hook (from a plugin) returned "
-            f"an invalid verbose value: {verbose!r}.\nExpected either a string "
-            "or a tuple of (word, markup)."
-        )
 
     def _to_json(self) -> dict[str, Any]:
         """Return the contents of this report as a dict of builtin entries,

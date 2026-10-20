@@ -50,6 +50,7 @@ from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
+from _pytest.outcomes import fail
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -1315,6 +1316,27 @@ class TerminalReporter:
         else:
             self.write_line(msg, **main_markup)
 
+    def _get_verbose_word_with_markup(
+        self, rep: BaseReport, default_markup: Mapping[str, bool]
+    ) -> tuple[str, Mapping[str, bool]]:
+        _category, _short, verbose = self.config.hook.pytest_report_teststatus(
+            report=rep, config=self.config
+        )
+
+        if isinstance(verbose, str):
+            return verbose, default_markup
+
+        if isinstance(verbose, Sequence) and len(verbose) == 2:
+            word, markup = verbose
+            if isinstance(word, str) and isinstance(markup, Mapping):
+                return word, markup
+
+        fail(
+            "pytest_report_teststatus() hook (from a plugin) returned "
+            f"an invalid verbose value: {verbose!r}.\nExpected either a string "
+            "or a tuple of (word, markup)."
+        )
+
     def short_test_summary(self) -> None:
         if not self.reportchars:
             return
@@ -1326,16 +1348,19 @@ class TerminalReporter:
             config = self.config
             for rep in failed:
                 color = _color_for_type.get(stat, _color_for_type_default)
+                verbose_word, verbose_markup = self._get_verbose_word_with_markup(
+                    rep, {color: True}
+                )
                 line = _get_line_with_reprcrash_message(
-                    config, rep, self._tw, {color: True}
+                    config, rep, self._tw, verbose_word, verbose_markup
                 )
                 lines.append(line)
 
         def show_xfailed(lines: list[str]) -> None:
             xfailed = self.stats.get("xfailed", [])
             for rep in xfailed:
-                verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
-                    self.config, {_color_for_type["warnings"]: True}
+                verbose_word, verbose_markup = self._get_verbose_word_with_markup(
+                    rep, {_color_for_type["warnings"]: True}
                 )
                 markup_word = self._tw.markup(verbose_word, **verbose_markup)
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
@@ -1354,8 +1379,8 @@ class TerminalReporter:
         def show_xpassed(lines: list[str]) -> None:
             xpassed = self.stats.get("xpassed", [])
             for rep in xpassed:
-                verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
-                    self.config, {_color_for_type["warnings"]: True}
+                verbose_word, verbose_markup = self._get_verbose_word_with_markup(
+                    rep, {_color_for_type["warnings"]: True}
                 )
                 markup_word = self._tw.markup(verbose_word, **verbose_markup)
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
@@ -1370,8 +1395,8 @@ class TerminalReporter:
             fskips = _folded_skips(self.startpath, skipped) if skipped else []
             if not fskips:
                 return
-            verbose_word, verbose_markup = skipped[0]._get_verbose_word_with_markup(
-                self.config, {_color_for_type["warnings"]: True}
+            verbose_word, verbose_markup = self._get_verbose_word_with_markup(
+                skipped[0], {_color_for_type["warnings"]: True}
             )
             markup_word = self._tw.markup(verbose_word, **verbose_markup)
             prefix = "Skipped: "
@@ -1390,8 +1415,8 @@ class TerminalReporter:
                 assert isinstance(rep.longrepr, tuple), (rep, rep.longrepr)
                 assert len(rep.longrepr) == 3, (rep, rep.longrepr)
 
-                verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
-                    self.config, {_color_for_type["warnings"]: True}
+                verbose_word, verbose_markup = self._get_verbose_word_with_markup(
+                    rep, {_color_for_type["warnings"]: True}
                 )
                 markup_word = self._tw.markup(verbose_word, **verbose_markup)
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
@@ -1572,12 +1597,13 @@ def _format_trimmed(format: str, msg: str, available_width: int) -> str | None:
 
 
 def _get_line_with_reprcrash_message(
-    config: Config, rep: BaseReport, tw: TerminalWriter, word_markup: dict[str, bool]
+    config: Config,
+    rep: BaseReport,
+    tw: TerminalWriter,
+    verbose_word: str,
+    verbose_markup: Mapping[str, bool],
 ) -> str:
     """Get summary line for a report, trying to add reprcrash message."""
-    verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
-        config, word_markup
-    )
     word = tw.markup(verbose_word, **verbose_markup)
     node = _get_node_id_with_markup(tw, config, rep)
 
