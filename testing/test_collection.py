@@ -2472,9 +2472,7 @@ class TestOverlappingCollectionArguments:
         result = pytester.runpytest(*args)
         result.assert_outcomes(passed=n_files)
 
-        collect_file_calls = int(
-            (pytester.path / "collect_file_calls.txt").read_text()
-        )
+        collect_file_calls = int((pytester.path / "collect_file_calls.txt").read_text())
         # Each file should be offered to pytest_collect_file once. Before the
         # fix the directory was re-collected for every file argument, i.e.
         # about n_files * n_files hook calls here.
