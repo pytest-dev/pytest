@@ -4072,6 +4072,18 @@ class TestShowFixtures:
                 @pytest.fixture
                 def numbers() -> Iterator[int]:
                     return iter([1])
+
+                @pytest.fixture
+                def plain_answer() -> Answer:
+                    yield Answer()
+
+                @pytest.fixture
+                def counts() -> dict[str, int]:
+                    yield {}
+
+                @pytest.fixture
+                def unparsable() -> "Iterator[":
+                    yield None
                 """
             )
         )
@@ -4084,6 +4096,10 @@ class TestShowFixtures:
                 # Before 3.14 without the __future__ import this is
                 # ``collections.abc.Iterator[int]``: nested names keep their module.
                 "numbers -> *Iterator[[]int[]] -- *",
+                # A yield fixture whose annotation is not a wrapper keeps it.
+                "plain_answer -> Answer -- *",
+                "counts -> dict[[]str, int[]] -- *",
+                "unparsable -> *Iterator[[]* -- *",
             ]
         )
 
