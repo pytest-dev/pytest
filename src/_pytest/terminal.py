@@ -48,9 +48,9 @@ from _pytest.config.argparsing import Parser
 from _pytest.nodeid import NodeId
 from _pytest.nodes import Item
 from _pytest.nodes import Node
+from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
-from _pytest.outcomes import fail
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
