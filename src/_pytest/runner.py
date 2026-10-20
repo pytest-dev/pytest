@@ -558,9 +558,7 @@ class SetupState:
     ) -> None:
         self._active_fixtures.append(_ActiveFixture(node, is_stale, finish, finalizer))
 
-    def unregister_fixture(
-        self, node: Node, finalizer: Callable[[], object]
-    ) -> None:
+    def unregister_fixture(self, node: Node, finalizer: Callable[[], object]) -> None:
         self._active_fixtures[:] = [
             fixture
             for fixture in self._active_fixtures
