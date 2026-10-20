@@ -564,6 +564,13 @@ class FixtureRequest(abc.ABC):
         result.extend(set(self._fixture_defs).difference(result))
         return result
 
+    # The return type is intentionally left unannotated (implicitly Any).
+    # The concrete node type depends on the request scope, so the only correct
+    # annotation would be a broad one (``Item | Collector``). That would force
+    # users to ``assert isinstance(...)`` or ``cast`` whenever they know the
+    # actual type (e.g. ``request.node.function`` in a function-scoped
+    # fixture), so we trade type safety for convenience here.
+    # See https://github.com/pytest-dev/pytest/issues/13888#issuecomment-3511168937.
     @property
     @abc.abstractmethod
     def node(self):
