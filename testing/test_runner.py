@@ -475,6 +475,213 @@ class BaseFunctionalTests:
             assert False, "did not raise"
 
 
+def test_fixture_teardown_duration_is_reported_in_previous_teardown(
+    pytester: Pytester, mock_timing
+) -> None:
+    delay = 0.1
+    reprec = pytester.inline_runsource(
+        f"""
+        from _pytest import timing
+        import pytest
+
+        @pytest.fixture(scope="module", params=[1, 2])
+        def fix():
+            timing.sleep({delay})
+            yield
+            timing.sleep({delay})
+
+        @pytest.mark.parametrize("par", [1, 2])
+        def test_one(fix, par):
+            pass
+        """
+    )
+
+    reprec.assertoutcome(passed=4)
+    reports = reprec.getreports("pytest_runtest_logreport")
+    previous_teardown = next(
+        report
+        for report in reports
+        if report.nodeid.endswith("test_one[1-2]") and report.when == "teardown"
+    )
+    next_setup = next(
+        report
+        for report in reports
+        if report.nodeid.endswith("test_one[2-1]") and report.when == "setup"
+    )
+
+    assert previous_teardown.duration == pytest.approx(delay, abs=1e-6)
+    assert next_setup.duration == pytest.approx(delay, abs=1e-6)
+
+
+def test_stale_fixture_finalizer_order_and_exactly_once(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        events = []
+
+        @pytest.fixture(scope="module", params=[1, 2])
+        def changing(request):
+            param = request.param
+            events.append(f"setup changing {param}")
+            request.addfinalizer(lambda: events.append(f"finalize changing {param}"))
+            return param
+
+        @pytest.fixture(scope="module")
+        def independent(request):
+            events.append("setup independent")
+            request.addfinalizer(lambda: events.append("finalize independent"))
+
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_runtest_makereport(item, call):
+            outcome = yield
+            report = outcome.get_result()
+            if call.when == "teardown":
+                report.user_properties.append(("fixture_events", list(events)))
+        """
+    )
+    reprec = pytester.inline_runsource(
+        """
+        import pytest
+
+        def test_use(changing, request):
+            if changing == 1:
+                request.getfixturevalue("independent")
+        """
+    )
+
+    reprec.assertoutcome(passed=2)
+    final_teardown = next(
+        report
+        for report in reprec.getreports("pytest_runtest_logreport")
+        if report.nodeid.endswith("test_use[2]") and report.when == "teardown"
+    )
+    events = dict(final_teardown.user_properties)["fixture_events"]
+    finalizers = [event for event in events if event.startswith("finalize ")]
+
+    assert len(finalizers) == len(set(finalizers))
+    assert finalizers == [
+        "finalize independent",
+        "finalize changing 1",
+        "finalize changing 2",
+    ]
+    assert events == [
+        "setup changing 1",
+        "setup independent",
+        "finalize independent",
+        "finalize changing 1",
+        "setup changing 2",
+        "finalize changing 2",
+    ]
+
+
+def test_overridden_base_fixture_teardown_duration_is_reported_in_previous_teardown(
+    pytester: Pytester, mock_timing
+) -> None:
+    delay = 0.1
+    pytester.makeconftest(
+        f"""
+        import pytest
+        from _pytest import timing
+
+        @pytest.fixture(scope="module", params=[1, 2])
+        def value(request):
+            yield request.param
+            timing.sleep({delay})
+        """
+    )
+    reprec = pytester.inline_runsource(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def value(value):
+            return value
+
+        @pytest.mark.parametrize("other", [1, 2])
+        def test_use(value, other):
+            pass
+        """
+    )
+
+    reprec.assertoutcome(passed=4)
+    reports = reprec.getreports("pytest_runtest_logreport")
+    previous_teardown = next(
+        report
+        for report in reports
+        if report.nodeid.endswith("test_use[1-2]") and report.when == "teardown"
+    )
+    next_setup = next(
+        report
+        for report in reports
+        if report.nodeid.endswith("test_use[2-1]") and report.when == "setup"
+    )
+
+    assert (previous_teardown.duration, next_setup.duration) == pytest.approx(
+        (delay, 0), abs=1e-6
+    )
+
+
+def test_overridden_fixture_finalization_order(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        events = []
+
+        @pytest.fixture(scope="module", params=["first", "second"])
+        def value(request):
+            events.append(f"base setup {request.param}")
+            yield request.param
+            events.append(f"base teardown {request.param}")
+
+        @pytest.fixture(scope="session")
+        def fixture_events():
+            return events
+
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_runtest_makereport(item, call):
+            outcome = yield
+            report = outcome.get_result()
+            if call.when == "teardown":
+                report.user_properties.append(("fixture_events", list(events)))
+        """
+    )
+    reprec = pytester.inline_runsource(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def value(value, fixture_events):
+            fixture_events.append(f"override setup {value}")
+            yield value
+            fixture_events.append(f"override teardown {value}")
+
+        @pytest.mark.parametrize("other", [1, 2])
+        def test_use(value, other):
+            assert value in {"first", "second"}
+        """
+    )
+
+    reprec.assertoutcome(passed=4)
+    final_teardown = next(
+        report
+        for report in reprec.getreports("pytest_runtest_logreport")
+        if report.nodeid.endswith("test_use[second-2]") and report.when == "teardown"
+    )
+    expected_events = [
+        "base setup first",
+        "override setup first",
+        "override teardown first",
+        "base teardown first",
+        "base setup second",
+        "override setup second",
+        "override teardown second",
+        "base teardown second",
+    ]
+    assert ("fixture_events", expected_events) in final_teardown.user_properties
+
+
 class TestExecutionNonForked(BaseFunctionalTests):
     def getrunner(self):
         def f(item):

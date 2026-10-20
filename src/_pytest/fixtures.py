@@ -787,6 +787,17 @@ class FixtureRequest(abc.ABC):
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
 
+        if isinstance(self, SubRequest):
+            parent_fixture = self._fixturedef
+            if (
+                parent_fixture is not fixturedef
+                and argname not in parent_fixture.argnames
+                and parent_fixture.cached_result is None
+            ):
+                fixturedef.addfinalizer(
+                    functools.partial(parent_fixture.finish, request=self)
+                )
+
         self._fixture_defs[argname] = fixturedef
         return fixturedef
 
@@ -1186,6 +1197,8 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
+        self._setupstate_finalizer: Callable[[], object] | None = None
+        self._setupstate_node: nodes.Node | None = None
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1204,6 +1217,14 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
+        if self._setupstate_finalizer is not None:
+            assert self._setupstate_node is not None
+            request.session._setupstate.unregister_fixture(
+                self._setupstate_node, self._setupstate_finalizer
+            )
+            self._setupstate_finalizer = None
+            self._setupstate_node = None
+
         if self.cached_result is None:
             # Already finished. It is assumed that finalizers cannot be added in
             # this state.
@@ -1295,11 +1316,45 @@ class FixtureDef(Generic[FixtureValue]):
         finally:
             # Schedule our finalizer, even if the setup failed.
             request.node.addfinalizer(finalizer)
+            self._setupstate_finalizer = finalizer
+            self._setupstate_node = request.node
+            request.session._setupstate.register_fixture(
+                request.node,
+                self._is_stale_for,
+                functools.partial(self.finish, request=request),
+                finalizer,
+            )
 
         return result
 
     def cache_key(self, request: SubRequest) -> object:
         return getattr(request, "param", None)
+
+    def _is_stale_for(self, nextitem: nodes.Item) -> bool:
+        if self.cached_result is None:
+            return False
+        fixtureinfo = getattr(nextitem, "_fixtureinfo", None)
+        if fixtureinfo is None:
+            return False
+        fixturedefs = fixtureinfo.name2fixturedefs.get(self.argname, ())
+        if not fixturedefs:
+            return False
+        used_fixturedefs = {fixturedefs[-1]}
+        index = len(fixturedefs) - 1
+        while index > 0 and fixturedefs[index].argname in fixturedefs[index].argnames:
+            index -= 1
+            used_fixturedefs.add(fixturedefs[index])
+        if self not in used_fixturedefs:
+            return False
+        callspec = getattr(nextitem, "callspec", None)
+        next_cache_key = (
+            callspec.params.get(self.argname) if callspec is not None else None
+        )
+        current_cache_key = self.cached_result[1]
+        try:
+            return not bool(next_cache_key == current_cache_key)
+        except (ValueError, RuntimeError):
+            return next_cache_key is not current_cache_key
 
     def __repr__(self) -> str:
         return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
