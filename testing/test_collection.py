@@ -2441,6 +2441,45 @@ class TestOverlappingCollectionArguments:
             consecutive=True,
         )
 
+    def test_multiple_file_args_do_not_rescan_parent_directory(
+        self, pytester: Pytester
+    ) -> None:
+        """Passing many files from one directory must not re-scan the directory
+        once per file argument (#15187)."""
+        n_files = 20
+        pytester.makepyfile(
+            **{f"sub/test_{i}": f"def test_{i}(): pass" for i in range(n_files)}
+        )
+        pytester.makeconftest(
+            """
+            collect_file_calls = 0
+
+            def pytest_collect_file(file_path, parent):
+                global collect_file_calls
+                collect_file_calls += 1
+                return None
+
+            def pytest_sessionfinish(session, exitstatus):
+                import pathlib
+
+                pathlib.Path("collect_file_calls.txt").write_text(
+                    str(collect_file_calls)
+                )
+            """
+        )
+
+        args = [f"sub/test_{i}.py" for i in range(n_files)]
+        result = pytester.runpytest(*args)
+        result.assert_outcomes(passed=n_files)
+
+        collect_file_calls = int(
+            (pytester.path / "collect_file_calls.txt").read_text()
+        )
+        # Each file should be offered to pytest_collect_file once. Before the
+        # fix the directory was re-collected for every file argument, i.e.
+        # about n_files * n_files hook calls here.
+        assert collect_file_calls <= 2 * n_files + 10
+
     @pytest.mark.parametrize("order", [(".", "a"), ("a", ".")])
     def test_root_and_subdir(self, pytester: Pytester, order: tuple[str, ...]) -> None:
         """Test that '. a' and 'a .' both collect all tests."""
