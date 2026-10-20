@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import abc
+import ast
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
+from collections.abc import AsyncGenerator
+from collections.abc import AsyncIterable
+from collections.abc import AsyncIterator
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
@@ -25,6 +29,8 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import Generic
+from typing import get_args
+from typing import get_origin
 from typing import Literal
 from typing import NoReturn
 from typing import overload
@@ -2466,10 +2472,13 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             return
         prettypath = _pretty_fixture_path(invocation_dir, fixture_def.func)
         tw.write(f"{argname}", green=True)
-        if return_annotation := _format_return_annotation(fixture_def.func):
+        return_annotation = _format_return_annotation(fixture_def.func)
+        if return_annotation:
             tw.write(f" -> {return_annotation}", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
+        if return_annotation is None:
+            _write_unshowable_return_annotation(tw, prettypath)
         fixture_doc = inspect.getdoc(fixture_def.func)
         if fixture_doc:
             write_docstring(
@@ -2537,12 +2546,15 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if verbose <= 0 and argname.startswith("_"):
             continue
         tw.write(f"{argname}", green=True)
-        if return_annotation := _format_return_annotation(fixturedef.func):
+        return_annotation = _format_return_annotation(fixturedef.func)
+        if return_annotation:
             tw.write(f" -> {return_annotation}", cyan=True)
         if fixturedef.scope != "function":
             tw.write(f" [{fixturedef.scope} scope]", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
+        if return_annotation is None:
+            _write_unshowable_return_annotation(tw, prettypath)
         doc = inspect.getdoc(fixturedef.func)
         if doc:
             write_docstring(
@@ -2553,28 +2565,81 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         tw.line()
 
 
-def _format_return_annotation(func: Callable[..., object]) -> str:
-    """Return the return annotation of a fixture function as text, or ``""``
-    if it has none."""
-    if sys.version_info >= (3, 14):
-        import annotationlib
+# What a yield fixture's annotation wraps around the value it yields.
+_YIELD_WRAPPERS: Final = (
+    Generator,
+    Iterator,
+    Iterable,
+    AsyncGenerator,
+    AsyncIterator,
+    AsyncIterable,
+)
 
-        # Read the annotation as written instead of evaluating it, so names the
-        # fixture's module cannot resolve at runtime, such as imports made only
-        # under TYPE_CHECKING, are shown rather than raising.
-        annotations = annotationlib.get_annotations(
-            func, format=annotationlib.Format.STRING
-        )
-    else:
-        annotations = inspect.get_annotations(func)
-    if "return" not in annotations:
-        return ""
-    annotation = annotations["return"]
+
+def _format_return_annotation(func: Callable[..., object]) -> str | None:
+    """Return the return annotation of a fixture function as text, ``""`` if
+    it has none, or ``None`` if it can't be read or formatted.
+
+    For a yield fixture this is the type it yields: ``Path`` rather than
+    ``Generator[Path]``."""
+    try:
+        if sys.version_info >= (3, 14):
+            import annotationlib
+
+            # Read the annotation as written instead of evaluating it, so names
+            # the fixture's module cannot resolve at runtime, such as imports
+            # made only under TYPE_CHECKING, are shown rather than raising.
+            annotations = annotationlib.get_annotations(
+                func, format=annotationlib.Format.STRING
+            )
+        else:
+            annotations = inspect.get_annotations(func)
+        if "return" not in annotations:
+            return ""
+        annotation = annotations["return"]
+        if inspect.isgeneratorfunction(func) or inspect.isasyncgenfunction(func):
+            annotation = _yielded_annotation(annotation)
+        if isinstance(annotation, str):
+            # Already as written: always on 3.14+, and before that with
+            # ``from __future__ import annotations``.
+            return annotation
+        return inspect.formatannotation(annotation, base_module=func.__module__)
+    except Exception:
+        return None
+
+
+def _yielded_annotation(annotation: object) -> object:
+    """Unwrap a yield fixture's ``Generator[T, ...]``, ``Iterator[T]`` or
+    ``Iterable[T]`` annotation (or an async one) to ``T``; anything else is
+    returned unchanged."""
     if isinstance(annotation, str):
-        # Already as written: always on 3.14+, and before that with
-        # ``from __future__ import annotations``.
-        return annotation
-    return inspect.formatannotation(annotation, base_module=func.__module__)
+        try:
+            node = ast.parse(annotation, mode="eval").body
+        except SyntaxError:
+            return annotation
+        if not isinstance(node, ast.Subscript):
+            return annotation
+        wrapper = node.value
+        name = (
+            wrapper.attr
+            if isinstance(wrapper, ast.Attribute)
+            else getattr(wrapper, "id", None)
+        )
+        if name not in {cls.__name__ for cls in _YIELD_WRAPPERS}:
+            return annotation
+        index = node.slice
+        return ast.unparse(index.elts[0] if isinstance(index, ast.Tuple) else index)
+    args = get_args(annotation)
+    if get_origin(annotation) in _YIELD_WRAPPERS and args:
+        return args[0]
+    return annotation
+
+
+def _write_unshowable_return_annotation(tw: TerminalWriter, location: str) -> None:
+    tw.line(
+        f"    the return type of the fixture defined at {location} can't be shown",
+        red=True,
+    )
 
 
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:

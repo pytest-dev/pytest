@@ -9,6 +9,7 @@ import textwrap
 
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
+from _pytest.fixtures import _format_return_annotation
 from _pytest.fixtures import deduplicate_names
 from _pytest.fixtures import ParamValueKey
 from _pytest.fixtures import TopRequest
@@ -3896,7 +3897,7 @@ class TestShowFixtures:
             [
                 "tmp_path_factory -> TempPathFactory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -> Generator[[]Path[]] -- .../_pytest/tmpdir.py:*",
+                "tmp_path -> Path -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3907,7 +3908,7 @@ class TestShowFixtures:
             [
                 "tmp_path_factory -> TempPathFactory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -> Generator[[]Path[]] -- .../_pytest/tmpdir.py:*",
+                "tmp_path -> Path -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3927,7 +3928,7 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
             """
-            *tmp_path -> Generator[[]Path[]] -- *
+            *tmp_path -> Path -- *
             *fixtures defined from*
             *arg1 -- test_show_fixtures_testmodule.py:5*
             *hello world*
@@ -4035,6 +4036,94 @@ class TestShowFixtures:
             ]
         )
         assert result.ret == 0
+
+    @pytest.mark.parametrize("future_annotations", [False, True])
+    def test_show_fixtures_return_annotation_yield(
+        self, pytester: Pytester, future_annotations: bool
+    ) -> None:
+        # A yield fixture shows the type it yields; a plain fixture that
+        # returns an iterator keeps its annotation.
+        p = pytester.makepyfile(
+            ("from __future__ import annotations\n" if future_annotations else "")
+            + textwrap.dedent(
+                """
+                from collections.abc import AsyncGenerator
+                from collections.abc import Generator
+                from collections.abc import Iterator
+                import typing
+
+                import pytest
+
+                class Answer:
+                    pass
+
+                @pytest.fixture
+                def answer() -> Generator[Answer, None, None]:
+                    yield Answer()
+
+                @pytest.fixture
+                def words() -> typing.Iterator[str]:
+                    yield "word"
+
+                @pytest.fixture
+                async def chunk() -> AsyncGenerator[bytes]:
+                    yield b""
+
+                @pytest.fixture
+                def numbers() -> Iterator[int]:
+                    return iter([1])
+                """
+            )
+        )
+        result = pytester.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines_random(
+            [
+                "answer -> Answer -- *",
+                "words -> str -- *",
+                "chunk -> bytes -- *",
+                # Before 3.14 without the __future__ import this is
+                # ``collections.abc.Iterator[int]``: nested names keep their module.
+                "numbers -> *Iterator[[]int[]] -- *",
+            ]
+        )
+
+    @pytest.mark.skipif(
+        sys.version_info >= (3, 14),
+        reason="on 3.14+ collection reads the same annotations and fails first",
+    )
+    def test_show_fixtures_return_annotation_unshowable(
+        self, pytester: Pytester
+    ) -> None:
+        # Formatting the annotation fails: the fixture is still listed, with a
+        # note instead of its return type.
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            class Unprintable:
+                def __repr__(self):
+                    raise RuntimeError("cannot repr")
+
+            def broken():
+                pass
+
+            broken.__annotations__ = {"return": Unprintable()}
+            broken = pytest.fixture(broken)
+
+            def test_broken(broken):
+                pass
+            """
+        )
+        note = (
+            "    the return type of the fixture defined at "
+            "test_show_fixtures_return_annotation_unshowable.py:* can't be shown"
+        )
+        for option in ("--fixtures", "--fixtures-per-test"):
+            result = pytester.runpytest(option, p)
+            result.stdout.fnmatch_lines(
+                ["broken -- test_show_fixtures_return_annotation_unshowable.py:*", note]
+            )
+            assert result.ret == 0
 
     @pytest.mark.parametrize("testmod", [True, False])
     def test_show_fixtures_conftest(self, pytester: Pytester, testmod) -> None:
@@ -6425,3 +6514,27 @@ def test_classmethod_above_fixture_warning_inherited(pytester: Pytester) -> None
     )
     result.stdout.fnmatch_lines(["*fixture 'fixt' not found*"])
     result.assert_outcomes(errors=1)
+
+
+def test_format_return_annotation_unreadable() -> None:
+    def broken() -> None:
+        pass
+
+    if sys.version_info >= (3, 14):
+        import annotationlib
+
+        def annotate(format: annotationlib.Format) -> dict[str, object]:
+            if format == annotationlib.Format.STRING:
+                raise RuntimeError("cannot annotate")
+            return {}
+
+        broken.__annotate__ = annotate  # type: ignore[attr-defined]
+    else:
+
+        class Unprintable:
+            def __repr__(self) -> str:
+                raise RuntimeError("cannot repr")
+
+        broken.__annotations__ = {"return": Unprintable()}
+
+    assert _format_return_annotation(broken) is None

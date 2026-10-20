@@ -1,1 +1,1 @@
-Added return type annotations in ``--fixtures`` and ``--fixtures-per-test``.
+Added return type annotations in ``--fixtures`` and ``--fixtures-per-test``. For a yield fixture this is the type it yields, so ``tmp_path`` is listed as ``tmp_path -> Path``.
