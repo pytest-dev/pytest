@@ -11,6 +11,10 @@ updates:
   - dependency-type: indirect
   cooldown:
     default-days: 7
+  groups:
+    pip:
+      patterns:
+      - "*"
 - package-ecosystem: github-actions
   directory: /
   schedule:
@@ -19,3 +23,7 @@ updates:
   open-pull-requests-limit: 10
   cooldown:
     default-days: 7
+  groups:
+    github-actions:
+      patterns:
+      - "*"
