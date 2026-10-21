@@ -780,7 +780,7 @@ class TestFillFixtures:
             ]
         )
         result.assert_outcomes(errors=1)
-        
+
     def test_fixture_excinfo_leak(self, pytester: Pytester) -> None:
         # on python2 sys.excinfo would leak into fixture executions
         pytester.makepyfile(
