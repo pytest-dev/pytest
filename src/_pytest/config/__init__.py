@@ -301,11 +301,9 @@ def console_main() -> int:
         This function is slated for removal in pytest 10.
         It is not meant for programmable use; use :func:`pytest.main` instead.
     """
-    import warnings
-
     from _pytest.deprecated import CONSOLE_MAIN
 
-    warnings.warn(CONSOLE_MAIN.format(), stacklevel=2)
+    CONSOLE_MAIN.warn(stacklevel=2)
     return _console_main()
 
 
@@ -1283,10 +1281,7 @@ class Config:
 
         @property
         def inicfg(self) -> _DeprecatedInicfgProxy:
-            warnings.warn(
-                _pytest.deprecated.CONFIG_INICFG.format(),
-                stacklevel=2,
-            )
+            _pytest.deprecated.CONFIG_INICFG.warn(stacklevel=2)
             return _DeprecatedInicfgProxy(self)
 
     @property
@@ -2052,10 +2047,7 @@ class Config:
             return _strtobool(str(value).strip())
         elif type == "string":
             if not isinstance(value, str):
-                warnings.warn(
-                    _pytest.deprecated.INI_STRING_TYPE_NON_STR_VALUE,
-                    stacklevel=2,
-                )
+                _pytest.deprecated.INI_STRING_TYPE_NON_STR_VALUE.warn(stacklevel=2)
             return value
         elif type == "int":
             if not isinstance(value, str):

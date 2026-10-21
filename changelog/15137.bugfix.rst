@@ -1,0 +1,1 @@
+The deprecation warning for passing a non-string value to a ``string``-typed ini option no longer reuses one warning instance, so it no longer accumulates traceback frames when warnings are turned into errors -- the case :issue:`14912` fixed for the other deprecations.
