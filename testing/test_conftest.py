@@ -1084,3 +1084,144 @@ def test_required_option_help(pytester: Pytester) -> None:
     result = pytester.runpytest("-h", x)
     result.stdout.no_fnmatch_line("*argument --xyz is required*")
     assert "general:" in result.stdout.str()
+
+
+class TestConftestImportOutcome:
+    """Outcome exceptions raised while a conftest.py is imported (#15142)."""
+
+    @pytest.fixture
+    def layout(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            **{
+                "tests/opt/test_a.py": "def test_a(): pass",
+                "tests/test_b.py": "def test_b(): pass",
+            }
+        )
+
+    def write_conftest(self, pytester: Pytester, source: str) -> None:
+        pytester.path.joinpath("tests/opt/conftest.py").write_text(
+            textwrap.dedent(source), encoding="utf-8"
+        )
+
+    @pytest.mark.usefixtures("layout")
+    @pytest.mark.parametrize(
+        ("statement", "deprecated"),
+        [
+            ('pytest.importorskip("no_such_module_xyz")', False),
+            ('pytest.importorskip("pytest", minversion="9999")', False),
+            # Still skips, but will be an error in pytest 10.
+            ('pytest.skip("opt is off", allow_module_level=True)', True),
+        ],
+    )
+    @pytest.mark.parametrize("import_mode", ["prepend", "importlib"])
+    @pytest.mark.parametrize(
+        ("args", "outcome"),
+        [
+            ((), {"passed": 1, "skipped": 1}),
+            (("tests",), {"passed": 1, "skipped": 1}),
+            # Initial conftests: previously a raw Skipped traceback (#15141).
+            (("tests/opt",), {"skipped": 1}),
+            (("tests/opt/test_a.py::test_a",), {"skipped": 1}),
+        ],
+    )
+    def test_module_level_skip_skips_directory(
+        self,
+        pytester: Pytester,
+        statement: str,
+        deprecated: bool,
+        import_mode: str,
+        args: tuple[str, ...],
+        outcome: dict[str, int],
+    ) -> None:
+        self.write_conftest(
+            pytester,
+            f"""\
+            import pytest
+            print("conftest executed")
+            {statement}
+            """,
+        )
+        # In a subprocess: a Skipped escaping an inline run would skip this test.
+        result = pytester.runpytest_subprocess(
+            f"--import-mode={import_mode}", "-s", *args
+        )
+        result.assert_outcomes(**outcome)
+        assert "found no collectors" not in result.stderr.str()
+        # Imported once, even when it is also an initial conftest.
+        assert result.stdout.str().count("conftest executed") == 1
+        assert ("PytestRemovedIn10Warning" in result.stdout.str()) == deprecated
+
+    @pytest.mark.usefixtures("layout")
+    @pytest.mark.parametrize(
+        "statement",
+        [
+            'pytest.skip("opt is off")',
+            'pytest.skip("opt is off", allow_module_level=True)',
+        ],
+    )
+    @pytest.mark.parametrize("args", [(), ("tests/opt",)])
+    def test_skip_is_deprecated(
+        self, pytester: Pytester, statement: str, args: tuple[str, ...]
+    ) -> None:
+        self.write_conftest(
+            pytester,
+            f"""\
+            import pytest
+            {statement}
+            """,
+        )
+        result = pytester.runpytest("-rs", *args)
+        result.assert_outcomes(passed=0 if args else 1, skipped=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*conftest.py:2: PytestRemovedIn10Warning: *conftest.py called "
+                "pytest.skip() while being imported.",
+                "SKIPPED [[]1[]] tests/opt/conftest.py:2: opt is off",
+            ]
+        )
+
+    @pytest.mark.usefixtures("layout")
+    def test_plain_skip_deprecation_as_error(self, pytester: Pytester) -> None:
+        self.write_conftest(
+            pytester,
+            """\
+            import pytest
+            pytest.skip("opt is off")
+            """,
+        )
+        result = pytester.runpytest(
+            "-W", "error::pytest.PytestRemovedIn10Warning", "tests/opt"
+        )
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            ["ImportError while loading conftest*", "*PytestRemovedIn10Warning*"]
+        )
+
+    @pytest.mark.usefixtures("layout")
+    @pytest.mark.parametrize(
+        ("statement", "error"),
+        [
+            ('pytest.fail("broken")', "Failed: broken"),
+            ('pytest.xfail("broken")', "*XFailed: broken"),
+        ],
+    )
+    def test_fail_and_xfail_are_errors(
+        self, pytester: Pytester, statement: str, error: str
+    ) -> None:
+        self.write_conftest(
+            pytester,
+            f"""\
+            import pytest
+            {statement}
+            """,
+        )
+        # As an initial conftest: usage error, no raw traceback.
+        result = pytester.runpytest("tests/opt")
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            ["ImportError while loading conftest*", f"E   {error}"]
+        )
+        # Found during collection: collection error.
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.INTERRUPTED
+        result.stdout.fnmatch_lines([f"E   {error}", "*1 error*"])
