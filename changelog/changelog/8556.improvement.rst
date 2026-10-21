@@ -1,0 +1,1 @@
+Removed obsolete warning filters for legacy Python libraries from ``pyproject.toml``.
