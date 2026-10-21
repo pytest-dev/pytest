@@ -677,6 +677,15 @@ def test_frozendict() -> None:
             })"""
         )
 
+        # As a dict key (frozendict is hashable), it goes through _safe_repr.
+        key = frozendict({"one": 1})  # noqa: F821
+        assert pp.pformat({key: 0}) == "{\n    frozendict({'one': 1}): 0,\n}"
+        nested = frozendict({"one": frozendict({"two": 2})})  # noqa: F821
+        assert (
+            PrettyPrinter(depth=1).pformat({nested: 0})
+            == "{\n    frozendict({...}): 0,\n}"
+        )
+
 
 def test_safe_tuple_sorts_unorderable_pairs() -> None:
     # ``_safe_tuple`` wraps each element of a 2-tuple in ``_safe_key`` so a
