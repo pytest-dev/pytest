@@ -416,6 +416,7 @@ class TerminalReporter:
         self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[NodeId] = set()
         self._timing_nodeids_reported: set[NodeId] = set()
+        self._current_logreport: TestReport | None = None
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -640,6 +641,7 @@ class TerminalReporter:
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
+        self._current_logreport = report
         self._tests_ran = True
         rep = report
 
@@ -747,6 +749,13 @@ class TerminalReporter:
         if self._show_progress_info == "times":
             if not collected:
                 return ""
+            from _pytest.subtests import SubtestReport
+
+            if isinstance(self._current_logreport, SubtestReport):
+                if self.showlongtestinfo:
+                    return format_node_duration(self._current_logreport.duration)
+                return ""
+
             all_reports = (
                 self._get_reports_to_display("passed")
                 + self._get_reports_to_display("xpassed")
@@ -756,9 +765,18 @@ class TerminalReporter:
                 + self._get_reports_to_display("error")
                 + self._get_reports_to_display("")
             )
-            current_location = all_reports[-1].location[0]
+
+            report = self._current_logreport
+            if report is not None:
+                current_location = report.location[0]
+            else:
+                current_location = all_reports[-1].location[0] if all_reports else ""
+
             not_reported = [
-                r for r in all_reports if r.id not in self._timing_nodeids_reported
+                r
+                for r in all_reports
+                if not isinstance(r, SubtestReport)
+                and r.id not in self._timing_nodeids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
@@ -1676,23 +1694,24 @@ def format_node_duration(seconds: float) -> str:
     """Format the given seconds in a human readable manner to show in the test progress."""
     # The formatting is designed to be compact and readable, with at most 7 characters
     # for durations below 100 hours.
-    if seconds < 0.00001:
-        return f" {seconds * 1000000:.3f}us"
-    if seconds < 0.0001:
-        return f" {seconds * 1000000:.2f}us"
-    if seconds < 0.001:
-        return f" {seconds * 1000000:.1f}us"
-    if seconds < 0.01:
-        return f" {seconds * 1000:.3f}ms"
-    if seconds < 0.1:
-        return f" {seconds * 1000:.2f}ms"
-    if seconds < 1:
-        return f" {seconds * 1000:.1f}ms"
-    if seconds < 60:
-        return f" {seconds:.3f}s"
-    if seconds < 3600:
-        return f" {seconds // 60:.0f}m {seconds % 60:.0f}s"
-    return f" {seconds // 3600:.0f}h {(seconds % 3600) // 60:.0f}m"
+    # Pick the unit based on the rounded value, so that e.g. 999.96us is shown
+    # as "1.000ms" instead of "1000.0us".
+    for scale, unit, precision, limit in (
+        (1000000, "us", 3, 10),
+        (1000000, "us", 2, 100),
+        (1000000, "us", 1, 1000),
+        (1000, "ms", 3, 10),
+        (1000, "ms", 2, 100),
+        (1000, "ms", 1, 1000),
+        (1, "s", 3, 60),
+    ):
+        text = f"{seconds * scale:.{precision}f}"
+        if float(text) < limit:
+            return f" {text}{unit}"
+    whole_seconds = round(seconds)
+    if whole_seconds < 3600:
+        return f" {whole_seconds // 60}m {whole_seconds % 60}s"
+    return f" {whole_seconds // 3600}h {(whole_seconds % 3600) // 60}m"
 
 
 def _get_raw_skip_reason(report: TestReport) -> str:

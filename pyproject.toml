@@ -51,7 +51,7 @@ dependencies = [
     "exceptiongroup>=1; python_version<'3.11'",
     "iniconfig>=2",
     "packaging>=24",
-    "pluggy>=1.5,<2",
+    "pluggy>=1.6,<2",
     "pygments>=2.15",
     "tomli>=2; python_version<'3.11'",
 ]
