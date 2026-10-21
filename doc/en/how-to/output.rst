@@ -642,6 +642,20 @@ instead, configure the ``junit_duration_report`` option like this:
         [pytest]
         junit_duration_report = call
 
+Subtests are reported as separate ``testcase`` elements, alongside their parent
+test. Each subtest name contains the parent name, a one-based execution index
+(for example, ``test_example [subtest 1]``), and its message and parameters.
+The index distinguishes repeated subtest contexts and restarts for each parent
+execution. Both passing and unsuccessful subtests appear in the XML.
+
+Suite counts include the parent and every subtest. The parent keeps its own
+reported outcome, including any failure caused by failed subtests, so both the
+parent and a subtest can count as failures. Each subtest reports its own call
+duration; the parent retains its inclusive duration according to
+``junit_duration_report``. These times overlap and should not be added together.
+Subtest durations from ``unittest.TestCase.subTest`` are currently reported as
+zero, as supplied by the unittest integration.
+
 .. _record_property example:
 
 record_property
