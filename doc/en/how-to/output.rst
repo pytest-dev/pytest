@@ -643,10 +643,12 @@ instead, configure the ``junit_duration_report`` option like this:
         junit_duration_report = call
 
 Subtests are reported as separate ``testcase`` elements, alongside their parent
-test. Each subtest name contains the parent name, a one-based execution index
+test. Each subtest name contains the parent name, a one-based report index
 (for example, ``test_example [subtest 1]``), and its message and parameters.
 The index distinguishes repeated subtest contexts and restarts for each parent
-execution. Both passing and unsuccessful subtests appear in the XML.
+execution. It follows report arrival order, which can differ from execution order
+when unittest defers reporting, as on Python 3.10. Both passing and unsuccessful
+subtests appear in the XML.
 
 Suite counts include the parent and every subtest. The parent keeps its own
 reported outcome, including any failure caused by failed subtests, so both the

@@ -1523,9 +1523,12 @@ def test_subtests_itemized(
     pytester.makepyfile(source)
     result, dom = run_and_parse("--junitprefix=prefix", family=xunit_family)
     assert result.ret == 1
-    parent, passed, failed, skipped = dom.find_by_tag("testcase")
+    parent, *children = dom.find_by_tag("testcase")
+    assert len(children) == 3
     parent.assert_attr(name="test_parent", classname=f"prefix.{classname}")
-    for i, child in enumerate([passed, failed, skipped], 1):
+    # Python 3.10's unittest defers reporting, emitting skips before the
+    # passing and failing subtests. The index follows report arrival order.
+    for i, child in enumerate(children, 1):
         child.assert_attr(
             name=f"test_parent [subtest {i}] [check <&>] (i=1)",
             classname=f"prefix.{classname}",
@@ -1533,6 +1536,9 @@ def test_subtests_itemized(
         if xunit_family == "xunit1":
             child.assert_attr(file="test_subtests_itemized.py")
             assert child["line"] == parent["line"]
+    (passed,) = [child for child in children if not child.children]
+    (failed,) = [child for child in children if child.find_first_by_tag("failure")]
+    (skipped,) = [child for child in children if child.find_first_by_tag("skipped")]
     assert passed.children == []
     assert "child failure" in failed.get_unique_child.text
     assert failed.get_unique_child.tag == "failure"
@@ -1544,6 +1550,40 @@ def test_subtests_itemized(
         assert parent.children == []
     dom.get_first_by_tag("testsuite").assert_attr(
         tests=4, failures=2 if api == "fixture" else 1, skipped=1, errors=0
+    )
+
+
+def test_subtests_record_property(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    pytester.makepyfile(
+        """
+        def test_parent(subtests, record_property):
+            record_property("shared", "<&>")
+            with subtests.test(stage="first"):
+                record_property("inside", 1)
+            with subtests.test(stage="second"):
+                record_property("inside", 2)
+        """
+    )
+    result, dom = run_and_parse(family="xunit1")
+    result.assert_outcomes(passed=1)
+    parent, first, second = dom.find_by_tag("testcase")
+    first.assert_attr(name="test_parent [subtest 1] (stage='first')")
+    second.assert_attr(name="test_parent [subtest 2] (stage='second')")
+    for case, inside_values in [
+        (parent, ["1", "2"]),
+        (first, ["1"]),
+        (second, ["1", "2"]),
+    ]:
+        properties = case.get_unique_child
+        assert properties.tag == "properties"
+        assert [(prop["name"], prop["value"]) for prop in properties.children] == [
+            ("shared", "<&>"),
+            *[("inside", value) for value in inside_values],
+        ]
+    dom.get_first_by_tag("testsuite").assert_attr(
+        tests=3, failures=0, skipped=0, errors=0
     )
 
 
