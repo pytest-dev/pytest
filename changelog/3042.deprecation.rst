@@ -1,0 +1,4 @@
+Registering command line options with ``required=True`` is now deprecated and emits a :class:`pytest.PytestRemovedIn11Warning`.
+
+Required options make argparse reject every invocation without them, including ``pytest --fixtures`` and ``pytest --markers``.
+See :ref:`required command line options` for how to check for a missing value instead.

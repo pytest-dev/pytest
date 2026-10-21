@@ -19,11 +19,13 @@ from typing import NoReturn
 from typing import TYPE_CHECKING
 from typing import TypeAlias
 from typing import Union
+import warnings
 
 from .exceptions import UsageError
 import _pytest._io
 from _pytest.compat import NOTSET
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import REQUIRED_OPTION
 
 
 if TYPE_CHECKING:
@@ -203,7 +205,7 @@ class Parser:
         by passing a ``dest`` attribute, for example
         ``addoption("--long", dest="NAME", ...)``.
         """
-        self._anonymous.addoption(*opts, **attrs)
+        self._anonymous._addoption_checked(opts, attrs)
 
     def parse(
         self,
@@ -451,6 +453,9 @@ class OptionGroup:
             Same attributes as the argparse library's :meth:`add_argument()
             <argparse.ArgumentParser.add_argument>` function accepts.
         """
+        self._addoption_checked(opts, attrs)
+
+    def _addoption_checked(self, opts: tuple[str, ...], attrs: dict[str, Any]) -> None:
         conflict = set(opts).intersection(
             name for opt in self.options for name in opt.names()
         )
@@ -482,6 +487,10 @@ class OptionGroup:
             for opt in opts:
                 if len(opt) >= 2 and opt[0] == "-" and opt[1].islower():
                     raise ValueError("lowercase short options are reserved")
+
+        if attrs.get("required"):
+            # Points at the caller of Parser.addoption()/OptionGroup.addoption().
+            warnings.warn(REQUIRED_OPTION.format(names=", ".join(opts)), stacklevel=4)
 
         action = self._arggroup.add_argument(*opts, **attrs)
         option = Argument(action)

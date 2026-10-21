@@ -204,6 +204,96 @@ This completes the basic pattern.  However, one often rather wants to
 process command line options outside of the test and rather pass in
 different or more complex objects.
 
+.. _`required command line options`:
+
+Require a command line option
+-----------------------------
+
+.. regendoc:wipe
+
+Some tests can't run without a value from the command line, for example the
+address of a server to test against. Don't register such an option with
+``required=True``: argparse then rejects every invocation without it,
+including informational ones like ``pytest --fixtures`` and ``pytest --markers``.
+``required=True`` is :ref:`deprecated <required-command-line-options>`.
+
+Instead, register the option without ``required`` and check for the missing
+value where it is needed. There are two ways to do that.
+
+Fail the tests that need the value
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Check in the fixture that provides the value:
+
+.. code-block:: python
+
+    # content of conftest.py
+    import pytest
+
+
+    def pytest_addoption(parser):
+        parser.addoption("--server", help="address of the server to test against")
+
+
+    @pytest.fixture(scope="session")
+    def server(request):
+        address = request.config.getoption("server")
+        if address is None:
+            pytest.fail(
+                "--server is required to run tests using the server fixture", pytrace=False
+            )
+        return address
+
+Only the tests that use ``server`` fail, each with a one-line error; all other
+tests run as usual. ``pytest --fixtures``, ``pytest --collect-only`` and
+selecting only tests that don't use ``server`` (for example with ``-k``) keep
+working. This also works with :pypi:`pytest-xdist`.
+
+Abort the whole run with a usage error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To refuse to start the test run, like ``required=True`` did, raise
+:class:`pytest.UsageError` from :hook:`pytest_runtestloop`:
+
+.. code-block:: python
+
+    # content of conftest.py
+    import pytest
+
+
+    def pytest_addoption(parser):
+        parser.addoption("--server", help="address of the server to test against")
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_runtestloop(session):
+        config = session.config
+        if not config.option.collectonly and config.getoption("server") is None:
+            raise pytest.UsageError("--server is required")
+
+
+    @pytest.fixture(scope="session")
+    def server(request):
+        return request.config.getoption("server")
+
+pytest then exits with code ``4`` (:class:`~pytest.ExitCode` ``USAGE_ERROR``)
+and prints the message before any test runs, also with :pypi:`pytest-xdist`.
+
+:hook:`pytest_runtestloop` is the first hook that only runs when tests are
+about to run. Checking earlier breaks informational options:
+
+* :hook:`pytest_configure` also runs for ``--help``, ``--markers``,
+  ``--fixtures``, ``--collect-only`` and ``--cache-show``.
+* :hook:`pytest_cmdline_main` also runs for ``--help``, ``--fixtures``,
+  ``--collect-only`` and ``--cache-show``.
+* :hook:`pytest_sessionstart` and the collection hooks also run for
+  ``--fixtures``, ``--collect-only`` and ``--cache-show``.
+
+The check applies to every run, including runs that only select tests which
+don't need the value. To fail only the tests that need it, use the fixture
+check above.
+
+
 Dynamically adding command line options
 --------------------------------------------------------------
 
