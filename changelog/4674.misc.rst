@@ -1,0 +1,1 @@
+Moved terminal-specific status formatting into TerminalReporter.
