@@ -285,6 +285,19 @@ def check_interactive_exception(call: CallInfo[object], report: BaseReport) -> b
     return True
 
 
+def is_syntax_error(call: CallInfo[object]) -> bool:
+    """Check whether the call failed because of a syntax error.
+
+    A syntax error is re-raised as a ``CollectError`` which keeps the original
+    ``SyntaxError`` as its cause, so both are checked here.
+    """
+    if call.excinfo is None:
+        # Didn't raise.
+        return False
+    exc = call.excinfo.value
+    return isinstance(exc, SyntaxError) or isinstance(exc.__cause__, SyntaxError)
+
+
 TResult = TypeVar("TResult", covariant=True)
 
 
@@ -589,5 +602,9 @@ def collect_one_node(collector: Collector) -> CollectReport:
     rep: CollectReport = ihook.pytest_make_collect_report(collector=collector)
     call = rep.__dict__.pop("call", None)
     if call and check_interactive_exception(call, rep):
-        ihook.pytest_exception_interact(node=collector, call=call, report=rep)
+        # The debugger is not entered for a syntax error: the traceback would
+        # point at the place where the error is re-raised instead of at the
+        # syntax error itself, which is not helpful (see #3649).
+        if not is_syntax_error(call):
+            ihook.pytest_exception_interact(node=collector, call=call, report=rep)
     return rep
