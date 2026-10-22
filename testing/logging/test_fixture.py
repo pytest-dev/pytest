@@ -6,8 +6,8 @@ from collections.abc import Iterator
 import logging
 import threading
 
-from _pytest.logging import catching_logs
 from _pytest.logging import caplog_records_key
+from _pytest.logging import catching_logs
 from _pytest.pytester import Pytester
 import pytest
 
