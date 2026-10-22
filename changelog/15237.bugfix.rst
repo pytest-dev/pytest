@@ -1,0 +1,1 @@
+Logger capture no longer fails when another thread registers a logger during capture setup.
