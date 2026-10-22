@@ -6327,8 +6327,8 @@ def test_classmethod_above_fixture_warning_inherited(pytester: Pytester) -> None
 
 
 def test_fixture_function_definition_exposed_in_public_api() -> None:
-    import pytest
     from _pytest.fixtures import FixtureFunctionDefinition
+    import pytest
 
     assert pytest.FixtureFunctionDefinition is FixtureFunctionDefinition
     assert "FixtureFunctionDefinition" in pytest.__all__
