@@ -1,0 +1,2144 @@
+{
+  "src/py.py": {
+    "loc": 15,
+    "lloc": 7,
+    "sloc": 7,
+    "comments": 3,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 3
+  },
+  "src/pytest/__init__.py": {
+    "loc": 192,
+    "lloc": 94,
+    "sloc": 184,
+    "comments": 2,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 2
+  },
+  "src/pytest/__main__.py": {
+    "loc": 9,
+    "lloc": 5,
+    "sloc": 4,
+    "comments": 0,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 1
+  },
+  "src/_pytest/approx.py": {
+    "loc": 1142,
+    "lloc": 471,
+    "sloc": 640,
+    "comments": 90,
+    "multi": 222,
+    "blank": 194,
+    "single_comments": 86
+  },
+  "src/_pytest/cacheprovider.py": {
+    "loc": 663,
+    "lloc": 377,
+    "sloc": 446,
+    "comments": 22,
+    "multi": 80,
+    "blank": 113,
+    "single_comments": 24
+  },
+  "src/_pytest/capture.py": {
+    "loc": 1157,
+    "lloc": 694,
+    "sloc": 735,
+    "comments": 50,
+    "multi": 126,
+    "blank": 240,
+    "single_comments": 56
+  },
+  "src/_pytest/compat.py": {
+    "loc": 330,
+    "lloc": 146,
+    "sloc": 167,
+    "comments": 38,
+    "multi": 49,
+    "blank": 74,
+    "single_comments": 40
+  },
+  "src/_pytest/debugging.py": {
+    "loc": 404,
+    "lloc": 259,
+    "sloc": 290,
+    "comments": 26,
+    "multi": 10,
+    "blank": 74,
+    "single_comments": 30
+  },
+  "src/_pytest/deprecated.py": {
+    "loc": 170,
+    "lloc": 26,
+    "sloc": 110,
+    "comments": 21,
+    "multi": 10,
+    "blank": 29,
+    "single_comments": 21
+  },
+  "src/_pytest/doctest.py": {
+    "loc": 752,
+    "lloc": 393,
+    "sloc": 545,
+    "comments": 41,
+    "multi": 43,
+    "blank": 127,
+    "single_comments": 37
+  },
+  "src/_pytest/faulthandler.py": {
+    "loc": 119,
+    "lloc": 71,
+    "sloc": 77,
+    "comments": 12,
+    "multi": 2,
+    "blank": 27,
+    "single_comments": 13
+  },
+  "src/_pytest/fixtures.py": {
+    "loc": 2613,
+    "lloc": 1266,
+    "sloc": 1621,
+    "comments": 296,
+    "multi": 332,
+    "blank": 356,
+    "single_comments": 304
+  },
+  "src/_pytest/freeze_support.py": {
+    "loc": 45,
+    "lloc": 24,
+    "sloc": 24,
+    "comments": 2,
+    "multi": 10,
+    "blank": 9,
+    "single_comments": 2
+  },
+  "src/_pytest/helpconfig.py": {
+    "loc": 284,
+    "lloc": 138,
+    "sloc": 233,
+    "comments": 11,
+    "multi": 9,
+    "blank": 34,
+    "single_comments": 8
+  },
+  "src/_pytest/hookspec.py": {
+    "loc": 1298,
+    "lloc": 161,
+    "sloc": 163,
+    "comments": 41,
+    "multi": 696,
+    "blank": 402,
+    "single_comments": 37
+  },
+  "src/_pytest/junitxml.py": {
+    "loc": 761,
+    "lloc": 441,
+    "sloc": 532,
+    "comments": 39,
+    "multi": 73,
+    "blank": 119,
+    "single_comments": 37
+  },
+  "src/_pytest/legacypath.py": {
+    "loc": 471,
+    "lloc": 273,
+    "sloc": 231,
+    "comments": 29,
+    "multi": 50,
+    "blank": 119,
+    "single_comments": 71
+  },
+  "src/_pytest/logging.py": {
+    "loc": 988,
+    "lloc": 525,
+    "sloc": 632,
+    "comments": 53,
+    "multi": 125,
+    "blank": 167,
+    "single_comments": 64
+  },
+  "src/_pytest/main.py": {
+    "loc": 1242,
+    "lloc": 632,
+    "sloc": 903,
+    "comments": 94,
+    "multi": 81,
+    "blank": 165,
+    "single_comments": 93
+  },
+  "src/_pytest/monkeypatch.py": {
+    "loc": 456,
+    "lloc": 220,
+    "sloc": 242,
+    "comments": 31,
+    "multi": 105,
+    "blank": 79,
+    "single_comments": 30
+  },
+  "src/_pytest/nodeid.py": {
+    "loc": 113,
+    "lloc": 59,
+    "sloc": 56,
+    "comments": 5,
+    "multi": 33,
+    "blank": 18,
+    "single_comments": 6
+  },
+  "src/_pytest/nodes.py": {
+    "loc": 797,
+    "lloc": 375,
+    "sloc": 438,
+    "comments": 60,
+    "multi": 149,
+    "blank": 149,
+    "single_comments": 61
+  },
+  "src/_pytest/outcomes.py": {
+    "loc": 286,
+    "lloc": 103,
+    "sloc": 105,
+    "comments": 12,
+    "multi": 86,
+    "blank": 82,
+    "single_comments": 13
+  },
+  "src/_pytest/pastebin.py": {
+    "loc": 121,
+    "lloc": 82,
+    "sloc": 88,
+    "comments": 10,
+    "multi": 4,
+    "blank": 20,
+    "single_comments": 9
+  },
+  "src/_pytest/pathlib.py": {
+    "loc": 1105,
+    "lloc": 579,
+    "sloc": 606,
+    "comments": 107,
+    "multi": 185,
+    "blank": 200,
+    "single_comments": 114
+  },
+  "src/_pytest/pytester.py": {
+    "loc": 1815,
+    "lloc": 915,
+    "sloc": 1057,
+    "comments": 53,
+    "multi": 380,
+    "blank": 314,
+    "single_comments": 64
+  },
+  "src/_pytest/pytester_assertions.py": {
+    "loc": 74,
+    "lloc": 27,
+    "sloc": 58,
+    "comments": 4,
+    "multi": 2,
+    "blank": 9,
+    "single_comments": 5
+  },
+  "src/_pytest/python.py": {
+    "loc": 1857,
+    "lloc": 940,
+    "sloc": 1267,
+    "comments": 153,
+    "multi": 200,
+    "blank": 241,
+    "single_comments": 149
+  },
+  "src/_pytest/raises.py": {
+    "loc": 1507,
+    "lloc": 567,
+    "sloc": 928,
+    "comments": 97,
+    "multi": 265,
+    "blank": 221,
+    "single_comments": 93
+  },
+  "src/_pytest/recwarn.py": {
+    "loc": 378,
+    "lloc": 166,
+    "sloc": 214,
+    "comments": 29,
+    "multi": 62,
+    "blank": 70,
+    "single_comments": 32
+  },
+  "src/_pytest/reports.py": {
+    "loc": 734,
+    "lloc": 407,
+    "sloc": 503,
+    "comments": 47,
+    "multi": 60,
+    "blank": 122,
+    "single_comments": 49
+  },
+  "src/_pytest/runner.py": {
+    "loc": 593,
+    "lloc": 356,
+    "sloc": 388,
+    "comments": 45,
+    "multi": 68,
+    "blank": 96,
+    "single_comments": 41
+  },
+  "src/_pytest/scope.py": {
+    "loc": 91,
+    "lloc": 43,
+    "sloc": 44,
+    "comments": 3,
+    "multi": 19,
+    "blank": 23,
+    "single_comments": 5
+  },
+  "src/_pytest/setuponly.py": {
+    "loc": 98,
+    "lloc": 62,
+    "sloc": 77,
+    "comments": 4,
+    "multi": 0,
+    "blank": 18,
+    "single_comments": 3
+  },
+  "src/_pytest/setupplan.py": {
+    "loc": 39,
+    "lloc": 23,
+    "sloc": 31,
+    "comments": 1,
+    "multi": 0,
+    "blank": 7,
+    "single_comments": 1
+  },
+  "src/_pytest/skipping.py": {
+    "loc": 321,
+    "lloc": 188,
+    "sloc": 249,
+    "comments": 14,
+    "multi": 6,
+    "blank": 50,
+    "single_comments": 16
+  },
+  "src/_pytest/stash.py": {
+    "loc": 116,
+    "lloc": 45,
+    "sloc": 35,
+    "comments": 0,
+    "multi": 41,
+    "blank": 37,
+    "single_comments": 3
+  },
+  "src/_pytest/stepwise.py": {
+    "loc": 219,
+    "lloc": 131,
+    "sloc": 165,
+    "comments": 20,
+    "multi": 0,
+    "blank": 34,
+    "single_comments": 20
+  },
+  "src/_pytest/subtests.py": {
+    "loc": 412,
+    "lloc": 246,
+    "sloc": 296,
+    "comments": 17,
+    "multi": 19,
+    "blank": 77,
+    "single_comments": 20
+  },
+  "src/_pytest/terminal.py": {
+    "loc": 1817,
+    "lloc": 1200,
+    "sloc": 1454,
+    "comments": 72,
+    "multi": 67,
+    "blank": 229,
+    "single_comments": 67
+  },
+  "src/_pytest/terminalprogress.py": {
+    "loc": 30,
+    "lloc": 13,
+    "sloc": 14,
+    "comments": 10,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 10
+  },
+  "src/_pytest/threadexception.py": {
+    "loc": 148,
+    "lloc": 92,
+    "sloc": 108,
+    "comments": 15,
+    "multi": 0,
+    "blank": 26,
+    "single_comments": 14
+  },
+  "src/_pytest/timing.py": {
+    "loc": 97,
+    "lloc": 50,
+    "sloc": 41,
+    "comments": 9,
+    "multi": 17,
+    "blank": 29,
+    "single_comments": 10
+  },
+  "src/_pytest/tmpdir.py": {
+    "loc": 345,
+    "lloc": 184,
+    "sloc": 225,
+    "comments": 36,
+    "multi": 37,
+    "blank": 46,
+    "single_comments": 37
+  },
+  "src/_pytest/tracemalloc.py": {
+    "loc": 24,
+    "lloc": 14,
+    "sloc": 17,
+    "comments": 3,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 3
+  },
+  "src/_pytest/unittest.py": {
+    "loc": 651,
+    "lloc": 388,
+    "sloc": 469,
+    "comments": 86,
+    "multi": 15,
+    "blank": 92,
+    "single_comments": 75
+  },
+  "src/_pytest/unraisableexception.py": {
+    "loc": 184,
+    "lloc": 106,
+    "sloc": 127,
+    "comments": 25,
+    "multi": 0,
+    "blank": 32,
+    "single_comments": 25
+  },
+  "src/_pytest/warnings.py": {
+    "loc": 122,
+    "lloc": 56,
+    "sloc": 92,
+    "comments": 3,
+    "multi": 4,
+    "blank": 22,
+    "single_comments": 4
+  },
+  "src/_pytest/warning_types.py": {
+    "loc": 174,
+    "lloc": 87,
+    "sloc": 75,
+    "comments": 1,
+    "multi": 30,
+    "blank": 59,
+    "single_comments": 10
+  },
+  "src/_pytest/_argcomplete.py": {
+    "loc": 117,
+    "lloc": 42,
+    "sloc": 38,
+    "comments": 3,
+    "multi": 48,
+    "blank": 27,
+    "single_comments": 4
+  },
+  "src/_pytest/__init__.py": {
+    "loc": 13,
+    "lloc": 8,
+    "sloc": 8,
+    "comments": 3,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 2
+  },
+  "src/_pytest/assertion/compare_text.py": {
+    "loc": 134,
+    "lloc": 89,
+    "sloc": 102,
+    "comments": 5,
+    "multi": 12,
+    "blank": 18,
+    "single_comments": 2
+  },
+  "src/_pytest/assertion/highlight.py": {
+    "loc": 11,
+    "lloc": 5,
+    "sloc": 4,
+    "comments": 0,
+    "multi": 3,
+    "blank": 4,
+    "single_comments": 0
+  },
+  "src/_pytest/assertion/rewrite.py": {
+    "loc": 1221,
+    "lloc": 753,
+    "sloc": 821,
+    "comments": 128,
+    "multi": 110,
+    "blank": 163,
+    "single_comments": 127
+  },
+  "src/_pytest/assertion/truncate.py": {
+    "loc": 159,
+    "lloc": 73,
+    "sloc": 91,
+    "comments": 21,
+    "multi": 21,
+    "blank": 26,
+    "single_comments": 21
+  },
+  "src/_pytest/assertion/util.py": {
+    "loc": 191,
+    "lloc": 110,
+    "sloc": 122,
+    "comments": 15,
+    "multi": 28,
+    "blank": 26,
+    "single_comments": 15
+  },
+  "src/_pytest/assertion/_compare_any.py": {
+    "loc": 139,
+    "lloc": 81,
+    "sloc": 118,
+    "comments": 7,
+    "multi": 5,
+    "blank": 11,
+    "single_comments": 5
+  },
+  "src/_pytest/assertion/_compare_mapping.py": {
+    "loc": 76,
+    "lloc": 48,
+    "sloc": 62,
+    "comments": 7,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 8
+  },
+  "src/_pytest/assertion/_compare_sequence.py": {
+    "loc": 96,
+    "lloc": 55,
+    "sloc": 67,
+    "comments": 17,
+    "multi": 0,
+    "blank": 12,
+    "single_comments": 17
+  },
+  "src/_pytest/assertion/_compare_set.py": {
+    "loc": 101,
+    "lloc": 36,
+    "sloc": 81,
+    "comments": 3,
+    "multi": 0,
+    "blank": 20,
+    "single_comments": 0
+  },
+  "src/_pytest/assertion/_guards.py": {
+    "loc": 61,
+    "lloc": 33,
+    "sloc": 32,
+    "comments": 3,
+    "multi": 6,
+    "blank": 22,
+    "single_comments": 1
+  },
+  "src/_pytest/assertion/_typing.py": {
+    "loc": 35,
+    "lloc": 21,
+    "sloc": 15,
+    "comments": 3,
+    "multi": 5,
+    "blank": 12,
+    "single_comments": 3
+  },
+  "src/_pytest/assertion/__init__.py": {
+    "loc": 258,
+    "lloc": 122,
+    "sloc": 172,
+    "comments": 14,
+    "multi": 25,
+    "blank": 44,
+    "single_comments": 17
+  },
+  "src/_pytest/config/argparsing.py": {
+    "loc": 659,
+    "lloc": 321,
+    "sloc": 396,
+    "comments": 34,
+    "multi": 120,
+    "blank": 105,
+    "single_comments": 38
+  },
+  "src/_pytest/config/exceptions.py": {
+    "loc": 15,
+    "lloc": 8,
+    "sloc": 6,
+    "comments": 0,
+    "multi": 2,
+    "blank": 6,
+    "single_comments": 1
+  },
+  "src/_pytest/config/findpaths.py": {
+    "loc": 501,
+    "lloc": 253,
+    "sloc": 306,
+    "comments": 35,
+    "multi": 78,
+    "blank": 84,
+    "single_comments": 33
+  },
+  "src/_pytest/config/__init__.py": {
+    "loc": 2501,
+    "lloc": 1287,
+    "sloc": 1664,
+    "comments": 195,
+    "multi": 274,
+    "blank": 351,
+    "single_comments": 212
+  },
+  "src/_pytest/mark/expression.py": {
+    "loc": 363,
+    "lloc": 224,
+    "sloc": 234,
+    "comments": 6,
+    "multi": 49,
+    "blank": 73,
+    "single_comments": 7
+  },
+  "src/_pytest/mark/structures.py": {
+    "loc": 708,
+    "lloc": 342,
+    "sloc": 447,
+    "comments": 59,
+    "multi": 86,
+    "blank": 120,
+    "single_comments": 55
+  },
+  "src/_pytest/mark/__init__.py": {
+    "loc": 341,
+    "lloc": 164,
+    "sloc": 208,
+    "comments": 16,
+    "multi": 41,
+    "blank": 77,
+    "single_comments": 15
+  },
+  "src/_pytest/_code/code.py": {
+    "loc": 1690,
+    "lloc": 1002,
+    "sloc": 1096,
+    "comments": 109,
+    "multi": 201,
+    "blank": 267,
+    "single_comments": 126
+  },
+  "src/_pytest/_code/source.py": {
+    "loc": 262,
+    "lloc": 196,
+    "sloc": 185,
+    "comments": 29,
+    "multi": 14,
+    "blank": 36,
+    "single_comments": 27
+  },
+  "src/_pytest/_code/__init__.py": {
+    "loc": 26,
+    "lloc": 12,
+    "sloc": 21,
+    "comments": 0,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 1
+  },
+  "src/_pytest/_io/pprint.py": {
+    "loc": 698,
+    "lloc": 357,
+    "sloc": 556,
+    "comments": 39,
+    "multi": 25,
+    "blank": 81,
+    "single_comments": 36
+  },
+  "src/_pytest/_io/saferepr.py": {
+    "loc": 155,
+    "lloc": 94,
+    "sloc": 90,
+    "comments": 4,
+    "multi": 32,
+    "blank": 29,
+    "single_comments": 4
+  },
+  "src/_pytest/_io/terminalwriter.py": {
+    "loc": 258,
+    "lloc": 148,
+    "sloc": 182,
+    "comments": 29,
+    "multi": 5,
+    "blank": 39,
+    "single_comments": 32
+  },
+  "src/_pytest/_io/wcwidth.py": {
+    "loc": 57,
+    "lloc": 28,
+    "sloc": 31,
+    "comments": 5,
+    "multi": 7,
+    "blank": 14,
+    "single_comments": 5
+  },
+  "src/_pytest/_io/__init__.py": {
+    "loc": 10,
+    "lloc": 4,
+    "sloc": 7,
+    "comments": 0,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 0
+  },
+  "src/_pytest/_py/error.py": {
+    "loc": 119,
+    "lloc": 66,
+    "sloc": 88,
+    "comments": 8,
+    "multi": 4,
+    "blank": 22,
+    "single_comments": 5
+  },
+  "src/_pytest/_py/path.py": {
+    "loc": 1475,
+    "lloc": 1070,
+    "sloc": 1019,
+    "comments": 62,
+    "multi": 168,
+    "blank": 204,
+    "single_comments": 84
+  },
+  "src/_pytest/_py/__init__.py": {
+    "loc": 0,
+    "lloc": 0,
+    "sloc": 0,
+    "comments": 0,
+    "multi": 0,
+    "blank": 0,
+    "single_comments": 0
+  },
+  "testing/acceptance_test.py": {
+    "loc": 1769,
+    "lloc": 724,
+    "sloc": 1413,
+    "comments": 73,
+    "multi": 41,
+    "blank": 230,
+    "single_comments": 85
+  },
+  "testing/conftest.py": {
+    "loc": 251,
+    "lloc": 138,
+    "sloc": 151,
+    "comments": 4,
+    "multi": 35,
+    "blank": 56,
+    "single_comments": 9
+  },
+  "testing/deprecated_test.py": {
+    "loc": 403,
+    "lloc": 137,
+    "sloc": 291,
+    "comments": 6,
+    "multi": 28,
+    "blank": 75,
+    "single_comments": 9
+  },
+  "testing/test_argcomplete.py": {
+    "loc": 99,
+    "lloc": 62,
+    "sloc": 64,
+    "comments": 6,
+    "multi": 0,
+    "blank": 27,
+    "single_comments": 8
+  },
+  "testing/test_assertion.py": {
+    "loc": 3157,
+    "lloc": 1234,
+    "sloc": 2644,
+    "comments": 79,
+    "multi": 63,
+    "blank": 374,
+    "single_comments": 76
+  },
+  "testing/test_assertrewrite.py": {
+    "loc": 2455,
+    "lloc": 1130,
+    "sloc": 1917,
+    "comments": 72,
+    "multi": 74,
+    "blank": 403,
+    "single_comments": 61
+  },
+  "testing/test_assertrewrite_coverage.py": {
+    "loc": 1231,
+    "lloc": 312,
+    "sloc": 922,
+    "comments": 25,
+    "multi": 72,
+    "blank": 174,
+    "single_comments": 63
+  },
+  "testing/test_cacheprovider.py": {
+    "loc": 1481,
+    "lloc": 611,
+    "sloc": 1241,
+    "comments": 39,
+    "multi": 29,
+    "blank": 166,
+    "single_comments": 45
+  },
+  "testing/test_capture.py": {
+    "loc": 1772,
+    "lloc": 798,
+    "sloc": 1504,
+    "comments": 38,
+    "multi": 17,
+    "blank": 223,
+    "single_comments": 28
+  },
+  "testing/test_collection.py": {
+    "loc": 2809,
+    "lloc": 970,
+    "sloc": 2295,
+    "comments": 98,
+    "multi": 79,
+    "blank": 335,
+    "single_comments": 100
+  },
+  "testing/test_collect_imported_tests.py": {
+    "loc": 102,
+    "lloc": 34,
+    "sloc": 73,
+    "comments": 2,
+    "multi": 9,
+    "blank": 18,
+    "single_comments": 2
+  },
+  "testing/test_compat.py": {
+    "loc": 204,
+    "lloc": 147,
+    "sloc": 145,
+    "comments": 15,
+    "multi": 0,
+    "blank": 53,
+    "single_comments": 6
+  },
+  "testing/test_config.py": {
+    "loc": 3647,
+    "lloc": 1594,
+    "sloc": 3099,
+    "comments": 68,
+    "multi": 45,
+    "blank": 403,
+    "single_comments": 100
+  },
+  "testing/test_conftest.py": {
+    "loc": 1086,
+    "lloc": 390,
+    "sloc": 860,
+    "comments": 35,
+    "multi": 64,
+    "blank": 129,
+    "single_comments": 33
+  },
+  "testing/test_debugging.py": {
+    "loc": 1445,
+    "lloc": 631,
+    "sloc": 1216,
+    "comments": 42,
+    "multi": 11,
+    "blank": 187,
+    "single_comments": 31
+  },
+  "testing/test_doctest.py": {
+    "loc": 1876,
+    "lloc": 528,
+    "sloc": 1600,
+    "comments": 25,
+    "multi": 88,
+    "blank": 164,
+    "single_comments": 24
+  },
+  "testing/test_entry_points.py": {
+    "loc": 10,
+    "lloc": 7,
+    "sloc": 6,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/test_error_diffs.py": {
+    "loc": 296,
+    "lloc": 12,
+    "sloc": 280,
+    "comments": 0,
+    "multi": 4,
+    "blank": 12,
+    "single_comments": 0
+  },
+  "testing/test_faulthandler.py": {
+    "loc": 238,
+    "lloc": 100,
+    "sloc": 173,
+    "comments": 5,
+    "multi": 18,
+    "blank": 36,
+    "single_comments": 11
+  },
+  "testing/test_findpaths.py": {
+    "loc": 266,
+    "lloc": 136,
+    "sloc": 217,
+    "comments": 2,
+    "multi": 2,
+    "blank": 29,
+    "single_comments": 18
+  },
+  "testing/test_helpconfig.py": {
+    "loc": 197,
+    "lloc": 78,
+    "sloc": 158,
+    "comments": 2,
+    "multi": 0,
+    "blank": 30,
+    "single_comments": 9
+  },
+  "testing/test_junitxml.py": {
+    "loc": 1968,
+    "lloc": 931,
+    "sloc": 1694,
+    "comments": 17,
+    "multi": 10,
+    "blank": 239,
+    "single_comments": 25
+  },
+  "testing/test_legacypath.py": {
+    "loc": 187,
+    "lloc": 96,
+    "sloc": 145,
+    "comments": 4,
+    "multi": 2,
+    "blank": 33,
+    "single_comments": 7
+  },
+  "testing/test_link_resolve.py": {
+    "loc": 84,
+    "lloc": 54,
+    "sloc": 62,
+    "comments": 8,
+    "multi": 0,
+    "blank": 14,
+    "single_comments": 8
+  },
+  "testing/test_main.py": {
+    "loc": 372,
+    "lloc": 126,
+    "sloc": 309,
+    "comments": 4,
+    "multi": 11,
+    "blank": 43,
+    "single_comments": 9
+  },
+  "testing/test_mark.py": {
+    "loc": 1679,
+    "lloc": 551,
+    "sloc": 1372,
+    "comments": 19,
+    "multi": 33,
+    "blank": 243,
+    "single_comments": 31
+  },
+  "testing/test_mark_expression.py": {
+    "loc": 356,
+    "lloc": 81,
+    "sloc": 307,
+    "comments": 5,
+    "multi": 9,
+    "blank": 39,
+    "single_comments": 1
+  },
+  "testing/test_meta.py": {
+    "loc": 34,
+    "lloc": 15,
+    "sloc": 20,
+    "comments": 3,
+    "multi": 4,
+    "blank": 8,
+    "single_comments": 2
+  },
+  "testing/test_monkeypatch.py": {
+    "loc": 690,
+    "lloc": 462,
+    "sloc": 494,
+    "comments": 26,
+    "multi": 20,
+    "blank": 156,
+    "single_comments": 20
+  },
+  "testing/test_nodeid.py": {
+    "loc": 174,
+    "lloc": 115,
+    "sloc": 128,
+    "comments": 4,
+    "multi": 10,
+    "blank": 31,
+    "single_comments": 5
+  },
+  "testing/test_nodes.py": {
+    "loc": 164,
+    "lloc": 78,
+    "sloc": 114,
+    "comments": 7,
+    "multi": 4,
+    "blank": 34,
+    "single_comments": 12
+  },
+  "testing/test_parseopt.py": {
+    "loc": 508,
+    "lloc": 311,
+    "sloc": 404,
+    "comments": 25,
+    "multi": 4,
+    "blank": 72,
+    "single_comments": 28
+  },
+  "testing/test_pastebin.py": {
+    "loc": 212,
+    "lloc": 110,
+    "sloc": 169,
+    "comments": 3,
+    "multi": 8,
+    "blank": 32,
+    "single_comments": 3
+  },
+  "testing/test_pathlib.py": {
+    "loc": 1791,
+    "lloc": 793,
+    "sloc": 1347,
+    "comments": 110,
+    "multi": 79,
+    "blank": 247,
+    "single_comments": 118
+  },
+  "testing/test_pluginmanager.py": {
+    "loc": 580,
+    "lloc": 355,
+    "sloc": 476,
+    "comments": 12,
+    "multi": 16,
+    "blank": 75,
+    "single_comments": 13
+  },
+  "testing/test_pytester.py": {
+    "loc": 864,
+    "lloc": 470,
+    "sloc": 682,
+    "comments": 30,
+    "multi": 6,
+    "blank": 156,
+    "single_comments": 20
+  },
+  "testing/test_python_path.py": {
+    "loc": 130,
+    "lloc": 70,
+    "sloc": 93,
+    "comments": 6,
+    "multi": 0,
+    "blank": 27,
+    "single_comments": 10
+  },
+  "testing/test_recwarn.py": {
+    "loc": 655,
+    "lloc": 422,
+    "sloc": 500,
+    "comments": 30,
+    "multi": 19,
+    "blank": 113,
+    "single_comments": 23
+  },
+  "testing/test_reports.py": {
+    "loc": 605,
+    "lloc": 331,
+    "sloc": 483,
+    "comments": 21,
+    "multi": 35,
+    "blank": 63,
+    "single_comments": 24
+  },
+  "testing/test_runner.py": {
+    "loc": 1279,
+    "lloc": 609,
+    "sloc": 1020,
+    "comments": 55,
+    "multi": 15,
+    "blank": 188,
+    "single_comments": 56
+  },
+  "testing/test_runner_xunit.py": {
+    "loc": 297,
+    "lloc": 59,
+    "sloc": 238,
+    "comments": 1,
+    "multi": 0,
+    "blank": 56,
+    "single_comments": 3
+  },
+  "testing/test_scope.py": {
+    "loc": 41,
+    "lloc": 28,
+    "sloc": 28,
+    "comments": 1,
+    "multi": 0,
+    "blank": 13,
+    "single_comments": 0
+  },
+  "testing/test_session.py": {
+    "loc": 485,
+    "lloc": 183,
+    "sloc": 395,
+    "comments": 14,
+    "multi": 10,
+    "blank": 70,
+    "single_comments": 10
+  },
+  "testing/test_setuponly.py": {
+    "loc": 321,
+    "lloc": 71,
+    "sloc": 270,
+    "comments": 2,
+    "multi": 0,
+    "blank": 48,
+    "single_comments": 3
+  },
+  "testing/test_setupplan.py": {
+    "loc": 122,
+    "lloc": 32,
+    "sloc": 89,
+    "comments": 3,
+    "multi": 9,
+    "blank": 19,
+    "single_comments": 5
+  },
+  "testing/test_skipping.py": {
+    "loc": 1569,
+    "lloc": 461,
+    "sloc": 1381,
+    "comments": 10,
+    "multi": 2,
+    "blank": 172,
+    "single_comments": 14
+  },
+  "testing/test_stash.py": {
+    "loc": 69,
+    "lloc": 52,
+    "sloc": 52,
+    "comments": 8,
+    "multi": 0,
+    "blank": 10,
+    "single_comments": 7
+  },
+  "testing/test_stepwise.py": {
+    "loc": 545,
+    "lloc": 166,
+    "sloc": 418,
+    "comments": 23,
+    "multi": 14,
+    "blank": 90,
+    "single_comments": 23
+  },
+  "testing/test_subtests.py": {
+    "loc": 1098,
+    "lloc": 256,
+    "sloc": 932,
+    "comments": 15,
+    "multi": 11,
+    "blank": 137,
+    "single_comments": 18
+  },
+  "testing/test_terminal.py": {
+    "loc": 3731,
+    "lloc": 1292,
+    "sloc": 3204,
+    "comments": 75,
+    "multi": 14,
+    "blank": 436,
+    "single_comments": 77
+  },
+  "testing/test_threadexception.py": {
+    "loc": 255,
+    "lloc": 56,
+    "sloc": 208,
+    "comments": 2,
+    "multi": 0,
+    "blank": 45,
+    "single_comments": 2
+  },
+  "testing/test_tmpdir.py": {
+    "loc": 901,
+    "lloc": 486,
+    "sloc": 655,
+    "comments": 41,
+    "multi": 46,
+    "blank": 154,
+    "single_comments": 46
+  },
+  "testing/test_unittest.py": {
+    "loc": 1743,
+    "lloc": 412,
+    "sloc": 1425,
+    "comments": 9,
+    "multi": 39,
+    "blank": 262,
+    "single_comments": 17
+  },
+  "testing/test_unraisableexception.py": {
+    "loc": 529,
+    "lloc": 117,
+    "sloc": 371,
+    "comments": 62,
+    "multi": 0,
+    "blank": 96,
+    "single_comments": 62
+  },
+  "testing/test_warnings.py": {
+    "loc": 1172,
+    "lloc": 431,
+    "sloc": 929,
+    "comments": 23,
+    "multi": 31,
+    "blank": 162,
+    "single_comments": 50
+  },
+  "testing/test_warning_types.py": {
+    "loc": 50,
+    "lloc": 19,
+    "sloc": 34,
+    "comments": 2,
+    "multi": 6,
+    "blank": 9,
+    "single_comments": 1
+  },
+  "testing/typing_checks.py": {
+    "loc": 80,
+    "lloc": 48,
+    "sloc": 41,
+    "comments": 9,
+    "multi": 4,
+    "blank": 26,
+    "single_comments": 9
+  },
+  "testing/typing_raises_group.py": {
+    "loc": 240,
+    "lloc": 142,
+    "sloc": 147,
+    "comments": 44,
+    "multi": 3,
+    "blank": 64,
+    "single_comments": 26
+  },
+  "testing/code/test_code.py": {
+    "loc": 227,
+    "lloc": 162,
+    "sloc": 163,
+    "comments": 7,
+    "multi": 0,
+    "blank": 62,
+    "single_comments": 2
+  },
+  "testing/code/test_excinfo.py": {
+    "loc": 2298,
+    "lloc": 1321,
+    "sloc": 1911,
+    "comments": 55,
+    "multi": 41,
+    "blank": 294,
+    "single_comments": 52
+  },
+  "testing/code/test_source.py": {
+    "loc": 726,
+    "lloc": 389,
+    "sloc": 529,
+    "comments": 26,
+    "multi": 7,
+    "blank": 166,
+    "single_comments": 24
+  },
+  "testing/examples/test_issue519.py": {
+    "loc": 9,
+    "lloc": 6,
+    "sloc": 6,
+    "comments": 0,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 0
+  },
+  "testing/example_scripts/issue_519.py": {
+    "loc": 54,
+    "lloc": 27,
+    "sloc": 37,
+    "comments": 1,
+    "multi": 0,
+    "blank": 16,
+    "single_comments": 1
+  },
+  "testing/example_scripts/__init__.py": {
+    "loc": 0,
+    "lloc": 0,
+    "sloc": 0,
+    "comments": 0,
+    "multi": 0,
+    "blank": 0,
+    "single_comments": 0
+  },
+  "testing/example_scripts/acceptance/fixture_mock_integration.py": {
+    "loc": 21,
+    "lloc": 13,
+    "sloc": 10,
+    "comments": 1,
+    "multi": 0,
+    "blank": 9,
+    "single_comments": 2
+  },
+  "testing/example_scripts/collect/collect_init_tests/tests/test_foo.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/collect/collect_init_tests/tests/__init__.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/collect/package_infinite_recursion/conftest.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/collect/package_infinite_recursion/tests/test_basic.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/collect/package_infinite_recursion/tests/__init__.py": {
+    "loc": 0,
+    "lloc": 0,
+    "sloc": 0,
+    "comments": 0,
+    "multi": 0,
+    "blank": 0,
+    "single_comments": 0
+  },
+  "testing/example_scripts/collect/package_init_given_as_arg/pkg/test_foo.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/collect/package_init_given_as_arg/pkg/__init__.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/config/collect_pytest_prefix/conftest.py": {
+    "loc": 5,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 0,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 0
+  },
+  "testing/example_scripts/config/collect_pytest_prefix/test_foo.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/conftest_usageerror/conftest.py": {
+    "loc": 12,
+    "lloc": 6,
+    "sloc": 6,
+    "comments": 1,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 1
+  },
+  "testing/example_scripts/customdirectory/conftest.py": {
+    "loc": 25,
+    "lloc": 15,
+    "sloc": 17,
+    "comments": 2,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 2
+  },
+  "testing/example_scripts/customdirectory/tests/test_first.py": {
+    "loc": 7,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 2,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 2
+  },
+  "testing/example_scripts/customdirectory/tests/test_second.py": {
+    "loc": 7,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 2,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 2
+  },
+  "testing/example_scripts/customdirectory/tests/test_third.py": {
+    "loc": 7,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 2,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 2
+  },
+  "testing/example_scripts/dataclasses/test_compare_dataclasses.py": {
+    "loc": 16,
+    "lloc": 13,
+    "sloc": 11,
+    "comments": 0,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 0
+  },
+  "testing/example_scripts/dataclasses/test_compare_dataclasses_field_comparison_off.py": {
+    "loc": 16,
+    "lloc": 13,
+    "sloc": 11,
+    "comments": 0,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 0
+  },
+  "testing/example_scripts/dataclasses/test_compare_dataclasses_verbose.py": {
+    "loc": 16,
+    "lloc": 13,
+    "sloc": 11,
+    "comments": 0,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 0
+  },
+  "testing/example_scripts/dataclasses/test_compare_dataclasses_with_custom_eq.py": {
+    "loc": 19,
+    "lloc": 15,
+    "sloc": 13,
+    "comments": 0,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 0
+  },
+  "testing/example_scripts/dataclasses/test_compare_initvar.py": {
+    "loc": 15,
+    "lloc": 11,
+    "sloc": 9,
+    "comments": 1,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 1
+  },
+  "testing/example_scripts/dataclasses/test_compare_recursive_dataclasses.py": {
+    "loc": 47,
+    "lloc": 34,
+    "sloc": 34,
+    "comments": 1,
+    "multi": 0,
+    "blank": 12,
+    "single_comments": 1
+  },
+  "testing/example_scripts/dataclasses/test_compare_two_different_dataclasses.py": {
+    "loc": 21,
+    "lloc": 19,
+    "sloc": 15,
+    "comments": 1,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 0
+  },
+  "testing/example_scripts/doctest/main_py/test_normal_module.py": {
+    "loc": 10,
+    "lloc": 4,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 4,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/doctest/main_py/__main__.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/test_fixture_named_request.py": {
+    "loc": 13,
+    "lloc": 7,
+    "sloc": 7,
+    "comments": 1,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/test_getfixturevalue_dynamic.py": {
+    "loc": 23,
+    "lloc": 13,
+    "sloc": 13,
+    "comments": 1,
+    "multi": 0,
+    "blank": 9,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/custom_item/conftest.py": {
+    "loc": 18,
+    "lloc": 10,
+    "sloc": 10,
+    "comments": 1,
+    "multi": 0,
+    "blank": 7,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/custom_item/foo/test_foo.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/custom_item/foo/__init__.py": {
+    "loc": 0,
+    "lloc": 0,
+    "sloc": 0,
+    "comments": 0,
+    "multi": 0,
+    "blank": 0,
+    "single_comments": 0
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_detect_recursive_dependency_error.py": {
+    "loc": 18,
+    "lloc": 10,
+    "sloc": 10,
+    "comments": 1,
+    "multi": 0,
+    "blank": 7,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_extend_fixture_module_class.py": {
+    "loc": 18,
+    "lloc": 11,
+    "sloc": 11,
+    "comments": 1,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_funcarg_basic.py": {
+    "loc": 18,
+    "lloc": 10,
+    "sloc": 10,
+    "comments": 1,
+    "multi": 0,
+    "blank": 7,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_funcarg_lookupfails.py": {
+    "loc": 13,
+    "lloc": 7,
+    "sloc": 7,
+    "comments": 1,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_funcarg_lookup_classlevel.py": {
+    "loc": 13,
+    "lloc": 8,
+    "sloc": 8,
+    "comments": 1,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_funcarg_lookup_modulelevel.py": {
+    "loc": 18,
+    "lloc": 10,
+    "sloc": 10,
+    "comments": 1,
+    "multi": 0,
+    "blank": 7,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_conftest_funcargs_only_available_in_subdir/sub1/conftest.py": {
+    "loc": 10,
+    "lloc": 6,
+    "sloc": 6,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_conftest_funcargs_only_available_in_subdir/sub1/test_in_sub1.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_conftest_funcargs_only_available_in_subdir/sub1/__init__.py": {
+    "loc": 0,
+    "lloc": 0,
+    "sloc": 0,
+    "comments": 0,
+    "multi": 0,
+    "blank": 0,
+    "single_comments": 0
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_conftest_funcargs_only_available_in_subdir/sub2/conftest.py": {
+    "loc": 11,
+    "lloc": 7,
+    "sloc": 7,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_conftest_funcargs_only_available_in_subdir/sub2/test_in_sub2.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_conftest_funcargs_only_available_in_subdir/sub2/__init__.py": {
+    "loc": 0,
+    "lloc": 0,
+    "sloc": 0,
+    "comments": 0,
+    "multi": 0,
+    "blank": 0,
+    "single_comments": 0
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_extend_fixture_conftest_conftest/conftest.py": {
+    "loc": 9,
+    "lloc": 5,
+    "sloc": 5,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_extend_fixture_conftest_conftest/pkg/conftest.py": {
+    "loc": 9,
+    "lloc": 5,
+    "sloc": 5,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_extend_fixture_conftest_conftest/pkg/test_spam.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_extend_fixture_conftest_conftest/pkg/__init__.py": {
+    "loc": 0,
+    "lloc": 0,
+    "sloc": 0,
+    "comments": 0,
+    "multi": 0,
+    "blank": 0,
+    "single_comments": 0
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_extend_fixture_conftest_module/conftest.py": {
+    "loc": 9,
+    "lloc": 5,
+    "sloc": 5,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/example_scripts/fixtures/fill_fixtures/test_extend_fixture_conftest_module/test_extend_fixture_conftest_module.py": {
+    "loc": 13,
+    "lloc": 7,
+    "sloc": 7,
+    "comments": 1,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 1
+  },
+  "testing/example_scripts/issue88_initial_file_multinodes/conftest.py": {
+    "loc": 18,
+    "lloc": 10,
+    "sloc": 10,
+    "comments": 1,
+    "multi": 0,
+    "blank": 7,
+    "single_comments": 1
+  },
+  "testing/example_scripts/issue88_initial_file_multinodes/test_hello.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/marks/marks_considered_keywords/conftest.py": {
+    "loc": 0,
+    "lloc": 0,
+    "sloc": 0,
+    "comments": 0,
+    "multi": 0,
+    "blank": 0,
+    "single_comments": 0
+  },
+  "testing/example_scripts/marks/marks_considered_keywords/test_marks_as_keywords.py": {
+    "loc": 9,
+    "lloc": 5,
+    "sloc": 5,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/example_scripts/perf_examples/collect_stats/generate_folders.py": {
+    "loc": 31,
+    "lloc": 24,
+    "sloc": 22,
+    "comments": 1,
+    "multi": 0,
+    "blank": 8,
+    "single_comments": 1
+  },
+  "testing/example_scripts/perf_examples/collect_stats/template_test.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/example_scripts/tmpdir/tmp_path_fixture.py": {
+    "loc": 10,
+    "lloc": 6,
+    "sloc": 6,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/example_scripts/unittest/test_parametrized_fixture_error_message.py": {
+    "loc": 17,
+    "lloc": 10,
+    "sloc": 10,
+    "comments": 1,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 1
+  },
+  "testing/example_scripts/unittest/test_setup_skip.py": {
+    "loc": 17,
+    "lloc": 10,
+    "sloc": 9,
+    "comments": 1,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 2
+  },
+  "testing/example_scripts/unittest/test_setup_skip_class.py": {
+    "loc": 18,
+    "lloc": 11,
+    "sloc": 10,
+    "comments": 1,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 2
+  },
+  "testing/example_scripts/unittest/test_setup_skip_module.py": {
+    "loc": 16,
+    "lloc": 9,
+    "sloc": 8,
+    "comments": 1,
+    "multi": 0,
+    "blank": 6,
+    "single_comments": 2
+  },
+  "testing/example_scripts/unittest/test_unittest_asyncio.py": {
+    "loc": 27,
+    "lloc": 17,
+    "sloc": 16,
+    "comments": 1,
+    "multi": 0,
+    "blank": 10,
+    "single_comments": 1
+  },
+  "testing/example_scripts/unittest/test_unittest_asynctest.py": {
+    "loc": 26,
+    "lloc": 16,
+    "sloc": 14,
+    "comments": 1,
+    "multi": 0,
+    "blank": 10,
+    "single_comments": 2
+  },
+  "testing/example_scripts/unittest/test_unittest_plain_async.py": {
+    "loc": 9,
+    "lloc": 5,
+    "sloc": 5,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/example_scripts/warnings/test_group_warnings_by_message.py": {
+    "loc": 24,
+    "lloc": 13,
+    "sloc": 13,
+    "comments": 1,
+    "multi": 0,
+    "blank": 10,
+    "single_comments": 1
+  },
+  "testing/example_scripts/warnings/test_group_warnings_by_message_summary/test_1.py": {
+    "loc": 24,
+    "lloc": 13,
+    "sloc": 13,
+    "comments": 1,
+    "multi": 0,
+    "blank": 10,
+    "single_comments": 1
+  },
+  "testing/example_scripts/warnings/test_group_warnings_by_message_summary/test_2.py": {
+    "loc": 8,
+    "lloc": 4,
+    "sloc": 4,
+    "comments": 1,
+    "multi": 0,
+    "blank": 3,
+    "single_comments": 1
+  },
+  "testing/freeze/create_executable.py": {
+    "loc": 16,
+    "lloc": 11,
+    "sloc": 10,
+    "comments": 0,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 1
+  },
+  "testing/freeze/runtests_script.py": {
+    "loc": 14,
+    "lloc": 6,
+    "sloc": 5,
+    "comments": 0,
+    "multi": 4,
+    "blank": 5,
+    "single_comments": 0
+  },
+  "testing/freeze/tox_run.py": {
+    "loc": 17,
+    "lloc": 10,
+    "sloc": 9,
+    "comments": 0,
+    "multi": 4,
+    "blank": 4,
+    "single_comments": 0
+  },
+  "testing/freeze/tests/test_trivial.py": {
+    "loc": 10,
+    "lloc": 5,
+    "sloc": 5,
+    "comments": 1,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 1
+  },
+  "testing/io/test_pprint.py": {
+    "loc": 711,
+    "lloc": 154,
+    "sloc": 625,
+    "comments": 41,
+    "multi": 4,
+    "blank": 49,
+    "single_comments": 33
+  },
+  "testing/io/test_saferepr.py": {
+    "loc": 231,
+    "lloc": 148,
+    "sloc": 161,
+    "comments": 8,
+    "multi": 3,
+    "blank": 63,
+    "single_comments": 4
+  },
+  "testing/io/test_terminalwriter.py": {
+    "loc": 325,
+    "lloc": 217,
+    "sloc": 252,
+    "comments": 7,
+    "multi": 3,
+    "blank": 66,
+    "single_comments": 4
+  },
+  "testing/io/test_wcwidth.py": {
+    "loc": 40,
+    "lloc": 10,
+    "sloc": 35,
+    "comments": 1,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 0
+  },
+  "testing/logging/test_fixture.py": {
+    "loc": 584,
+    "lloc": 236,
+    "sloc": 417,
+    "comments": 15,
+    "multi": 27,
+    "blank": 124,
+    "single_comments": 16
+  },
+  "testing/logging/test_formatter.py": {
+    "loc": 187,
+    "lloc": 85,
+    "sloc": 149,
+    "comments": 4,
+    "multi": 0,
+    "blank": 34,
+    "single_comments": 4
+  },
+  "testing/logging/test_reporting.py": {
+    "loc": 1628,
+    "lloc": 469,
+    "sloc": 1300,
+    "comments": 44,
+    "multi": 24,
+    "blank": 254,
+    "single_comments": 50
+  },
+  "testing/plugins_integration/bdd_wallet.py": {
+    "loc": 42,
+    "lloc": 26,
+    "sloc": 26,
+    "comments": 1,
+    "multi": 0,
+    "blank": 15,
+    "single_comments": 1
+  },
+  "testing/plugins_integration/django_settings.py": {
+    "loc": 4,
+    "lloc": 2,
+    "sloc": 2,
+    "comments": 0,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 0
+  },
+  "testing/plugins_integration/pytest_anyio_integration.py": {
+    "loc": 11,
+    "lloc": 6,
+    "sloc": 6,
+    "comments": 1,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 1
+  },
+  "testing/plugins_integration/pytest_asyncio_integration.py": {
+    "loc": 11,
+    "lloc": 6,
+    "sloc": 6,
+    "comments": 1,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 1
+  },
+  "testing/plugins_integration/pytest_mock_integration.py": {
+    "loc": 6,
+    "lloc": 3,
+    "sloc": 3,
+    "comments": 1,
+    "multi": 0,
+    "blank": 2,
+    "single_comments": 1
+  },
+  "testing/plugins_integration/pytest_rerunfailures_integration.py": {
+    "loc": 13,
+    "lloc": 9,
+    "sloc": 8,
+    "comments": 0,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 1
+  },
+  "testing/plugins_integration/pytest_trio_integration.py": {
+    "loc": 11,
+    "lloc": 6,
+    "sloc": 6,
+    "comments": 1,
+    "multi": 0,
+    "blank": 4,
+    "single_comments": 1
+  },
+  "testing/plugins_integration/pytest_twisted_integration.py": {
+    "loc": 21,
+    "lloc": 12,
+    "sloc": 12,
+    "comments": 1,
+    "multi": 0,
+    "blank": 8,
+    "single_comments": 1
+  },
+  "testing/plugins_integration/simple_integration.py": {
+    "loc": 13,
+    "lloc": 7,
+    "sloc": 7,
+    "comments": 1,
+    "multi": 0,
+    "blank": 5,
+    "single_comments": 1
+  },
+  "testing/python/approx.py": {
+    "loc": 1768,
+    "lloc": 906,
+    "sloc": 1388,
+    "comments": 72,
+    "multi": 33,
+    "blank": 271,
+    "single_comments": 76
+  },
+  "testing/python/collect.py": {
+    "loc": 1751,
+    "lloc": 589,
+    "sloc": 1418,
+    "comments": 16,
+    "multi": 97,
+    "blank": 214,
+    "single_comments": 22
+  },
+  "testing/python/fixtures.py": {
+    "loc": 6326,
+    "lloc": 1401,
+    "sloc": 5210,
+    "comments": 35,
+    "multi": 176,
+    "blank": 869,
+    "single_comments": 71
+  },
+  "testing/python/integration.py": {
+    "loc": 465,
+    "lloc": 153,
+    "sloc": 380,
+    "comments": 8,
+    "multi": 8,
+    "blank": 71,
+    "single_comments": 6
+  },
+  "testing/python/metafunc.py": {
+    "loc": 2526,
+    "lloc": 849,
+    "sloc": 2053,
+    "comments": 28,
+    "multi": 70,
+    "blank": 348,
+    "single_comments": 55
+  },
+  "testing/python/raises.py": {
+    "loc": 515,
+    "lloc": 254,
+    "sloc": 396,
+    "comments": 45,
+    "multi": 9,
+    "blank": 80,
+    "single_comments": 30
+  },
+  "testing/python/raises_group.py": {
+    "loc": 1370,
+    "lloc": 346,
+    "sloc": 1127,
+    "comments": 122,
+    "multi": 4,
+    "blank": 139,
+    "single_comments": 100
+  },
+  "testing/python/show_fixtures_per_test.py": {
+    "loc": 328,
+    "lloc": 58,
+    "sloc": 278,
+    "comments": 0,
+    "multi": 8,
+    "blank": 42,
+    "single_comments": 0
+  },
+  "testing/_py/test_local.py": {
+    "loc": 1580,
+    "lloc": 1235,
+    "sloc": 1262,
+    "comments": 62,
+    "multi": 7,
+    "blank": 262,
+    "single_comments": 49
+  }
+}
