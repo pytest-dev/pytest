@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="12" failures="0" skipped="0" tests="12" time="1.745" timestamp="2026-10-22T16:19:57.765284-03:00" hostname="João"><testcase classname="" name="testing.acceptance_test" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\acceptance_test.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\acceptance_test.py:13: in &lt;module&gt;
+    import setuptools
+E   ModuleNotFoundError: No module named 'setuptools'</error></testcase><testcase classname="" name="testing.python.approx" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\python\approx.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\python\approx.py:17: in &lt;module&gt;
+    from _pytest.approx import _recursive_sequence_map
+E   ModuleNotFoundError: No module named '_pytest.approx'</error></testcase><testcase classname="" name="testing.python.fixtures" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\python\fixtures.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\python\fixtures.py:13: in &lt;module&gt;
+    from _pytest.fixtures import ParamValueKey
+E   ImportError: cannot import name 'ParamValueKey' from '_pytest.fixtures' (C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\.venv\Lib\site-packages\_pytest\fixtures.py)</error></testcase><testcase classname="" name="testing.python.metafunc" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\python\metafunc.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\python\metafunc.py:15: in &lt;module&gt;
+    import hypothesis
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="testing.test_assertion" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_assertion.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\test_assertion.py:17: in &lt;module&gt;
+    import attr
+E   ModuleNotFoundError: No module named 'attr'</error></testcase><testcase classname="" name="testing.test_config" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_config.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\test_config.py:22: in &lt;module&gt;
+    from _pytest.config import _plugin_rewrite_name
+E   ImportError: cannot import name '_plugin_rewrite_name' from '_pytest.config' (C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\.venv\Lib\site-packages\_pytest\config\__init__.py)</error></testcase><testcase classname="" name="testing.test_junitxml" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_junitxml.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\test_junitxml.py:13: in &lt;module&gt;
+    import xmlschema
+E   ModuleNotFoundError: No module named 'xmlschema'</error></testcase><testcase classname="" name="testing.test_mark" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_mark.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\test_mark.py:12: in &lt;module&gt;
+    from _pytest.config import RegisteredMarker
+E   ImportError: cannot import name 'RegisteredMarker' from '_pytest.config' (C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\.venv\Lib\site-packages\_pytest\config\__init__.py)</error></testcase><testcase classname="" name="testing.test_nodeid" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_nodeid.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\test_nodeid.py:3: in &lt;module&gt;
+    from _pytest.nodeid import coerce_node_id
+E   ModuleNotFoundError: No module named '_pytest.nodeid'</error></testcase><testcase classname="" name="testing.test_pluginmanager" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_pluginmanager.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\test_pluginmanager.py:11: in &lt;module&gt;
+    from _pytest.config import _is_missing_module
+E   ImportError: cannot import name '_is_missing_module' from '_pytest.config' (C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\.venv\Lib\site-packages\_pytest\config\__init__.py)</error></testcase><testcase classname="" name="testing.test_reports" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_reports.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\test_reports.py:8: in &lt;module&gt;
+    from _pytest.approx import approx
+E   ModuleNotFoundError: No module named '_pytest.approx'</error></testcase><testcase classname="" name="testing.test_tmpdir" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_tmpdir.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+testing\test_tmpdir.py:17: in &lt;module&gt;
+    from _pytest.pathlib import _chmod_rwx
+E   ImportError: cannot import name '_chmod_rwx' from '_pytest.pathlib' (C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\.venv\Lib\site-packages\_pytest\pathlib.py)</error></testcase></testsuite></testsuites>
