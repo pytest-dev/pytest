@@ -1,0 +1,3 @@
+Fixed negative subtest durations and ``0.0`` stop timestamps in reports when a test
+mocks the ``time`` module (for example with ``freezegun`` or ``time-machine``).
+Subtests now use pytest's internal timing helpers, consistent with regular tests.

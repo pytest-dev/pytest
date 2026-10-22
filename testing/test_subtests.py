@@ -4,6 +4,7 @@ from enum import Enum
 import json
 import sys
 from typing import Literal
+from xml.dom import minidom
 
 from _pytest._io.saferepr import saferepr
 from _pytest.subtests import SubtestContext
@@ -1096,3 +1097,32 @@ def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no c
     pytester.syspathinsert()
     result = pytester.runpytest("-n1", "-pxdist.plugin")
     result.assert_outcomes(passed=2)
+
+
+def test_subtest_duration_unaffected_by_mocked_time(
+    pytester: pytest.Pytester,
+) -> None:
+    """Subtest durations must not be affected when a test mocks the time module.
+
+    Regression test for #15201: subtests.py called time.time() /
+    time.perf_counter() directly, so a test mocking them (e.g. via freezegun or
+    time-machine) produced negative durations and a 0.0 stop timestamp.
+    """
+    pytester.makepyfile(
+        """
+        import time
+
+        def test_with_subtest(subtests, monkeypatch):
+            real_sleep = time.sleep
+            with subtests.test(msg="frozen clock"):
+                monkeypatch.setattr(time, "perf_counter", lambda: 0.0)
+                monkeypatch.setattr(time, "time", lambda: 0.0)
+                real_sleep(0.1)
+        """
+    )
+    xml_path = pytester.path / "junit.xml"
+    result = pytester.runpytest(f"--junitxml={xml_path}")
+    result.assert_outcomes(passed=1)
+    xmldoc = minidom.parse(str(xml_path))
+    (testcase,) = xmldoc.getElementsByTagName("testcase")
+    assert float(testcase.getAttribute("time")) >= 0
