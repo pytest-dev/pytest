@@ -628,6 +628,18 @@ def test_scandir_handles_os_error() -> None:
         mock_entry.is_file.assert_called_once()
 
 
+def test_scandir_skips_permission_denied_entry() -> None:
+    # An entry whose is_file() raises PermissionError (e.g. a symlinked
+    # folder owned by root) must be skipped, not abort the whole scan.
+    denied_entry = unittest.mock.MagicMock()
+    denied_entry.is_file.side_effect = PermissionError(13, "Permission denied")
+    ok_entry = unittest.mock.MagicMock()
+    ok_entry.name = "test_ok.py"
+    with unittest.mock.patch("os.scandir") as mock_scandir:
+        mock_scandir.return_value.__enter__.return_value = [denied_entry, ok_entry]
+        assert scandir("/fake/path") == [ok_entry]
+
+
 class TestImportLibMode:
     def test_importmode_importlib_with_dataclass(
         self, tmp_path: Path, ns_param: bool

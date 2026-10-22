@@ -1,0 +1,1 @@
+Fixed collection crashing with ``PermissionError`` when scanning a directory containing entries that cannot be inspected due to insufficient permissions; such entries are now skipped by ``scandir()``, consistent with other transient filesystem errors.

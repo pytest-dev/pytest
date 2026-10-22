@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 import contextlib
 from enum import Enum
+from errno import EACCES
 from errno import EBADF
 from errno import ELOOP
 from errno import ENOENT
@@ -51,7 +52,7 @@ _AnyPurePath = TypeVar("_AnyPurePath", bound=PurePath)
 # copied from cpython 3.9 Lib/pathlib.py file.
 
 # EBADF - guard against macOS `stat` throwing EBADF
-_IGNORED_ERRORS = (ENOENT, ENOTDIR, EBADF, ELOOP)
+_IGNORED_ERRORS = (ENOENT, ENOTDIR, EACCES, EBADF, ELOOP)
 
 _IGNORED_WINERRORS = (
     21,  # ERROR_NOT_READY - drive exists but is not accessible
