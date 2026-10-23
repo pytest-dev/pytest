@@ -624,6 +624,8 @@ class FSCollector(Collector, abc.ABC):
                 )
             except ValueError:
                 path_str = _check_initialpaths_for_relpath(session._initialpaths, path)
+                if path_str == "" and isinstance(self, File):
+                    path_str = session._node_location_to_relpath(path)
 
             if path_str:
                 path_str = norm_sep(path_str)
