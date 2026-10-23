@@ -4585,7 +4585,7 @@ def test_fixture_post_finalizer_called_once(pytester: Pytester) -> None:
 
 
 def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
-    """Test that exceptions in pytest_fixture_post_finalizer hook are caught.
+    """Test that exceptions in pytest_fixture_post_finalizer hook propagate.
 
     Also verifies that the fixture cache is properly reset even when the
     post_finalizer hook raises an exception, so the fixture can be rebuilt
@@ -4635,6 +4635,128 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
             "        TEARDOWN F my_fixture",
         ],
         consecutive=True,
+    )
+
+
+def test_fixture_post_finalizer_teardown_exception(pytester: Pytester) -> None:
+    """The teardown error is passed to the hook explicitly (#12306)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_fixture_post_finalizer(fixturedef, request, teardown_exception):
+            if fixturedef.argname in ("failing", "failing_twice", "passing"):
+                print(f"\\n{fixturedef.argname}: {teardown_exception!r}")
+
+        @pytest.fixture
+        def failing():
+            yield
+            raise RuntimeError("teardown failed")
+
+        @pytest.fixture
+        def failing_twice(request):
+            request.addfinalizer(lambda: 1 / 0)
+            yield
+            raise RuntimeError("teardown failed")
+
+        @pytest.fixture
+        def passing():
+            yield
+        """
+    )
+    pytester.makepyfile(
+        """
+        def test_failing(failing):
+            pass
+
+        def test_failing_twice(failing_twice):
+            pass
+
+        def test_passing(passing):
+            pass
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=3, errors=2)
+    result.stdout.fnmatch_lines(
+        [
+            "failing: RuntimeError('teardown failed')",
+            "*failing_twice: ExceptionGroup('errors while tearing down fixture "
+            "\"failing_twice\"*ZeroDivisionError('division by zero'), "
+            "RuntimeError('teardown failed')*",
+            "*passing: None",
+        ]
+    )
+
+
+def test_fixture_post_finalizer_gets_setup_request_on_param_switch(
+    pytester: Pytester,
+) -> None:
+    """When a parametrized fixture is torn down because the next test needs a
+    different param, the hook gets the request that set it up (#12306)."""
+    pytester.makeconftest(
+        """
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            if fixturedef.argname == "fix":
+                print(f"\\npost_finalizer: {fixturedef.cached_result[0]} {request.param}")
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module", params=[1, 2])
+        def fix(request):
+            return request.param
+
+        def test_it(fix):
+            pass
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=2)
+    result.stdout.fnmatch_lines(["post_finalizer: 1 1", "*post_finalizer: 2 2"])
+
+
+def test_fixture_post_finalizer_after_setup_hook_failure(pytester: Pytester) -> None:
+    """The hook runs once for a setup that failed before a result was cached,
+    and the following params of the fixture still run (#14800)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        calls = []
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_fixture_setup(fixturedef, request):
+            if getattr(request, "param", None) == "fail":
+                raise RuntimeError("setup hook failed")
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            if fixturedef.argname == "val":
+                calls.append((request.node.name, fixturedef.cached_result))
+
+        def pytest_terminal_summary(terminalreporter):
+            terminalreporter.write_line(f"post_finalizer calls: {calls}")
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("val", ["fail", "ok"])
+        def test_thing(val):
+            assert val == "ok"
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, errors=1)
+    result.stdout.no_fnmatch_line("*AssertionError*")
+    result.stdout.fnmatch_lines(
+        [
+            "post_finalizer calls: [('test_thing[fail]', None), "
+            "('test_thing[ok]', ('ok', 'ok', None))]"
+        ]
     )
 
 
