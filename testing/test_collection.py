@@ -454,7 +454,7 @@ class TestCustomConftests:
             """
             import pytest
             class MyModule(pytest.Module):
-                pass
+                '''dummy module'''
             def pytest_collect_file(file_path, parent):
                 if file_path.suffix == ".py":
                     return MyModule.from_parent(path=file_path, parent=parent)
