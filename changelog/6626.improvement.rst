@@ -1,0 +1,2 @@
+pytest now warns when custom parametrization IDs contain characters that prevent
+selecting the generated test case directly with ``-k``.

@@ -65,6 +65,7 @@ from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
+from _pytest.mark.expression import is_safe_identifier_part
 from _pytest.mark.structures import _HiddenParam
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import HIDDEN_PARAM
@@ -82,6 +83,7 @@ from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
+from _pytest.warning_types import PytestWarning
 
 
 if TYPE_CHECKING:
@@ -991,6 +993,16 @@ class IdMaker:
             strict_parametrization_ids = self.config.getini("strict")
         return cast(bool, strict_parametrization_ids)
 
+    def _warn_if_id_sabotages_selection(self, id: str) -> None:
+        if not is_safe_identifier_part(id):
+            warnings.warn(
+                PytestWarning(
+                    f"{self._make_error_prefix()}parametrization ID {id!r} "
+                    "contains characters that prevent selecting the generated "
+                    "test case directly with '-k'"
+                )
+            )
+
     def _resolve_ids(self) -> Iterable[str | _HiddenParam]:
         """Resolve IDs for all ParameterSets (may contain duplicates)."""
         for idx, parameterset in enumerate(self.parametersets):
@@ -999,13 +1011,17 @@ class IdMaker:
                 if parameterset.id is HIDDEN_PARAM:
                     yield HIDDEN_PARAM
                 else:
-                    yield _ascii_escaped_by_config(parameterset.id, self.config)
+                    id = _ascii_escaped_by_config(parameterset.id, self.config)
+                    self._warn_if_id_sabotages_selection(id)
+                    yield id
             elif self.ids and idx < len(self.ids) and self.ids[idx] is not None:
                 # ID provided in the IDs list - parametrize(..., ids=[...]).
                 if self.ids[idx] is HIDDEN_PARAM:
                     yield HIDDEN_PARAM
                 else:
-                    yield self._idval_from_value_required(self.ids[idx], idx)
+                    id = self._idval_from_value_required(self.ids[idx], idx)
+                    self._warn_if_id_sabotages_selection(id)
+                    yield id
             else:
                 # ID not provided - generate it.
                 yield "-".join(
@@ -1086,7 +1102,11 @@ class IdMaker:
             raise ValueError(msg) from e
         if id is None:
             return None
-        return self._idval_from_value(id)
+
+        resolved_id = self._idval_from_value(id)
+        if resolved_id is not None:
+            self._warn_if_id_sabotages_selection(resolved_id)
+        return resolved_id
 
     def _idval_from_hook(self, val: object, argname: str) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet by calling the
@@ -1095,6 +1115,8 @@ class IdMaker:
             id: str | None = self.config.hook.pytest_make_parametrize_id(
                 config=self.config, val=val, argname=argname
             )
+            if id is not None:
+                self._warn_if_id_sabotages_selection(id)
             return id
         return None
 
