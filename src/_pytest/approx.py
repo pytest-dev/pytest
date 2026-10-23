@@ -47,6 +47,21 @@ def _max_diff(current: Any, candidate: Any) -> Any:
     return candidate if current is None else max(current, candidate)
 
 
+def _abs_diff_or_none(expected: Any, actual: Any) -> Any:
+    """Return ``abs(expected - actual)``, or None for non-numeric operands.
+
+    Non-numbers are ignored for the diff calculations (#13012).
+    ``decimal.FloatOperation`` subclasses ``TypeError``, so it is re-raised
+    explicitly instead of being reported as a missing difference.
+    """
+    try:
+        return abs(expected - actual)
+    except FloatOperation:
+        raise
+    except TypeError:
+        return None
+
+
 def _vetted_diffs(
     max_abs_diff: Any, max_rel_diff: Any, rel_diff_is_infinite: bool
 ) -> tuple[Any, Any]:
@@ -431,17 +446,9 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
             zip(approx_side_as_map, other_side, strict=True)
         ):
             if approx_value != other_value:
-                try:
-                    abs_diff = abs(approx_value.expected - other_value)
+                abs_diff = _abs_diff_or_none(approx_value.expected, other_value)
+                if abs_diff is not None:
                     max_abs_diff = _max_diff(max_abs_diff, abs_diff)
-                # decimal.FloatOperation subclasses TypeError, so it would be
-                # caught below and reported as a missing difference.
-                except FloatOperation:
-                    raise
-                # Ignore non-numbers for the diff calculations (#13012).
-                except TypeError:
-                    pass
-                else:
                     if other_value == 0:
                         rel_diff_is_infinite = True
                     else:
