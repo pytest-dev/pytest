@@ -1891,12 +1891,9 @@ class Config:
         registered ``type``, a :class:`~pytest.UsageError` is raised.
         """
         canonical_name = self._parser._ini_aliases.get(name, name)
-        try:
-            return self._inicache[canonical_name]
-        except KeyError:
-            pass
-        self._inicache[canonical_name] = val = self._getini(canonical_name)
-        return val
+        if canonical_name not in self._inicache:
+            self._inicache[canonical_name] = self._getini(canonical_name)
+        return self._inicache[canonical_name]
 
     def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
         """Iterate over all markers registered in the configuration."""
