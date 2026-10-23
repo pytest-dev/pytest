@@ -62,6 +62,7 @@ DEVELOPMENT_STATUS_CLASSIFIERS = (
     "Development Status :: 7 - Inactive",
 )
 ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
+    "agentverify",
     "logassert",
     "logot",
     "nuts",
