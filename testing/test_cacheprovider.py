@@ -723,7 +723,7 @@ class TestLastFailed:
             """
             import pytest
             @pytest.mark.xfail(strict=True)
-            def test(): pass
+            def test(): ...
         """
         )
         result = pytester.runpytest()
