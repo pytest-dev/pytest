@@ -640,6 +640,44 @@ def test_scandir_skips_permission_denied_entry() -> None:
         assert scandir("/fake/path") == [ok_entry]
 
 
+def test_scandir_returns_empty_for_unreadable_directory() -> None:
+    # If os.scandir() itself raises PermissionError (e.g. recursing into
+    # a directory the user cannot read), the directory is skipped.
+    with unittest.mock.patch(
+        "os.scandir", side_effect=PermissionError(13, "Permission denied")
+    ):
+        assert scandir("/fake/path") == []
+
+
+def test_scandir_reraises_os_error_from_scandir_call() -> None:
+    # An OSError raised by os.scandir() itself whose errno is not
+    # ignorable must still propagate, mirroring the per-entry guarantee
+    # in test_scandir_handles_os_error.
+    with unittest.mock.patch("os.scandir", side_effect=OSError("some error")):
+        with pytest.raises(OSError, match="some error"):
+            scandir("/fake/path")
+
+
+def test_collection_skips_unreadable_directory(pytester: Pytester) -> None:
+    # Regression test for #9089: collection recursing into a directory
+    # that cannot be read must skip it instead of crashing the session
+    # with PermissionError. Uses a real chmod, unlike the mock-based
+    # tests above, which patch os.scandir wholesale.
+    ok_dir = pytester.mkdir("ok")
+    ok_dir.joinpath("test_ok.py").write_text(
+        "def test_a():\n    pass\n", encoding="utf-8"
+    )
+    locked_dir = pytester.mkdir("locked")
+    locked_dir.chmod(0o000)
+    try:
+        if os.access(locked_dir, os.R_OK):
+            pytest.skip("cannot make a directory unreadable in this environment")
+        result = pytester.runpytest()
+    finally:
+        locked_dir.chmod(0o755)
+    result.assert_outcomes(passed=1)
+
+
 class TestImportLibMode:
     def test_importmode_importlib_with_dataclass(
         self, tmp_path: Path, ns_param: bool

@@ -52,7 +52,7 @@ _AnyPurePath = TypeVar("_AnyPurePath", bound=PurePath)
 # copied from cpython 3.9 Lib/pathlib.py file.
 
 # EBADF - guard against macOS `stat` throwing EBADF
-_IGNORED_ERRORS = (ENOENT, ENOTDIR, EACCES, EBADF, ELOOP)
+_IGNORED_ERRORS = (EACCES, EBADF, ELOOP, ENOENT, ENOTDIR)
 
 _IGNORED_WINERRORS = (
     21,  # ERROR_NOT_READY - drive exists but is not accessible
@@ -990,15 +990,18 @@ def scandir(
 
     The returned entries are sorted according to the given key.
     The default is to sort by name.
-    If the directory does not exist, return an empty list.
+    If the directory does not exist or cannot be read, return an empty list.
     """
     entries = []
     # Attempt to create a scandir iterator for the given path.
     try:
         scandir_iter = os.scandir(path)
-    except FileNotFoundError:
-        # If the directory does not exist, return an empty list.
-        return []
+    except OSError as err:
+        if _ignore_error(err):
+            # If the directory does not exist, or cannot be read due to
+            # insufficient permissions, return an empty list.
+            return []
+        raise
     # Use the scandir iterator in a context manager to ensure it is properly closed.
     with scandir_iter as s:
         for entry in s:
