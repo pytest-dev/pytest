@@ -9,6 +9,7 @@ from collections.abc import Collection
 from collections.abc import Mapping
 from collections.abc import Sequence
 from collections.abc import Sized
+import contextlib
 from datetime import datetime
 from datetime import timedelta
 from decimal import Decimal
@@ -335,7 +336,7 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
             other_value = other_side[approx_key]
             if approx_value != other_value:
                 if approx_value.expected is not None and other_value is not None:
-                    try:
+                    with contextlib.suppress(ZeroDivisionError):
                         max_abs_diff = _max_diff(
                             max_abs_diff,
                             # TODO: The type error here seems correct.
@@ -352,8 +353,6 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
                                     / approx_value.expected
                                 ),
                             )
-                    except ZeroDivisionError:
-                        pass
                 different_ids.append(approx_key)
 
         max_abs_diff, max_rel_diff = _vetted_diffs(
