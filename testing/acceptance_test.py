@@ -464,11 +464,11 @@ class TestGeneralUsage:
         pytester.mkdir("not_a_package")
         p = pytester.makepyfile(
             """
-            try:
+            import contextlib
+
+            # We handle the import error gracefully here
+            with contextlib.suppress(ImportError):
                 from not_a_package import doesnt_exist
-            except ImportError:
-                # We handle the import error gracefully here
-                pass
 
             def test_whatever():
                 pass
