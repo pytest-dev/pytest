@@ -1890,7 +1890,7 @@ def test_source_mtime_long_long(pytester: Pytester, offset) -> None:
     """
     p = pytester.makepyfile(
         """
-        def test(): pass
+        def test(): ...
     """
     )
     # use unsigned long timestamp which overflows signed long,
