@@ -419,7 +419,7 @@ class TestAssertionRewrite:
             assert cls == 42  # type: ignore[name-defined]  # noqa: F821
 
         class X:
-            pass
+            """Dummy class passed to the rewritten function as ``cls``."""
 
         msg = getmsg(f5, {"cls": X})
         assert msg is not None
