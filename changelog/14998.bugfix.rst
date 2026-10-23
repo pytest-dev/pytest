@@ -1,0 +1,1 @@
+Fixed :confval:`tmp_path_retention_policy` ``failed`` to retain ``tmp_path`` directories when tests fail during setup or teardown.

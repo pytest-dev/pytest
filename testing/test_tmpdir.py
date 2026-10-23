@@ -223,6 +223,87 @@ class TestConfigTmpPath:
             # Check the base dir itself is gone
             assert len(list(base_dir)) == 0
 
+    @pytest.mark.parametrize(
+        ("test_source", "outcomes", "kept"),
+        [
+            (
+                """
+                import pytest
+
+                @pytest.fixture
+                def broken_setup(tmp_path):
+                    raise RuntimeError("setup error")
+
+                def test_setup_error(broken_setup):
+                    pass
+                """,
+                {"errors": 1},
+                True,
+            ),
+            (
+                """
+                def test_call_failure(tmp_path):
+                    assert False
+                """,
+                {"failed": 1},
+                True,
+            ),
+            (
+                """
+                import pytest
+
+                @pytest.fixture
+                def broken_teardown(tmp_path):
+                    yield
+                    raise RuntimeError("teardown error")
+
+                def test_teardown_error(broken_teardown):
+                    pass
+                """,
+                {"passed": 1, "errors": 1},
+                True,
+            ),
+            (
+                """
+                import pytest
+
+                @pytest.fixture
+                def skipped_setup(tmp_path):
+                    pytest.skip("setup skip")
+
+                def test_setup_skip(skipped_setup):
+                    pass
+                """,
+                {"skipped": 1},
+                False,
+            ),
+            (
+                """
+                def test_pass(tmp_path):
+                    pass
+                """,
+                {"passed": 1},
+                False,
+            ),
+        ],
+        ids=["setup-error", "call-failure", "teardown-error", "setup-skip", "pass"],
+    )
+    def test_policy_failed_retains_dirs_for_errors(
+        self, pytester: Pytester, test_source: str, outcomes: dict[str, int], kept: bool
+    ) -> None:
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "failed"
+            """
+        )
+        pytester.makepyfile(test_source)
+        result = pytester.runpytest()
+        result.assert_outcomes(**outcomes)
+
+        retained = list((pytester.path.parent / "basetemp").glob("test_*"))
+        assert bool(retained) is kept
+
     # issue #10502
     def test_policy_failed_removes_dir_when_skipped_from_fixture(
         self, pytester: Pytester
