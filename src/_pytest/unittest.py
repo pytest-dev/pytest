@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from unittest import TestCase
 
 from _pytest import fixtures
+from _pytest import timing
 import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest.compat import assert_never
@@ -441,14 +442,12 @@ class TestCaseFunction(Function):
             case unreachable:
                 assert_never(unreachable)
 
-        call_info = CallInfo[None](
-            None,
-            exception_info,
-            start=0,
-            stop=0,
-            duration=0,
+        # unittest reports subtests after the fact, without timing.
+        call_info = CallInfo[None]._from_duration(
+            result=None,
+            excinfo=exception_info,
+            duration=timing.UNMEASURED,
             when="call",
-            _ispytest=True,
         )
         msg = None if test._message is _subtest_msg_sentinel else str(test._message)  # type: ignore[attr-defined]
         report = self.ihook.pytest_runtest_makereport(item=self, call=call_info)

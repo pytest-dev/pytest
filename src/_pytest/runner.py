@@ -296,12 +296,8 @@ class CallInfo(Generic[TResult]):
     _result: TResult | None
     #: The captured exception of the call, if it raised.
     excinfo: ExceptionInfo[BaseException] | None
-    #: The system time when the call started, in seconds since the epoch.
-    start: float
-    #: The system time when the call ended, in seconds since the epoch.
-    stop: float
-    #: The call duration, in seconds.
-    duration: float
+    # The timing of the call; ``start``, ``stop`` and ``duration`` are views on it.
+    _duration: timing.Duration
     #: The context of invocation: "collect", "setup", "call" or "teardown".
     when: Literal["collect", "setup", "call", "teardown"]
 
@@ -319,10 +315,67 @@ class CallInfo(Generic[TResult]):
         check_ispytest(_ispytest)
         self._result = result
         self.excinfo = excinfo
-        self.start = start
-        self.stop = stop
-        self.duration = duration
+        # Kept for plugins which construct CallInfo from plain floats; pytest
+        # itself uses _from_duration().
+        self._duration = timing.Duration(
+            start=timing.Instant(time=start, perf_count=0.0),
+            stop=timing.Instant(time=stop, perf_count=duration),
+        )
         self.when = when
+
+    @classmethod
+    def _from_duration(
+        cls,
+        result: TResult | None,
+        excinfo: ExceptionInfo[BaseException] | None,
+        duration: timing.Duration,
+        when: Literal["collect", "setup", "call", "teardown"],
+    ) -> CallInfo[TResult]:
+        """Create a CallInfo timed by a :class:`_pytest.timing.Duration`.
+
+        Internal code should construct CallInfo through this (or
+        :meth:`from_call`), measuring with :class:`_pytest.timing.Instant`,
+        which is immune to tests mocking :mod:`time` (#185).
+        """
+        # Bypass __init__, which only exists to accept the legacy floats.
+        call = cls.__new__(cls)
+        call._result = result
+        call.excinfo = excinfo
+        call._duration = duration
+        call.when = when
+        return call
+
+    @property
+    def start(self) -> float:
+        """The system time when the call started, in seconds since the epoch."""
+        return self._duration.start.time
+
+    @start.setter
+    def start(self, value: float) -> None:
+        start = dataclasses.replace(self._duration.start, time=value)
+        self._duration = dataclasses.replace(self._duration, start=start)
+
+    @property
+    def stop(self) -> float:
+        """The system time when the call ended, in seconds since the epoch."""
+        return self._duration.stop.time
+
+    @stop.setter
+    def stop(self, value: float) -> None:
+        stop = dataclasses.replace(self._duration.stop, time=value)
+        self._duration = dataclasses.replace(self._duration, stop=stop)
+
+    @property
+    def duration(self) -> float:
+        """The call duration, in seconds."""
+        return self._duration.seconds
+
+    @duration.setter
+    def duration(self, value: float) -> None:
+        stop = dataclasses.replace(
+            self._duration.stop, perf_count=self._duration.start.perf_count + value
+        )
+        self._duration = dataclasses.replace(self._duration, stop=stop)
 
     @property
     def result(self) -> TResult:
@@ -364,15 +417,11 @@ class CallInfo(Generic[TResult]):
             if reraise is not None and isinstance(excinfo.value, reraise):
                 raise
             result = None
-        duration = instant.elapsed()
-        return cls(
-            start=duration.start.time,
-            stop=duration.stop.time,
-            duration=duration.seconds,
-            when=when,
+        return cls._from_duration(
             result=result,
             excinfo=excinfo,
-            _ispytest=True,
+            duration=instant.elapsed(),
+            when=when,
         )
 
     def __repr__(self) -> str:
