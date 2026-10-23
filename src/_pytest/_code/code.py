@@ -6,6 +6,7 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sequence
+import contextlib
 import dataclasses
 import inspect
 from io import StringIO
@@ -1586,10 +1587,8 @@ def getfslineno(obj: object) -> tuple[str | Path, int]:
         fspath = (fn and absolutepath(fn)) or ""
         lineno = -1
         if fspath:
-            try:
+            with contextlib.suppress(OSError):
                 _, lineno = findsource(obj)
-            except OSError:
-                pass
         return fspath, lineno
 
     return code.path, code.firstlineno
