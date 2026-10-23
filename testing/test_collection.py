@@ -2159,7 +2159,7 @@ class TestOverlappingCollectionArguments:
                     collected[file_path.name] += 1
 
             def pytest_sessionfinish(session, exitstatus):
-                Path("collect-counts.txt").write_text(str(sum(collected.values())))
+                Path("collect-counts.txt").write_text(str(sum(collected.values())), encoding="utf-8")
             """
         )
 
@@ -2167,9 +2167,9 @@ class TestOverlappingCollectionArguments:
         result = pytester.runpytest_subprocess("--collect-only", *file_args)
 
         assert result.ret == ExitCode.OK
-        assert int(pytester.path.joinpath("collect-counts.txt").read_text()) == len(
-            files
-        )
+        assert int(
+            pytester.path.joinpath("collect-counts.txt").read_text(encoding="utf-8")
+        ) == len(files)
 
     def test_keep_duplicates_flag(self, pytester: Pytester) -> None:
         """Test that --keep-duplicates allows duplication."""
