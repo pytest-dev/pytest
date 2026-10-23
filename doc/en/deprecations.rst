@@ -31,12 +31,12 @@ Support for ``bytes`` will be removed in pytest 10.
 ``_pytest.python.CallSpec2`` renamed to ``CallSpec``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 9.1
+.. deprecated:: 9.2
 
 The private ``_pytest.python.CallSpec2`` name has been renamed to ``CallSpec``.
 
 Plugins that import ``CallSpec2`` should update to ``CallSpec``. The old
-``CallSpec2`` alias remains available for now and will be removed in pytest 10.
+``CallSpec2`` alias remains available for now and will be removed in pytest 11.
 
 
 .. _fixture-nodeid-deprecated:
@@ -148,7 +148,7 @@ be retrieved while they remain active, though this is discouraged.
 ``config.inicfg``
 ~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 9.0
+.. deprecated:: 9.1
 
 The private ``config.inicfg`` attribute is deprecated.
 Use :meth:`config.getini() <pytest.Config.getini>` to access configuration values instead.
@@ -291,7 +291,7 @@ to all test methods.
 
 Similarly, using a scope higher than ``class`` (``module``, ``package`` or ``session``)
 without using ``@classmethod`` (or ``@staticmethod``) is deprecated and will be
-removed in pytest 10.0.
+removed in pytest 11.0.
 
 .. _monkeypatch-fixup-namespace-packages:
 

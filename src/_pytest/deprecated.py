@@ -17,6 +17,7 @@ from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn10Warning
+from _pytest.warning_types import PytestRemovedIn11Warning
 from _pytest.warning_types import UnformattedWarning
 
 
@@ -44,6 +45,13 @@ CLASS_FIXTURE_INSTANCE_METHOD = UnformattedWarning(
     "as each test gets a new instance while the fixture runs only once per class.\n"
     "Use a @classmethod decorator below @pytest.fixture and set attributes on cls instead.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#class-scoped-fixture-as-instance-method",
+)
+
+# Same as CLASS_FIXTURE_INSTANCE_METHOD, but for module/package/session scope,
+# which was deprecated later and so is removed later.
+HIGHER_SCOPED_FIXTURE_INSTANCE_METHOD = UnformattedWarning(
+    PytestRemovedIn11Warning,
+    CLASS_FIXTURE_INSTANCE_METHOD.template,
 )
 
 # This deprecation is never really meant to be removed.
@@ -106,7 +114,7 @@ PASTEBIN = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#the-pastebin-option",
 )
 
-INI_STRING_TYPE_NON_STR_VALUE = PytestRemovedIn10Warning(
+INI_STRING_TYPE_NON_STR_VALUE = PytestRemovedIn11Warning(
     "Passing a value that is not a string to a 'string'-typed ini option is deprecated.\n"
     "In a future version this will raise a TypeError, matching the behavior of the "
     "corresponding TOML config path.\n"
@@ -157,9 +165,9 @@ PARSEFACTORIES_NODEID_DEPRECATED = UnformattedWarning(
 )
 
 CALLSPEC2_RENAMED = UnformattedWarning(
-    PytestRemovedIn10Warning,
+    PytestRemovedIn11Warning,
     "_pytest.python.CallSpec2 has been renamed to CallSpec.\n"
-    "The CallSpec2 alias will be removed in pytest 10.\n"
+    "The CallSpec2 alias will be removed in pytest 11.\n"
     "Update imports to use CallSpec instead.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed",
 )

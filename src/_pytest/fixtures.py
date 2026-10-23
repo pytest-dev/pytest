@@ -61,6 +61,7 @@ from _pytest.deprecated import FIXTURE_BASEID_DEPRECATED
 from _pytest.deprecated import FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN
 from _pytest.deprecated import FIXTURE_NODEID_DEPRECATED
 from _pytest.deprecated import FIXTUREDEF_HAS_LOCATION_DEPRECATED
+from _pytest.deprecated import HIGHER_SCOPED_FIXTURE_INSTANCE_METHOD
 from _pytest.deprecated import PARSEFACTORIES_NODEID_DEPRECATED
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
@@ -1335,7 +1336,13 @@ def resolve_fixture_function(
     value."""
 
     def __tracebackhide__(e):
-        return issubclass(e.type, CLASS_FIXTURE_INSTANCE_METHOD.category)
+        return issubclass(
+            e.type,
+            (
+                CLASS_FIXTURE_INSTANCE_METHOD.category,
+                HIGHER_SCOPED_FIXTURE_INSTANCE_METHOD.category,
+            ),
+        )
 
     fixturefunc = fixturedef.func
     # The fixture function needs to be bound to the actual
@@ -1350,8 +1357,13 @@ def resolve_fixture_function(
             # classmethod: bound_to is the class itself (a type)
             # instance method: bound_to is an instance (not a type)
             if not isinstance(bound_to, type):
+                warning = (
+                    CLASS_FIXTURE_INSTANCE_METHOD
+                    if fixturedef._scope is Scope.Class
+                    else HIGHER_SCOPED_FIXTURE_INSTANCE_METHOD
+                )
                 warnings.warn(
-                    CLASS_FIXTURE_INSTANCE_METHOD.format(
+                    warning.format(
                         scope=fixturedef._scope.name.capitalize(),
                         fixturename=request.fixturename,
                     ),
