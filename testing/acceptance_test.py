@@ -1359,7 +1359,7 @@ def test_frame_leak_on_failing_test(pytester: Pytester) -> None:
         import weakref
 
         class Obj:
-            pass
+            '''Plain object that is only used to hold a weak reference.'''
 
         ref = None
 
