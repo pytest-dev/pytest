@@ -1444,6 +1444,7 @@ def test_error_on_async_gen_function(pytester: Pytester) -> None:
 def test_error_on_sync_test_async_fixture(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_sync="""
+            import contextlib
             import pytest
 
             @pytest.fixture
@@ -1503,10 +1504,8 @@ def test_error_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
             # We explicitly request the fixture to be able to
             # suppress the RuntimeWarning for unawaited coroutine.
             def test_foo(async_fixture):
-                try:
+                with contextlib.suppress(StopIteration):
                     async_fixture.send(None)
-                except StopIteration:
-                    pass
         """
     )
     result = pytester.runpytest()
