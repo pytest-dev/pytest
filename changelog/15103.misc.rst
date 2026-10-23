@@ -1,0 +1,1 @@
+Added type annotations to FixtureRequest's node property.
