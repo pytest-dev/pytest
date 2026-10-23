@@ -1,0 +1,1 @@
+Fixed a regression in ``--import-mode=importlib`` where a test file whose rootdir-relative path reused the name of an installed package (for example ``mypkg/tests/test_foo.py`` next to the real ``mypkg/mypkg`` package) would shadow that package in ``sys.modules`` with a namespace package, breaking imports such as ``from mypkg import version`` in the tests.
