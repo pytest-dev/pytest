@@ -253,6 +253,116 @@ def test_log_cli_enabled_disabled(pytester: Pytester, enabled: bool) -> None:
         assert msg not in result.stdout.str()
 
 
+@pytest.mark.parametrize("log_args", [["-o", "log_cli=true"], ["--log-cli-level=INFO"]])
+@pytest.mark.parametrize("verbosity", [[], ["-q"], ["-v"]])
+def test_log_cli_without_local_tests(
+    pytester: Pytester, log_args: list[str], verbosity: list[str]
+) -> None:
+    pytester.makeconftest(
+        """
+        import logging
+        from pathlib import Path
+
+        def pytest_runtestloop(session):
+            logging.warning("message without local tests")
+
+        def pytest_sessionfinish(session):
+            Path("verbosity").write_text(str(session.config.option.verbose), encoding="utf-8")
+        """
+    )
+    result = pytester.runpytest(
+        *log_args, *verbosity, "--log-file=hooks.log", "--log-file-level=WARNING"
+    )
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
+    assert (pytester.path / "verbosity").read_text(encoding="utf-8") == str(
+        verbosity.count("-v") - verbosity.count("-q")
+    )
+    result.stdout.fnmatch_lines(["*message without local tests*"])
+    assert "message without local tests" in (pytester.path / "hooks.log").read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.parametrize("log_args", [["-o", "log_cli=true"], ["--log-cli-level=INFO"]])
+@pytest.mark.parametrize("verbosity", [[], ["-q"], ["-qq"], ["-v"], ["-vv"]])
+def test_log_cli_xdist_verbosity(
+    pytester: Pytester, log_args: list[str], verbosity: list[str]
+) -> None:
+    pytest.importorskip("xdist")
+    pytester.makeconftest(
+        """
+        from pathlib import Path
+
+        def pytest_sessionfinish(session):
+            if not hasattr(session.config, "workerinput"):
+                Path("verbosity").write_text(str(session.config.option.verbose), encoding="utf-8")
+        """
+    )
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test_one(caplog):
+            logging.warning("worker log remains captured")
+            assert "worker log remains captured" in caplog.text
+
+        def test_two():
+            pass
+        """
+    )
+    result = pytester.runpytest_subprocess(
+        "-p", "xdist.plugin", "-n2", *log_args, *verbosity
+    )
+    assert result.ret == ExitCode.OK
+    if verbosity != ["-qq"]:
+        result.assert_outcomes(passed=2)
+    expected_verbosity = {"-q": -1, "-qq": -2, "-v": 1, "-vv": 2}
+    assert (pytester.path / "verbosity").read_text(encoding="utf-8") == str(
+        expected_verbosity.get(verbosity[0], 0) if verbosity else 0
+    )
+    if verbosity in (["-v"], ["-vv"]):
+        result.stdout.fnmatch_lines(["*PASSED*test_log_cli_xdist_verbosity.py::test_*"])
+    else:
+        result.stdout.re_match_lines([r"\.\.\s+\[100%\]"])
+        result.stdout.no_fnmatch_line("*PASSED*test_log_cli_xdist_verbosity.py::test_*")
+        if verbosity == ["-qq"]:
+            result.stdout.no_fnmatch_line("*2 passed*")
+
+
+@pytest.mark.parametrize("log_args", [["-o", "log_cli=true"], ["--log-cli-level=INFO"]])
+@pytest.mark.parametrize(
+    ("dist_args", "distributed"),
+    [
+        (["-n1"], True),
+        (["--dist=load", "--tx=popen"], True),
+        (["-n0"], False),
+        (["--dist=no"], False),
+    ],
+)
+def test_log_cli_xdist_execution_modes(
+    pytester: Pytester, log_args: list[str], dist_args: list[str], distributed: bool
+) -> None:
+    pytest.importorskip("xdist")
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test_log():
+            logging.warning("message from test")
+        """
+    )
+    result = pytester.runpytest_subprocess("-p", "xdist.plugin", *dist_args, *log_args)
+    result.assert_outcomes(passed=1)
+    assert result.ret == ExitCode.OK
+    if distributed:
+        result.stdout.re_match_lines([r"\.\s+\[100%\]"])
+        result.stdout.no_fnmatch_line(
+            "*PASSED*test_log_cli_xdist_execution_modes.py::test_log*"
+        )
+    else:
+        result.stdout.fnmatch_lines(["*message from test*", "PASSED*"])
+
+
 def test_log_cli_default_level(pytester: Pytester) -> None:
     # Default log file level
     pytester.makepyfile(
