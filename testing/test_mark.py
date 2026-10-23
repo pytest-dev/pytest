@@ -821,9 +821,9 @@ class TestFunctional:
             """
                 import pytest
                 class pytestmark(object):
-                    pass
+                    '''dummy'''
                 def test_func():
-                    pass
+                    '''dummy'''
         """
         )
         values = reprec.getfailedcollections()
