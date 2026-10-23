@@ -1,0 +1,1 @@
+Documented :ref:`parametrization with pytest-xdist <parametrize-xdist>`, including inconsistent collection order and dynamically generated test IDs.
