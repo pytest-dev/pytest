@@ -336,7 +336,9 @@ def record_property(request: FixtureRequest) -> Callable[[str, object], None]:
     _warn_incompatibility_with_xunit2(request, "record_property")
 
     def append_property(name: str, value: object) -> None:
-        request.node.user_properties.append((name, value))
+        node = request.node
+        assert isinstance(node, nodes.Item)
+        node.user_properties.append((name, value))
 
     return append_property
 

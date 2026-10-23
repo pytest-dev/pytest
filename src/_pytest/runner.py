@@ -548,6 +548,18 @@ class SetupState:
         assert node in self.stack, (node, self.stack)
         self.stack[node][0].append(finalizer)
 
+    def _run_finalizers(
+        self, finalizers: list[Callable[[], object]]
+    ) -> list[BaseException]:
+        exceptions: list[BaseException] = []
+        while finalizers:
+            fin = finalizers.pop()
+            try:
+                fin()
+            except TEST_OUTCOME as e:
+                exceptions.append(e)
+        return exceptions
+
     def teardown_exact(self, nextitem: Item | None) -> None:
         """Teardown the current stack up until reaching nodes that nextitem
         also descends from.
@@ -557,17 +569,12 @@ class SetupState:
         """
         needed_collectors = (nextitem and nextitem.listchain()) or []
         exceptions: list[BaseException] = []
+
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
             node, (finalizers, _) = self.stack.popitem()
-            these_exceptions = []
-            while finalizers:
-                fin = finalizers.pop()
-                try:
-                    fin()
-                except TEST_OUTCOME as e:
-                    these_exceptions.append(e)
+            these_exceptions = self._run_finalizers(finalizers)
 
             if len(these_exceptions) == 1:
                 exceptions.extend(these_exceptions)

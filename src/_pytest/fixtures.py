@@ -566,7 +566,7 @@ class FixtureRequest(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def node(self):
+    def node(self) -> nodes.Node:
         """Underlying collection node (depends on current request scope)."""
         raise NotImplementedError()
 
