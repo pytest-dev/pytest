@@ -7,6 +7,7 @@ from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
+import contextlib
 from enum import auto
 from enum import Enum
 import inspect
@@ -297,11 +298,9 @@ class TestCaseFunction(Function):
     def addError(
         self, testcase: unittest.TestCase, rawexcinfo: _SysExcInfoType
     ) -> None:
-        try:
+        with contextlib.suppress(TypeError):
             if isinstance(rawexcinfo[1], exit.Exception):
                 exit(rawexcinfo[1].msg)
-        except TypeError:
-            pass
         self._addexcinfo(rawexcinfo)
 
     def addFailure(
