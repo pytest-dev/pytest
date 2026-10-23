@@ -731,15 +731,15 @@ class TestFunctional:
 
             class TestBase(object):
                 def test_foo(self):
-                    pass
+                    '''dummy'''
 
             @pytest.mark.b
             class TestSub(TestBase):
-                pass
+                '''dummy'''
 
 
             class TestOtherSub(TestBase):
-                pass
+                '''dummy'''
 
         """
         )
