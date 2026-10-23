@@ -707,14 +707,17 @@ class TestFunctional:
             import pytest
 
             @pytest.mark.a
-            class Base(object): pass
+            class Base(object):
+                '''dummy'''
 
             @pytest.mark.b
             class Test1(Base):
-                def test_foo(self): pass
+                def test_foo(self):
+                    '''dummy'''
 
             class Test2(Base):
-                def test_bar(self): pass
+                def test_bar(self):
+                    '''dummy'''
         """
         )
         items, _rec = pytester.inline_genitems(p)
