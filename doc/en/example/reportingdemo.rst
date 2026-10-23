@@ -470,7 +470,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     self = <failure_demo.TestRaises object at 0xdeadbeef0022>
 
         def test_some_error(self):
-    >       if namenotexi:  # noqa: F821
+    >       _ = namenotexi  # noqa: F821
                ^^^^^^^^^^
     E       NameError: name 'namenotexi' is not defined
 
