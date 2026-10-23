@@ -1,0 +1,1 @@
+pytest now warns when the reason given to ``pytest.mark.skip`` looks like a condition (for example ``"sys.platform == 'win32'"``), since ``pytest.mark.skipif`` was probably intended.
