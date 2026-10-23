@@ -533,7 +533,7 @@ class TestLastFailed:
 
         test_a = pytester.makepyfile(
             test_a="""
-            def test_a1(): pass
+            def test_a1(): ...
             def test_a2(): pass
         """
         )
