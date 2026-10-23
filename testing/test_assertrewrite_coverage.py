@@ -12,6 +12,7 @@ rewriting behavior across all expression types, checking:
 from __future__ import annotations
 
 import ast
+import contextlib
 from collections.abc import Callable
 from collections.abc import Sequence
 import textwrap
@@ -111,10 +112,8 @@ def assert_single_evaluation(
     func = _exec_check(src, ns=ns)
     counter = cast(list[int], ns["counter"])
     counter[0] = 0
-    try:
+    with contextlib.suppress(AssertionError):
         func()
-    except AssertionError:
-        pass
     actual = counter[0]
     assert actual == expected_call_count, (
         f"Expression evaluated {actual} times, expected {expected_call_count}"
