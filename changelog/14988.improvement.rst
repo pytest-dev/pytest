@@ -1,0 +1,1 @@
+:meth:`MonkeyPatch.syspath_prepend <pytest.MonkeyPatch.syspath_prepend>` now annotates its ``path`` parameter as ``str | os.PathLike[str]``, so strict type checkers no longer report calls to it as having an unknown type.
