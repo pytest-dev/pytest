@@ -1185,6 +1185,7 @@ class FixtureDef(Generic[FixtureValue]):
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
+        self._cached_scope: Scope | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
 
         # only used to emit a deprecationwarning, can be removed in pytest9
@@ -1221,6 +1222,7 @@ class FixtureDef(Generic[FixtureValue]):
         # value and remove all finalizers because they may be bound methods
         # which will keep instances alive.
         self.cached_result = None
+        self._cached_scope = None
         self._finalizers.clear()
         if len(exceptions) == 1:
             raise exceptions[0]
@@ -1250,13 +1252,15 @@ class FixtureDef(Generic[FixtureValue]):
         if self.cached_result is not None:
             request_cache_key = self.cache_key(request)
             cache_key = self.cached_result[1]
-            try:
-                # Attempt to make a normal == check: this might fail for objects
-                # which do not implement the standard comparison (like numpy arrays -- #6497).
-                cache_hit = bool(request_cache_key == cache_key)
-            except (ValueError, RuntimeError):
-                # If the comparison raises, use 'is' as fallback.
-                cache_hit = request_cache_key is cache_key
+            cache_hit = self._cached_scope is request._scope
+            if cache_hit:
+                try:
+                    # Attempt to make a normal == check: this might fail for objects
+                    # which do not implement the standard comparison (like numpy arrays -- #6497).
+                    cache_hit = bool(request_cache_key == cache_key)
+                except (ValueError, RuntimeError):
+                    # If the comparison raises, use 'is' as fallback.
+                    cache_hit = request_cache_key is cache_key
 
             if cache_hit:
                 if self.cached_result[2] is not None:
@@ -1286,6 +1290,7 @@ class FixtureDef(Generic[FixtureValue]):
         )
 
         ihook = request.node.ihook
+        self._cached_scope = request._scope
         try:
             # Setup the fixture, run the code in it, and cache the value
             # in self.cached_result.
