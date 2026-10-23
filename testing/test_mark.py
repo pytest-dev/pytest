@@ -36,10 +36,10 @@ class TestMark:
 
     def test_mark_with_param(self):
         def some_function(abc):
-            pass
+            '''dummy'''
 
         class SomeClass:
-            pass
+            '''dummy'''
 
         assert pytest.mark.foo(some_function) is some_function
         marked_with_args = pytest.mark.foo.with_args(some_function)
