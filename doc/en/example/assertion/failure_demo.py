@@ -182,8 +182,7 @@ class TestRaises:
         a, b = items.pop()
 
     def test_some_error(self):
-        if namenotexi:  # noqa: F821
-            pass
+        _ = namenotexi  # noqa: F821
 
     def func1(self):
         assert 41 == 42
