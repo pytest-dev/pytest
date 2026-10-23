@@ -934,7 +934,8 @@ class TestNodeKeywords:
             pytestmark = pytest.mark.kw
             class TestClass:
                 pytestmark = pytest.mark.kw
-                def test_method(self): pass
+                def test_method(self):
+                    '''dummy'''
                 test_method.kw = 'method'
         """,
             "test_method",
