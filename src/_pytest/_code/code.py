@@ -331,7 +331,7 @@ class TracebackEntry:
             # as such, we suppress all exceptions while accessing __tracebackhide__
             try:
                 tbh = maybe_ns_dct["__tracebackhide__"]
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
             break
         if tbh and callable(tbh):

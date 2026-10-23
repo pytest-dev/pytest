@@ -12,9 +12,9 @@ rewriting behavior across all expression types, checking:
 from __future__ import annotations
 
 import ast
-import contextlib
 from collections.abc import Callable
 from collections.abc import Sequence
+import contextlib
 import textwrap
 from typing import cast
 
