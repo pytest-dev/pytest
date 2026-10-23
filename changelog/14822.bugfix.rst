@@ -1,0 +1,1 @@
+Chained comparisons in an ``assert`` now short-circuit the way Python does: in ``assert a < b < c``, ``c`` is no longer evaluated when ``a < b`` is false. Previously ``assert 1 < 0 < 1 / 0`` raised ``ZeroDivisionError`` instead of ``AssertionError``, and a call in an unreached position ran anyway.
