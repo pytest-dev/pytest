@@ -398,7 +398,7 @@ def cleanup_dead_symlinks(root: Path) -> None:
     for left_dir in root.iterdir():
         if left_dir.is_symlink():
             if not left_dir.resolve().exists():
-                left_dir.unlink()
+                left_dir.unlink(missing_ok=True)
 
 
 def cleanup_numbered_dir(
