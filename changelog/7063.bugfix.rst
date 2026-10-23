@@ -1,0 +1,1 @@
+``pytest.Class.from_parent()`` now uses the given ``obj`` instead of ignoring it and looking the class up by name.
