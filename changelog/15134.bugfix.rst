@@ -1,0 +1,1 @@
+Fixed ``DumpError`` from ``pytest-xdist`` when a ``str`` subclass (such as a :class:`~enum.StrEnum` member) is passed as the ``msg`` of :fixture:`subtests` -- the message is now converted to a plain ``str``.
