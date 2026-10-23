@@ -331,9 +331,8 @@ class TracebackEntry:
             try:
                 tbh = maybe_ns_dct["__tracebackhide__"]
             except Exception:
-                pass
-            else:
-                break
+                continue
+            break
         if tbh and callable(tbh):
             return tbh(excinfo)
         return tbh
