@@ -309,7 +309,7 @@ class TestPrunetraceback:
             def pytest_collect_file(file_path, parent):
                 return MyFile.from_parent(path=file_path, parent=parent)
             class MyError(Exception):
-                pass
+                '''custom error'''
             class MyFile(pytest.File):
                 def collect(self):
                     raise MyError()
