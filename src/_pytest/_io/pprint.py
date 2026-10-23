@@ -29,6 +29,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 import dataclasses as _dataclasses
 import re
+import sys
 import types as _types
 from typing import Any
 
@@ -228,6 +229,10 @@ class PrettyPrinter:
         yield ")"
 
     _dispatch[_collections.OrderedDict.__repr__] = _pprint_ordered_dict
+
+    if sys.version_info >= (3, 15):
+        # frozendict's repr has the same shape as OrderedDict's: Name({...})
+        _dispatch[frozendict.__repr__] = _pprint_ordered_dict  # noqa: F821
 
     def _pprint_list(
         self,
@@ -621,12 +626,19 @@ class PrettyPrinter:
 
         r = getattr(typ, "__repr__", None)
 
-        if issubclass(typ, dict) and r is dict.__repr__:
+        is_frozendict = False
+        if sys.version_info >= (3, 15):
+            is_frozendict = (
+                issubclass(typ, frozendict)  # noqa: F821
+                and r is frozendict.__repr__  # noqa: F821
+            )
+
+        if (issubclass(typ, dict) and r is dict.__repr__) or is_frozendict:
             if not object:
-                return "{}"
+                return f"{typ.__name__}()" if is_frozendict else "{}"
             objid = id(object)
             if maxlevels and level >= maxlevels:
-                return "{...}"
+                return f"{typ.__name__}({{...}})" if is_frozendict else "{...}"
             if objid in context:
                 return _recursion(object)
             context.add(objid)
@@ -638,7 +650,8 @@ class PrettyPrinter:
                 vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
             context.remove(objid)
-            return "{{{}}}".format(", ".join(components))
+            rep = "{{{}}}".format(", ".join(components))
+            return f"{typ.__name__}({rep})" if is_frozendict else rep
 
         if (issubclass(typ, list) and r is list.__repr__) or (
             issubclass(typ, tuple) and r is tuple.__repr__
