@@ -259,15 +259,22 @@ class MonkeyPatch:
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, NOTSET)
         elif not _is_data_descriptor(type(target), name):
-            # With no data descriptor in the way, the `setattr()` below writes
-            # into the instance `__dict__`, so `undo()` has to restore that
-            # `__dict__` entry. Assigning an inherited `oldval` back onto the
-            # instance would instead leave behind a new entry shadowing the
-            # class attribute, which permanently freezes descriptors that
-            # resolve dynamically (#10644).
             target_dict = getattr(target, "__dict__", None)
-            if isinstance(target_dict, Mapping):
+            setter = next(
+                (
+                    klass.__dict__["__setattr__"]
+                    for klass in type(target).__mro__
+                    if "__setattr__" in klass.__dict__
+                ),
+                object.__setattr__,
+            )
+            if isinstance(target_dict, Mapping) and setter is object.__setattr__:
+                # With the default setter, restore the instance dictionary
+                # entry directly so inherited attributes are not shadowed.
                 oldval = target_dict.get(name, NOTSET)
+            else:
+                # A custom setter may store the value outside __dict__.
+                oldval = getattr(target, name, NOTSET)
         setattr(target, name, value)
         self._setattr.append((target, name, oldval))
 
