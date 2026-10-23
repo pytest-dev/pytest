@@ -1452,10 +1452,8 @@ def test_error_on_sync_test_async_fixture(pytester: Pytester) -> None:
 
             def test_foo(async_fixture):
                 # suppress unawaited coroutine warning
-                try:
+                with contextlib.suppress(StopIteration):
                     async_fixture.send(None)
-                except StopIteration:
-                    pass
         """
     )
     result = pytester.runpytest()
@@ -1471,6 +1469,7 @@ def test_error_on_sync_test_async_fixture(pytester: Pytester) -> None:
 def test_error_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_sync="""
+            import contextlib
             import pytest
 
             @pytest.fixture
