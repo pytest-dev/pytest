@@ -864,7 +864,8 @@ class TestNodeKeywords:
     def test_no_under(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol(
             """
-            def test_pass(): pass
+            def test_pass():
+                '''dummy'''
             def test_fail(): assert 0
         """
         )
