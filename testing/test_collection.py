@@ -2142,6 +2142,35 @@ class TestOverlappingCollectionArguments:
             consecutive=True,
         )
 
+    def test_explicit_file_arguments_collect_shared_directory_once(
+        self, pytester: Pytester
+    ) -> None:
+        files = {f"tests/test_{i}.py": "def test_example(): pass" for i in range(8)}
+        pytester.makepyfile(**files)
+        pytester.makeconftest(
+            """
+            from collections import Counter
+            from pathlib import Path
+
+            collected = Counter()
+
+            def pytest_collect_file(file_path, parent):
+                if file_path.name.startswith("test_"):
+                    collected[file_path.name] += 1
+
+            def pytest_sessionfinish(session, exitstatus):
+                Path("collect-counts.txt").write_text(str(sum(collected.values())))
+            """
+        )
+
+        file_args = [f"tests/test_{i}.py" for i in range(4)]
+        result = pytester.runpytest_subprocess("--collect-only", *file_args)
+
+        assert result.ret == ExitCode.OK
+        assert int(pytester.path.joinpath("collect-counts.txt").read_text()) == len(
+            files
+        )
+
     def test_keep_duplicates_flag(self, pytester: Pytester) -> None:
         """Test that --keep-duplicates allows duplication."""
         pytester.makepyfile(
