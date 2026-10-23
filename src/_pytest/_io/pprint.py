@@ -29,6 +29,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 import dataclasses as _dataclasses
 import re
+import sys
 import types as _types
 from typing import Any
 
@@ -228,6 +229,9 @@ class PrettyPrinter:
         yield ")"
 
     _dispatch[_collections.OrderedDict.__repr__] = _pprint_ordered_dict
+    if sys.version_info >= (3, 15):
+        # frozendict's repr has the same shape as OrderedDict's: Name({...})
+        _dispatch[frozendict.__repr__] = _pprint_ordered_dict  # noqa: F821
 
     def _pprint_list(
         self,

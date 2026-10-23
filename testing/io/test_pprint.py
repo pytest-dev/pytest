@@ -9,6 +9,7 @@ from collections import UserDict
 from collections import UserList
 from collections import UserString
 from dataclasses import dataclass
+import sys
 import textwrap
 from types import MappingProxyType
 from types import SimpleNamespace
@@ -649,6 +650,32 @@ def test_simplenamespace_subclass_uses_class_name() -> None:
 
     pp = PrettyPrinter()
     assert pp.pformat(MyNamespace(one=1)) == "MyNamespace(\n    one=1,\n)"
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 15), reason="frozendict is a builtin since Python 3.15"
+)
+def test_frozendict() -> None:
+    if sys.version_info >= (3, 15):  # for mypy, which checks against Python 3.10
+        pp = PrettyPrinter()
+        assert pp.pformat(frozendict()) == "frozendict()"  # noqa: F821
+        assert pp.pformat(frozendict({"one": 1, "two": 2})) == textwrap.dedent(
+            """\
+            frozendict({
+                'one': 1,
+                'two': 2,
+            })"""
+        )
+
+        class MyFrozenDict(frozendict):  # noqa: F821
+            pass
+
+        assert pp.pformat(MyFrozenDict({"one": 1})) == textwrap.dedent(
+            """\
+            MyFrozenDict({
+                'one': 1,
+            })"""
+        )
 
 
 def test_safe_tuple_sorts_unorderable_pairs() -> None:
