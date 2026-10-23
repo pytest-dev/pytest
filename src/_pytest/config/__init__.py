@@ -534,15 +534,13 @@ class PytestPluginManager(PluginManager):
         if os.environ.get("PYTEST_DEBUG"):
             err: IO[str] = sys.stderr
             encoding: str = getattr(err, "encoding", "utf8")
-            try:
+            with contextlib.suppress(Exception):
                 err = open(
                     os.dup(err.fileno()),
                     mode=err.mode,
                     buffering=1,
                     encoding=encoding,
                 )
-            except Exception:
-                pass
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
 
