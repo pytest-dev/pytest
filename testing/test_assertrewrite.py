@@ -2107,11 +2107,11 @@ class TestAssertionPass:
         """Assertion pass should not be called (and hence formatting should
         not occur) if there is no hook declared for pytest_assertion_pass"""
 
-        def raise_on_assertionpass(*_, **__):
+        def raise_if_called(*_, **__):
             raise Exception("Assertion passed called when it shouldn't!")
 
         monkeypatch.setattr(
-            _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
+            _pytest.assertion.rewrite, "_call_assertion_pass", raise_if_called
         )
 
         pytester.makepyfile(
