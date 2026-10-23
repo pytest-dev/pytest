@@ -719,11 +719,11 @@ class AssertionRewriter(ast.NodeVisitor):
                     if self.is_rewrite_disabled(doc):
                         return
                     expect_docstring = False
+                    pos += 1
                 case ast.ImportFrom(level=0, module="__future__"):
-                    pass
+                    pos += 1
                 case _:
                     break
-            pos += 1
         # Special case: for a decorated function, set the lineno to that of the
         # first decorator, not the `def`. Issue #4984.
         if isinstance(item, ast.FunctionDef) and item.decorator_list:
