@@ -507,10 +507,8 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
     if isinstance(item, TestCaseFunction):
         if item._excinfo:
             call.excinfo = item._excinfo.pop(0)
-            try:
+            with contextlib.suppress(AttributeError):
                 del call.result
-            except AttributeError:
-                pass
 
     # Convert unittest.SkipTest to pytest.skip.
     # This covers explicit `raise unittest.SkipTest`.
