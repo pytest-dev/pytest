@@ -1,0 +1,1 @@
+Passing ``bytes`` to ``TerminalReporter.write_line()`` is now deprecated, pass a ``str`` instead.
