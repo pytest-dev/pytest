@@ -789,13 +789,13 @@ class TestLastFailed:
         # 1. initial run
         test_bar = pytester.makepyfile(
             test_bar="""
-            def test_bar_1(): pass
+            def test_bar_1(): ...
             def test_bar_2(): assert 0
         """
         )
         test_foo = pytester.makepyfile(
             test_foo="""
-            def test_foo_3(): pass
+            def test_foo_3(): ...
             def test_foo_4(): assert 0
         """
         )
@@ -808,8 +808,8 @@ class TestLastFailed:
         # 2. fix test_bar_2, run only test_bar.py
         pytester.makepyfile(
             test_bar="""
-            def test_bar_1(): pass
-            def test_bar_2(): pass
+            def test_bar_1(): ...
+            def test_bar_2(): ...
         """
         )
         result = pytester.runpytest(test_bar)
@@ -830,8 +830,8 @@ class TestLastFailed:
         # 3. fix test_foo_4, run only test_foo.py
         test_foo = pytester.makepyfile(
             test_foo="""
-            def test_foo_3(): pass
-            def test_foo_4(): pass
+            def test_foo_3(): ...
+            def test_foo_4(): ...
         """
         )
         result = pytester.runpytest(test_foo, "--last-failed")
