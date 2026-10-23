@@ -44,6 +44,7 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import TERMINAL_WRITE_LINE_BYTES
 from _pytest.nodeid import NodeId
@@ -295,9 +296,22 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
+def _max_warnings(config: Config) -> int | None:
+    """The ``max_warnings`` threshold, or None if unset."""
+    value: int | str | None = config.getini("max_warnings")
+    if not isinstance(value, str):
+        return value
+    try:
+        return int(value)
+    except ValueError:
+        raise UsageError(f"max_warnings must be an integer, got {value!r}") from None
+
+
 def pytest_configure(config: Config) -> None:
-    # Eagerly validate the value; it is only read lazily during reporting.
+    # Eagerly validate these; they are only read lazily during reporting, by
+    # which point a UsageError no longer reaches the user.
     config.getini("console_output_style")
+    _max_warnings(config)
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
@@ -1007,7 +1021,7 @@ class TerminalReporter:
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
         # Check --max-warnings threshold after all warnings have been collected.
-        max_warnings = self._get_max_warnings()
+        max_warnings = _max_warnings(self.config)
         if max_warnings is not None and session.exitstatus == ExitCode.OK:
             warning_count = len(self.stats.get("warnings", []))
             if warning_count > max_warnings:
@@ -1105,16 +1119,6 @@ class TerminalReporter:
                 return str(rep.longrepr)[:50]
             except AttributeError:
                 return ""
-
-    def _get_max_warnings(self) -> int | None:
-        """Return the max_warnings threshold, from CLI or INI, or None if unset."""
-        value = self.config.option.max_warnings
-        if value is not None:
-            return int(value)
-        ini_value: int | str | None = self.config.getini("max_warnings")
-        if isinstance(ini_value, str):
-            return int(ini_value)
-        return ini_value
 
     #
     # Summaries for sessionfinish.

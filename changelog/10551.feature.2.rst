@@ -1,0 +1,14 @@
+New :func:`parser.addconfig <pytest.Parser.addconfig>`, which registers a configuration option together with a command line option that sets it, in one call and with one type:
+
+.. code-block:: python
+
+    parser.addconfig(
+        "log_file_mode",
+        "Log file open mode",
+        type=Literal["w", "a"],
+        default="w",
+        cli="--log-file-mode",
+        group="logging",
+    )
+
+The command line option overrides the configuration option rather than being a separate value, so :func:`config.getini <pytest.Config.getini>` reads the setting whichever way the user supplied it. The value is also available as ``config.option.<name>``, and the type is enforced for all sources.
