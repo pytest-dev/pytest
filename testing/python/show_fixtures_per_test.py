@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from _pytest.config import ExitCode
 from _pytest.pytester import Pytester
 
 
@@ -7,6 +8,38 @@ def test_should_show_no_output_when_zero_items(pytester: Pytester) -> None:
     result = pytester.runpytest("--fixtures-per-test")
     result.stdout.no_fnmatch_line("*fixtures used by*")
     assert result.ret == 0
+
+
+def test_fixtures_per_test_collection_error(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_broken(:
+            pass
+        """
+    )
+
+    result = pytester.runpytest("--fixtures-per-test")
+
+    assert result.ret == ExitCode.INTERRUPTED
+    result.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
+
+
+def test_fixtures_per_test_continue_on_collection_errors(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        def test_broken(:
+            pass
+        """
+    )
+
+    result = pytester.runpytest(
+        "--fixtures-per-test", "--continue-on-collection-errors"
+    )
+
+    assert result.ret == ExitCode.TESTS_FAILED
+    result.stdout.no_fnmatch_line("*Interrupted:*")
 
 
 def test_fixtures_in_module(pytester: Pytester) -> None:
