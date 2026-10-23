@@ -11,7 +11,7 @@ pytester = &lt;Pytester WindowsPath('C:/Users/joaog/AppData/Local/Temp/pytest-of
 &gt;       result = pytester.runpython_c("import pytest;help(pytest)")
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\acceptance_test.py:591: 
+C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\acceptance_test.py:591:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\src\_pytest\pytester.py:1501: in runpython_c
     return self.run(sys.executable, "-c", command)
@@ -86,7 +86,7 @@ pytester = &lt;Pytester WindowsPath('C:/Users/joaog/AppData/Local/Temp/pytest-of
         pytester.makepyfile(
             """
             import collections
-    
+
             TestCase = collections.namedtuple('TestCase', ['a'])
         """
         )
@@ -112,7 +112,7 @@ pytester = &lt;Pytester WindowsPath('C:/Users/joaog/AppData/Local/Temp/pytest-of
         pytester.makepyfile(
             """
             import pytest
-    
+
             @pytest.mark.usefixtures()
             def test_one():
                 assert 1 == 1
@@ -145,7 +145,7 @@ C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\python\fixture
                 stdin=subprocess.PIPE,
                 timeout=0.1,
             )
-    
+
         with pytest.raises(pytester.TimeoutExpired):
             result = pytester.run(
                 sys.executable,
@@ -154,7 +154,7 @@ C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\python\fixture
                 stdin=b"input\n2ndline",
                 timeout=0.1,
             )
-    
+
         result = pytester.run(
             sys.executable,
             "-c",
@@ -164,7 +164,7 @@ C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\python\fixture
         assert result.stdout.lines == ["input", "2ndline"]
 &gt;       assert result.stderr.str() == ""
 E       assert 'C:\\Users\\j...ude-ignored")' == ''
-E         
+E
 E         #x1B[0m#x1B[92m+ C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\.venv\Lib\site-packages\coverage\inorout.py:513: CoverageWarning: --include is ignored because --source is set (include-ignored); see https://coverage.readthedocs.io/en/7.17.0/messages.html#warning-include-ignored#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[92m+   self.warn("--include is ignored because --source is set", slug="include-ignored")#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 
@@ -182,14 +182,14 @@ C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_pytester.
         assert stdout.decode("utf8").splitlines() == ["input", "2ndline"]
 &gt;       assert stderr == b""
 E       assert b'C:\\Users\\...ignored")\r\n' == b''
-E         
+E
 E         Full diff: (-: missing in left side, +: extra in left side)
 E         #x1B[0m#x1B[91m- b''#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+ (b'C:\\Users\\joaog\\OneDrive\\Documentos\\PROJETOS\\pytest-smells\\.venv\\'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b'Lib\\site-packages\\coverage\\inorout.py:513: CoverageWarning: --include is'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b' ignored because --source is set (include-ignored); see https://coverage.rea'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b'dthedocs.io/en/7.17.0/messages.html#warning-include-ignored\r\n  self.warn'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m...
-E         
+E
 E         ...Full output truncated, use '-vv' to show
 
 C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_pytester.py:660: AssertionError</failure></testcase><testcase classname="testing.test_pytester" name="test_popen_stdin_bytes" time="0.180"><failure message="assert b'C:\\Users\\...ignored&quot;)\r\n' == b''&#10;  &#10;  Full diff: (-: missing in left side, +: extra in left side)&#10;  #x1B[0m#x1B[91m- b''#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  #x1B[0m#x1B[92m+ (b'C:\\Users\\joaog\\OneDrive\\Documentos\\PROJETOS\\pytest-smells\\.venv\\'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  #x1B[0m#x1B[92m+  b'Lib\\site-packages\\coverage\\inorout.py:513: CoverageWarning: --include is'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;[+4 more lines; full report in element text]">pytester = &lt;Pytester WindowsPath('C:/Users/joaog/AppData/Local/Temp/pytest-of-joaog/pytest-4/test_popen_stdin_bytes0')&gt;
@@ -205,14 +205,14 @@ C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_pytester.
         assert stdout.decode("utf8").splitlines() == ["input", "2ndline"]
 &gt;       assert stderr == b""
 E       assert b'C:\\Users\\...ignored")\r\n' == b''
-E         
+E
 E         Full diff: (-: missing in left side, +: extra in left side)
 E         #x1B[0m#x1B[91m- b''#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+ (b'C:\\Users\\joaog\\OneDrive\\Documentos\\PROJETOS\\pytest-smells\\.venv\\'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b'Lib\\site-packages\\coverage\\inorout.py:513: CoverageWarning: --include is'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b' ignored because --source is set (include-ignored); see https://coverage.rea'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b'dthedocs.io/en/7.17.0/messages.html#warning-include-ignored\r\n  self.warn'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m...
-E         
+E
 E         ...Full output truncated, use '-vv' to show
 
 C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_pytester.py:673: AssertionError</failure></testcase><testcase classname="testing.test_pytester" name="test_popen_default_stdin_stderr_and_stdin_None" time="0.282"><failure message="assert &lt;ExitCode.TESTS_FAILED: 1&gt; == 0&#10; +  where &lt;ExitCode.TESTS_FAILED: 1&gt; = &lt;RunResult ret=1 len(stdout.lines)=35 len(stderr.lines)=0 duration=0.26s&gt;.ret">pytester = &lt;Pytester WindowsPath('C:/Users/joaog/AppData/Local/Temp/pytest-of-joaog/pytest-4/test_popen_default_stdin_stderr_and_stdin_None0')&gt;
@@ -226,7 +226,7 @@ C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_pytester.
         p1 = pytester.makepyfile(
             '''
             import sys
-    
+
             def test_inner(pytester):
                 p1 = pytester.makepyfile(
                     """
@@ -263,7 +263,7 @@ pytester = &lt;Pytester WindowsPath('C:/Users/joaog/AppData/Local/Temp/pytest-of
             result, "assertion is always true, perhaps remove parentheses?"
         )
 
-C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_warnings.py:616: 
+C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\testing\test_warnings.py:616:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 result = &lt;RunResult ret=0 len(stdout.lines)=8 len(stderr.lines)=0 duration=0.06s&gt;
@@ -317,25 +317,25 @@ monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002ADA5524D10&g
             """
             import threading
             import sys
-    
+
             printing = threading.Event()
-    
+
             def spam():
                 f = sys.stderr
                 print('SPAMBEFORE', end='', file=f)
                 printing.set()
-    
+
                 while True:
                     try:
                         f.flush()
                     except (OSError, ValueError):
                         break
-    
+
             def test_spam_in_thread():
                 t = threading.Thread(target=spam)
                 t.daemon = True
                 t.start()
-    
+
                 printing.wait()
         """
         )
@@ -345,7 +345,7 @@ monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002ADA5524D10&g
         assert result.ret == 0
 &gt;       assert result.stderr.str() == ""
 E       assert 'C:\\Users\\j...ude-ignored")' == ''
-E         
+E
 E         #x1B[0m#x1B[92m+ C:\Users\joaog\OneDrive\Documentos\PROJETOS\pytest-smells\.venv\Lib\site-packages\coverage\inorout.py:513: CoverageWarning: --include is ignored because --source is set (include-ignored); see https://coverage.readthedocs.io/en/7.17.0/messages.html#warning-include-ignored#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[92m+   self.warn("--include is ignored because --source is set", slug="include-ignored")#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 

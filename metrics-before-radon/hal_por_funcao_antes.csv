@@ -1,4 +1,4 @@
-arquivo,origem,escopo,nome,h1,h2,N1,N2,vocabulary,length,calculated_length,volume,difficulty,effort,time,bugs
+arquivo,origem,escopo,gnome,h1,h2,N1,N2,vocabulary,length,calculated_length,volume,difficulty,effort,time,bugs
 src/_pytest/approx.py,fonte,funcao,_max_diff,1,2,1,2,3,3,2.0,4.7549,0.5,2.3774,0.1321,0.0016
 src/_pytest/approx.py,fonte,funcao,_vetted_diffs,2,4,4,6,6,10,10.0,25.8496,1.5,38.7744,2.1541,0.0086
 src/_pytest/approx.py,fonte,funcao,_compare_approx,1,2,1,2,3,3,2.0,4.7549,0.5,2.3774,0.1321,0.0016

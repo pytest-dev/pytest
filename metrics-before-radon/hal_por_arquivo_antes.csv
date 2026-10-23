@@ -1,4 +1,4 @@
-arquivo,origem,escopo,nome,h1,h2,N1,N2,vocabulary,length,calculated_length,volume,difficulty,effort,time,bugs
+arquivo,origem,escopo,gnome,h1,h2,N1,N2,vocabulary,length,calculated_length,volume,difficulty,effort,time,bugs
 src/py.py,fonte,arquivo,,0,0,0,0,0,0,0,0,0,0,0,0
 src/pytest/__init__.py,fonte,arquivo,,0,0,0,0,0,0,0,0,0,0,0,0
 src/_pytest/hookspec.py,fonte,arquivo,,0,0,0,0,0,0,0,0,0,0,0,0

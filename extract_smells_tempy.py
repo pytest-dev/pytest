@@ -11,12 +11,17 @@ Uso (sempre a partir da pasta raiz do projeto):
 
 # ======================= CONFIGURAÇÃO =======================
 # Altere apenas esta linha, se necessário: caminho da pasta onde o TEMPY foi clonado.
+from __future__ import annotations
+
+
 TEMPY_DIR = "../TEMPY"
 # ============================================================
 
 import argparse
+from collections import Counter
 import contextlib
 import csv
+from datetime import datetime
 import functools
 import html
 import io
@@ -24,21 +29,31 @@ import json
 import os
 import subprocess
 import sys
-from collections import Counter
-from datetime import datetime
+
 
 SCRIPT_NAME = os.path.basename(__file__)
-IGNORED_DIRS = {"venv", "env", "node_modules", "build", "dist", "site-packages", "__pycache__"}
+IGNORED_DIRS = {
+    "venv",
+    "env",
+    "node_modules",
+    "build",
+    "dist",
+    "site-packages",
+    "__pycache__",
+}
 
 
 def load_tempy(tempy_dir):
     """Importa o parser do TEMPY a partir da pasta clonada."""
     assets = os.path.join(os.path.abspath(tempy_dir), "assets")
     if not os.path.isfile(os.path.join(assets, "python_parser.py")):
-        sys.exit(f"[erro] TEMPY não encontrado em: {os.path.abspath(tempy_dir)}\n"
-                 f"       Ajuste TEMPY_DIR no início do script ou use --tempy <caminho>.")
+        sys.exit(
+            f"[error] TEMPY não encontrado em: {os.path.abspath(tempy_dir)}\n"
+            f"       Ajuste TEMPY_DIR no início do script ou use --tempy <caminho>."
+        )
     sys.path.insert(0, assets)
     import python_parser
+
     # O TEMPY abre os arquivos sem definir a codificação, o que quebra no Windows
     # com arquivos UTF-8 acentuados. Forçamos UTF-8 apenas dentro do parser.
     python_parser.open = functools.partial(open, encoding="utf-8", errors="ignore")
@@ -55,7 +70,15 @@ def is_test_file(path):
         for line in f:
             if line.find("assert") == 0:
                 return True
-            if any(t in line for t in ("import unittest", "import pytest", "from unittest", "from pytest")):
+            if any(
+                t in line
+                for t in (
+                    "import unittest",
+                    "import pytest",
+                    "from unittest",
+                    "from pytest",
+                )
+            ):
                 return True
     return False
 
@@ -72,7 +95,7 @@ def find_test_files(root):
 
 
 def analyze(parser_cls, path):
-    """Executa a detecção do TEMPY em um arquivo. Retorna (ocorrências, erro)."""
+    """Executa a detecção do TEMPY em um arquivo. Retorna (ocorrências, error)."""
     try:
         with contextlib.redirect_stdout(io.StringIO()):  # o TEMPY imprime muita coisa
             parser = parser_cls(path)
@@ -84,7 +107,9 @@ def analyze(parser_cls, path):
 
 def git_commit(path):
     try:
-        r = subprocess.run(["git", "rev-parse", "HEAD"], cwd=path, capture_output=True, text=True)
+        r = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=path, capture_output=True, text=True
+        )
         return r.stdout.strip() or None
     except OSError:
         return None
@@ -96,45 +121,58 @@ def run(parser_cls, root, files):
         rel = os.path.relpath(path, root).replace(os.sep, "/")
         occurrences, error = analyze(parser_cls, path)
         if error:
-            errors.append({"arquivo": rel, "erro": error})
+            errors.append({"arquivo": rel, "error": error})
         for occ in occurrences:
             lines = ";".join(str(n) for n in occ.lines)
             key = (rel, occ.test_smell_type, occ.method_name, lines)
             if key in seen:  # descarta ocorrências idênticas repetidas
                 continue
             seen.add(key)
-            rows.append({"arquivo": rel, "smell": occ.test_smell_type,
-                         "metodo": occ.method_name or "(nível do módulo)", "linhas": lines})
+            rows.append(
+                {
+                    "arquivo": rel,
+                    "smell": occ.test_smell_type,
+                    "metodo": occ.method_name or "(nível do módulo)",
+                    "linhas": lines,
+                }
+            )
     return rows, errors
 
 
 def print_summary(rows, n_files, errors):
-    print(f"\n{len(rows)} test smells encontrados em {n_files} arquivos de teste analisados.\n")
+    print(
+        f"\n{len(rows)} test smells encontrados em {n_files} arquivos de teste analisados.\n"
+    )
     for smell, n in Counter(r["smell"] for r in rows).most_common():
         print(f"  {n:5d}  {smell}")
     if errors:
-        print(f"\n[aviso] {len(errors)} arquivo(s) não puderam ser analisados pelo TEMPY.")
+        print(
+            f"\n[aviso] {len(errors)} arquivo(s) não puderam set analisados pelo TEMPY."
+        )
 
 
 def write_html(path, summary, rows):
-    by_type = "".join(f"<tr><td>{html.escape(s)}</td><td>{n}</td></tr>"
-                      for s, n in summary["por_tipo"].items())
+    by_type = "".join(
+        f"<tr><td>{html.escape(s)}</td><td>{n}</td></tr>"
+        for s, n in summary["por_tipo"].items()
+    )
     body = "".join(
         f"<tr><td>{i}</td><td>{html.escape(r['arquivo'])}</td><td>{html.escape(r['smell'])}</td>"
         f"<td>{html.escape(r['metodo'])}</td><td>{html.escape(r['linhas'].replace(';', ', '))}</td></tr>"
-        for i, r in enumerate(rows, 1))
+        for i, r in enumerate(rows, 1)
+    )
     page = f"""<!DOCTYPE html>
-<html lang="pt-br"><head><meta charset="utf-8"><title>Test smells ({summary['etapa']})</title>
+<html lang="pt-br"><head><meta charset="utf-8"><title>Test smells ({summary["etapa"]})</title>
 <style>
 body {{ font-family: system-ui, sans-serif; margin: 2rem; }}
 table {{ border-collapse: collapse; margin-bottom: 2rem; }}
 th, td {{ border: 1px solid #999; padding: 4px 8px; text-align: left; }}
 th {{ background: #eee; }}
 </style></head><body>
-<h1>Test smells detectados pelo TEMPY ({summary['etapa']})</h1>
-<p>Data: {summary['data']}<br>Commit do projeto: {summary['commit_projeto']}<br>
-Arquivos de teste analisados: {summary['arquivos_analisados']}<br>
-Total de test smells: <strong>{summary['total_smells']}</strong></p>
+<h1>Test smells detectados pelo TEMPY ({summary["etapa"]})</h1>
+<p>Data: {summary["data"]}<br>Commit do projeto: {summary["commit_projeto"]}<br>
+Arquivos de teste analisados: {summary["arquivos_analisados"]}<br>
+Total de test smells: <strong>{summary["total_smells"]}</strong></p>
 <h2>Por tipo</h2><table><tr><th>Test smell</th><th>Ocorrências</th></tr>{by_type}</table>
 <h2>Ocorrências</h2>
 <table><tr><th>#</th><th>Arquivo</th><th>Test smell</th><th>Método</th><th>Linhas</th></tr>{body}</table>
@@ -145,24 +183,32 @@ Total de test smells: <strong>{summary['total_smells']}</strong></p>
 
 def main():
     p = argparse.ArgumentParser(description="Detecta test smells com o TEMPY.")
-    p.add_argument("--etapa", choices=("before", "after"),
-                   help="salva os resultados em metrics-<etapa>-tempy/. Sem esta opção, nada é salvo.")
-    p.add_argument("--arquivo", help="analisa apenas este arquivo de teste (conferência; não salva)")
+    p.add_argument(
+        "--etapa",
+        choices=("before", "after"),
+        help="salva os resultados em metrics-<etapa>-tempy/. Sem esta opção, nada é salvo.",
+    )
+    p.add_argument(
+        "--arquivo",
+        help="analisa apenas este arquivo de teste (conferência; não salva)",
+    )
     p.add_argument("--tempy", default=TEMPY_DIR, help="pasta onde o TEMPY foi clonado")
     args = p.parse_args()
 
     if args.etapa and args.arquivo:
-        p.error("--arquivo serve só para conferência e não pode ser usado com --etapa")
+        p.error("--arquivo serve só para conferência e não pode set usado com --etapa")
 
     root = os.getcwd()
     parser_cls = load_tempy(args.tempy)
 
     if args.arquivo:
         if not os.path.isfile(args.arquivo):
-            sys.exit(f"[erro] arquivo não encontrado: {args.arquivo}")
+            sys.exit(f"[error] arquivo não encontrado: {args.arquivo}")
         rows, errors = run(parser_cls, root, [args.arquivo])
         for r in rows:
-            print(f"  {r['smell']:<30} {r['metodo']:<40} linhas {r['linhas'].replace(';', ', ')}")
+            print(
+                f"  {r['smell']:<30} {r['metodo']:<40} linhas {r['linhas'].replace(';', ', ')}"
+            )
         print_summary(rows, 1, errors)
         for e in errors:
             print(f"  {e['arquivo']}: {e['erro']}")
@@ -170,12 +216,16 @@ def main():
 
     out_dir = f"metrics-{args.etapa}-tempy" if args.etapa else None
     if out_dir and os.path.exists(out_dir):
-        sys.exit(f"[erro] a pasta {out_dir}/ já existe. Os resultados não serão sobrescritos.\n"
-                 f"       Se precisar refazer a medição, fale com o monitor antes de apagar a pasta.")
+        sys.exit(
+            f"[error] a pasta {out_dir}/ já existe. Os resultados não serão sobrescritos.\n"
+            f"       Se precisar refazer a medição, fale com o monitor antes de apagar a pasta."
+        )
 
     files = find_test_files(root)
     if not files:
-        sys.exit("[erro] nenhum arquivo de teste encontrado. Execute o script na pasta raiz do projeto.")
+        sys.exit(
+            "[error] nenhum arquivo de teste encontrado. Execute o script na pasta raiz do projeto."
+        )
     rows, errors = run(parser_cls, root, files)
     print_summary(rows, len(files), errors)
 
@@ -194,16 +244,20 @@ def main():
         "total_smells": len(rows),
         "por_tipo": dict(Counter(r["smell"] for r in rows).most_common()),
         "por_arquivo": dict(Counter(r["arquivo"] for r in rows).most_common()),
-        "erros": errors,
+        "errors": errors,
     }
-    with open(os.path.join(out_dir, "smells.csv"), "w", newline="", encoding="utf-8") as f:
+    with open(
+        os.path.join(out_dir, "smells.csv"), "w", newline="", encoding="utf-8"
+    ) as f:
         writer = csv.DictWriter(f, fieldnames=["arquivo", "smell", "metodo", "linhas"])
         writer.writeheader()
         writer.writerows(rows)
     with open(os.path.join(out_dir, "resumo.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
     write_html(os.path.join(out_dir, "relatorio.html"), summary, rows)
-    print(f"\nResultados salvos em {out_dir}/ (smells.csv, resumo.json, relatorio.html)")
+    print(
+        f"\nResultados salvos em {out_dir}/ (smells.csv, resumo.json, relatorio.html)"
+    )
 
 
 if __name__ == "__main__":
