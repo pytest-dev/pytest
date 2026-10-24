@@ -1,0 +1,1 @@
+Schedule *yield_fixture* decorator for removal in pytest 10.

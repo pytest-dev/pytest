@@ -248,9 +248,9 @@ def pytest_collection(session: Session) -> object | None:
 
       1. ``pytest_deselected(items)`` for any deselected items (may be called multiple times)
 
-    3. Set ``session.items`` to the list of collected items
+    3. Set ``session.items`` to the list of collected items (not including deselected items)
     4. ``pytest_collection_finish(session)``
-    5. Set ``session.testscollected`` to the number of collected items
+    5. Set ``session.testscollected`` to the number of collected items (not including deselected items)
     6. Abort with :class:`~pytest.Interrupted` if collection reported errors
        (unless ``--continue-on-collection-errors`` is set)
 

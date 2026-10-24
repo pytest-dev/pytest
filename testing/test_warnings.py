@@ -1066,6 +1066,23 @@ class TestMaxWarnings:
         assert result.ret == ExitCode.MAX_WARNINGS_ERROR
 
     @pytest.mark.filterwarnings("default::UserWarning")
+    @pytest.mark.parametrize("value", ["1", '"1"'])
+    def test_max_warnings_toml_option(self, pytester: Pytester, value: str) -> None:
+        """max_warnings can be set via TOML configuration.
+
+        Supports both int and str (for backward compat).
+        """
+        pytester.maketoml(
+            f"""
+            [pytest]
+            max_warnings = {value}
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
     def test_max_warnings_with_test_failure(self, pytester: Pytester) -> None:
         """When tests fail AND warnings exceed max, TESTS_FAILED takes priority."""
         pytester.makepyfile(

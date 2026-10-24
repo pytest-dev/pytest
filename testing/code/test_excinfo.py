@@ -340,6 +340,36 @@ class TestTraceback_f_g_h:
         assert excinfo._getreprcrash() is None
 
 
+def test_excinfo_exconly_tryshort_assert() -> None:
+    """Rewritten asserts lose their 'AssertionError: ' prefix, also when the
+    ExceptionInfo comes from pytest.raises (#12175)."""
+    x = 1
+    with pytest.raises(AssertionError) as excinfo:
+        assert x == 2
+    assert excinfo.exconly(tryshort=True) == "assert 1 == 2"
+    assert ExceptionInfo.from_exception(excinfo.value).exconly(tryshort=True) == (
+        "assert 1 == 2"
+    )
+
+    # Explicit AssertionErrors keep their type name.
+    with pytest.raises(AssertionError) as excinfo:
+        raise AssertionError("message")
+    assert excinfo.exconly(tryshort=True) == "AssertionError: message"
+
+    # A legacy ``msg`` attribute is checked instead of the repr.
+    exc = AssertionError("assert 1 == 2")
+    exc.msg = "custom"  # type: ignore[attr-defined]
+    with pytest.raises(AssertionError) as excinfo:
+        raise exc
+    assert excinfo.exconly(tryshort=True) == "AssertionError: assert 1 == 2"
+
+    # An explicit exprinfo disables stripping.
+    with pytest.raises(AssertionError) as excinfo:
+        assert x == 2
+    info = ExceptionInfo.from_exception(excinfo.value, exprinfo="assert x == 2")
+    assert info.exconly(tryshort=True) == "AssertionError: assert 1 == 2"
+
+
 def test_excinfo_exconly():
     with pytest.raises(ValueError) as excinfo:
         h()
@@ -2165,6 +2195,59 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
         ],
         consecutive=True,
     )
+
+
+def test_tracebackhide_in_exceptiongroup_is_respected(pytester: Pytester) -> None:
+    """ExceptionGroup tracebacks respect __tracebackhide__ (#14036)."""
+    p = pytester.makepyfile(
+        """
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
+
+        def g1():
+            __tracebackhide__ = True
+            str.does_not_exist
+
+        def f3():
+            __tracebackhide__ = True
+            1 / 0
+
+        def f2():
+            __tracebackhide__ = True
+            exc = None
+            try:
+                f3()
+            except Exception as e:
+                exc = e
+            exc2 = None
+            try:
+                g1()
+            except Exception as e:
+                exc2 = e
+            raise ExceptionGroup("blah", [exc, exc2])
+
+        def f1():
+            __tracebackhide__ = True
+            f2()
+
+        def test():
+            f1()
+        """
+    )
+    result = pytester.runpytest(str(p), "--tb=short")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*ExceptionGroup: blah (2 sub-exceptions)*",
+            "*ZeroDivisionError: division by zero*",
+            "*AttributeError*does_not_exist*",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*in f1*")
+    result.stdout.no_fnmatch_line("*in f2*")
+    result.stdout.no_fnmatch_line("*in f3*")
+    result.stdout.no_fnmatch_line("*in g1*")
 
 
 def add_note(err: BaseException, msg: str) -> None:

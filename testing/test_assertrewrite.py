@@ -675,8 +675,8 @@ class TestAssertionRewrite:
         getmsg(f11, must_pass=True)
 
     def test_short_circuit_evaluation(self) -> None:
-        def f1() -> None:
-            assert True or explode  # type: ignore[name-defined,unreachable] # noqa: F821
+        def f1() -> None:  # pragma: no cover
+            assert True or explode  # type: ignore[name-defined,unreachable] # noqa: F821,SIM222
 
         getmsg(f1, must_pass=True)
 
@@ -725,8 +725,8 @@ class TestAssertionRewrite:
         assert getmsg(f2) == "assert not (5 % 4)"
 
     def test_boolop_percent(self) -> None:
-        def f1() -> None:
-            assert 3 % 2 and False
+        def f1() -> None:  # pragma: no cover
+            assert 3 % 2 and False  # noqa: SIM223
 
         assert getmsg(f1) == "assert ((3 % 2) and False)"
 
@@ -1161,6 +1161,66 @@ def test_rewritten():
             glob.glob("__pycache__/*.pyc")
         )
 
+    @pytest.mark.parametrize("implementation", ["import-lib", "pure-python"])
+    def test_moved_test_file_updates_code_filename(
+        self,
+        pytester: Pytester,
+        monkeypatch: pytest.MonkeyPatch,
+        implementation: str,
+    ) -> None:
+        """Moving a test module must keep ``co_filename`` synchronized with ``__file__``.
+
+        The rewritten pyc is reused: filenames are corrected in memory, not by
+        rewriting the cache.
+        """
+        from _pytest.assertion.rewrite import _imp_fix_co_filename  # type: ignore[attr-defined]
+
+        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+
+        if implementation == "import-lib":
+            if _imp_fix_co_filename is None:
+                pytest.skip(
+                    "_imp._fix_co_filename is not available"
+                )  # pragma: no cover
+        else:
+            # The inner pytest runs in a subprocess, so patch there.
+            pytester.makeconftest(
+                """
+                import _pytest.assertion.rewrite as rewrite
+                rewrite._imp_fix_co_filename = None
+                """
+            )
+
+        source = pytester.makepyfile(
+            **{
+                "test1/test_a.py": """
+                from inspect import currentframe
+
+                def test_a():
+                    assert currentframe().f_code.co_filename == __file__
+                """
+            }
+        )
+
+        first = pytester.runpytest_subprocess("-s", "test1/test_a.py")
+        first.assert_outcomes(passed=1)
+
+        pyc = get_cache_dir(source) / ("test_a" + PYC_TAIL)
+        assert pyc.is_file()
+
+        pyc_mtime = pyc.stat().st_mtime_ns
+
+        pytester.path.joinpath("test1").rename(pytester.path.joinpath("test2"))
+
+        moved_source = pytester.path / "test2" / "test_a.py"
+        moved_pyc = get_cache_dir(moved_source) / ("test_a" + PYC_TAIL)
+        assert moved_pyc.is_file()
+
+        second = pytester.runpytest_subprocess("-s", "test2/test_a.py")
+        second.assert_outcomes(passed=1)
+        assert moved_pyc.stat().st_mtime_ns == pyc_mtime
+
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(
         self,
@@ -1484,7 +1544,7 @@ class TestAssertionRewriteHookDetails:
         assert _read_pyc(source, pyc, print) is None
 
     def test_rewrite_picks_up_edit_within_one_mtime_second(
-        self, pytester: Pytester
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Regression test for #13292.
 
@@ -1492,6 +1552,9 @@ class TestAssertionRewriteHookDetails:
         edited twice within the same second used to be served from a stale
         pyc. Hashing the source instead sidesteps the resolution problem.
         """
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+
         source = pytester.path / "test_edited.py"
         pyc_dir = source.parent / "__pycache__"
 
@@ -1637,190 +1700,29 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
-class TestAssertionRewriteWalrusOperator:
-    """See #10743"""
+def test_walrus_rebinding_does_not_outlive_its_statement(
+    pytester: Pytester,
+) -> None:
+    """A walrus target must not be rebound by a later, unrelated assertion.
 
-    def test_assertion_walrus_operator(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def my_func(before, after):
-                return before == after
-
-            def change_value(value):
-                return value.lower()
-
-            def test_walrus_conversion():
-                a = "Hello"
-                assert not my_func(a, a := change_value(a))
-                assert a == "hello"
+    The rest of #10743's suite moved to the coverage matrix, which runs
+    in-process.  This one stays here because it needs two tests in one module
+    to say anything: the rewriter may keep no state that survives a statement,
+    let alone a test.  The matrix cannot express that.
+    """
+    pytester.makepyfile(
         """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
+        def test_walrus_operator_change_value():
+            a = True
+            assert (a := None) is None
 
-    def test_assertion_walrus_operator_dont_rewrite(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            'PYTEST_DONT_REWRITE'
-            def my_func(before, after):
-                return before == after
-
-            def change_value(value):
-                return value.lower()
-
-            def test_walrus_conversion_dont_rewrite():
-                a = "Hello"
-                assert not my_func(a, a := change_value(a))
-                assert a == "hello"
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_inline_walrus_operator(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def my_func(before, after):
-                return before == after
-
-            def test_walrus_conversion_inline():
-                a = "Hello"
-                assert not my_func(a, a := a.lower())
-                assert a == "hello"
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_inline_walrus_operator_reverse(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def my_func(before, after):
-                return before == after
-
-            def test_walrus_conversion_reverse():
-                a = "Hello"
-                assert my_func(a := a.lower(), a)
-                assert a == 'hello'
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_walrus_no_variable_name_conflict(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_conversion_no_conflict():
-                a = "Hello"
-                assert a == (b := a.lower())
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*AssertionError: assert 'Hello' == 'hello'"])
-
-    def test_assertion_walrus_operator_true_assertion_and_changes_variable_value(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_conversion_succeed():
-                a = "Hello"
-                assert a != (a := a.lower())
-                assert a == 'hello'
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_walrus_operator_fail_assertion(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_conversion_fails():
-                a = "Hello"
-                assert a == (a := a.lower())
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*AssertionError: assert 'Hello' == 'hello'"])
-
-    def test_assertion_walrus_operator_boolean_composite(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_operator_change_boolean_value():
-                a = True
-                assert a and True and ((a := False) is False) and (a is False) and ((a := None) is None)
-                assert a is None
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_walrus_operator_compare_boolean_fails(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_operator_change_boolean_value():
-                a = True
-                assert not (a and ((a := False) is False))
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert not (True and False is False)"])
-
-    def test_assertion_walrus_operator_boolean_none_fails(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_operator_change_boolean_value():
-                a = True
-                assert not (a and ((a := None) is None))
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert not (True and None is None)"])
-
-    def test_assertion_walrus_operator_value_changes_cleared_after_each_test(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_walrus_operator_change_value():
-                a = True
-                assert (a := None) is None
-
-            def test_walrus_operator_not_override_value():
-                a = True
-                assert a is True
-        """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 0
-
-    def test_assertion_namedexpr_compare_left_overwrite(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            def test_namedexpr_compare_left_overwrite():
-                a = "Hello"
-                b = "World"
-                c = "Test"
-                assert (a := b) == c and (a := "Test") == "Test"
-            """
-        )
-        result = pytester.runpytest()
-        assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert ('World' == 'Test'*"])
+        def test_walrus_operator_not_override_value():
+            a = True
+            assert a is True
+    """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
 
 
 class TestIssue11028:
@@ -1925,6 +1827,49 @@ class TestIssue11239:
             def test_2():
                 db = {"x": 2}
                 assert (state := db.get("x")) is not None
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+
+class TestIssue14445:
+    """Regression tests for #14445: walrus operator double evaluation."""
+
+    def test_walrus_no_double_eval_basic(self, pytester: Pytester) -> None:
+        """Walrus captures the value at assignment time, not re-evaluated later."""
+        pytester.makepyfile(
+            """
+            class Counter:
+                def __init__(self):
+                    self.value = 0
+                def increment(self):
+                    self.value += 1
+
+            def test_walrus_in_assertion_basic():
+                c = Counter()
+                assert (before := c.value) == 0
+                c.increment()
+                assert before != (after := c.value)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_walrus_no_double_eval_running_counter(self, pytester: Pytester) -> None:
+        """Walrus increments fire exactly once per assert statement."""
+        pytester.makepyfile(
+            """
+            def test_walrus_running_counter():
+                count = 0
+                items = []
+                items.append("a")
+                assert (count := count + 1) == len(items)
+                items.append("b")
+                assert (count := count + 1) == len(items)
+                items.append("c")
+                assert (count := count + 1) == len(items)
+                assert count == 3
         """
         )
         result = pytester.runpytest()

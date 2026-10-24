@@ -38,8 +38,9 @@ Pytest supports several ways to run and select tests from the command-line or fr
 
     pytest -k 'MyClass and not method'
 
-This will run tests which contain names that match the given *string expression* (case-insensitive),
-which can include Python operators that use filenames, class names and function names as variables.
+This will run tests whose *keywords* match the given expression (case-insensitive).
+A test's keywords are its own name, the names of the file and class it is in, the names of
+its markers, and :ref:`a few more <keyword expressions>`.
 The example above will run ``TestMyClass.test_something``  but not ``TestMyClass.test_method_simple``.
 Use ``""`` instead of ``''`` in expression when running this on Windows
 

@@ -431,7 +431,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
     result = call.result if not call.excinfo else None
-    rep = CollectReport(collector.nodeid, outcome, longrepr, result)
+    rep = CollectReport(collector.id, outcome, longrepr, result)
     rep.call = call  # type: ignore # see collect_one_node
     return rep
 

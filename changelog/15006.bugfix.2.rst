@@ -1,0 +1,1 @@
+:func:`pytest.approx` no longer raises ``AttributeError`` when comparing :class:`numpy.ndarray` instances with ``object`` dtype, such as arrays of :class:`~decimal.Decimal`.

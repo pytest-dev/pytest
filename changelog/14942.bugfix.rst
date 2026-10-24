@@ -1,0 +1,2 @@
+Fixed a regression in 9.1.0 that made collection very slow (quadratic) when many fixtures are defined with the same name.
+This can happen particularly when many tests are defined in separate classes which inherit from a base class which defines fixtures (the fixtures are repeated per class).

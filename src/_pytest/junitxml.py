@@ -22,10 +22,15 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
+from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
+from _pytest.nodeid import coerce_node_id
+from _pytest.nodeid import NodeId
+from _pytest.reports import BaseReport
+from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
@@ -64,6 +69,41 @@ def bin_xml_escape(arg: object) -> str:
     return re.sub(illegal_xml_re, repl, str(arg))
 
 
+# Budget for the ``message`` attribute of <failure> and <error> elements.
+# The full report is always written as the element text.
+MESSAGE_ATTR_BUDGET = 500
+
+
+def shorten_message(msg: str, budget: int = MESSAGE_ATTR_BUDGET) -> str:
+    """Shorten ``msg`` for use in a ``message`` attribute.
+
+    Whole lines are kept while they fit in ``budget`` characters; a first
+    line that is longer than ``budget`` on its own is cut. If anything was
+    dropped, a final line points readers to the element text, which holds
+    the full report.
+    """
+    lines = msg.splitlines() or [""]
+    kept: list[str] = []
+    size = 0
+    for line in lines:
+        if kept and size + len(line) + 1 > budget:
+            break
+        kept.append(line)
+        size += len(line) + 1
+    shortened = "\n".join(kept)
+    first_line_cut = len(shortened) > budget
+    if first_line_cut:
+        shortened = shortened[:budget] + "..."
+    remaining = len(lines) - len(kept)
+    if remaining:
+        note = f"+{remaining} more line{'s' if remaining > 1 else ''}"
+    elif first_line_cut:
+        note = "truncated"
+    else:
+        return msg
+    return f"{shortened}\n[{note}; full report in element text]"
+
+
 def merge_family(left, right) -> None:
     result = {}
     for kl, vl in left.items():
@@ -87,8 +127,8 @@ families["xunit2"] = families["_base"]
 
 
 class _NodeReporter:
-    def __init__(self, nodeid: str | TestReport, xml: LogXML) -> None:
-        self.id = nodeid
+    def __init__(self, node_id: NodeId, xml: LogXML) -> None:
+        self.id = node_id
         self.xml = xml
         self.add_stats = self.xml.add_stats
         self.family = self.xml.family
@@ -116,19 +156,21 @@ class _NodeReporter:
             return properties
         return None
 
-    def record_testreport(self, testreport: TestReport) -> None:
+    def record_testreport(self, testreport: TestReport | CollectReport) -> None:
         names = mangle_test_address(testreport.nodeid)
         existing_attrs = self.attrs
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
+        location = testreport.location
+        assert location is not None
         attrs: dict[str, str] = {
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
-            "file": testreport.location[0],
+            "file": location[0],
         }
-        if testreport.location[1] is not None:
-            attrs["line"] = str(testreport.location[1])
+        if location[1] is not None:
+            attrs["line"] = str(location[1])
         if hasattr(testreport, "url"):
             attrs["url"] = testreport.url
         self.attrs = attrs
@@ -206,15 +248,15 @@ class _NodeReporter:
                 message = reprcrash.message
             else:
                 message = str(report.longrepr)
-            message = bin_xml_escape(message)
+            message = bin_xml_escape(shorten_message(message))
             self._add_simple("failure", message, str(report.longrepr))
 
-    def append_collect_error(self, report: TestReport) -> None:
+    def append_collect_error(self, report: CollectReport) -> None:
         # msg = str(report.longrepr.reprtraceback.extraline)
         assert report.longrepr is not None
         self._add_simple("error", "collection failure", str(report.longrepr))
 
-    def append_collect_skipped(self, report: TestReport) -> None:
+    def append_collect_skipped(self, report: CollectReport) -> None:
         self._add_simple("skipped", "collection skipped", str(report.longrepr))
 
     def append_error(self, report: TestReport) -> None:
@@ -229,7 +271,9 @@ class _NodeReporter:
             msg = f'failed on teardown with "{reason}"'
         else:
             msg = f'failed on setup with "{reason}"'
-        self._add_simple("error", bin_xml_escape(msg), str(report.longrepr))
+        self._add_simple(
+            "error", bin_xml_escape(shorten_message(msg)), str(report.longrepr)
+        )
 
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):
@@ -320,7 +364,7 @@ def record_xml_attribute(request: FixtureRequest) -> Callable[[str, object], Non
 
     xml = request.config.stash.get(xml_key, None)
     if xml is not None:
-        node_reporter = xml.node_reporter(request.node.nodeid)
+        node_reporter = xml.node_reporter(request.node.id)
         attr_func = node_reporter.add_attribute
 
     return attr_func
@@ -447,13 +491,15 @@ def pytest_unconfigure(config: Config) -> None:
 
 
 def mangle_test_address(address: str) -> list[str]:
-    path, possible_open_bracket, params = address.partition("[")
-    names = path.split("::")
+    oid = NodeId.parse(address)
+    names = [oid.path, *oid.names]
     # Convert file path to dotted path.
     names[0] = names[0].replace(nodes.SEP, ".")
     names[0] = re.sub(r"\.py$", "", names[0])
-    # Put any params back.
-    names[-1] += possible_open_bracket + params
+    # Put any params back as one opaque bracket (the '-'-separated
+    # param-call-boundary structure inside cannot be reliably recovered).
+    if oid.params is not None:
+        names[-1] += f"[{oid.params}]"
     return names
 
 
@@ -479,7 +525,7 @@ class LogXML:
         self.stats: dict[str, int] = dict.fromkeys(
             ["error", "passed", "failure", "skipped"], 0
         )
-        self.node_reporters: dict[tuple[str | TestReport, object], _NodeReporter] = {}
+        self.node_reporters: dict[tuple[NodeId, object], _NodeReporter] = {}
         self.node_reporters_ordered: list[_NodeReporter] = []
         self.global_properties: list[tuple[str, str]] = []
 
@@ -492,10 +538,10 @@ class LogXML:
             self.family = "xunit1"
 
     def finalize(self, report: TestReport) -> None:
-        nodeid = getattr(report, "nodeid", report)
+        node_id = report.id
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
-        reporter = self.node_reporters.pop((nodeid, workernode))
+        reporter = self.node_reporters.pop((node_id, workernode))
 
         for propname, propvalue in report.user_properties:
             reporter.add_property(propname, str(propvalue))
@@ -503,18 +549,26 @@ class LogXML:
         if reporter is not None:
             reporter.finalize()
 
-    def node_reporter(self, report: TestReport | str) -> _NodeReporter:
-        nodeid: str | TestReport = getattr(report, "nodeid", report)
+    def node_reporter(self, report: BaseReport | NodeId | str) -> _NodeReporter:
+        match report:
+            case NodeId():
+                node_id = coerce_node_id(report)
+            case str():
+                node_id = coerce_node_id(report)
+            case BaseReport():
+                node_id = report.id
+            case _:  # pragma: no cover
+                assert_never(report)
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
 
-        key = nodeid, workernode
+        key = node_id, workernode
 
         if key in self.node_reporters:
             # TODO: breaks for --dist=each
             return self.node_reporters[key]
 
-        reporter = _NodeReporter(nodeid, self)
+        reporter = _NodeReporter(node_id, self)
 
         self.node_reporters[key] = reporter
         self.node_reporters_ordered.append(reporter)
@@ -525,7 +579,7 @@ class LogXML:
         if key in self.stats:
             self.stats[key] += 1
 
-    def _opentestcase(self, report: TestReport) -> _NodeReporter:
+    def _opentestcase(self, report: TestReport | CollectReport) -> _NodeReporter:
         reporter = self.node_reporter(report)
         reporter.record_testreport(report)
         return reporter
@@ -568,7 +622,7 @@ class LogXML:
                         rep
                         for rep in self.open_reports
                         if (
-                            rep.nodeid == report.nodeid
+                            rep.id == report.id
                             and getattr(rep, "item_index", None) == report_ii
                             and getattr(rep, "worker_id", None) == report_wid
                         )
@@ -586,7 +640,7 @@ class LogXML:
                     # element for that item (#3850).
                     self.cnt_double_fail_tests += int(
                         (
-                            report.nodeid,
+                            report.id,
                             getattr(report, "node", None),
                         )
                         in self.node_reporters
@@ -615,7 +669,7 @@ class LogXML:
                     rep
                     for rep in self.open_reports
                     if (
-                        rep.nodeid == report.nodeid
+                        rep.id == report.id
                         and getattr(rep, "item_index", None) == report_ii
                         and getattr(rep, "worker_id", None) == report_wid
                     )
@@ -632,7 +686,7 @@ class LogXML:
             reporter = self.node_reporter(report)
             reporter.duration += getattr(report, "duration", 0.0)
 
-    def pytest_collectreport(self, report: TestReport) -> None:
+    def pytest_collectreport(self, report: CollectReport) -> None:
         if not report.passed:
             reporter = self._opentestcase(report)
             if report.failed:

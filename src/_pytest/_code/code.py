@@ -17,6 +17,8 @@ from traceback import extract_tb
 from traceback import format_exception
 from traceback import format_exception_only
 from traceback import FrameSummary
+from traceback import StackSummary
+from traceback import TracebackException
 from types import CodeType
 from types import FrameType
 from types import TracebackType
@@ -502,13 +504,14 @@ class ExceptionInfo(Generic[E]):
     _assert_start_repr: ClassVar = "AssertionError('assert "
 
     _excinfo: tuple[type[E], E, TracebackType] | None
-    _striptext: str
+    # None means "derive from the exception when needed", see _get_striptext().
+    _striptext: str | None
     _traceback: Traceback | None
 
     def __init__(
         self,
         excinfo: tuple[type[E], E, TracebackType] | None,
-        striptext: str = "",
+        striptext: str | None = None,
         traceback: Traceback | None = None,
         *,
         _ispytest: bool = False,
@@ -555,15 +558,9 @@ class ExceptionInfo(Generic[E]):
         exprinfo: str | None = None,
     ) -> ExceptionInfo[E]:
         """Like :func:`from_exception`, but using old-style exc_info tuple."""
-        _striptext = ""
-        if exprinfo is None and isinstance(exc_info[1], AssertionError):
-            exprinfo = getattr(exc_info[1], "msg", None)
-            if exprinfo is None:
-                exprinfo = saferepr(exc_info[1])
-            if exprinfo and exprinfo.startswith(cls._assert_start_repr):
-                _striptext = "AssertionError: "
-
-        return cls(exc_info, _striptext, _ispytest=True)
+        # An explicit exprinfo has always disabled stripping.
+        striptext = None if exprinfo is None else ""
+        return cls(exc_info, striptext, _ispytest=True)
 
     @classmethod
     def from_current(cls, exprinfo: str | None = None) -> ExceptionInfo[BaseException]:
@@ -619,6 +616,18 @@ class ExceptionInfo(Generic[E]):
         )
         return self._excinfo[2]
 
+    def _get_striptext(self) -> str:
+        if self._striptext is None:
+            self._striptext = ""
+            exc = self.value
+            if isinstance(exc, AssertionError):
+                exprinfo = getattr(exc, "msg", None)
+                if exprinfo is None:
+                    exprinfo = saferepr(exc)
+                if exprinfo and exprinfo.startswith(self._assert_start_repr):
+                    self._striptext = "AssertionError: "
+        return self._striptext
+
     @property
     def typename(self) -> str:
         """The type name of the exception."""
@@ -651,8 +660,10 @@ class ExceptionInfo(Generic[E]):
         information for SyntaxError's.
 
         :param tryshort:
-            If true, and the exception is an AssertionError, strip
-            'AssertionError: ' from the beginning.
+            If true, and the exception is an AssertionError raised by a
+            failing ``assert`` statement (with assertion rewriting active),
+            strip 'AssertionError: ' from the beginning, leaving just the
+            ``assert ...`` explanation.
         """
 
         def _get_single_subexc(
@@ -676,7 +687,7 @@ class ExceptionInfo(Generic[E]):
         text = "".join(lines)
         text = text.rstrip()
         if tryshort:
-            text = text.removeprefix(self._striptext)
+            text = text.removeprefix(self._get_striptext())
         return text
 
     def errisinstance(self, exc: EXCEPTION_OR_MORE) -> bool:
@@ -1215,19 +1226,16 @@ class ExceptionInfoFormatter:
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 reprtraceback: ReprTraceback | ReprTracebackNative
                 if isinstance(e, BaseExceptionGroup):
-                    # don't filter any sub-exceptions since they shouldn't have any internal frames
                     traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
                     extraline = (
                         "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames."
                         if not traceback
                         else None
                     )
+                    tb_exc = TracebackException.from_exception(excinfo.value)
+                    _filter_tracebackexception(tb_exc, excinfo.value, self.tbfilter)
                     reprtraceback = ReprTracebackNative(
-                        format_exception(
-                            type(excinfo.value),
-                            excinfo.value,
-                            traceback[0]._rawentry if traceback else None,
-                        ),
+                        list(tb_exc.format()),
                         extraline=extraline,
                     )
 
@@ -1645,3 +1653,38 @@ def filter_excinfo_traceback(
         return excinfo.traceback.filter(excinfo)
     else:
         return excinfo.traceback
+
+
+def _filter_tracebackexception(
+    tb_exc: TracebackException,
+    e: BaseException,
+    tbfilter: TracebackFilter,
+) -> None:
+    """Filter a ``TracebackException`` in-place, respecting ``__tracebackhide__``.
+
+    This is used to filter native-style tracebacks (currently the only style
+    used for ``BaseExceptionGroup``) without mutating the original exception
+    objects. It recurses into exception group sub-exceptions and into
+    ``__cause__`` / ``__context__`` chains.
+
+    Frames are matched by ``(filename, lineno)``: ``TracebackEntry._rawentry.tb_lineno``
+    is 1-based absolute, matching ``FrameSummary.lineno``.
+    """
+    if e.__traceback__ is not None:
+        excinfo = ExceptionInfo.from_exception(e)
+        filtered = filter_excinfo_traceback(tbfilter, excinfo)
+        kept = {
+            (str(entry.frame.code.path), entry._rawentry.tb_lineno)
+            for entry in filtered
+        }
+        tb_exc.stack = StackSummary.from_list(
+            [fs for fs in tb_exc.stack if (fs.filename, fs.lineno) in kept]
+        )
+    if isinstance(e, BaseExceptionGroup):
+        sub_tb_excs = getattr(tb_exc, "exceptions", None) or []
+        for sub_tb_exc, sub_e in zip(sub_tb_excs, e.exceptions, strict=True):
+            _filter_tracebackexception(sub_tb_exc, sub_e, tbfilter)
+    if tb_exc.__cause__ is not None and e.__cause__ is not None:
+        _filter_tracebackexception(tb_exc.__cause__, e.__cause__, tbfilter)
+    if tb_exc.__context__ is not None and e.__context__ is not None:
+        _filter_tracebackexception(tb_exc.__context__, e.__context__, tbfilter)

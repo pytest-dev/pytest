@@ -674,6 +674,41 @@ class TestIntrospectionWalrus:
                 assert (y := x * 2) == 100
             """)
 
+    def test_walrus_in_boolop_reports_each_operand(self) -> None:
+        """Two walrus assignments to one name: each operand shows what it saw."""
+        assert_introspects(
+            """
+            def check():
+                def side_effect():
+                    return True
+                assert (x := side_effect()) and (x := False)
+            """,
+            must_contain=["assert (True and False)"],
+        )
+
+    def test_walrus_in_boolop_reports_assigned_value(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                a = True
+                assert not (a and ((a := False) is False))
+            """,
+            must_contain=["assert not (True and False is False)"],
+        )
+
+    def test_walrus_in_boolop_reports_left_operand(self) -> None:
+        """A comparator walrus must not overwrite the left operand's report."""
+        assert_introspects(
+            """
+            def check():
+                a = "Hello"
+                b = "World"
+                c = "Test"
+                assert (a := b) == c and (a := "Test") == "Test"
+            """,
+            must_contain=["assert ('World' == 'Test'"],
+        )
+
 
 # ---------------------------------------------------------------------------
 # Single-evaluation tests: ensure no expression is evaluated multiple times
@@ -763,6 +798,33 @@ class TestSingleEvaluation:
                 assert d["a"] == 100
             """)
 
+    def test_walrus_in_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 42
+                assert (x := side_effect()) == 100
+            """)
+
+    def test_walrus_in_boolean_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 42
+                assert (x := side_effect()) and False
+            """)
+
+    def test_walrus_in_chained_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+            def check():
+                def side_effect():
+                    counter[0] += 1
+                    return 5
+                assert 1 < (x := side_effect()) < 3
+            """)
+
     def test_method_call_evaluated_once(self) -> None:
         assert_single_evaluation("""
             def check():
@@ -835,6 +897,97 @@ class TestEvaluationOrder:
     between, and the earlier operand then sees a value Python would never have
     given it.
     """
+
+    def test_compare_left_operand_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = "Hello"
+                try:
+                    assert value != identity(value := value.lower())
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_compare_reports_left_operand(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                def identity(v):
+                    return v
+                value = 2
+                assert value == identity(value := 3)
+            """,
+            must_contain=["assert 2 == 3"],
+        )
+
+    def test_call_earlier_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                value = "Hello"
+                try:
+                    assert collect(value, identity(value := value.lower())) == ("Hello", "hello")
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_call_later_argument_sees_walrus_value(self) -> None:
+        """The mirror of the case above: a later operand sees the new value."""
+        assert_evaluation_order("""
+            def check():
+                def collect(*values):
+                    return values
+                value = "Hello"
+                try:
+                    assert collect(value := value.lower(), value) == ("hello", "hello")
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_boolop_chain_rebinds_in_order(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                a = True
+                try:
+                    assert a and True and ((a := False) is False) and (a is False) and ((a := None) is None)
+                except AssertionError:
+                    return "raised", a
+                return "passed", a
+            """)
+
+    def test_binop_left_operand_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = 1
+                try:
+                    assert value + identity(value := 5) == 6
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_chained_compare_operands_in_order(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                value = 1
+                try:
+                    assert value < identity(value := 5) < 9
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
 
     def test_container_literal_operand_in_order(self) -> None:
         """Guard: ``generic_visit`` hoists container literals into a temporary."""
@@ -912,6 +1065,36 @@ class TestEvaluationOrder:
                 except AssertionError:
                     return "raised", obj
                 return "passed", obj
+            """)
+
+    def test_keyword_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(**kwargs):
+                    return kwargs
+                value = 1
+                try:
+                    assert collect(a=value, b=identity(value := 2)) == {"a": 1, "b": 2}
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_double_star_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(**kwargs):
+                    return kwargs
+                mapping = {"a": 1}
+                try:
+                    assert collect(**mapping, b=identity(mapping := {"a": 9})) == {"a": 1, "b": {"a": 9}}
+                except AssertionError:
+                    return "raised", mapping
+                return "passed", mapping
             """)
 
     def test_ifexp_branches_in_order(self) -> None:

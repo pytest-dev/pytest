@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 import dataclasses
+import importlib
 import importlib.metadata
 import os
 from pathlib import Path
@@ -10,18 +11,22 @@ import re
 import sys
 import textwrap
 from typing import Any
+from typing import cast
 from typing import Literal
 
 import _pytest._code
+from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _get_prog_name
 from _pytest.config import _iter_rewritable_modules
+from _pytest.config import _plugin_rewrite_name
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
+from _pytest.config import PluginImportFailure
 from _pytest.config.argparsing import get_ini_default_for_type
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
@@ -1152,6 +1157,30 @@ class TestConfigAPI:
         ):
             _ = config.getini("ini_param")
 
+    def test_addini_string_non_str_deprecated(self, pytester: Pytester) -> None:
+        """Passing a non-string value to a 'string'-typed ini option emits a
+        deprecation warning. The value is still returned as-is for now, but will
+        raise TypeError in pytest 10."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("myname", "", type="string")
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            myname = ["value1", "value2"]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.warns(
+            pytest.PytestRemovedIn10Warning,
+            match="Passing a value that is not a string to a 'string'-typed ini option",
+        ):
+            result = config.getini("myname")
+        assert result == ["value1", "value2"]
+
     UNION_CONFTEST = """
         def pytest_addoption(parser):
             parser.addini("ini_param", "", type=int | str, default=None)
@@ -1644,6 +1673,86 @@ class TestConfigAPI:
     def test_iter_rewritable_modules(self, names, expected) -> None:
         assert list(_iter_rewritable_modules(names)) == expected
 
+    def test_plugin_rewrite_name_skips_namespace_packages(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A namespace package can be shared with unrelated distributions, so
+        the plugin's own package is marked instead of the whole namespace."""
+        (tmp_path / "myns" / "plug").mkdir(parents=True)
+        (tmp_path / "myns" / "plug" / "__init__.py").touch()
+        (tmp_path / "myns" / "other").mkdir(parents=True)
+        (tmp_path / "myns" / "other" / "__init__.py").touch()
+        (tmp_path / "myplug").mkdir()
+        (tmp_path / "myplug" / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        importlib.invalidate_caches()
+
+        # "myns" is a namespace package, so descend into the plugin's package.
+        assert _plugin_rewrite_name("myns.plug.plugin") == "myns.plug"
+        # A regular package is marked as a whole, so its helpers are rewritten.
+        assert _plugin_rewrite_name("myplug.plugin") == "myplug"
+        assert _plugin_rewrite_name("does_not_exist.plugin") is None
+        # Nothing to mark when the entry point points at the namespace itself.
+        assert _plugin_rewrite_name("myns") is None
+
+    @pytest.mark.parametrize(
+        "direct_url, expected",
+        [
+            # PEP 660 editable install: no Python files are recorded, so the
+            # entry point is the only way to find the package (#11783).
+            ('{"dir_info": {"editable": true}, "url": "file:///src"}', ["myplug"]),
+            # A regular install of a local directory is not editable.
+            ('{"dir_info": {}, "url": "file:///src"}', []),
+            # Installed from an index: no direct_url.json at all.
+            (None, []),
+            # Unreadable metadata is treated as a non-editable install.
+            ("not json", []),
+        ],
+    )
+    def test_mark_plugins_for_rewrite_editable_install(
+        self,
+        pytester: Pytester,
+        tmp_path: Path,
+        monkeypatch: MonkeyPatch,
+        direct_url,
+        expected,
+    ) -> None:
+        """Plugins installed in editable mode are still marked for rewrite."""
+        (tmp_path / "myplug").mkdir()
+        (tmp_path / "myplug" / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        importlib.invalidate_caches()
+
+        class DummyEntryPoint:
+            name = "myplug"
+            group = "pytest11"
+            value = "myplug.plugin"
+
+        class DummyDistribution:
+            metadata = {"name": "myplug"}
+            entry_points = (DummyEntryPoint(),)
+            files = ()
+
+            def read_text(self, filename):
+                return direct_url if filename == "direct_url.json" else None
+
+        class DummyHook:
+            def __init__(self):
+                self.marked: list[str] = []
+
+            def mark_rewrite(self, *names: str) -> None:
+                self.marked.extend(names)
+
+        monkeypatch.setattr(
+            importlib.metadata, "distributions", lambda: (DummyDistribution(),)
+        )
+        hook = DummyHook()
+        config = pytester.parseconfig()
+        config._mark_plugins_for_rewrite(
+            cast(AssertionRewritingHook, hook), disable_autoload=False
+        )
+        assert hook.marked == expected
+
     def test_add_cleanup(self, pytester: Pytester) -> None:
         config = Config.fromdictargs({}, [])
         config._do_configure()
@@ -1834,7 +1943,35 @@ def test_setuptools_importerror_issue1479(
         return (Distribution(),)
 
     monkeypatch.setattr(importlib.metadata, "distributions", distributions)
-    with pytest.raises(ImportError):
+    with pytest.raises(PluginImportFailure) as excinfo:
+        pytester.parseconfig()
+    assert "Don't hide me!" in str(excinfo.value.__cause__)
+
+
+def test_setuptools_usage_error_passes_through(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """A UsageError from an entry-point plugin is not reclassified (#993)."""
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+    class DummyEntryPoint:
+        name = "mytestplugin"
+        group = "pytest11"
+
+        def load(self):
+            raise UsageError("bad usage")
+
+    class Distribution:
+        version = "1.0"
+        files = ("foo.txt",)
+        metadata = {"name": "foo"}
+        entry_points = (DummyEntryPoint(),)
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    with pytest.raises(UsageError, match="bad usage"):
         pytester.parseconfig()
 
 
@@ -3453,3 +3590,58 @@ class TestProgName:
             match="pytest.console_main.*is deprecated",
         ):
             console_main()
+
+
+class TestNativeTomlOptionTypes:
+    """Built-in options accept the native TOML types their values naturally have."""
+
+    @pytest.mark.parametrize(
+        ("name", "toml_value", "ini_value", "expected"),
+        [
+            ("verbosity_assertions", "2", "2", 2),
+            ("verbosity_assertions", '"auto"', "auto", "auto"),
+            ("verbosity_test_cases", "-1", "-1", -1),
+            ("tmp_path_retention_count", "0", "0", 0),
+            ("log_level", "10", "10", 10),
+            ("log_level", '"INFO"', "INFO", "INFO"),
+            ("log_cli_level", "20", "20", 20),
+            ("log_file_level", "30", "30", 30),
+            ("log_auto_indent", "true", "true", True),
+            ("log_auto_indent", "4", "4", 4),
+            ("log_file_mode", '"a"', "a", "a"),
+            ("parametrize_long_str_id_strategy", '"sha256"', "sha256", "sha256"),
+        ],
+    )
+    def test_getini(
+        self,
+        pytester: Pytester,
+        name: str,
+        toml_value: str,
+        ini_value: str,
+        expected: object,
+    ) -> None:
+        pytester.maketoml(f"[pytest]\n{name} = {toml_value}\n")
+        assert pytester.parseconfig().getini(name) == expected
+
+        pytester.path.joinpath("pytest.toml").unlink()
+        pytester.makeini(f"[pytest]\n{name} = {ini_value}\n")
+        assert pytester.parseconfig().getini(name) == expected
+
+    @pytest.mark.parametrize(
+        ("name", "value"),
+        [
+            ("verbosity_assertions", '"loud"'),
+            ("log_file_mode", '"x"'),
+            ("parametrize_long_str_id_strategy", '"bogus"'),
+        ],
+    )
+    def test_invalid_value(self, pytester: Pytester, name: str, value: str) -> None:
+        pytester.maketoml(f"[pytest]\n{name} = {value}\n")
+        config = pytester.parseconfig()
+        with pytest.raises(UsageError, match=name):
+            config.getini(name)
+
+    def test_get_verbosity(self, pytester: Pytester) -> None:
+        pytester.maketoml("[pytest]\nverbosity_assertions = 2\n")
+        config = pytester.parseconfig()
+        assert config.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2

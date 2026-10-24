@@ -14,6 +14,17 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+.. _terminalreporter-write-line-bytes:
+
+Passing ``bytes`` to ``TerminalReporter.write_line()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+Passing ``bytes`` to ``TerminalReporter.write_line()`` is deprecated. Plugins
+should decode the value themselves and pass a ``str`` instead.
+Support for ``bytes`` will be removed in pytest 10.
+
 
 .. _callspec2-renamed:
 
@@ -440,7 +451,7 @@ The ``yield_fixture`` function/decorator
 
 .. deprecated:: 6.2
 
-``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
+``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture` and will be removed in pytest 10.
 
 It has been so for a very long time, so it can be searched/replaced safely.
 

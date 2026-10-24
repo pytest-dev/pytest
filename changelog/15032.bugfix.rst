@@ -1,0 +1,4 @@
+Help texts for command-line options and ini options now keep their indentation
+and blank lines. Previously each line was stripped before wrapping, so a wrapped
+list item was indistinguishable from a new one and blank lines were dropped; ini
+option help lost its line breaks entirely.

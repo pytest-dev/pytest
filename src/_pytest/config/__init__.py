@@ -20,8 +20,10 @@ import enum
 from functools import lru_cache
 import glob
 import importlib
+import importlib.machinery
 import importlib.metadata
 import inspect
+import json
 import os
 import pathlib
 import re
@@ -69,6 +71,7 @@ from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -142,7 +145,17 @@ class ConftestImportFailure(Exception):
         return f"{type(self.cause).__name__}: {self.cause} (from {self.path})"
 
 
-def filter_traceback_for_conftest_import_failure(
+class PluginImportFailure(Exception):
+    """A plugin was found, but raised while being imported.
+
+    This is deliberately distinct from a plugin which could not be found at
+    all: not finding it means pytest was pointed at something that isn't there,
+    which is a :class:`UsageError`, while a plugin blowing up on import is a
+    defect in the plugin and reported as an internal error.
+    """
+
+
+def filter_traceback_for_import_failure(
     entry: _pytest._code.TracebackEntry,
 ) -> bool:
     """Filter tracebacks entries which point to pytest internals or importlib.
@@ -153,13 +166,11 @@ def filter_traceback_for_conftest_import_failure(
     return filter_traceback(entry) and "importlib" not in str(entry.path).split(os.sep)
 
 
-def print_conftest_import_error(e: ConftestImportFailure, file: TextIO) -> None:
-    exc_info = ExceptionInfo.from_exception(e.cause)
+def _print_import_error(header: str, cause: BaseException, file: TextIO) -> None:
+    exc_info = ExceptionInfo.from_exception(cause)
     tw = TerminalWriter(file)
-    tw.line(f"ImportError while loading conftest '{e.path}'.", red=True)
-    exc_info.traceback = exc_info.traceback.filter(
-        filter_traceback_for_conftest_import_failure
-    )
+    tw.line(header, red=True)
+    exc_info.traceback = exc_info.traceback.filter(filter_traceback_for_import_failure)
     exc_repr = (
         exc_info.getrepr(style="short", chain=False)
         if exc_info.traceback
@@ -168,6 +179,17 @@ def print_conftest_import_error(e: ConftestImportFailure, file: TextIO) -> None:
     formatted_tb = str(exc_repr)
     for line in formatted_tb.splitlines():
         tw.line(line.rstrip(), red=True)
+
+
+def print_conftest_import_error(e: ConftestImportFailure, file: TextIO) -> None:
+    _print_import_error(
+        f"ImportError while loading conftest '{e.path}'.", e.cause, file
+    )
+
+
+def print_plugin_import_error(e: PluginImportFailure, file: TextIO) -> None:
+    assert e.__cause__ is not None, f"{e!r} must be raised `from` the original error"
+    _print_import_error(f'Error while loading plugin "{e}".', e.__cause__, file)
 
 
 def print_usage_error(e: UsageError, file: TextIO) -> None:
@@ -232,6 +254,9 @@ def _main(
         except ConftestImportFailure as e:
             print_conftest_import_error(e, file=sys.stderr)
             return ExitCode.USAGE_ERROR
+        except PluginImportFailure as e:
+            print_plugin_import_error(e, file=sys.stderr)
+            return ExitCode.INTERNAL_ERROR
 
         try:
             ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
@@ -280,7 +305,7 @@ def console_main() -> int:
 
     from _pytest.deprecated import CONSOLE_MAIN
 
-    warnings.warn(CONSOLE_MAIN, stacklevel=2)
+    warnings.warn(CONSOLE_MAIN.format(), stacklevel=2)
     return _console_main()
 
 
@@ -647,11 +672,8 @@ class PytestPluginManager(PluginManager):
 
         anchors = []
         for initial_path in args:
-            path = str(initial_path)
-            # remove node-id syntax
-            i = path.find("::")
-            if i != -1:
-                path = path[:i]
+            # Remove node-id syntax from the argument.
+            path = NodeId.parse(str(initial_path)).path
             anchor = absolutepath(invocation_dir / path)
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
@@ -924,15 +946,45 @@ class PytestPluginManager(PluginManager):
                 # testing/test_config.py::test_disable_plugin_autoload.
                 __import__(importspec)
                 mod = sys.modules[importspec]
-        except ImportError as e:
-            raise ImportError(
-                f'Error importing plugin "{modname}": {e.args[0]}'
-            ).with_traceback(e.__traceback__) from e
-
         except Skipped as e:
             self.skipped_plugins.append((modname, e.msg or ""))
+        except ModuleNotFoundError as e:
+            if _is_missing_module(e, importspec):
+                # The plugin itself is nowhere to be found - pytest was pointed
+                # at something which does not exist, so this is a usage error.
+                raise UsageError(f'Error importing plugin "{modname}": {e}') from e
+            # Some *other* module the plugin imports is missing: the plugin was
+            # found, so this is a defect in the plugin, not a usage error.
+            raise PluginImportFailure(modname) from e
+        except UsageError:
+            raise
+        except Exception as e:
+            raise PluginImportFailure(modname) from e
         else:
             self.register(mod, modname)
+
+    def load_setuptools_entrypoints(self, group: str, name: str | None = None) -> int:
+        """:meta private:"""
+        try:
+            return super().load_setuptools_entrypoints(group, name=name)
+        except UsageError:
+            raise
+        except Exception as e:
+            # An installed plugin which cannot be loaded is a defect in that
+            # plugin - the user did nothing wrong by having it installed.
+            raise PluginImportFailure(name or group) from e
+
+
+def _is_missing_module(e: ModuleNotFoundError, importspec: str) -> bool:
+    """Whether ``e`` means that ``importspec`` itself could not be found.
+
+    A ``ModuleNotFoundError`` naming some other module means the plugin was
+    located but one of its own imports is unsatisfied.
+    """
+    if e.name is None:
+        return False
+    # A missing parent package also means importspec cannot be found.
+    return e.name == importspec or importspec.startswith(f"{e.name}.")
 
 
 def _get_plugin_specs_as_list(
@@ -954,6 +1006,47 @@ def _get_plugin_specs_as_list(
     raise UsageError(
         f"Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: {specs!r}"
     )
+
+
+def _plugin_rewrite_name(module: str) -> str | None:
+    """Return the name to mark so that ``module`` is rewritten.
+
+    This is the outermost package of ``module`` that is not a namespace
+    package: a namespace package can be shared with distributions that have
+    nothing to do with the plugin, and marking it would rewrite those too.
+
+    Names are resolved through ``PathFinder`` because it does not import
+    anything, and the plugin must not be imported before it is marked.
+    """
+    parts = module.split(".")
+    search_path: list[str] | None = None
+    for i, part in enumerate(parts):
+        spec = importlib.machinery.PathFinder.find_spec(part, search_path)
+        if spec is None:
+            return None
+        if spec.origin is not None or spec.submodule_search_locations is None:
+            return ".".join(parts[: i + 1])
+        search_path = list(spec.submodule_search_locations)
+    return None
+
+
+def _is_editable_install(dist: importlib.metadata.Distribution) -> bool:
+    """Whether the distribution was installed in editable mode (PEP 660).
+
+    Such installs do not record the package's Python files in the distribution
+    metadata, so they need special handling when looking for modules to rewrite.
+    """
+    read_text = getattr(dist, "read_text", None)
+    if read_text is None:
+        return False
+    direct_url = read_text("direct_url.json")
+    if not direct_url:
+        return False
+    try:
+        dir_info = json.loads(direct_url).get("dir_info", {})
+    except ValueError:
+        return False
+    return bool(dir_info.get("editable"))
 
 
 def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
@@ -1191,7 +1284,7 @@ class Config:
         @property
         def inicfg(self) -> _DeprecatedInicfgProxy:
             warnings.warn(
-                _pytest.deprecated.CONFIG_INICFG,
+                _pytest.deprecated.CONFIG_INICFG.format(),
                 stacklevel=2,
             )
             return _DeprecatedInicfgProxy(self)
@@ -1342,15 +1435,12 @@ class Config:
                 sys.stderr.write(f"INTERNALERROR> {line}\n")
                 sys.stderr.flush()
 
-    def cwd_relative_nodeid(self, nodeid: str) -> str:
+    def cwd_relative_nodeid(self, nodeid: NodeId) -> NodeId:
         # nodeid's are relative to the rootpath, compute relative to cwd.
         if self.invocation_params.dir != self.rootpath:
-            base_path_part, *nodeid_part = nodeid.split("::")
-            # Only process path part
-            fullpath = self.rootpath / base_path_part
+            fullpath = self.rootpath / nodeid.path
             relative_path = bestrelpath(self.invocation_params.dir, fullpath)
-
-            nodeid = "::".join([relative_path, *nodeid_part])
+            return dataclasses.replace(nodeid, path=relative_path)
         return nodeid
 
     @classmethod
@@ -1430,15 +1520,25 @@ class Config:
             # no need to continue.
             return
 
-        package_files = (
-            str(file)
-            for dist in importlib.metadata.distributions()
-            if any(ep.group == "pytest11" for ep in dist.entry_points)
-            for file in dist.files or []
-        )
-
-        for name in _iter_rewritable_modules(package_files):
-            hook.mark_rewrite(name)
+        for dist in importlib.metadata.distributions():
+            entry_points = [ep for ep in dist.entry_points if ep.group == "pytest11"]
+            if not entry_points:
+                continue
+            names = set(
+                _iter_rewritable_modules(str(file) for file in dist.files or [])
+            )
+            if not names and _is_editable_install(dist):
+                # An editable install lists no Python files, so fall back
+                # to the package owning each plugin entry point (#11783).
+                names = {
+                    name
+                    for ep in entry_points
+                    if (
+                        name := _plugin_rewrite_name(ep.value.partition(":")[0].strip())
+                    )
+                }
+            for name in names:
+                hook.mark_rewrite(name)
 
     def _configure_python_path(self) -> None:
         # `pythonpath = a b` will set `sys.path` to `[a, b, x, y, z, ...]`
@@ -1951,6 +2051,11 @@ class Config:
         elif type == "bool":
             return _strtobool(str(value).strip())
         elif type == "string":
+            if not isinstance(value, str):
+                warnings.warn(
+                    _pytest.deprecated.INI_STRING_TYPE_NON_STR_VALUE,
+                    stacklevel=2,
+                )
             return value
         elif type == "int":
             if not isinstance(value, str):
@@ -2184,7 +2289,7 @@ class Config:
         parser.addini(
             Config._verbosity_ini_name(verbosity_type),
             help=help,
-            type="string",
+            type=int | Literal["auto"],
             default=Config._VERBOSITY_INI_DEFAULT,
         )
 

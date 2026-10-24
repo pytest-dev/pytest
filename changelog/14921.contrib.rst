@@ -1,0 +1,1 @@
+Added `scripts/diff-assert-rewrite.py`, which diffs the assert-rewritten form of a snippet between the plain source, this checkout and released pytest versions.
