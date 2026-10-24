@@ -33,6 +33,7 @@ from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
+from _pytest.subtests import SubtestReport
 from _pytest.terminal import TerminalReporter
 import pytest
 
@@ -133,6 +134,7 @@ class _NodeReporter:
         self.add_stats = self.xml.add_stats
         self.family = self.xml.family
         self.duration = 0.0
+        self.subtest_count = 0
         self.properties: list[tuple[str, str]] = []
         self.nodes: list[ET.Element] = []
         self.attrs: dict[str, str] = {}
@@ -584,6 +586,31 @@ class LogXML:
         reporter.record_testreport(report)
         return reporter
 
+    def _write_subtest(self, report: SubtestReport) -> None:
+        parent = self.node_reporter(report)
+        parent.subtest_count += 1
+        # Subtests share the parent's nodeid, but each report is a complete
+        # testcase. Keep them out of the setup/call/teardown reporter cache.
+        reporter = _NodeReporter(report.id, self)
+        self.node_reporters_ordered.append(reporter)
+        reporter.record_testreport(report)
+        reporter.attrs["name"] += bin_xml_escape(
+            f" [subtest {parent.subtest_count}] {report._sub_test_description()}"
+        )
+        if report.passed:
+            reporter.append_pass(report)
+        elif report.failed:
+            reporter.append_failure(report)
+        else:
+            reporter.append_skipped(report)
+        reporter.duration = report.duration
+        # Ordinary skips already write their captured output in append_skipped.
+        if not report.skipped or hasattr(report, "wasxfail"):
+            reporter.write_captured_output(report)
+        for propname, propvalue in report.user_properties:
+            reporter.add_property(propname, str(propvalue))
+        reporter.finalize()
+
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         """Handle a setup/call/teardown report, generating the appropriate
         XML tags as necessary.
@@ -607,6 +634,10 @@ class LogXML:
             -> teardown node2
             -> teardown node1
         """
+        if isinstance(report, SubtestReport):
+            self._write_subtest(report)
+            return
+
         close_report = None
         if report.passed:
             if report.when == "call":  # ignore setup/teardown
