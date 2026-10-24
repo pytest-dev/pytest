@@ -1049,6 +1049,11 @@ OptionGroup
 .. autoclass:: pytest.OptionGroup()
     :members:
 
+ParameterSet
+~~~~~~~~~~~~
+
+.. autoclass:: pytest.ParameterSet()
+
 PytestPluginManager
 ~~~~~~~~~~~~~~~~~~~
 
