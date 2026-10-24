@@ -162,3 +162,42 @@ def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
+
+
+@pytest.mark.parametrize("fulltrace", [False, True])
+@pytest.mark.parametrize(
+    "failure", ["raise ValueError('custom failure')", "pytest.fail('custom failure')"]
+)
+def test_custom_item_hidden_traceback(
+    pytester: Pytester, fulltrace: bool, failure: str
+) -> None:
+    pytester.makeconftest(
+        f"""
+        import pytest
+
+        def hidden_helper():
+            __tracebackhide__ = True
+            {failure}
+
+        class CustomItem(pytest.Item):
+            def runtest(self):
+                hidden_helper()
+
+        class CustomFile(pytest.File):
+            def collect(self):
+                yield CustomItem.from_parent(self, name="custom")
+
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == ".custom":
+                return CustomFile.from_parent(parent, path=file_path)
+        """
+    )
+    pytester.makefile(".custom", test_custom="")
+    args = ["--tb=long"]
+    if fulltrace:
+        args.append("--full-trace")
+    result = pytester.runpytest(*args)
+    result.assert_outcomes(failed=1)
+    output = result.stdout.str()
+    assert "custom failure" in output
+    assert ("__tracebackhide__ = True" in output) == fulltrace

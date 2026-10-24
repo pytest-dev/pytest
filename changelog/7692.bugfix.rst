@@ -1,0 +1,1 @@
+Custom test items now respect ``__tracebackhide__`` when reporting failures, unless ``--full-trace`` is used.
