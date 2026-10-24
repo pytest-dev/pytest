@@ -395,14 +395,13 @@ def _main(config: Config, session: Session) -> int | ExitCode | None:
 
 def pytest_collection(session: Session) -> None:
     session.perform_collect()
-
-
-def pytest_runtestloop(session: Session) -> bool:
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
         raise session.Interrupted(
             f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
         )
 
+
+def pytest_runtestloop(session: Session) -> bool:
     if session.config.option.collectonly:
         return True
 
