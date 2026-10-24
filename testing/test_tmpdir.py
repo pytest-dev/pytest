@@ -78,18 +78,11 @@ class TestTmpPathHandler:
         config = cast(Config, FakeConfig(tmp_path))
         t = TempPathFactory.from_config(config, _ispytest=True)
         (t.getbasetemp() / "world1").mkdir()
-        listed: list[str] = []
-        orig = pathlib.find_suffixes
-
-        def find_suffixes(root: Path, prefix: str):
-            listed.append(prefix)
-            return orig(root, prefix)
-
-        monkeypatch.setattr("_pytest.tmpdir.find_suffixes", find_suffixes)
+        # Listing basetemp would fail.
+        monkeypatch.setattr("_pytest.tmpdir.find_suffixes", None)
         names = [t.mktemp("world").name for _ in range(3)]
         # The existing "world1" is skipped.
         assert names == ["world0", "world2", "world3"]
-        assert listed == []
 
     @pytest.mark.parametrize("kind", ["dir", "file", "dangling_symlink"])
     def test_counted_dir_skips_unexpected_entries(
