@@ -1,0 +1,1 @@
+Fix bug where fixture finalizers were skipped if fixture setup was interrupted before ``cached_result`` was set.
