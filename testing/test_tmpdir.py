@@ -22,6 +22,7 @@ from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import on_rm_rf_error
 from _pytest.pathlib import register_cleanup_lock_removal
 from _pytest.pathlib import rm_rf
+from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import TempPathFactory
@@ -104,10 +105,7 @@ class TestTmpPathHandler:
         elif kind == "file":
             taken.touch()
         else:
-            try:
-                taken.symlink_to(t.getbasetemp() / "missing")
-            except OSError:
-                pytest.skip("symlinks not supported")
+            symlink_or_skip(t.getbasetemp() / "missing", taken)
         names = [
             t._make_counted_dir("test_a", seed_from_listing=False).name
             for _ in range(2)
