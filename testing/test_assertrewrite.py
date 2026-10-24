@@ -164,12 +164,7 @@ class TestAssertionRewrite:
                     offset -= 1
 
                 instruction = instructions[offset]
-                if sys.version_info >= (3, 11):
-                    position = instruction.positions
-                else:
-                    position = instruction.starts_line
-
-                locations.append((msg, instruction.opname, position))
+                locations.append((msg, instruction.opname, instruction.positions))
 
             globals = {"loc": loc}
 

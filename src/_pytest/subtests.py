@@ -14,7 +14,7 @@ import dataclasses
 import time
 from types import TracebackType
 from typing import Any
-from typing import TYPE_CHECKING
+from typing import Self
 
 import pluggy
 
@@ -38,10 +38,6 @@ from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
 from _pytest.runner import get_reraise_exceptions
 from _pytest.stash import StashKey
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 
 def pytest_addoption(parser: Parser) -> None:

@@ -33,6 +33,7 @@ from textwrap import dedent
 import types
 from types import FunctionType
 from typing import Any
+from typing import assert_never
 from typing import cast
 from typing import Final
 from typing import final
@@ -61,7 +62,6 @@ from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
-from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import NOTSET
 from _pytest.config.argparsing import _ini_type_repr
@@ -939,13 +939,7 @@ class PytestPluginManager(PluginManager):
                 return
 
         try:
-            if sys.version_info >= (3, 11):
-                mod = importlib.import_module(importspec)
-            else:
-                # On Python 3.10, import_module breaks
-                # testing/test_config.py::test_disable_plugin_autoload.
-                __import__(importspec)
-                mod = sys.modules[importspec]
+            mod = importlib.import_module(importspec)
         except Skipped as e:
             self.skipped_plugins.append((modname, e.msg or ""))
         except ModuleNotFoundError as e:
@@ -1834,8 +1828,9 @@ class Config:
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
         config_filters = self.getini("filterwarnings")
 
-        with warnings.catch_warnings(record=True) as records:
-            warnings.simplefilter("always", type(warning))
+        with warnings.catch_warnings(
+            record=True, action="always", category=type(warning)
+        ) as records:
             apply_warning_filters(config_filters, cmdline_filters)
             warnings.warn(warning, stacklevel=stacklevel)
 

@@ -30,6 +30,7 @@ from typing import final
 from typing import get_args
 from typing import Literal
 from typing import NoReturn
+from typing import Self
 from typing import TYPE_CHECKING
 import warnings
 
@@ -83,9 +84,6 @@ from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 LongStrIdStrategy = Literal["short", "sha256", "legacy", "disallow"]
 _LONG_STR_STRATEGIES: frozenset[LongStrIdStrategy] = frozenset(
