@@ -90,15 +90,95 @@ class TestTmpPathHandler:
         assert names == ["world6", "world7", "world8"]
         assert listed == ["world"]
 
-    def test_counted_dir_skips_foreign_entries(self, tmp_path: Path) -> None:
-        """#15254"""
+    @pytest.mark.parametrize("kind", ["dir", "file", "dangling_symlink"])
+    def test_counted_dir_skips_unexpected_entries(
+        self, tmp_path: Path, kind: str
+    ) -> None:
+        """Something else taking the next name is skipped (#15254)."""
         config = cast(Config, FakeConfig(tmp_path))
         t = TempPathFactory.from_config(config, _ispytest=True)
         first = t._make_counted_dir("test_a", seed_from_listing=False)
-        (t.getbasetemp() / "test_a1").mkdir()
-        second = t._make_counted_dir("test_a", seed_from_listing=False)
+        taken = t.getbasetemp() / "test_a1"
+        if kind == "dir":
+            taken.mkdir()
+        elif kind == "file":
+            taken.touch()
+        else:
+            try:
+                taken.symlink_to(t.getbasetemp() / "missing")
+            except OSError:
+                pytest.skip("symlinks not supported")
+        names = [
+            t._make_counted_dir("test_a", seed_from_listing=False).name
+            for _ in range(2)
+        ]
         assert first.name == "test_a0"
-        assert second.name == "test_a2"
+        assert names == ["test_a2", "test_a3"]
+
+    def test_counted_dir_jumps_past_long_run(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A long run of taken names is skipped with one listing (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        for i in range(50):
+            (t.getbasetemp() / f"test_a{i}").mkdir()
+        listed: list[str] = []
+        orig = pathlib.find_suffixes
+
+        def find_suffixes(root: Path, prefix: str):
+            listed.append(prefix)
+            return orig(root, prefix)
+
+        monkeypatch.setattr("_pytest.tmpdir.find_suffixes", find_suffixes)
+        names = [
+            t._make_counted_dir("test_a", seed_from_listing=False).name
+            for _ in range(2)
+        ]
+        assert names == ["test_a50", "test_a51"]
+        assert listed == ["test_a"]
+
+    def test_counted_dir_overlapping_prefixes(self, tmp_path: Path) -> None:
+        """Prefixes "test_a" and "test_a1" share names like "test_a10" (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        names = [
+            t._make_counted_dir(prefix, seed_from_listing=False).name
+            for _ in range(30)
+            for prefix in ("test_a", "test_a1")
+        ]
+        assert len(set(names)) == len(names)
+
+    def test_counted_dir_gives_up(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A filesystem that reports every name as taken raises instead of
+        looping forever (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        t.getbasetemp()
+
+        def mkdir(self: Path, mode: int = 0o777) -> None:
+            raise FileExistsError(self)
+
+        monkeypatch.setattr(Path, "mkdir", mkdir)
+        with pytest.raises(OSError, match="after 20 tries"):
+            t._make_counted_dir("test_a", seed_from_listing=False)
+
+    def test_counted_dir_other_errors_propagate(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Errors other than FileExistsError are not retried (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        t.getbasetemp()
+
+        def mkdir(self: Path, mode: int = 0o777) -> None:
+            raise PermissionError(self)
+
+        monkeypatch.setattr(Path, "mkdir", mkdir)
+        with pytest.raises(PermissionError):
+            t._make_counted_dir("test_a", seed_from_listing=False)
 
     def test_tmppath_relative_basetemp_absolute(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
