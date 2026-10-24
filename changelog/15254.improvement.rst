@@ -1,0 +1,1 @@
+:fixture:`tmp_path` and :meth:`TempPathFactory.mktemp <pytest.TempPathFactory.mktemp>` no longer list the whole base temporary directory on every call, which made sessions with many temporary directories quadratically slow. Numbers are now handed out from a per-prefix counter.

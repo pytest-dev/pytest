@@ -70,6 +70,36 @@ class TestTmpPathHandler:
         assert str(tmp2.relative_to(t.getbasetemp())).startswith("this")
         assert tmp2 != tmp
 
+    def test_mktemp_lists_basetemp_once_per_prefix(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """#15254"""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        (t.getbasetemp() / "world5").mkdir()
+        listed: list[str] = []
+        orig = pathlib.find_suffixes
+
+        def find_suffixes(root: Path, prefix: str):
+            listed.append(prefix)
+            return orig(root, prefix)
+
+        monkeypatch.setattr("_pytest.tmpdir.find_suffixes", find_suffixes)
+        names = [t.mktemp("world").name for _ in range(3)]
+        # Greater than any existing one, listing only on first use.
+        assert names == ["world6", "world7", "world8"]
+        assert listed == ["world"]
+
+    def test_counted_dir_skips_foreign_entries(self, tmp_path: Path) -> None:
+        """#15254"""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        first = t._make_counted_dir("test_a", seed_from_listing=False)
+        (t.getbasetemp() / "test_a1").mkdir()
+        second = t._make_counted_dir("test_a", seed_from_listing=False)
+        assert first.name == "test_a0"
+        assert second.name == "test_a2"
+
     def test_tmppath_relative_basetemp_absolute(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
