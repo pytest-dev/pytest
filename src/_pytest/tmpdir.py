@@ -149,8 +149,8 @@ class TempPathFactory:
         With ``seed_from_listing``, the first use of a prefix lists basetemp so
         the number is greater than any existing one; otherwise counting starts
         at 0, as basetemp is created by this factory. mkdir decides uniqueness:
-        names taken by something else are skipped, and a long run of them
-        makes basetemp be listed once to jump past it.
+        names it fails on are skipped, a run of 10 failures makes basetemp be
+        listed once to jump past it, and 20 failures raise OSError.
         """
         root = self.getbasetemp()
         key = prefix.lower()
@@ -166,7 +166,9 @@ class TempPathFactory:
             path = root.joinpath(f"{prefix}{number}")
             try:
                 path.mkdir(mode=0o700)
-            except FileExistsError:
+            except OSError as e:
+                # Usually FileExistsError; on Windows also PermissionError for
+                # a name that is still being deleted.
                 collisions += 1
                 if collisions == 10:
                     listed = max(
@@ -177,7 +179,7 @@ class TempPathFactory:
                     raise OSError(
                         f"could not create numbered dir with prefix {prefix} in {root}"
                         f" after {collisions} tries"
-                    ) from None
+                    ) from e
                 else:
                     number += 1
             else:

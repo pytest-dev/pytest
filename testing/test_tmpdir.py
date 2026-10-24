@@ -163,20 +163,31 @@ class TestTmpPathHandler:
         with pytest.raises(OSError, match="after 20 tries"):
             t._make_counted_dir("test_a", seed_from_listing=False)
 
-    def test_counted_dir_other_errors_propagate(
+    def test_counted_dir_retries_other_errors(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        """Errors other than FileExistsError are not retried (#15254)."""
+        """Other OSErrors are retried too, e.g. PermissionError on Windows for a
+        name that is still being deleted (#15254)."""
         config = cast(Config, FakeConfig(tmp_path))
         t = TempPathFactory.from_config(config, _ispytest=True)
         t.getbasetemp()
+        orig_mkdir = Path.mkdir
 
         def mkdir(self: Path, mode: int = 0o777) -> None:
-            raise PermissionError(self)
+            if self.name == "test_a0":
+                raise PermissionError(self)
+            orig_mkdir(self, mode)
 
         monkeypatch.setattr(Path, "mkdir", mkdir)
-        with pytest.raises(PermissionError):
-            t._make_counted_dir("test_a", seed_from_listing=False)
+        assert t._make_counted_dir("test_a", seed_from_listing=False).name == "test_a1"
+
+        def always_fail(self: Path, mode: int = 0o777) -> None:
+            raise PermissionError(self)
+
+        monkeypatch.setattr(Path, "mkdir", always_fail)
+        with pytest.raises(OSError, match="after 20 tries") as excinfo:
+            t._make_counted_dir("test_b", seed_from_listing=False)
+        assert isinstance(excinfo.value.__cause__, PermissionError)
 
     def test_tmppath_relative_basetemp_absolute(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
