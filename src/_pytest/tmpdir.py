@@ -127,9 +127,10 @@ class TempPathFactory:
 
         :param numbered:
             If ``True``, ensure the directory is unique by adding a numbered
-            suffix greater than any existing one: ``basename="foo-"`` and ``numbered=True``
+            suffix: ``basename="foo-"`` and ``numbered=True``
             means that this function will create directories named ``"foo-0"``,
-            ``"foo-1"``, ``"foo-2"`` and so on.
+            ``"foo-1"``, ``"foo-2"`` and so on. Names that already exist in the
+            base temporary directory are skipped.
 
         :returns:
             The path to the new directory.
@@ -139,28 +140,21 @@ class TempPathFactory:
             p = self.getbasetemp().joinpath(basename)
             p.mkdir(mode=0o700)
         else:
-            p = self._make_counted_dir(basename, seed_from_listing=True)
+            p = self._make_counted_dir(basename)
             self._trace("mktemp", p)
         return p
 
-    def _make_counted_dir(self, prefix: str, *, seed_from_listing: bool) -> Path:
+    def _make_counted_dir(self, prefix: str) -> Path:
         """Create ``<prefix><n>`` in basetemp, using a per-prefix counter.
 
-        With ``seed_from_listing``, the first use of a prefix lists basetemp so
-        the number is greater than any existing one; otherwise counting starts
-        at 0, as basetemp is created by this factory. mkdir decides uniqueness:
+        Counting starts at 0 without listing basetemp, as basetemp is created
+        by this factory. mkdir decides uniqueness:
         names it fails on are skipped, a run of 10 failures makes basetemp be
         listed once to jump past it, and 20 failures raise OSError.
         """
         root = self.getbasetemp()
         key = prefix.lower()
-        number = self._next_number.get(key)
-        if number is None:
-            number = 0
-            if seed_from_listing:
-                number = (
-                    max(map(parse_num, find_suffixes(root, prefix)), default=-1) + 1
-                )
+        number = self._next_number.get(key, 0)
         collisions = 0
         while True:
             path = root.joinpath(f"{prefix}{number}")
@@ -328,9 +322,7 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
     name = re.sub(r"[\W]", "_", name)
     MAXVAL = 30
     name = name[:MAXVAL]
-    path = factory._make_counted_dir(name, seed_from_listing=False)
-    factory._trace("mktemp", path)
-    return path
+    return factory.mktemp(name, numbered=True)
 
 
 @fixture

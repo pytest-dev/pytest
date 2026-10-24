@@ -71,13 +71,13 @@ class TestTmpPathHandler:
         assert str(tmp2.relative_to(t.getbasetemp())).startswith("this")
         assert tmp2 != tmp
 
-    def test_mktemp_lists_basetemp_once_per_prefix(
+    def test_mktemp_does_not_list_basetemp(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        """#15254"""
+        """Mktemp counts per prefix instead of listing basetemp (#15254)."""
         config = cast(Config, FakeConfig(tmp_path))
         t = TempPathFactory.from_config(config, _ispytest=True)
-        (t.getbasetemp() / "world5").mkdir()
+        (t.getbasetemp() / "world1").mkdir()
         listed: list[str] = []
         orig = pathlib.find_suffixes
 
@@ -87,9 +87,9 @@ class TestTmpPathHandler:
 
         monkeypatch.setattr("_pytest.tmpdir.find_suffixes", find_suffixes)
         names = [t.mktemp("world").name for _ in range(3)]
-        # Greater than any existing one, listing only on first use.
-        assert names == ["world6", "world7", "world8"]
-        assert listed == ["world"]
+        # The existing "world1" is skipped.
+        assert names == ["world0", "world2", "world3"]
+        assert listed == []
 
     @pytest.mark.parametrize("kind", ["dir", "file", "dangling_symlink"])
     def test_counted_dir_skips_unexpected_entries(
@@ -98,7 +98,7 @@ class TestTmpPathHandler:
         """Something else taking the next name is skipped (#15254)."""
         config = cast(Config, FakeConfig(tmp_path))
         t = TempPathFactory.from_config(config, _ispytest=True)
-        first = t._make_counted_dir("test_a", seed_from_listing=False)
+        first = t._make_counted_dir("test_a")
         taken = t.getbasetemp() / "test_a1"
         if kind == "dir":
             taken.mkdir()
@@ -106,10 +106,7 @@ class TestTmpPathHandler:
             taken.touch()
         else:
             symlink_or_skip(t.getbasetemp() / "missing", taken)
-        names = [
-            t._make_counted_dir("test_a", seed_from_listing=False).name
-            for _ in range(2)
-        ]
+        names = [t._make_counted_dir("test_a").name for _ in range(2)]
         assert first.name == "test_a0"
         assert names == ["test_a2", "test_a3"]
 
@@ -129,10 +126,7 @@ class TestTmpPathHandler:
             return orig(root, prefix)
 
         monkeypatch.setattr("_pytest.tmpdir.find_suffixes", find_suffixes)
-        names = [
-            t._make_counted_dir("test_a", seed_from_listing=False).name
-            for _ in range(2)
-        ]
+        names = [t._make_counted_dir("test_a").name for _ in range(2)]
         assert names == ["test_a50", "test_a51"]
         assert listed == ["test_a"]
 
@@ -141,7 +135,7 @@ class TestTmpPathHandler:
         config = cast(Config, FakeConfig(tmp_path))
         t = TempPathFactory.from_config(config, _ispytest=True)
         names = [
-            t._make_counted_dir(prefix, seed_from_listing=False).name
+            t._make_counted_dir(prefix).name
             for _ in range(30)
             for prefix in ("test_a", "test_a1")
         ]
@@ -161,7 +155,7 @@ class TestTmpPathHandler:
 
         monkeypatch.setattr(Path, "mkdir", mkdir)
         with pytest.raises(OSError, match="after 20 tries"):
-            t._make_counted_dir("test_a", seed_from_listing=False)
+            t._make_counted_dir("test_a")
 
     def test_counted_dir_retries_other_errors(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
@@ -179,14 +173,14 @@ class TestTmpPathHandler:
             orig_mkdir(self, mode)
 
         monkeypatch.setattr(Path, "mkdir", mkdir)
-        assert t._make_counted_dir("test_a", seed_from_listing=False).name == "test_a1"
+        assert t._make_counted_dir("test_a").name == "test_a1"
 
         def always_fail(self: Path, mode: int = 0o777) -> None:
             raise PermissionError(self)
 
         monkeypatch.setattr(Path, "mkdir", always_fail)
         with pytest.raises(OSError, match="after 20 tries") as excinfo:
-            t._make_counted_dir("test_b", seed_from_listing=False)
+            t._make_counted_dir("test_b")
         assert isinstance(excinfo.value.__cause__, PermissionError)
 
     def test_tmppath_relative_basetemp_absolute(
