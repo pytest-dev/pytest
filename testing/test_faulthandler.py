@@ -118,6 +118,42 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
     assert result.ret == 0
 
 
+def test_timeout_still_active_after_test_failure(pytester: Pytester) -> None:
+    """The timeout must keep covering teardown after the test itself fails.
+
+    Regression test for #15180: pytest_exception_interact used to cancel the
+    timer on any failure, so a hanging fixture teardown after a failed test
+    never produced a traceback dump.
+    """
+    pytester.makepyfile(
+        """
+    import time
+
+    import pytest
+
+
+    @pytest.fixture
+    def hang_on_teardown():
+        yield
+        time.sleep(5)
+
+
+    def test_fail(hang_on_teardown):
+        assert False
+    """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        faulthandler_timeout = 0.5
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.stderr.fnmatch_lines(["*most recent call first*"])
+    result.stdout.fnmatch_lines(["*1 failed*"])
+    assert result.ret == 1
+
+
 @pytest.mark.parametrize(
     ("value", "expected"), [(5, 5), (0.01, 0.01), ('"0.01"', "0.01")]
 )
@@ -172,11 +208,16 @@ def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
     assert result.ret == 1
 
 
-@pytest.mark.parametrize("hook_name", ["pytest_enter_pdb", "pytest_exception_interact"])
-def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
+def test_cancel_timeout_on_hook(monkeypatch) -> None:
     """Make sure that we are cancelling any scheduled traceback dumping due
-    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any
-    other interactive exception (pytest-dev/pytest-faulthandler#14)."""
+    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12).
+
+    The timeout is intentionally *not* cancelled on pytest_exception_interact
+    anymore (#15180): that hook fires for every ordinary test failure, which
+    disabled the timeout for the rest of the item, including teardown. The
+    pdb case is still covered because entering pdb triggers pytest_enter_pdb.
+    """
+    hook_name = "pytest_enter_pdb"
     import faulthandler
 
     from _pytest import faulthandler as faulthandler_plugin
