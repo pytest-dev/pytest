@@ -511,6 +511,7 @@ class SetupState:
                 tuple[OutcomeException | Exception, types.TracebackType | None] | None,
             ],
         ] = {}
+        self._active_fixtures: list[_ActiveFixture] = []
 
     def is_node_active(self, node: Node) -> bool:
         """Check if a node is currently active in the stack -- set up and not
@@ -548,6 +549,63 @@ class SetupState:
         assert node in self.stack, (node, self.stack)
         self.stack[node][0].append(finalizer)
 
+    def register_fixture(
+        self,
+        node: Node,
+        is_stale: Callable[[Item], bool],
+        finish: Callable[[], object],
+        finalizer: Callable[[], object],
+    ) -> None:
+        self._active_fixtures.append(_ActiveFixture(node, is_stale, finish, finalizer))
+
+    def unregister_fixture(self, node: Node, finalizer: Callable[[], object]) -> None:
+        self._active_fixtures[:] = [
+            fixture
+            for fixture in self._active_fixtures
+            if fixture.finalizer is not finalizer
+        ]
+        if node in self.stack:
+            finalizers = self.stack[node][0]
+            for index, registered in enumerate(finalizers):
+                if registered is finalizer:
+                    del finalizers[index]
+                    break
+
+    def _finish_stale_fixtures(
+        self, nextitem: Item, exceptions: list[BaseException]
+    ) -> None:
+        nextitem_chain = nextitem.listchain()
+        while True:
+            stale_fixtures = [
+                fixture
+                for fixture in self._active_fixtures
+                if fixture.node in nextitem_chain and fixture.is_stale(nextitem)
+            ]
+            if not stale_fixtures:
+                return
+
+            # Run callbacks down to the last stale fixture in normal LIFO order.
+            # This also finishes any later fixtures whose finalizers precede it.
+            stale_by_node: dict[Node, set[Callable[[], object]]] = {}
+            for fixture in stale_fixtures:
+                stale_by_node.setdefault(fixture.node, set()).add(fixture.finalizer)
+            node = max(
+                stale_by_node,
+                key=lambda candidate: list(self.stack).index(candidate),
+            )
+            finalizers = self.stack[node][0]
+            target = next(
+                fin
+                for fin in reversed(finalizers)
+                if any(fin is stale for stale in stale_by_node[node])
+            )
+            while any(fin is target for fin in finalizers):
+                fin = finalizers.pop()
+                try:
+                    fin()
+                except TEST_OUTCOME as e:
+                    exceptions.append(e)
+
     def teardown_exact(self, nextitem: Item | None) -> None:
         """Teardown the current stack up until reaching nodes that nextitem
         also descends from.
@@ -569,6 +627,9 @@ class SetupState:
                 except TEST_OUTCOME as e:
                     these_exceptions.append(e)
 
+            if isinstance(node, Item) and nextitem is not None:
+                self._finish_stale_fixtures(nextitem, these_exceptions)
+
             if len(these_exceptions) == 1:
                 exceptions.extend(these_exceptions)
             elif these_exceptions:
@@ -581,6 +642,14 @@ class SetupState:
             raise BaseExceptionGroup("errors during test teardown", exceptions[::-1])
         if nextitem is None:
             assert not self.stack
+
+
+@dataclasses.dataclass
+class _ActiveFixture:
+    node: Node
+    is_stale: Callable[[Item], bool]
+    finish: Callable[[], object]
+    finalizer: Callable[[], object]
 
 
 def collect_one_node(collector: Collector) -> CollectReport:
