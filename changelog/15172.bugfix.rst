@@ -1,0 +1,1 @@
+Added a ``_pprint_frozendict`` handler so ``frozendict`` values (Python 3.15+ built-in) are pretty-printed key-per-line in assertion diffs, matching the behaviour for ``dict``.

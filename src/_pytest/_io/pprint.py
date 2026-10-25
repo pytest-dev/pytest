@@ -612,6 +612,23 @@ class PrettyPrinter:
 
     _dispatch[_collections.UserString.__repr__] = _pprint_user_string
 
+    def _pprint_frozendict(
+        self,
+        object: Any,
+        indent: int,
+        allowance: int,
+        context: set[int],
+        level: int,
+    ) -> Iterator[str]:
+        if not len(object):
+            yield repr(object)
+            return
+        yield "frozendict({"
+        yield from self._format_dict_items(
+            object.items(), indent, allowance, context, level
+        )
+        yield "})"
+
     def _safe_repr(
         self, object: Any, context: set[int], maxlevels: int | None, level: int
     ) -> str:
@@ -674,6 +691,13 @@ class PrettyPrinter:
 _builtin_scalars = frozenset(
     {str, bytes, bytearray, float, complex, bool, type(None), int}
 )
+
+import builtins as _builtins
+
+if hasattr(_builtins, "frozendict"):
+    PrettyPrinter._dispatch[
+        _builtins.frozendict.__repr__  # type: ignore[attr-defined]
+    ] = PrettyPrinter._pprint_frozendict
 
 
 def _recursion(object: Any) -> str:

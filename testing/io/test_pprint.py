@@ -709,3 +709,27 @@ def test_wrap_bytes_repr_edges() -> None:
     # emits each group rather than dropping bytes.
     assert list(_wrap_bytes_repr(b"", 80, 0)) == []
     assert list(_wrap_bytes_repr(b"abcdefgh", 6, 0)) == ["b'abcd'", "b'efgh'"]
+
+
+@pytest.mark.skipif(
+    not hasattr(__builtins__, "frozendict")
+    if isinstance(__builtins__, dict)
+    else not hasattr(__import__("builtins"), "frozendict"),
+    reason="frozendict is only available in Python 3.15+",
+)
+def test_pprint_frozendict() -> None:
+    import builtins
+
+    frozendict = builtins.frozendict  # type: ignore[attr-defined]
+
+    # Empty frozendict falls back to repr().
+    assert PrettyPrinter().pformat(frozendict()) == repr(frozendict())
+
+    # Non-empty frozendict must be pretty-printed like a dict but with the
+    # frozendict(...) wrapper so the diff is readable key-per-line.
+    fd = frozendict(name="alice", age=30)
+    result = PrettyPrinter().pformat(fd)
+    assert result.startswith("frozendict({")
+    assert result.endswith("})")
+    assert "'name': 'alice'" in result
+    assert "'age': 30" in result
