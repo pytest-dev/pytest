@@ -197,6 +197,55 @@ class TestConfigTmpPath:
             assert len(test_dir) == 1
             assert test_dir[0].name == "test_20"
 
+
+    def test_policy_failed_keeps_setup_and_teardown_errors(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #14998."""
+
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "failed"
+            """
+        )
+
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def setup_error(tmp_path):
+                (tmp_path / "evidence.txt").write_text("setup")
+                raise RuntimeError("setup failed")
+
+            @pytest.fixture
+            def teardown_error(tmp_path):
+                (tmp_path / "evidence.txt").write_text("teardown")
+                yield
+                raise RuntimeError("teardown failed")
+
+            def test_setup(setup_error):
+                pass
+
+            def test_call(tmp_path):
+                (tmp_path / "evidence.txt").write_text("call")
+                assert False
+
+            def test_teardown(teardown_error):
+                pass
+            """
+        )
+
+        result = pytester.runpytest("--basetemp=retained")
+        result.assert_outcomes(passed=1, failed=1, errors=2)
+
+        retained = pytester.path / "retained"
+
+        assert (retained / "test_setup0" / "evidence.txt").exists()
+        assert (retained / "test_call0" / "evidence.txt").exists()
+        assert (retained / "test_teardown0" / "evidence.txt").exists()    
+
     def test_policy_failed_removes_basedir_when_all_passed(
         self, pytester: Pytester
     ) -> None:
