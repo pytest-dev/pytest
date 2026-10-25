@@ -11,13 +11,13 @@ from contextlib import contextmanager
 from contextlib import ExitStack
 from contextlib import nullcontext
 import dataclasses
-from _pytest import timing
 from types import TracebackType
 from typing import Any
 from typing import TYPE_CHECKING
 
 import pluggy
 
+from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._io.saferepr import saferepr
 from _pytest.capture import CaptureFixture
