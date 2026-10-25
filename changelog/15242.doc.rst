@@ -1,0 +1,1 @@
+Added a note to the "Get Started" guide explaining how to resolve the ``error: externally-managed-environment`` error by using a virtual environment.

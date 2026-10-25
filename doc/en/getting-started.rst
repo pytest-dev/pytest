@@ -15,6 +15,20 @@ Install ``pytest``
 
     pip install -U pytest
 
+.. note::
+
+    On some operating systems (Ubuntu 24.04+, Debian, Fedora, and others) a
+    system-managed Python may reject this with
+    ``error: externally-managed-environment``.  The recommended fix is to
+    install pytest inside a **virtual environment**::
+
+        python -m venv .venv
+        source .venv/bin/activate   # on Windows: .venv\Scripts\activate
+        pip install -U pytest
+
+    See :ref:`goodpractices` for more details on virtual environments and
+    recommended project layouts.
+
 2. Check that you installed the correct version:
 
 .. code-block:: bash
