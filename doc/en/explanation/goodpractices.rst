@@ -82,6 +82,19 @@ together with the ``dev`` group, by running from the same directory:
 
 which lets you change your source code (both tests and application) and rerun tests at will.
 
+.. _`system-pytest`:
+
+Using pytest from the operating system
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some projects deliberately use the ``pytest`` provided by the operating system,
+for example to test software that is itself built and packaged by a distribution,
+or where a test suite only needs ``pytest`` to be available as a command.
+In that case install ``pytest`` with the system package manager
+(for example ``apt install python3-pytest`` or ``dnf install python3-pytest``),
+not with ``pip`` into the system Python.
+The version is then the one your distribution ships, which may be older than the latest release.
+
 .. _`test discovery`:
 .. _`Python test discovery`:
 
