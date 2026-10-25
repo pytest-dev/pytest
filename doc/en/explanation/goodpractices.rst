@@ -11,9 +11,16 @@ Install package in a virtual environment
 
 For development, we recommend that you install your application, its dependencies
 and the ``pytest`` package itself into a virtual environment.
-This ensures your code and dependencies are isolated from your system Python installation,
-and avoids the ``externally-managed-environment`` error (:pep:`668`)
-that many operating systems raise for installs into their own Python.
+This ensures your code and dependencies are isolated from your system Python installation.
+
+.. note::
+
+    Many systems, such as recent Debian, Ubuntu and Fedora releases, refuse a plain
+    ``pip install`` outside a virtual environment with
+    ``error: externally-managed-environment`` (see :pep:`668`).
+    Do not work around this with ``--break-system-packages``,
+    which can break tools of your operating system;
+    create a virtual environment instead.
 
 Create a ``pyproject.toml`` file in the root of your repository as described in
 :doc:`packaging:tutorials/packaging-projects`.

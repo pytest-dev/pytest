@@ -10,12 +10,7 @@ Install ``pytest``
 ----------------------------------------
 
 Install ``pytest`` into a virtual environment, not into the Python installation
-of your operating system.
-Many systems, such as recent Debian, Ubuntu and Fedora releases, refuse a plain
-``pip install`` outside a virtual environment with
-``error: externally-managed-environment`` (see :pep:`668`).
-Do not work around this with ``--break-system-packages``;
-create a virtual environment instead.
+of your operating system (see :ref:`install-package-with-pip`).
 
 1. Create a virtual environment and install ``pytest`` into it,
    using the tool of your choice:
