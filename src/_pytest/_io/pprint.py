@@ -694,6 +694,7 @@ _builtin_scalars = frozenset(
 
 import builtins as _builtins
 
+
 if hasattr(_builtins, "frozendict"):
     PrettyPrinter._dispatch[
         _builtins.frozendict.__repr__  # type: ignore[attr-defined]
