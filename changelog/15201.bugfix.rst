@@ -1,0 +1,1 @@
+Fixed subtest durations going negative when tests mock ``time.perf_counter`` or ``time.time``. Subtests now use ``_pytest.timing`` for clock access, consistent with the rest of pytest.

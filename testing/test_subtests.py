@@ -1096,3 +1096,34 @@ def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no c
     pytester.syspathinsert()
     result = pytester.runpytest("-n1", "-pxdist.plugin")
     result.assert_outcomes(passed=2)
+
+
+def test_subtest_timing_not_affected_by_time_mock(pytester: pytest.Pytester) -> None:
+    """Subtest durations must not go negative when the test mocks time.perf_counter
+    or time.time (regression test for #15201).
+
+    subtests.py previously imported the ``time`` module and called
+    ``time.perf_counter()`` / ``time.time()`` directly, so a mock installed
+    inside the subtest body would affect the stop-time but not the start-time,
+    producing a large negative duration.  The fix is to use ``_pytest.timing``
+    which holds its own references to the real clock functions.
+    """
+    pytester.makepyfile(
+        """
+        import time
+
+        def test_subtest_with_mocked_clock(subtests, monkeypatch):
+            with subtests.test(msg="frozen"):
+                monkeypatch.setattr(time, "perf_counter", lambda: 0.0)
+                monkeypatch.setattr(time, "time", lambda: 0.0)
+        """
+    )
+    result = pytester.runpytest("--junitxml=out.xml", "-v")
+    result.assert_outcomes(passed=1)
+
+    xml = pytester.path.joinpath("out.xml").read_text(encoding="utf-8")
+    import re
+
+    time_values = re.findall(r'time="([^"]+)"', xml)
+    for val in time_values:
+        assert float(val) >= 0.0, f"Negative duration in JUnit XML: time={val!r}"

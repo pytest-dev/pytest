@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from contextlib import ExitStack
 from contextlib import nullcontext
 import dataclasses
-import time
+from _pytest import timing
 from types import TracebackType
 from typing import Any
 from typing import TYPE_CHECKING
@@ -216,8 +216,8 @@ class _SubTestContextManager:
     def __enter__(self) -> None:
         __tracebackhide__ = True
 
-        self._start = time.time()
-        self._precise_start = time.perf_counter()
+        self._start = timing.time()
+        self._precise_start = timing.perf_counter()
         self._exc_info = None
 
         self._exit_stack = ExitStack()
@@ -242,9 +242,9 @@ class _SubTestContextManager:
 
         self._exit_stack.close()
 
-        precise_stop = time.perf_counter()
+        precise_stop = timing.perf_counter()
         duration = precise_stop - self._precise_start
-        stop = time.time()
+        stop = timing.time()
 
         call_info = CallInfo[None](
             None,
