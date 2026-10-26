@@ -22,6 +22,7 @@ from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import on_rm_rf_error
 from _pytest.pathlib import register_cleanup_lock_removal
 from _pytest.pathlib import rm_rf
+from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import TempPathFactory
@@ -69,6 +70,111 @@ class TestTmpPathHandler:
         tmp2 = t.mktemp("this")
         assert str(tmp2.relative_to(t.getbasetemp())).startswith("this")
         assert tmp2 != tmp
+
+    def test_mktemp_does_not_list_basetemp(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Mktemp counts per prefix instead of listing basetemp (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        (t.getbasetemp() / "world1").mkdir()
+        # Listing basetemp would fail.
+        monkeypatch.setattr("_pytest.tmpdir.find_suffixes", None)
+        names = [t.mktemp("world").name for _ in range(3)]
+        # The existing "world1" is skipped.
+        assert names == ["world0", "world2", "world3"]
+
+    @pytest.mark.parametrize("kind", ["dir", "file", "dangling_symlink"])
+    def test_counted_dir_skips_unexpected_entries(
+        self, tmp_path: Path, kind: str
+    ) -> None:
+        """Something else taking the next name is skipped (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        first = t._make_counted_dir("test_a")
+        taken = t.getbasetemp() / "test_a1"
+        if kind == "dir":
+            taken.mkdir()
+        elif kind == "file":
+            taken.touch()
+        else:
+            symlink_or_skip(t.getbasetemp() / "missing", taken)
+        names = [t._make_counted_dir("test_a").name for _ in range(2)]
+        assert first.name == "test_a0"
+        assert names == ["test_a2", "test_a3"]
+
+    def test_counted_dir_jumps_past_long_run(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A long run of taken names is skipped with one listing (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        for i in range(50):
+            (t.getbasetemp() / f"test_a{i}").mkdir()
+        listed: list[str] = []
+        orig = pathlib.find_suffixes
+
+        def find_suffixes(root: Path, prefix: str):
+            listed.append(prefix)
+            return orig(root, prefix)
+
+        monkeypatch.setattr("_pytest.tmpdir.find_suffixes", find_suffixes)
+        names = [t._make_counted_dir("test_a").name for _ in range(2)]
+        assert names == ["test_a50", "test_a51"]
+        assert listed == ["test_a"]
+
+    def test_counted_dir_overlapping_prefixes(self, tmp_path: Path) -> None:
+        """Prefixes "test_a" and "test_a1" share names like "test_a10" (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        names = [
+            t._make_counted_dir(prefix).name
+            for _ in range(30)
+            for prefix in ("test_a", "test_a1")
+        ]
+        assert len(set(names)) == len(names)
+
+    def test_counted_dir_gives_up(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A filesystem that reports every name as taken raises instead of
+        looping forever (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        t.getbasetemp()
+
+        def mkdir(self: Path, mode: int = 0o777) -> None:
+            raise FileExistsError(self)
+
+        monkeypatch.setattr(Path, "mkdir", mkdir)
+        with pytest.raises(OSError, match="after 20 tries"):
+            t._make_counted_dir("test_a")
+
+    def test_counted_dir_retries_other_errors(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Other OSErrors are retried too, e.g. PermissionError on Windows for a
+        name that is still being deleted (#15254)."""
+        config = cast(Config, FakeConfig(tmp_path))
+        t = TempPathFactory.from_config(config, _ispytest=True)
+        t.getbasetemp()
+        orig_mkdir = Path.mkdir
+
+        def mkdir(self: Path, mode: int = 0o777) -> None:
+            if self.name == "test_a0":
+                raise PermissionError(self)
+            orig_mkdir(self, mode)
+
+        monkeypatch.setattr(Path, "mkdir", mkdir)
+        assert t._make_counted_dir("test_a").name == "test_a1"
+
+        def always_fail(self: Path, mode: int = 0o777) -> None:
+            raise PermissionError(self)
+
+        monkeypatch.setattr(Path, "mkdir", always_fail)
+        with pytest.raises(OSError, match="after 20 tries") as excinfo:
+            t._make_counted_dir("test_b")
+        assert isinstance(excinfo.value.__cause__, PermissionError)
 
     def test_tmppath_relative_basetemp_absolute(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
