@@ -93,7 +93,7 @@ with the type of the value yielded:
 
 
     @pytest.fixture
-    def sample_fixture_yield() -> Generator[int, None, None]:
+    def sample_yield_fixture() -> Generator[int]:
         yield 38
 
 
