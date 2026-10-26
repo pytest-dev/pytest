@@ -1,0 +1,1 @@
+Added :option:`--warnings-collapse-threshold` CLI option and :confval:`warnings_collapse_threshold` ini setting to control the number of warning locations at which the warnings summary collapses to filename-only output. Defaults to ``10``; set to ``none`` to never collapse and always show full test node IDs.
