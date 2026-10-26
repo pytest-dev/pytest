@@ -39,7 +39,7 @@ Create a new file called ``test_sample.py``, containing a function, and a test:
     def test_answer():
         assert func(3) == 5
 
-The test
+Run the test:
 
 .. code-block:: pytest
 
