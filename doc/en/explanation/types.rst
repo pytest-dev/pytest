@@ -97,8 +97,8 @@ with the type of the value yielded:
         yield 38
 
 
-    def test_sample_fixture_yield(sample_fixture_yield: int) -> None:
-        assert sample_fixture_yield == 38
+    def test_sample_yield_fixture(sample_yield_fixture: int) -> None:
+        assert sample_yield_fixture == 38
 
 The test receives the yielded ``int``, not the generator object. See :ref:`How to use fixtures <how-to-fixtures>` for more information about
 ``yield`` fixtures and teardown.
