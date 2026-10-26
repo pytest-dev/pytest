@@ -214,12 +214,12 @@ class TestConfigTmpPath:
 
             @pytest.fixture
             def setup_error(tmp_path):
-                (tmp_path / "evidence.txt").write_text("setup")
+                (tmp_path / "evidence.txt").write_text("setup", encoding='utf-8')
                 raise RuntimeError("setup failed")
 
             @pytest.fixture
             def teardown_error(tmp_path):
-                (tmp_path / "evidence.txt").write_text("teardown")
+                (tmp_path / "evidence.txt").write_text("teardown", encoding='utf-8')
                 yield
                 raise RuntimeError("teardown failed")
 
@@ -227,7 +227,7 @@ class TestConfigTmpPath:
                 pass
 
             def test_call(tmp_path):
-                (tmp_path / "evidence.txt").write_text("call")
+                (tmp_path / "evidence.txt").write_text("call", encoding='utf-8')
                 assert False
 
             def test_teardown(teardown_error):
