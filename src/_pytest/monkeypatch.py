@@ -124,6 +124,20 @@ def _is_data_descriptor(cls: type, name: str) -> bool:
     return False
 
 
+def _writes_to_instance_dict(cls: type) -> bool:
+    """Return True if ``setattr()`` on an instance of ``cls`` writes to the instance ``__dict__``.
+
+    A class which defines ``__setattr__`` may store the value anywhere -- in a
+    proxy object's private mapping, for example -- so for those the old value
+    has to be read with ``getattr()`` and restored through the same hook.
+    """
+    return all(
+        "__setattr__" not in klass.__dict__
+        for klass in cls.__mro__
+        if klass is not object
+    )
+
+
 @final
 class MonkeyPatch:
     """Helper to conveniently monkeypatch attributes/items/environment
@@ -258,13 +272,17 @@ class MonkeyPatch:
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, NOTSET)
-        elif not _is_data_descriptor(type(target), name):
-            # With no data descriptor in the way, the `setattr()` below writes
-            # into the instance `__dict__`, so `undo()` has to restore that
-            # `__dict__` entry. Assigning an inherited `oldval` back onto the
-            # instance would instead leave behind a new entry shadowing the
-            # class attribute, which permanently freezes descriptors that
-            # resolve dynamically (#10644).
+        elif not _is_data_descriptor(type(target), name) and _writes_to_instance_dict(
+            type(target)
+        ):
+            # With no data descriptor in the way and a plain `__setattr__`, the
+            # `setattr()` below writes into the instance `__dict__`, so `undo()`
+            # has to restore that `__dict__` entry. Assigning an inherited
+            # `oldval` back onto the instance would instead leave behind a new
+            # entry shadowing the class attribute, which permanently freezes
+            # descriptors that resolve dynamically (#10644).
+            # A custom `__setattr__` can store the value anywhere, so for those
+            # the `getattr()` value is what has to be restored (#15099).
             target_dict = getattr(target, "__dict__", None)
             if isinstance(target_dict, Mapping):
                 oldval = target_dict.get(name, NOTSET)
