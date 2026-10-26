@@ -123,6 +123,10 @@ is performed.
     the start or end of message. Consult the `warning filter`_ documentation for more
     details.
 
+Filters installed with :py:func:`warnings.filterwarnings` while test modules or
+conftest files are imported (for example, a module-level call) take effect for
+the rest of the test session.
+
 
 .. _`filterwarnings`:
 
