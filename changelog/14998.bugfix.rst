@@ -1,0 +1,2 @@
+Fixed ``tmp_path_retention_policy="failed"`` incorrectly removing temporary
+directories when fixture setup or teardown raises an error.
