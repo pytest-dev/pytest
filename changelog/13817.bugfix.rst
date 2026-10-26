@@ -1,0 +1,1 @@
+Rejects non-dash option strings passed to ``addoption`` with a clear error instead of silently registering a required positional.
