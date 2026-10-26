@@ -1,0 +1,1 @@
+When `--showlocals` is enabled, function arguments are no longer displayed in a separate block because they are already included in the locals output.
