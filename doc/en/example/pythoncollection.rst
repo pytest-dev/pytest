@@ -165,6 +165,8 @@ You can check for multiple glob patterns by adding a space between the patterns:
    for ``unittest.TestCase`` test discovery because pytest delegates
    discovery of test case methods to unittest code.
 
+.. _pyargs-testpaths:
+
 Interpreting cmdline arguments as Python packages
 -----------------------------------------------------
 
@@ -186,10 +188,32 @@ can make this change more permanently:
     # content of pytest.toml
     [pytest]
     addopts = ["--pyargs"]
+    testpaths = ["mypkg.tests"]
 
 Now a simple invocation of ``pytest NAME`` will check
 if NAME exists as an importable package/module and otherwise
 treat it as a filesystem path.
+
+When no collection arguments are given and pytest is invoked from the
+:ref:`rootdir <rootdir>`, :confval:`testpaths` supplies the default arguments.
+With the configuration above, a bare ``pytest`` collects ``mypkg.tests``.
+Explicit arguments, such as ``pytest other_tests/test_one.py``, replace these
+defaults. When invoked outside rootdir, pytest instead defaults to collecting
+from the invocation directory.
+
+With :option:`--pyargs`, entries in :confval:`testpaths` are resolved as
+importable packages or modules before falling back to filesystem paths;
+they are not expanded as filesystem globs. Without :option:`--pyargs`,
+``testpaths`` entries are filesystem patterns, including glob expansion.
+An importable package can therefore be selected instead of a local directory
+with the same name, depending on Python's import search path.
+When tests exist both locally and in an installed package, check which copy
+Python resolves and the :ref:`import mode <import-modes>` when investigating
+``ImportPathMismatchError``.
+
+Put default collection arguments in :confval:`testpaths`, not :confval:`addopts`:
+positional arguments in ``addopts`` are passed on every invocation and are not
+replaced by explicit command-line arguments.
 
 Finding out what is collected
 -----------------------------------------------

@@ -2610,6 +2610,10 @@ passed multiple times. The expected format is ``name=value``. For example::
    File system paths may use shell-style wildcards, including the recursive
    ``**`` pattern.
 
+   With :option:`--pyargs`, entries are resolved as importable packages or modules
+   before filesystem paths, without glob expansion. See
+   :ref:`how --pyargs interacts with testpaths <pyargs-testpaths>`.
+
    Useful when all project tests are in a known location to speed up
    test collection and to avoid picking up undesired tests by accident.
 
