@@ -1,0 +1,1 @@
+Fixed ``RaisesGroup`` calling the ``check`` callback a second time with a contained exception after the callback rejected the group, which crashed checks that assume an exception group and violated the documented contract. The ``check`` callback is now only ever called with the group itself.
