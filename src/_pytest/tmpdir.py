@@ -37,6 +37,7 @@ from _pytest.stash import StashKey
 
 
 tmppath_result_key = StashKey[dict[str, bool]]()
+tmppath_path_key = StashKey[Path]()
 RetentionType = Literal["all", "failed", "none"]
 
 
@@ -292,18 +293,11 @@ def tmp_path(
     as discussed in :ref:`temporary directory location and retention`.
     """
     path = _mk_tmp(request, tmp_path_factory)
+
+    # Store the path so cleanup can happen after the teardown report.
+    request.node.stash[tmppath_path_key] = path
+
     yield path
-
-    # Remove the tmpdir if the policy is "failed" and the test passed.
-    policy = tmp_path_factory._retention_policy
-    result_dict = request.node.stash[tmppath_result_key]
-
-    if policy == "failed" and result_dict.get("call", True):
-        # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
-        # permissions, etc, in which case we ignore it.
-        rmtree(path, ignore_errors=True)
-
-    del request.node.stash[tmppath_result_key]
 
 
 def pytest_sessionfinish(session, exitstatus: int | ExitCode):
@@ -340,6 +334,25 @@ def pytest_runtest_makereport(
 ) -> Generator[None, TestReport, TestReport]:
     rep = yield
     assert rep.when is not None
-    empty: dict[str, bool] = {}
-    item.stash.setdefault(tmppath_result_key, empty)[rep.when] = rep.passed
+
+    # Record whether each phase failed.
+    result_dict = item.stash.setdefault(tmppath_result_key, {})
+    result_dict[rep.when] = rep.failed
+
+    # Wait until teardown has finished before deciding whether the temporary directory should be retained.
+    if rep.when == "teardown":
+        path = item.stash.get(tmppath_path_key, None)
+
+        if path is not None:
+            tmp_path_factory: TempPathFactory = item.config._tmp_path_factory  # type: ignore[attr-defined]
+            policy = tmp_path_factory._retention_policy
+
+            # Retain the directory if any phase failed. Otherwise, remove it under the "failed" policy.
+            if policy == "failed" and not any(result_dict.values()):
+                rmtree(path, ignore_errors=True)
+
+            del item.stash[tmppath_path_key]
+
+        del item.stash[tmppath_result_key]
+
     return rep

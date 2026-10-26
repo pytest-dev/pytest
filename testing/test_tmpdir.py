@@ -197,12 +197,10 @@ class TestConfigTmpPath:
             assert len(test_dir) == 1
             assert test_dir[0].name == "test_20"
 
-
     def test_policy_failed_keeps_setup_and_teardown_errors(
         self, pytester: Pytester
     ) -> None:
         """Regression test for #14998."""
-
         pytester.makepyprojecttoml(
             """
             [tool.pytest.ini_options]
@@ -244,7 +242,7 @@ class TestConfigTmpPath:
 
         assert (retained / "test_setup0" / "evidence.txt").exists()
         assert (retained / "test_call0" / "evidence.txt").exists()
-        assert (retained / "test_teardown0" / "evidence.txt").exists()    
+        assert (retained / "test_teardown0" / "evidence.txt").exists()
 
     def test_policy_failed_removes_basedir_when_all_passed(
         self, pytester: Pytester
