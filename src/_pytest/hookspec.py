@@ -864,16 +864,33 @@ def pytest_fixture_setup(
 
 
 def pytest_fixture_post_finalizer(
-    fixturedef: FixtureDef[Any], request: SubRequest
+    fixturedef: FixtureDef[Any],
+    request: SubRequest,
+    teardown_exception: BaseException | None,
 ) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
-    the fixture result ``fixturedef.cached_result`` is still available (not
-    ``None``).
+    the fixture result ``fixturedef.cached_result`` is still available.
+
+    Also called when the fixture setup failed before a result was cached
+    (for example, a :hook:`pytest_fixture_setup` implementation raised), in
+    which case ``fixturedef.cached_result`` is ``None``.
+
+    An exception raised by an implementation of this hook is a bug in that
+    implementation: it is not swallowed or merged into
+    ``teardown_exception``, but propagates immediately.
 
     :param fixturedef:
         The fixture definition object.
     :param request:
-        The fixture request object.
+        The fixture request object that set up the fixture.
+    :param teardown_exception:
+        The exception raised while tearing down the fixture, or ``None`` if
+        teardown succeeded. If several finalizers of the fixture failed, this
+        is a :class:`BaseExceptionGroup` holding all of their exceptions.
+        Use this argument rather than :func:`sys.exc_info` to inspect
+        teardown failures.
+
+        .. versionadded:: 9.2
 
     Use in conftest plugins
     =======================
