@@ -1,1 +1,0 @@
-``Cache.get()``, ``Cache.set()`` and ``Cache.mkdir()`` now reject keys that resolve outside the cache directory, and ``--cache-show`` ignores glob matches outside it.

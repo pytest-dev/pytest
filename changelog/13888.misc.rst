@@ -1,1 +1,0 @@
-:attr:`FixtureRequest.node <pytest.FixtureRequest.node>` is now explicitly annotated as returning ``Any``, so strict pyright no longer reports it as ``Unknown``. The return type stays deliberately broad, see :issue:`13888`.

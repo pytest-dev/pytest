@@ -1,1 +1,0 @@
-Assertion diffs now pretty-print the built-in :class:`frozendict` (Python 3.15+) across multiple lines, similarly to how :class:`dict` is displayed.
