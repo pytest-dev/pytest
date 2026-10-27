@@ -1,0 +1,7 @@
+Added :class:`pytest.PytestRemovedIn11Warning`.
+
+Deprecations that have not been part of a release yet now use it, so they are removed in pytest 11 instead of turning into errors in pytest 10 without ever having been released as warnings:
+
+- module-, package- and session-scoped fixtures defined as instance methods (class-scoped ones stay scheduled for pytest 10);
+- non-string values for ``string``-typed ini options;
+- the ``_pytest.python.CallSpec2`` alias.
