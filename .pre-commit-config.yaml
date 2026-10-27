@@ -29,6 +29,8 @@ repos:
         args: ["--toml=pyproject.toml"]
         additional_dependencies:
           - tomli
+        # Don't spell check contributor names.
+        exclude: ^doc/en/announce/release-.*\.rst$
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
