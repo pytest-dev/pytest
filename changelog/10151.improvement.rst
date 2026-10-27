@@ -1,0 +1,6 @@
+When a fixture is not found, the error now points at definitions of that name
+which exist elsewhere in the collection tree but are not visible to the test.
+
+Moving a fixture into a conftest one directory over leaves the name registered
+but out of scope, and the previous message only listed the fixtures that *were*
+available, giving no sign that the fixture was there all along.
