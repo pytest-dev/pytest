@@ -9,11 +9,47 @@ Get Started
 Install ``pytest``
 ----------------------------------------
 
-1. Run the following command in your command line:
+Install ``pytest`` into a virtual environment, not into the Python installation
+of your operating system (see :ref:`install-package-with-pip`).
 
-.. code-block:: bash
+1. Create a virtual environment and install ``pytest`` into it,
+   using the tool of your choice:
 
-    pip install -U pytest
+.. tab:: venv + pip
+
+    :mod:`venv` and :doc:`pip <pip:index>` ship with Python.
+    Some Linux distributions package them separately
+    (for example ``python3-venv`` on Debian and Ubuntu).
+
+    .. code-block:: bash
+
+        python3 -m venv .venv
+        source .venv/bin/activate   # on Windows: .venv\Scripts\activate
+        pip install -U pytest
+
+.. tab:: uv
+
+    `uv <https://docs.astral.sh/uv/>`__ creates and manages the virtual
+    environment of your project for you.
+    In a directory with a ``pyproject.toml`` (``uv init`` creates one):
+
+    .. code-block:: bash
+
+        uv add --dev pytest
+
+    Prefix the ``pytest`` commands on this page with ``uv run``,
+    for example ``uv run pytest``, to run them inside the project environment.
+
+.. tab:: virtualenv
+
+    :doc:`virtualenv <virtualenv:index>` is a faster, more configurable
+    alternative to :mod:`venv`:
+
+    .. code-block:: bash
+
+        virtualenv .venv
+        source .venv/bin/activate   # on Windows: .venv\Scripts\activate
+        pip install -U pytest
 
 2. Check that you installed the correct version:
 
@@ -21,6 +57,9 @@ Install ``pytest``
 
     $ pytest --version
     pytest 9.1.1
+
+See :ref:`install-package-with-pip` for how to install the project you are
+testing into the same environment.
 
 .. _`simpletest`:
 
