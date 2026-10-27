@@ -118,7 +118,10 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
     assert result.ret == 0
 
 
-def test_timeout_still_active_after_test_failure(pytester: Pytester) -> None:
+@pytest.mark.parametrize("exit_on_timeout", [True, False])
+def test_timeout_still_active_after_test_failure(
+    pytester: Pytester, exit_on_timeout: bool
+) -> None:
     """The timeout must keep covering teardown after the test itself fails.
 
     Regression test for #15180: pytest_exception_interact used to cancel the
@@ -143,14 +146,18 @@ def test_timeout_still_active_after_test_failure(pytester: Pytester) -> None:
     """
     )
     pytester.makeini(
-        """
+        f"""
         [pytest]
         faulthandler_timeout = 0.5
+        faulthandler_exit_on_timeout = {"true" if exit_on_timeout else "false"}
         """
     )
     result = pytester.runpytest_subprocess()
-    result.stderr.fnmatch_lines(["*most recent call first*"])
-    result.stdout.fnmatch_lines(["*1 failed*"])
+    result.stderr.fnmatch_lines(["*most recent call first*", "*in hang_on_teardown*"])
+    if exit_on_timeout:
+        result.stdout.no_fnmatch_line("*1 failed*")
+    else:
+        result.stdout.fnmatch_lines(["*1 failed*"])
     assert result.ret == 1
 
 
