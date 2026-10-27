@@ -3179,6 +3179,11 @@ Output and Reporting
 
     Force condensed summary output regardless of verbosity level.
 
+.. option:: --no-truncate-summary
+
+    Do not truncate messages in the short test summary, regardless of terminal width.
+    Only the first line of each message is displayed.
+
 .. option:: -l, --showlocals
 
     Show locals in tracebacks (disabled by default).
