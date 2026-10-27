@@ -1,1 +1,0 @@
-The :ref:`installation instructions <installation>` and :ref:`install-package-with-pip` now show how to install pytest into a virtual environment with venv and pip, uv or virtualenv, and explain the ``externally-managed-environment`` error.
