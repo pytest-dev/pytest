@@ -168,6 +168,9 @@ class Skip:
     reason: str = "unconditional skip"
 
 
+warned_skip_reasons_key = StashKey[set[str]]()
+
+
 def _looks_like_condition(reason: object) -> bool:
     """Return whether a skip reason looks like a skipif condition, e.g.
     ``"sys.platform == 'win32'"`` (#12582)."""
@@ -212,7 +215,15 @@ def evaluate_skip_marks(item: Item) -> Skip | None:
 
     for mark in item.iter_markers(name="skip"):
         reason = mark.args[0] if mark.args else mark.kwargs.get("reason")
-        if _looks_like_condition(reason):
+        # Marks applied to a module or class are seen by each of their items,
+        # so only warn once per reason.
+        warned_reasons = item.config.stash.setdefault(warned_skip_reasons_key, set())
+        if (
+            isinstance(reason, str)
+            and _looks_like_condition(reason)
+            and reason not in warned_reasons
+        ):
+            warned_reasons.add(reason)
             item.warn(
                 PytestWarning(
                     f"The reason {reason!r} of pytest.mark.skip looks like a condition. "

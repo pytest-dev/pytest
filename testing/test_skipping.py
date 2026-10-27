@@ -1617,3 +1617,26 @@ def test_skip_reason_plain_text_does_not_warn(pytester: Pytester, reason: str) -
     )
     result = pytester.runpytest("-W", "default::pytest.PytestWarning")
     result.assert_outcomes(skipped=1, warnings=0)
+
+
+def test_skip_reason_looks_like_condition_warns_once_per_reason(
+    pytester: Pytester,
+) -> None:
+    """A module- or class-level mark applies to every item, but warns only once."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        pytestmark = pytest.mark.skip("sys.platform == 'win32'")
+
+        def test_a(): pass
+        def test_b(): pass
+
+        @pytest.mark.skip("os.name == 'nt'")
+        class TestClass:
+            def test_c(self): pass
+            def test_d(self): pass
+        """
+    )
+    result = pytester.runpytest("-W", "default::pytest.PytestWarning")
+    result.assert_outcomes(skipped=4, warnings=2)
