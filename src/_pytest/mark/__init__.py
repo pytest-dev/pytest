@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import argparse
 import collections
 from collections.abc import Collection
 from collections.abc import Iterable
+from collections.abc import Sequence
 from collections.abc import Set as AbstractSet
 import dataclasses
 from typing import TYPE_CHECKING
@@ -86,11 +88,43 @@ def param(
     return ParameterSet.param(*values, marks=marks, id=id)
 
 
+#: Options selecting tests by expression, as ``dest -> flag``.
+_EXPRESSION_OPTIONS = {"keyword": "-k", "markexpr": "-m"}
+
+_DISCARDED_ATTR = "_discarded_expressions"
+
+
+class _StoreKeepingDiscarded(argparse.Action):
+    """Like ``store``, but remembers the values replaced by later occurrences.
+
+    The discarded values are kept, in order, per ``dest`` in a dict stored in
+    the ``_discarded_expressions`` namespace attribute.
+    """
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Sequence[object] | None,
+        option_string: str | None = None,
+    ) -> None:
+        previous = getattr(namespace, self.dest, None)
+        if previous and previous != values:
+            discarded: dict[str, list[str]] = getattr(namespace, _DISCARDED_ATTR, {})
+            # Rebind instead of mutating: the namespace may be shallow-copied.
+            setattr(
+                namespace,
+                _DISCARDED_ATTR,
+                {**discarded, self.dest: [*discarded.get(self.dest, []), previous]},
+            )
+        setattr(namespace, self.dest, values)
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(  # private to use reserved lower-case short option
         "-k",
-        action="store",
+        action=_StoreKeepingDiscarded,
         dest="keyword",
         default="",
         metavar="EXPRESSION",
@@ -103,17 +137,19 @@ def pytest_addoption(parser: Parser) -> None:
         "- the names of the markers applied to it or to its parents\n"
         "- attributes assigned directly to the test function\n"
         "- any names in its 'extra_keyword_matches' set\n"
-        "Use -m to match marker names exactly, including their arguments.",
+        "Use -m to match marker names exactly, including their arguments.\n"
+        "If given more than once, only the last expression is used.",
     )
 
     group._addoption(  # private to use reserved lower-case short option
         "-m",
-        action="store",
+        action=_StoreKeepingDiscarded,
         dest="markexpr",
         default="",
         metavar="MARKEXPR",
         help="Only run tests matching given mark expression. "
-        "For example: -m 'mark1 and not mark2'.",
+        "For example: -m 'mark1 and not mark2'. "
+        "If given more than once, only the last expression is used.",
     )
 
     group.addoption(
@@ -129,6 +165,17 @@ def pytest_addoption(parser: Parser) -> None:
         type=_EmptyParameterSetMark,
         default="skip",
     )
+
+
+def pytest_report_header(config: Config) -> list[str]:
+    discarded_by_dest = getattr(config.option, _DISCARDED_ATTR, {})
+    return [
+        f"note: {flag} expressions are not combined; "
+        f"discarded {', '.join(map(repr, discarded))}, "
+        f"using {getattr(config.option, dest)!r}"
+        for dest, flag in _EXPRESSION_OPTIONS.items()
+        if (discarded := discarded_by_dest.get(dest))
+    ]
 
 
 @hookimpl(tryfirst=True)

@@ -2917,6 +2917,9 @@ Test Selection
     * attributes assigned directly to the test function, as in the legacy ``test_func.slow = True`` style;
     * any names added to the :attr:`~_pytest.nodes.Node.extra_keyword_matches` set of it or of a parent.
 
+    If given more than once, only the last expression is used: expressions are not combined,
+    and a note listing the discarded ones is shown in the report header.
+
     See :ref:`keyword expressions` for more information and examples.
 
 .. option:: -m MARKEXPR
@@ -2932,6 +2935,10 @@ Test Selection
         pytest -m "device(serial='123')" # run tests marked device with that argument
 
     Marker names are matched exactly and case-sensitively.
+
+    If given more than once, only the last expression is used: expressions are not combined,
+    and a note listing the discarded ones is shown in the report header.
+    Use ``and``/``or`` inside a single expression to combine marks.
 
     See :ref:`mark` for more information on markers.
 
@@ -3492,8 +3499,11 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             - any names in its 'extra_keyword_matches' set
                             Use -m to match marker names exactly, including their
                             arguments.
+                            If given more than once, only the last expression is
+                            used.
       -m MARKEXPR           Only run tests matching given mark expression. For
-                            example: -m 'mark1 and not mark2'.
+                            example: -m 'mark1 and not mark2'. If given more than
+                            once, only the last expression is used.
       --markers             show markers (builtin, plugin and per-project ones).
       -x, --exitfirst       Exit instantly on first error or failed test
       --maxfail=num         Exit after first num failures or errors
