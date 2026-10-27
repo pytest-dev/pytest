@@ -200,4 +200,5 @@ def test_custom_item_hidden_traceback(
     result.assert_outcomes(failed=1)
     output = result.stdout.str()
     assert "custom failure" in output
+    assert "def runtest(self):" in output
     assert ("__tracebackhide__ = True" in output) == fulltrace
