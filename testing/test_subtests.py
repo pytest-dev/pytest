@@ -1096,3 +1096,24 @@ def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no c
     pytester.syspathinsert()
     result = pytester.runpytest("-n1", "-pxdist.plugin")
     result.assert_outcomes(passed=2)
+
+
+def test_subtest_with_mocked_clock(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import time
+
+        def test_with_subtest(subtests, monkeypatch):
+            real_sleep = time.sleep
+            monkeypatch.setattr(time, "perf_counter", lambda: 0.0)
+            monkeypatch.setattr(time, "time", lambda: 0.0)
+
+            with subtests.test("frozen clock"):
+                real_sleep(0.01)
+        """
+    )
+    result = pytester.runpytest("--junitxml=report.xml")
+    result.assert_outcomes(passed=1)
+
+    xml = pytester.path.joinpath("report.xml").read_text(encoding="utf-8")
+    assert 'time="-' not in xml
