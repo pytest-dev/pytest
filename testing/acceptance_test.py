@@ -185,7 +185,7 @@ class TestGeneralUsage:
                 "*No module named *does_not_work*",
             ]
         )
-        assert result.ret == 2
+        assert result.ret == ExitCode.COLLECTION_ERROR
 
     def test_not_collectable_arguments(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("")
@@ -1027,9 +1027,11 @@ class TestDurations:
         pytester.makepyfile(self.source)
         pytester.makepyfile(test_collecterror="""xyz""")
         result = pytester.runpytest_inprocess("--durations=2", "-k test_1")
-        assert result.ret == 2
+        assert result.ret == ExitCode.COLLECTION_ERROR
 
-        result.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
+        result.stdout.fnmatch_lines(
+            ["*CollectionInterrupted: 1 error during collection*"]
+        )
         # Collection errors abort test execution, therefore no duration is
         # output
         result.stdout.no_fnmatch_line("*duration*")
@@ -1726,13 +1728,13 @@ def test_no_terminal_plugin(pytester: Pytester) -> None:
 def test_stop_iteration_from_collect(pytester: Pytester) -> None:
     pytester.makepyfile(test_it="raise StopIteration('hello')")
     result = pytester.runpytest()
-    assert result.ret == ExitCode.INTERRUPTED
+    assert result.ret == ExitCode.COLLECTION_ERROR
     result.assert_outcomes(failed=0, passed=0, errors=1)
     result.stdout.fnmatch_lines(
         [
             "=* short test summary info =*",
             "ERROR test_it.py - StopIteration: hello",
-            "!* Interrupted: 1 error during collection !*",
+            "!* CollectionInterrupted: 1 error during collection !*",
             "=* 1 error in * =*",
         ]
     )
