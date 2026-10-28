@@ -6367,6 +6367,22 @@ def test_find_wrapped_fixture_def_depth_is_bounded(pytester: Pytester) -> None:
     assert accesses == _MAX_UNWRAP_DEPTH
 
 
+def test_find_wrapped_fixture_def_detects_loops(pytester: Pytester) -> None:
+    """A ``__wrapped__`` cycle stops at the first revisited object."""
+    accesses = 0
+
+    class Loop:
+        @property
+        def __wrapped__(self) -> Loop:
+            nonlocal accesses
+            accesses += 1
+            return self
+
+    fm = pytester.getitem("def test_func(): pass").session._fixturemanager
+    assert fm._find_wrapped_fixture_def(Loop()) is None
+    assert accesses == 1
+
+
 def test_find_wrapped_fixture_def_skips_mock_call(pytester: Pytester) -> None:
     """``mock.call`` has ``_mock_name = None``; it must still be skipped."""
     from unittest import mock
