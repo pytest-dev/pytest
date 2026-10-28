@@ -11,6 +11,20 @@ from _pytest.assertion.highlight import dummy_highlighter
 from _pytest.compat import assert_never
 
 
+_WHITESPACE_MAP = {
+    "\t": r"\t",
+    "\r": r"\r",
+    "\v": r"\v",
+    "\f": r"\f",
+    "\u00a0": r"\u00a0",
+}
+
+
+def _escape_whitespace(text: str) -> str:
+    """Substitui caracteres de espaço ocultos por suas representações literais."""
+    return "".join(_WHITESPACE_MAP.get(ch, ch) for ch in text)
+
+
 def _compare_eq_text(
     left: str,
     right: str,
@@ -81,13 +95,21 @@ def _diff_text(
                 )
                 left = left[:-i]
                 right = right[:-i]
+
     keepends = True
     if left.isspace() or right.isspace():
         left = repr(str(left))
         right = repr(str(right))
         yield "Strings contain only whitespace, escaping them using repr()"
+
     left_lines = _cap_ndiff_input(left, keepends, truncation_budget)
     right_lines = _cap_ndiff_input(right, keepends, truncation_budget)
+
+    # Escapa caracteres de espaço invisíveis (\t, \r, \v, \f, \u00a0) mantendo
+    # a estrutura original de quebras de linha para a exibição do diff.
+    left_lines = [_escape_whitespace(line) for line in left_lines]
+    right_lines = [_escape_whitespace(line) for line in right_lines]
+
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     yield from highlighter(

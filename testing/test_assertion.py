@@ -3155,3 +3155,61 @@ def test_dict_extra_items_preserve_insertion_order(pytester: Pytester) -> None:
             "test_order.py:*: AssertionError",
         ]
     )
+
+
+@pytest.mark.parametrize(
+    ("actual", "expected", "escape"),
+    [
+        pytest.param("hello\tworld", "hello world", r"\t", id="tab"),
+        pytest.param("hello\tworld", "hello earth", r"\t", id="whitespace-and-text"),
+        pytest.param("hello\vworld", "hello world", r"\v", id="vertical-tab"),
+        pytest.param("hello\fworld", "hello world", r"\f", id="form-feed"),
+        pytest.param("hello\r\nworld", "hello\nworld", r"\r", id="carriage-return"),
+        pytest.param("hello\t", "hello ", r"\t", id="trailing-tab-vs-space"),
+        pytest.param("hello world", "hello\u00a0world", r"\u00a0", id="nbsp"),
+    ],
+)
+def test_reprcompare_whitespace_inside_text(
+    actual: str, expected: str, escape: str
+) -> None:
+    lines = callequal(actual, expected)
+    assert lines is not None
+
+    diff_lines = [
+        line for line in lines
+        if line.startswith(("+", "-"))
+    ]
+    assert diff_lines
+    assert any(escape in line for line in diff_lines)
+    assert not any(
+        char in line
+        for line in diff_lines
+        for char in "\t\r\v\f"
+    )
+
+
+def test_reprcompare_whitespace_inside_text_identical() -> None:
+    lines = callequal("hello\tworld", "hello\tworld")
+    assert lines is not None
+    assert not any(line.startswith(("+", "-")) for line in lines)
+
+
+def test_whitespace_diff_pytester(pytester: Pytester) -> None:
+    """Garante que códigos de escape para whitespace invisível sejam visíveis na saída do terminal (#10704)."""
+    p = pytester.makepyfile(
+        """
+        def test_whitespace():
+            expected = "hello\tworld"
+            actual = "hello world"
+            assert actual == expected
+        """
+    )
+    result = pytester.runpytest(str(p))
+    result.stdout.fnmatch_lines(
+        [
+            "*AssertionError: assert*",
+            "*- hello\\tworld*",
+            "*+ hello world*",
+            "*1 failed in*",
+        ]
+    )
