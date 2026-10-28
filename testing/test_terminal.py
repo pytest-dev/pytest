@@ -836,6 +836,7 @@ class TestFixtureReporting:
                 "*assert 0*",
                 "*Captured stdout*",
                 "*teardown func*",
+                "*ERROR at teardown of test_teardown_fixture_error.py::test_nada - assert 0*",
                 "*1 passed*1 error*",
             ]
         )
@@ -2654,7 +2655,7 @@ class TestProgressWithTeardown:
             [
                 r"test_teardown_with_test_also_failing.py FE\s+\[100%\]",
                 "FAILED test_teardown_with_test_also_failing.py::test_foo - assert 0",
-                "ERROR test_teardown_with_test_also_failing.py::test_foo - assert False",
+                r"ERROR at teardown of test_teardown_with_test_also_failing.py::test_foo - asse.*",
             ]
         )
 
@@ -2741,6 +2742,8 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
             self.option = Namespace(verbose=0)
 
     class rep:
+        when = "call"
+
         def _get_verbose_word_with_markup(self, *args):
             return mocked_verbose_word, {}
 
@@ -2801,6 +2804,9 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
     check("🉐🉐🉐🉐🉐\n2nd line", 41, "FAILED nodeid::🉐::withunicode - 🉐🉐...")
     check("🉐🉐🉐🉐🉐\n2nd line", 42, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐...")
     check("🉐🉐🉐🉐🉐\n2nd line", 80, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐")
+
+    rep.when = "teardown"
+    check("msg", 80, "FAILED at teardown of nodeid::🉐::withunicode - msg")
 
 
 def test_short_summary_with_verbose(

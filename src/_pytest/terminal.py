@@ -1583,7 +1583,10 @@ def _get_line_with_reprcrash_message(
     word = tw.markup(verbose_word, **verbose_markup)
     node = _get_node_id_with_markup(tw, config, rep)
 
-    line = f"{word} {node}"
+    if rep.when in ("setup", "teardown"):
+        line = f"{word} at {rep.when} of {node}"
+    else:
+        line = f"{word} {node}"
     line_width = wcswidth(line)
 
     msg: str | None
