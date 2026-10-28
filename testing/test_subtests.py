@@ -1115,5 +1115,5 @@ def test_subtest_with_mocked_clock(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("--junitxml=report.xml")
     result.assert_outcomes(passed=1)
 
-    xml = pytester.path.joinpath("report.xml").read_text()
+    xml = pytester.path.joinpath("report.xml").read_text(encoding="utf-8")
     assert 'time="-' not in xml
