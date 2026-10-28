@@ -259,6 +259,55 @@ class TestApprox:
             ],
         )
 
+    @pytest.mark.parametrize(
+        ("dtype", "actual", "expected", "absolute_difference", "relative_difference"),
+        [
+            ("uint8", 255, 0, 255, 1.0),
+            ("int8", -128, 127, 255, 1.9921875),
+            ("uint64", 2**64 - 1, 0, 2**64 - 1, 1.0),
+            ("int64", -(2**63), 2**63 - 1, 2**64 - 1, 2.0),
+        ],
+    )
+    def test_numpy_integer_failure_details(
+        self, dtype, actual, expected, absolute_difference, relative_difference
+    ) -> None:
+        np = pytest.importorskip("numpy")
+        actual_array = np.array([actual], dtype=dtype)
+        expected_array = np.array([expected], dtype=dtype)
+        comparison = approx(expected_array)
+
+        assert actual_array != comparison
+        explanation = comparison._repr_compare(actual_array)
+        assert explanation[:3] == [
+            "comparison failed. Mismatched elements: 1 / 1:",
+            f"Max absolute difference: {absolute_difference}",
+            f"Max relative difference: {relative_difference}",
+        ]
+
+    def test_numpy_integer_assertion_details(self, pytester: Pytester) -> None:
+        pytest.importorskip("numpy")
+        pytester.makepyfile(
+            """
+            import numpy as np
+            import pytest
+
+            def test_difference():
+                assert np.array([255], dtype=np.uint8) == pytest.approx(
+                    np.array([0], dtype=np.uint8)
+                )
+            """
+        )
+        result = pytester.runpytest("-Werror")
+        result.assert_outcomes(failed=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*Mismatched elements: 1 / 1:*",
+                "*Max absolute difference: 255*",
+                "*Max relative difference: 1.0*",
+            ]
+        )
+        assert "representation of details failed" not in result.stdout.str()
+
     def test_error_messages_invalid_args(self, assert_approx_raises_regex):
         np = pytest.importorskip("numpy")
         with pytest.raises(AssertionError) as e:
