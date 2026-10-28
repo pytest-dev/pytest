@@ -3175,17 +3175,10 @@ def test_reprcompare_whitespace_inside_text(
     lines = callequal(actual, expected)
     assert lines is not None
 
-    diff_lines = [
-        line for line in lines
-        if line.startswith(("+", "-"))
-    ]
+    diff_lines = [line for line in lines if line.startswith(("+", "-"))]
     assert diff_lines
     assert any(escape in line for line in diff_lines)
-    assert not any(
-        char in line
-        for line in diff_lines
-        for char in "\t\r\v\f"
-    )
+    assert not any(char in line for line in diff_lines for char in "\t\r\v\f")
 
 
 def test_reprcompare_whitespace_inside_text_identical() -> None:

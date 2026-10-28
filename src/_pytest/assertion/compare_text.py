@@ -21,7 +21,7 @@ _WHITESPACE_MAP = {
 
 
 def _escape_whitespace(text: str) -> str:
-    """Substitui caracteres de espaço ocultos por suas representações literais."""
+    """Substitui characters de espaço ocultos por suas representações literais."""
     return "".join(_WHITESPACE_MAP.get(ch, ch) for ch in text)
 
 
@@ -105,7 +105,7 @@ def _diff_text(
     left_lines = _cap_ndiff_input(left, keepends, truncation_budget)
     right_lines = _cap_ndiff_input(right, keepends, truncation_budget)
 
-    # Escapa caracteres de espaço invisíveis (\t, \r, \v, \f, \u00a0) mantendo
+    # Escapa characters de espaço invisíveis (\t, \r, \v, \f, \u00a0) mantendo
     # a estrutura original de quebras de linha para a exibição do diff.
     left_lines = [_escape_whitespace(line) for line in left_lines]
     right_lines = [_escape_whitespace(line) for line in right_lines]
