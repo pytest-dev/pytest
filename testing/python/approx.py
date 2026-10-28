@@ -904,7 +904,7 @@ class TestApprox:
 
         class CustomArray:
             def __init__(self, values, /):
-                self.values = np.asarray(values)
+                self.values = values
                 self.array_conversions = 0
 
             def __array__(self, dtype=None, copy=None):
@@ -915,7 +915,7 @@ class TestApprox:
                 raise AssertionError("Should not be called")
 
             def __len__(self):
-                return len(self.values)
+                return AssertionError("Should not be called")
 
             @property
             def flat(self):
