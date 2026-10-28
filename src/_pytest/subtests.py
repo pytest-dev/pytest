@@ -16,6 +16,7 @@ from typing import Any
 from typing import TYPE_CHECKING
 
 import pluggy
+
 from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._io.saferepr import saferepr

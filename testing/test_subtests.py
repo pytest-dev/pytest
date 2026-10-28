@@ -1096,6 +1096,8 @@ def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no c
     pytester.syspathinsert()
     result = pytester.runpytest("-n1", "-pxdist.plugin")
     result.assert_outcomes(passed=2)
+
+
 def test_subtest_with_mocked_clock(pytester: pytest.Pytester) -> None:
     pytester.makepyfile(
         """
