@@ -426,14 +426,46 @@ def test_check() -> None:
     def is_value_error(e: BaseException) -> bool:
         return isinstance(e, ValueError)
 
-    # helpful suggestion if the user thinks the check is for the sub-exception
+    # A failed check must not be retried on the contained exception.
     with (
         fails_raises_group(
-            f"check {is_value_error} did not return True on the ExceptionGroup, but did return True for the expected ValueError. You might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
+            f"check {is_value_error} did not return True on the ExceptionGroup"
         ),
         RaisesGroup(ValueError, check=is_value_error),
     ):
         raise ExceptionGroup("", (ValueError(),))
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+@pytest.mark.parametrize("exception_type", [ValueError, KeyboardInterrupt])
+def test_check_only_receives_group(
+    accepted: bool, exception_type: type[BaseException]
+) -> None:
+    group = BaseExceptionGroup("message", [exception_type()])
+    calls: list[BaseExceptionGroup[BaseException]] = []
+
+    def check(exc: BaseExceptionGroup[BaseException]) -> bool:
+        calls.append(exc)
+        return len(exc.exceptions) == 1 and accepted
+
+    matcher = RaisesGroup(exception_type, check=check)
+    assert matcher.matches(group) is accepted
+    assert calls == [group]
+    if not accepted:
+        assert matcher.fail_reason == (
+            f"check {repr_callable(check)} did not return True on the {type(group).__name__}"
+        )
+
+
+def test_check_exception_propagates() -> None:
+    error = RuntimeError("check failed")
+
+    def check(exc: ExceptionGroup[ValueError]) -> bool:
+        raise error
+
+    with pytest.raises(RuntimeError) as excinfo:
+        RaisesGroup(ValueError, check=check).matches(ExceptionGroup("", [ValueError()]))
+    assert excinfo.value is error
 
 
 def test_unwrapped_match_check() -> None:
