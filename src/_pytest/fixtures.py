@@ -1761,6 +1761,11 @@ def deduplicate_names(*seqs: Iterable[str]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(name for seq in seqs for name in seq))
 
 
+# Upper bound for following ``__wrapped__`` chains when looking for fixtures
+# hidden behind decorators; real decorator stacks are far shallower.
+_MAX_UNWRAP_DEPTH: Final = 100
+
+
 class FixtureManager:
     """pytest fixture definitions and information is stored and managed
     from this class.
@@ -2158,34 +2163,40 @@ class FixtureManager:
     ) -> FixtureFunctionDefinition | None:
         """Find a FixtureFunctionDefinition in ``obj``'s ``__wrapped__`` chain.
 
-        Uses :func:`inspect.unwrap` with a ``stop`` callback so unwrapping does
-        not continue past :class:`FixtureFunctionDefinition` (which itself sets
-        ``__wrapped__`` via :func:`functools.update_wrapper`).
+        Stops at the first :class:`FixtureFunctionDefinition` (which itself sets
+        ``__wrapped__`` via :func:`functools.update_wrapper`). ``obj`` may also
+        be a descriptor (classmethod/staticmethod) exposing ``__wrapped__``.
 
         Returns the definition if found, else ``None``. Loops, excessive depth,
         and objects that raise on attribute access are treated as not found.
         """
         # Skip mock objects to avoid false positives when traversing
-        # their wrapper chains (they have a _mock_name attribute).
-        if safe_getattr(obj, "_mock_name", None) is not None:
+        # their wrapper chains. Any ``_mock_name`` attribute counts, even
+        # ``None``: ``unittest.mock.call`` has ``_mock_name = None`` and returns
+        # a new ``_Call`` for every attribute, including ``__wrapped__``.
+        if safe_getattr(obj, "_mock_name", NOTSET) is not NOTSET:
             return None
 
-        try:
-            # unwrap is typed for callables, but we also pass descriptors
-            # (classmethod/staticmethod) that expose __wrapped__/__func__.
-            # Use type(...) is, not isinstance: some proxies raise on
-            # isinstance via a broken __class__ (see pytest#4266).
-            unwrapped = inspect.unwrap(
-                cast(Callable[..., Any], obj),
-                stop=lambda o: type(o) is FixtureFunctionDefinition,
-            )
-        except Exception:
-            # ValueError for wrapper loops / depth; also "evil objects"
-            # that raise on attribute access (see pytest#214).
-            return None
-
-        if type(unwrapped) is FixtureFunctionDefinition:
-            return unwrapped
+        # Walk __wrapped__ ourselves rather than via inspect.unwrap, whose
+        # depth limit is sys.getrecursionlimit(): objects that return a fresh
+        # __wrapped__ on every access would otherwise be followed until a
+        # raised recursion limit exhausts memory (pytest#15281).
+        # Use type(...) is, not isinstance: some proxies raise on isinstance
+        # via a broken __class__ (see pytest#4266).
+        # Keep visited objects alive so their ids are not reused.
+        seen: dict[int, object] = {}
+        current = obj
+        for _ in range(_MAX_UNWRAP_DEPTH):
+            if type(current) is FixtureFunctionDefinition:
+                return current
+            if id(current) in seen:
+                return None
+            seen[id(current)] = current
+            # safe_getattr also covers "evil objects" that raise on
+            # attribute access (see pytest#214).
+            current = safe_getattr(current, "__wrapped__", NOTSET)
+            if current is NOTSET:
+                return None
         return None
 
     def _check_for_wrapped_fixture(self, name: str, obj: object) -> None:
