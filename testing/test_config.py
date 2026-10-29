@@ -3630,7 +3630,6 @@ class TestNativeTomlOptionTypes:
     @pytest.mark.parametrize(
         ("name", "value"),
         [
-            ("verbosity_assertions", '"loud"'),
             ("log_file_mode", '"x"'),
             ("parametrize_long_str_id_strategy", '"bogus"'),
         ],
@@ -3641,7 +3640,15 @@ class TestNativeTomlOptionTypes:
         with pytest.raises(UsageError, match=name):
             config.getini(name)
 
-    def test_get_verbosity(self, pytester: Pytester) -> None:
-        pytester.maketoml("[pytest]\nverbosity_assertions = 2\n")
+    @pytest.mark.parametrize("toml_value", ["2", '"2"'])
+    def test_get_verbosity(self, pytester: Pytester, toml_value: str) -> None:
+        pytester.maketoml(f"[pytest]\nverbosity_assertions = {toml_value}\n")
         config = pytester.parseconfig()
         assert config.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2
+
+    @pytest.mark.parametrize("toml_value", ['"loud"', "true", "2.5"])
+    def test_get_verbosity_invalid(self, pytester: Pytester, toml_value: str) -> None:
+        pytester.maketoml(f"[pytest]\nverbosity_assertions = {toml_value}\n")
+        config = pytester.parseconfig()
+        with pytest.raises(UsageError, match="verbosity_assertions"):
+            config.get_verbosity(Config.VERBOSITY_ASSERTIONS)

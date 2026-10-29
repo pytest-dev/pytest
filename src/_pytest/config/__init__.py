@@ -2268,8 +2268,15 @@ class Config:
         level = self.getini(ini_name)
         if level == Config._VERBOSITY_INI_DEFAULT:
             return global_level
-
-        return int(level)
+        if isinstance(level, int):
+            return level
+        try:
+            return int(level)
+        except ValueError:
+            raise UsageError(
+                f"{self.inipath}: config option '{ini_name}' expects an int "
+                f"or 'auto', got {level!r}"
+            ) from None
 
     @staticmethod
     def _verbosity_ini_name(verbosity_type: str) -> str:
@@ -2289,7 +2296,9 @@ class Config:
         parser.addini(
             Config._verbosity_ini_name(verbosity_type),
             help=help,
-            type=int | Literal["auto"],
+            # str rather than Literal["auto"]: numeric strings stay accepted
+            # in TOML for backward compatibility, see get_verbosity.
+            type=int | str,
             default=Config._VERBOSITY_INI_DEFAULT,
         )
 

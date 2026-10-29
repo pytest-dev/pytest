@@ -1,0 +1,1 @@
+Native TOML configuration again accepts numeric strings such as ``"2"`` for :confval:`verbosity_assertions`, :confval:`verbosity_test_cases` and :confval:`verbosity_subtests`, as promised for backward compatibility in pytest 9.2.0 -- regressed by :pr:`15153`.
