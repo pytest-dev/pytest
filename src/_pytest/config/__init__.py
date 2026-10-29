@@ -1957,10 +1957,29 @@ class Config:
                 )
 
             # Union: try each member; the first one that accepts the value wins.
+            coerce_toml_int_strings = name in {
+                Config._verbosity_ini_name(Config.VERBOSITY_ASSERTIONS),
+                Config._verbosity_ini_name(Config.VERBOSITY_SUBTESTS),
+                Config._verbosity_ini_name(Config.VERBOSITY_TEST_CASES),
+            }
             for member in type:
                 try:
+                    # Keep accepting numeric strings for built-in verbosity options.
+                    member_value = (
+                        int(value)
+                        if mode == "toml"
+                        and member == "int"
+                        and isinstance(value, str)
+                        and coerce_toml_int_strings
+                        else value
+                    )
                     return self._getini_value(
-                        mode, name, canonical_name, member, value, default
+                        mode,
+                        name,
+                        canonical_name,
+                        member,
+                        member_value,
+                        default,
                     )
                 except (TypeError, ValueError):
                     pass

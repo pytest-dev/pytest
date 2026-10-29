@@ -1,0 +1,3 @@
+TOML configuration again accepts numeric strings for the
+:confval:`verbosity_assertions`, :confval:`verbosity_subtests`, and
+:confval:`verbosity_test_cases` options.

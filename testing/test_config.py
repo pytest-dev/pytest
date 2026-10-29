@@ -3599,8 +3599,11 @@ class TestNativeTomlOptionTypes:
         ("name", "toml_value", "ini_value", "expected"),
         [
             ("verbosity_assertions", "2", "2", 2),
+            ("verbosity_assertions", '"2"', "2", 2),
             ("verbosity_assertions", '"auto"', "auto", "auto"),
+            ("verbosity_subtests", '"1"', "1", 1),
             ("verbosity_test_cases", "-1", "-1", -1),
+            ("verbosity_test_cases", '"-1"', "-1", -1),
             ("tmp_path_retention_count", "0", "0", 0),
             ("log_level", "10", "10", 10),
             ("log_level", '"INFO"', "INFO", "INFO"),
@@ -3641,7 +3644,8 @@ class TestNativeTomlOptionTypes:
         with pytest.raises(UsageError, match=name):
             config.getini(name)
 
-    def test_get_verbosity(self, pytester: Pytester) -> None:
-        pytester.maketoml("[pytest]\nverbosity_assertions = 2\n")
+    @pytest.mark.parametrize("toml_value", ["2", '"2"'])
+    def test_get_verbosity(self, pytester: Pytester, toml_value: str) -> None:
+        pytester.maketoml(f"[pytest]\nverbosity_assertions = {toml_value}\n")
         config = pytester.parseconfig()
         assert config.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2
