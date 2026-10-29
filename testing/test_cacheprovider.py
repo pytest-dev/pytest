@@ -68,6 +68,36 @@ class TestNewAPI:
         config.cache.set("plugin/sub/../value", 42)
         assert config.cache.get("plugin/value", None) == 42
 
+    def test_cache_dir_with_dotdot_segments(self, pytester: Pytester) -> None:
+        """Regression test for #15295: cache_dir containing '..' segments must not
+        trigger false-positive escape validation errors.
+        """
+        pytester.makeini("[pytest]\ncache_dir = ../.pytest_cache\n")
+        config = pytester.parseconfigure()
+        assert config.cache is not None
+        assert ".." not in config.cache._cachedir.parts
+        config.cache.set("cache/lastfailed", {"test_a.py": True})
+        assert config.cache.get("cache/lastfailed", {}) == {"test_a.py": True}
+
+        # Escaping keys are still rejected even when cache_dir contained '..'
+        with pytest.raises(
+            ValueError, match="not allowed to escape the cache directory"
+        ):
+            config.cache.set("../escaped", 1)
+
+    def test_cache_join_within_unnormalized_base(self) -> None:
+        """Cache._join_within normalizes base path to ensure relative_to containment checks."""
+        from _pytest.cacheprovider import Cache
+
+        base = Path("/proj/sub/../.pytest_cache/v")
+        joined = Cache._join_within(base, "cache/lastfailed")
+        assert joined == Path("/proj/.pytest_cache/v/cache/lastfailed")
+
+        with pytest.raises(
+            ValueError, match="not allowed to escape the cache directory"
+        ):
+            Cache._join_within(base, "../../escape")
+
     def test_cache_dir_permissions(self, pytester: Pytester) -> None:
         """The .pytest_cache directory should have world-readable permissions
         (depending on umask).
