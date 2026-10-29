@@ -1,0 +1,3 @@
+Live logging no longer increases progress verbosity when the current process has
+no local tests to run, such as a pytest-xdist controller. Serial live logging
+continues to show the current test and its outcome.
