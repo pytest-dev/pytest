@@ -914,10 +914,10 @@ class TestApprox:
                 return np.array(self.values, dtype=dtype, copy=copy)
 
             def __getitem__(self, _):
-                raise AssertionError("Should not be called")  # pragma: no-cover
+                raise AssertionError("Should not be called")  # pragma: no cover
 
             def __len__(self):
-                raise AssertionError("Should not be called")  # pragma: no-cover
+                raise AssertionError("Should not be called")  # pragma: no cover
 
             @property
             def flat(self):
