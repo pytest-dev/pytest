@@ -123,6 +123,11 @@ You can prevent plugins from loading or unregister them:
 This means that any subsequent try to activate/load the named
 plugin will not work.
 
+``NAME`` can also be the name of an installed plugin as shown in the
+``plugins:`` line at the top of the test session output (the name of its
+distribution, without a ``pytest-`` prefix): for example ``-p no:bdd``
+disables the plugins of the ``pytest-bdd`` distribution.
+
 If you want to unconditionally disable a plugin for a project, you can add
 this option to your configuration file:
 
