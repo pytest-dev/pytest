@@ -2132,6 +2132,12 @@ class Config:
         elif type == "int":
             # Expect an integer (but not bool, which is a subclass of int).
             if not isinstance(value, int) or isinstance(value, bool):
+                # For backward compatibility, verbosity options in TOML also accept numeric strings.
+                if canonical_name.startswith("verbosity_") and isinstance(value, str):
+                    try:
+                        return int(value)
+                    except ValueError:
+                        pass
                 raise TypeError(
                     f"{self.inipath}: config option '{name}' expects an int, "
                     f"got {value_type}: {value!r}"
