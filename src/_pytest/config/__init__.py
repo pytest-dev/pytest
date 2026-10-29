@@ -2283,7 +2283,7 @@ class Config:
         if ini_name not in self._warned_verbosity_strings:
             self._warned_verbosity_strings.add(ini_name)
             self.issue_config_time_warning(
-                _pytest.deprecated.TOML_VERBOSITY_STRING.format(
+                _pytest.deprecated.TOML_NUMERIC_STRING.format(
                     name=ini_name, value=level
                 ),
                 stacklevel=2,

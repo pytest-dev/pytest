@@ -14,16 +14,17 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
-.. _toml-verbosity-strings:
+.. _toml-numeric-strings:
 
-Numeric strings for verbosity options in TOML
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Numeric strings for integer options in TOML
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 9.2.1
 
 In native TOML configuration, :confval:`verbosity_assertions`,
 :confval:`verbosity_test_cases` and :confval:`verbosity_subtests` take an
-integer or ``"auto"``. Numeric strings are still accepted for backward
+integer or ``"auto"``, and :confval:`tmp_path_retention_count` takes an
+integer. Numeric strings are still accepted for backward
 compatibility, but issue a deprecation warning and will be rejected in pytest 10.
 
 .. code-block:: toml

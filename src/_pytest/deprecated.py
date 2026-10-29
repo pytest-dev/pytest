@@ -114,11 +114,11 @@ INI_STRING_TYPE_NON_STR_VALUE = PytestRemovedIn10Warning(
     '(e.g. type="args") instead of relying on the implicit string default.'
 )
 
-TOML_VERBOSITY_STRING = UnformattedWarning(
+TOML_NUMERIC_STRING = UnformattedWarning(
     PytestRemovedIn10Warning,
     "{name} = {value!r} in TOML configuration is deprecated, "
     "use an integer instead: {name} = {value}\n"
-    "See https://docs.pytest.org/en/stable/deprecations.html#toml-verbosity-strings",
+    "See https://docs.pytest.org/en/stable/deprecations.html#toml-numeric-strings",
 )
 
 # You want to make some `__init__` or function "private".
