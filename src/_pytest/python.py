@@ -15,6 +15,7 @@ from collections.abc import Sequence
 import dataclasses
 import enum
 import fnmatch
+from functools import cache
 from functools import partial
 import hashlib
 import inspect
@@ -142,6 +143,43 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_generate_tests(metafunc: Metafunc) -> None:
     for marker in metafunc.definition.iter_markers(name="parametrize"):
         metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
+
+
+@cache
+def _parametrize_mark_signature() -> inspect.Signature:
+    """The signature that the arguments of ``@pytest.mark.parametrize`` must
+    match: the public parameters of :meth:`Metafunc.parametrize`, without
+    annotations so that it reads well in error messages."""
+    signature = inspect.signature(Metafunc.parametrize)
+    parameters = [
+        param.replace(annotation=inspect.Parameter.empty)
+        for name, param in signature.parameters.items()
+        if name not in ("self", "_param_mark")
+    ]
+    return signature.replace(
+        parameters=parameters, return_annotation=inspect.Signature.empty
+    )
+
+
+def _check_parametrize_mark_args(marker: Mark, nodeid: str) -> None:
+    """Fail with a clear message pointing at the test if the arguments of a
+    ``parametrize`` mark do not match the expected signature (#3645).
+
+    Otherwise the mistake surfaces as a ``TypeError`` about pytest internals,
+    with a traceback through pytest and pluggy code.
+    """
+    signature = _parametrize_mark_signature()
+    try:
+        signature.bind(*marker.args, **marker.kwargs)
+    except TypeError as e:
+        error = str(e)
+    else:
+        return
+    fail(
+        f"In {nodeid}: invalid arguments to @pytest.mark.parametrize: {error}\n"
+        f"Expected: @pytest.mark.parametrize{signature}",
+        pytrace=False,
+    )
 
 
 def pytest_configure(config: Config) -> None:

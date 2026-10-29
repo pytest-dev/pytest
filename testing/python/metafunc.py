@@ -2358,7 +2358,12 @@ class TestMarkersWithParametrization:
         """
         )
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*TypeError*positional argument*"])
+        result.stdout.fnmatch_lines(
+            [
+                "*invalid arguments to @pytest.mark.parametrize: "
+                "too many positional arguments*"
+            ]
+        )
         result.assert_outcomes(errors=1)
 
     def test_parametrize_iterator(self, pytester: Pytester) -> None:
@@ -2396,6 +2401,59 @@ class TestMarkersWithParametrization:
                 "*= 6 passed in *",
             ]
         )
+
+    @pytest.mark.parametrize(
+        ("mark_args", "error"),
+        [
+            pytest.param(
+                "'x', 'y', [(1, 2)]",
+                "too many positional arguments",
+                id="argnames-as-separate-strings",
+            ),
+            pytest.param(
+                "'x', [1], idss=['a']",
+                "got an unexpected keyword argument 'idss'",
+                id="misspelled-keyword",
+            ),
+            pytest.param(
+                "'x'",
+                "missing a required argument: 'argvalues'",
+                id="missing-argvalues",
+            ),
+            pytest.param(
+                "",
+                "missing a required argument: 'argnames'",
+                id="no-arguments",
+            ),
+        ],
+    )
+    def test_parametrize_mark_invalid_arguments(
+        self, pytester: Pytester, mark_args: str, error: str
+    ) -> None:
+        """Wrong arguments to the parametrize mark are reported with a short
+        message naming the test and the expected signature, instead of a
+        TypeError about pytest internals (#3645)."""
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            @pytest.mark.parametrize({mark_args})
+            def test_foo(x):
+                pass
+            """
+        )
+        result = pytester.runpytest("--collect-only")
+        assert result.ret == pytest.ExitCode.INTERRUPTED
+        result.stdout.fnmatch_lines(
+            [
+                "In test_parametrize_mark_invalid_arguments.py::test_foo: "
+                f"invalid arguments to @pytest.mark.parametrize: {error}",
+                "Expected: @pytest.mark.parametrize(argnames, argvalues, *, "
+                "indirect=False, ids=None, scope=None)",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*Traceback*")
+        result.stdout.no_fnmatch_line("*TypeError*")
 
 
 class TestHiddenParam:
