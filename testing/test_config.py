@@ -13,6 +13,7 @@ import textwrap
 from typing import Any
 from typing import cast
 from typing import Literal
+import warnings
 
 import _pytest._code
 from _pytest.assertion.rewrite import AssertionRewritingHook
@@ -3640,11 +3641,36 @@ class TestNativeTomlOptionTypes:
         with pytest.raises(UsageError, match=name):
             config.getini(name)
 
-    @pytest.mark.parametrize("toml_value", ["2", '"2"'])
-    def test_get_verbosity(self, pytester: Pytester, toml_value: str) -> None:
-        pytester.maketoml(f"[pytest]\nverbosity_assertions = {toml_value}\n")
+    def test_get_verbosity(self, pytester: Pytester) -> None:
+        pytester.maketoml("[pytest]\nverbosity_assertions = 2\n")
         config = pytester.parseconfig()
         assert config.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2
+
+    def test_get_verbosity_numeric_string_deprecated(self, pytester: Pytester) -> None:
+        pytester.maketoml('[pytest]\nverbosity_assertions = "2"\n')
+        pytester.makepyfile(
+            """
+            from pytest import Config
+
+            def test_a(pytestconfig):
+                assert pytestconfig.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2
+
+            def test_b(pytestconfig):
+                assert pytestconfig.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, warnings=1)
+        result.stdout.fnmatch_lines(
+            ["*PytestRemovedIn10Warning: verbosity_assertions = '2' in TOML*"]
+        )
+
+    def test_get_verbosity_ini_numeric_string(self, pytester: Pytester) -> None:
+        pytester.makeini("[pytest]\nverbosity_assertions = 2\n")
+        config = pytester.parseconfig()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            assert config.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2
 
     @pytest.mark.parametrize("toml_value", ['"loud"', "true", "2.5"])
     def test_get_verbosity_invalid(self, pytester: Pytester, toml_value: str) -> None:

@@ -1261,6 +1261,7 @@ class Config:
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
         self._inicache: dict[str, Any] = {}
+        self._warned_verbosity_strings: set[str] = set()
         self._inicfg: ConfigDict = {}
         self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
@@ -2271,12 +2272,23 @@ class Config:
         if isinstance(level, int):
             return level
         try:
-            return int(level)
+            int_level = int(level)
         except ValueError:
             raise UsageError(
                 f"{self.inipath}: config option '{ini_name}' expects an int "
                 f"or 'auto', got {level!r}"
             ) from None
+        # A numeric str only gets here from TOML: in ini mode the int member
+        # of the option type already converted it.
+        if ini_name not in self._warned_verbosity_strings:
+            self._warned_verbosity_strings.add(ini_name)
+            self.issue_config_time_warning(
+                _pytest.deprecated.TOML_VERBOSITY_STRING.format(
+                    name=ini_name, value=level
+                ),
+                stacklevel=2,
+            )
+        return int_level
 
     @staticmethod
     def _verbosity_ini_name(verbosity_type: str) -> str:
@@ -2296,8 +2308,8 @@ class Config:
         parser.addini(
             Config._verbosity_ini_name(verbosity_type),
             help=help,
-            # str rather than Literal["auto"]: numeric strings stay accepted
-            # in TOML for backward compatibility, see get_verbosity.
+            # str rather than Literal["auto"]: numeric strings in TOML are
+            # deprecated but still accepted, see get_verbosity.
             type=int | str,
             default=Config._VERBOSITY_INI_DEFAULT,
         )
