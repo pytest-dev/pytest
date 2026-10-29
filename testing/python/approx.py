@@ -900,6 +900,8 @@ class TestApprox:
 
     @pytest.mark.parametrize("values", (42, [42, 43], [[42, 43], [44, 45]]))
     def test_custom_array_unimplemented_flat(self, values) -> None:
+        """Test handling of an array which raises NotImplementedError from
+        `flat`, as is done by JAX (#15284)."""
         np = pytest.importorskip("numpy")
 
         class CustomArray:
@@ -912,14 +914,13 @@ class TestApprox:
                 return np.array(self.values, dtype=dtype, copy=copy)
 
             def __getitem__(self, _):
-                raise AssertionError("Should not be called")
+                raise AssertionError("Should not be called")  # pragma: no-cover
 
             def __len__(self):
-                return AssertionError("Should not be called")
+                raise AssertionError("Should not be called")  # pragma: no-cover
 
             @property
             def flat(self):
-                # jax.Array behaves like this (#15284).
                 raise NotImplementedError("this class does not provide .flat")
 
         actual = np.array(values)
