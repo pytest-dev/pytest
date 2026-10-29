@@ -1956,6 +1956,28 @@ class Config:
                     mode, name, canonical_name, type, value, default
                 )
 
+            # Preserve support for numeric strings in fine-grained verbosity
+            # options while TOML's native integer values are handled directly.
+            if (
+                mode == "toml"
+                and isinstance(value, str)
+                and "int" in type
+                and canonical_name
+                in {
+                    Config._verbosity_ini_name(Config.VERBOSITY_ASSERTIONS),
+                    Config._verbosity_ini_name(Config.VERBOSITY_SUBTESTS),
+                    Config._verbosity_ini_name(Config.VERBOSITY_TEST_CASES),
+                }
+                and any(
+                    isinstance(member, _IniLiteral) and "auto" in member.choices
+                    for member in type
+                )
+            ):
+                try:
+                    return int(value)
+                except ValueError:
+                    pass
+
             # Union: try each member; the first one that accepts the value wins.
             for member in type:
                 try:
