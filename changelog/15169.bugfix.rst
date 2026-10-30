@@ -1,0 +1,1 @@
+Safely handle restrictive directory permissions during temporary directory cleanup (`rm_rf`) and ensure `scandir` iterators are properly closed in `find_prefixed`.

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import dataclasses
+import errno
 import os
 from pathlib import Path
 import shutil
@@ -862,6 +863,55 @@ class TestRmRf:
         exc_info = PermissionError()
         on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
         assert not fn.exists()
+
+    def test_on_rm_rf_error_is_a_directory_error(self, tmp_path: Path) -> None:
+        """When os.unlink is called on a directory (e.g. traversal could not detect it),
+        on_rm_rf_error removes it via rm_rf and returns True (#15169)."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        (subdir / "child.txt").touch()
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = IsADirectoryError()
+            result = on_rm_rf_error(
+                os.unlink, str(subdir), exc_info, start_path=tmp_path
+            )
+            assert result is True
+            assert not subdir.exists()
+            assert not [x.message for x in w]
+
+    def test_on_rm_rf_error_directory_not_empty(self, tmp_path: Path) -> None:
+        """When os.rmdir fails with ENOTEMPTY / EEXIST, on_rm_rf_error chmods the tree
+        and recursively removes it (#15169)."""
+        parent_dir = tmp_path / "parent_dir"
+        parent_dir.mkdir()
+        child_dir = parent_dir / "child_dir"
+        child_dir.mkdir()
+        (child_dir / "item.txt").touch()
+
+        with warnings.catch_warnings(record=True) as w:
+            exc = OSError(errno.ENOTEMPTY, "Directory not empty")
+            result = on_rm_rf_error(os.rmdir, str(parent_dir), exc, start_path=tmp_path)
+            assert result is True
+            assert not parent_dir.exists()
+            assert not [x.message for x in w]
+
+    def test_find_prefixed_closes_scandir_iterator(self, tmp_path: Path) -> None:
+        """find_prefixed exhausts and closes the scandir iterator cleanly (#15169)."""
+        from _pytest.pathlib import find_prefixed
+
+        (tmp_path / "pytest-1").mkdir()
+        (tmp_path / "pytest-2").mkdir()
+        (tmp_path / "other-3").mkdir()
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", ResourceWarning)
+            items = list(find_prefixed(tmp_path, "pytest-"))
+            assert len(items) == 2
+            resource_warnings = [
+                x for x in w if issubclass(x.category, ResourceWarning)
+            ]
+            assert len(resource_warnings) == 0
 
 
 def attempt_symlink_to(path, to_path):
