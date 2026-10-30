@@ -21,10 +21,6 @@ from _pytest.pytester import Pytester
 import pytest
 
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup
-
-
 class TestSetupState:
     def test_setup(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
@@ -410,10 +406,9 @@ class BaseFunctionalTests:
         longrepr = reps[2].longrepr
         assert isinstance(longrepr, ExceptionChainRepr)
         assert longrepr.reprcrash
-        assert longrepr.reprcrash.message in (
-            "TypeError: teardown_method() missing 2 required positional arguments: 'y' and 'z'",
-            # Python >= 3.10
-            "TypeError: TestClass.teardown_method() missing 2 required positional arguments: 'y' and 'z'",
+        assert (
+            longrepr.reprcrash.message
+            == "TypeError: TestClass.teardown_method() missing 2 required positional arguments: 'y' and 'z'"
         )
 
     def test_failure_in_setup_function_ignores_custom_repr(

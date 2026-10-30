@@ -506,16 +506,14 @@ Here are some use cases involving warnings that often come up in tests, and sugg
 .. code-block:: python
 
     def test_warning():
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
+        with warnings.catch_warnings(action="error"):
             ...
 
 - To suppress warnings, use:
 
 .. code-block:: python
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with warnings.catch_warnings(action="ignore"):
         ...
 
 

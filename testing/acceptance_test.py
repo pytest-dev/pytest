@@ -714,8 +714,7 @@ class TestInvocationVariants:
         monkeypatch.setenv("PYTHONPATH", str(empty_package), prepend=os.pathsep)
         # the path which is not a package raises a warning on pypy;
         # no idea why only pypy and not normal python warn about it here
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", ImportWarning)
+        with warnings.catch_warnings(action="ignore", category=ImportWarning):
             result = pytester.runpytest("--pyargs", ".")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*2 passed*"])

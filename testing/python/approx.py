@@ -1624,9 +1624,9 @@ class TestApproxDatetime:
     def test_datetime_with_timezone(self):
         from datetime import datetime
         from datetime import timedelta
-        from datetime import timezone
+        from datetime import UTC
 
-        tz = timezone.utc
+        tz = UTC
         dt1 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=tz)
         dt2 = datetime(2024, 1, 1, 12, 0, 0, 500000, tzinfo=tz)
         assert dt1 == approx(dt2, abs=timedelta(seconds=1))

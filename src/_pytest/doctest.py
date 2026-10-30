@@ -45,8 +45,7 @@ from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     import doctest
-
-    from typing_extensions import Self
+    from typing import Self
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -508,12 +507,9 @@ class DoctestModule(Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
-            py_ver_info_minor = sys.version_info[:2]
-            is_find_lineno_broken = (
-                py_ver_info_minor < (3, 11)
-                or (py_ver_info_minor == (3, 11) and sys.version_info.micro < 9)
-                or (py_ver_info_minor == (3, 12) and sys.version_info.micro < 3)
-            )
+            pyver = sys.version_info[:3]
+            # Fixed in 3.11.9 and 3.12.3 (https://github.com/python/cpython/issues/61648).
+            is_find_lineno_broken = pyver < (3, 11, 9) or (3, 12) <= pyver < (3, 12, 3)
             if is_find_lineno_broken:
 
                 def _find_lineno(self, obj, source_lines):
@@ -535,7 +531,7 @@ class DoctestModule(Module):
                         obj,
                         source_lines,
                     )
-            elif py_ver_info_minor == (3, 12):
+            elif pyver[:2] == (3, 12):
 
                 def _find_lineno(self, obj, source_lines):
                     if isinstance(obj, FixtureFunctionDefinition):

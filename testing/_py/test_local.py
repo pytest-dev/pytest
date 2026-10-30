@@ -18,8 +18,7 @@ import pytest
 
 @contextlib.contextmanager
 def ignore_encoding_warning():
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", EncodingWarning)
+    with warnings.catch_warnings(action="ignore", category=EncodingWarning):
         yield
 
 
