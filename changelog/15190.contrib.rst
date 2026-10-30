@@ -1,1 +1,0 @@
-Fixed the documentation build with Pluggy 1.7 by ignoring a reference to its undocumented ``DistFacade`` compatibility class.

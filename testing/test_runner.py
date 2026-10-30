@@ -12,6 +12,7 @@ from typing import cast
 from _pytest import outcomes
 from _pytest import reports
 from _pytest import runner
+from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionChainRepr
 from _pytest.config import ExitCode
@@ -595,6 +596,26 @@ def test_callinfo() -> None:
     ci3 = runner.CallInfo.from_call(raise_assertion, "call")
     assert repr(ci3) == f"<CallInfo when='call' excinfo={ci3.excinfo!r}>"
     assert "\n" not in repr(ci3)
+
+
+def test_callinfo_timing(mock_timing) -> None:
+    instant = timing.Instant()
+    timing.sleep(3)
+    duration = instant.elapsed()
+    ci = runner.CallInfo[None](None, None, duration, "call", _ispytest=True)
+    assert ci.start == duration.start.time
+    assert ci.stop == duration.stop.time
+    assert ci.duration == duration.seconds == 3
+
+
+def test_callinfo_timing_setters() -> None:
+    """Plugins assign the timing attributes."""
+    ci = runner.CallInfo[None](None, None, timing.UNMEASURED, "call", _ispytest=True)
+
+    ci.start = 20.0
+    ci.stop = 30.0
+    ci.duration = 9.5
+    assert (ci.start, ci.stop, ci.duration) == (20.0, 30.0, 9.5)
 
 
 # design question: do we want general hooks in python files?
