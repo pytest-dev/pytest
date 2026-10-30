@@ -1,0 +1,1 @@
+Fixed a regression in pytest 9.2.0 where :meth:`MonkeyPatch.setattr <pytest.MonkeyPatch.setattr>` ``undo()`` deleted child attributes on :class:`unittest.mock.MagicMock` (or other dynamic attributes not present on the class) instead of restoring them.

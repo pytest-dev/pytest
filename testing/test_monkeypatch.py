@@ -607,6 +607,44 @@ def test_undo_slot_attribute_on_instance() -> None:
     assert obj.x == 1
 
 
+def test_undo_magicmock_child_attribute() -> None:
+    """Undoing a patch on a MagicMock's child mock must not delete it.
+
+    See #15287.
+    """
+    from unittest.mock import MagicMock
+
+    shared = MagicMock()
+    orig_child = shared.connect  # create child mock
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(shared, "connect", MagicMock(return_value=1))
+    assert shared.connect() == 1
+
+    monkeypatch.undo()
+    assert shared.connect is orig_child
+    shared.connect.return_value = 2
+    assert shared.connect() == 2
+
+
+def test_undo_dynamic_getattr_attribute() -> None:
+    """Undoing a patch on an attribute resolved via __getattr__ must restore it."""
+
+    class Dynamic:
+        def __getattr__(self, name: str) -> int:
+            if name == "dyn":
+                return 42
+            raise AttributeError(name)
+
+    d = Dynamic()
+    assert d.dyn == 42
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(d, "dyn", 100)
+    assert d.dyn == 100
+
+    monkeypatch.undo()
+    assert d.dyn == 42
+
+
 def test_issue1338_name_resolving() -> None:
     pytest.importorskip("requests")
     monkeypatch = MonkeyPatch()
