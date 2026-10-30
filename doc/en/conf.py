@@ -66,6 +66,7 @@ nitpick_ignore = [
     # TODO (fix in pluggy?)
     ("py:class", "HookCaller"),
     ("py:class", "HookspecMarker"),
+    ("py:class", "pluggy._compat.DistFacade"),
     ("py:exc", "PluginValidationError"),
     ("py:class", "pluggy._compat.DistFacade"),
     # Might want to expose/TODO (https://github.com/pytest-dev/pytest/issues/7469)
