@@ -1069,6 +1069,12 @@ def search_pypath(
 ) -> str | None:
     """Search sys.path for the given a dotted module name, and return its file
     system path if found."""
+    if module_name.endswith(".py"):
+        # Looks like a package module, but is actually a filename. Asking
+        # importlib about it would import everything up to the last dot as a
+        # package -- for `t.py` that imports `t`, and a test module which is
+        # already in sys.modules can no longer be assertion-rewritten (#1930).
+        return None
     try:
         spec = importlib.util.find_spec(module_name)
     # AttributeError: looks like package module, but actually filename
