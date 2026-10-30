@@ -1,0 +1,1 @@
+Avoid binding class and non-data descriptors unnecessarily in :meth:`pytest.MonkeyPatch.setattr` and :meth:`pytest.MonkeyPatch.delattr` when ``raising=False``. Instance data descriptors are still read so their values can be restored.
