@@ -529,6 +529,10 @@ class PytestPluginManager(PluginManager):
         # just stored here to be used later.
         self.skipped_plugins: list[tuple[str, str]] = []
 
+        # Normalized distribution name -> names of its pytest11 entry points,
+        # computed on first use by _get_distribution_entry_point_names.
+        self._distribution_entry_point_names: dict[str, list[str]] | None = None
+
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
         if os.environ.get("PYTEST_DEBUG"):
@@ -885,6 +889,11 @@ class PytestPluginManager(PluginManager):
             self.set_blocked(name)
             if not name.startswith("pytest_"):
                 self.set_blocked("pytest_" + name)
+            # The "plugins:" line of the header shows distribution names, with
+            # a "pytest-" prefix removed, which often differ from the plugin
+            # names; accept those as well (#5661).
+            for entry_point_name in self._get_distribution_entry_point_names(name):
+                self.set_blocked(entry_point_name)
         else:
             name = arg
             # Unblock the plugin.
@@ -892,6 +901,36 @@ class PytestPluginManager(PluginManager):
             if not name.startswith("pytest_"):
                 self.unblock("pytest_" + name)
             self.import_plugin(arg, consider_entry_points=True)
+
+    def _get_distribution_entry_point_names(self, name: str) -> list[str]:
+        """Return the names of the ``pytest11`` entry points of the installed
+        distribution called ``name`` or ``pytest-<name>``, which is how the
+        "plugins:" line of the header shows it."""
+        if self._distribution_entry_point_names is None:
+            self._distribution_entry_point_names = {}
+            for dist in importlib.metadata.distributions():
+                entry_point_names = [
+                    ep.name for ep in dist.entry_points if ep.group == "pytest11"
+                ]
+                if entry_point_names:
+                    dist_name = _normalize_distribution_name(
+                        dist.metadata["name"] or ""
+                    )
+                    self._distribution_entry_point_names.setdefault(
+                        dist_name, []
+                    ).extend(entry_point_names)
+        return [
+            entry_point_name
+            for dist_name in dict.fromkeys(
+                (
+                    _normalize_distribution_name(name),
+                    _normalize_distribution_name(f"pytest-{name}"),
+                )
+            )
+            for entry_point_name in self._distribution_entry_point_names.get(
+                dist_name, ()
+            )
+        ]
 
     def consider_conftest(
         self, conftestmodule: types.ModuleType, registration_name: str
@@ -1028,6 +1067,12 @@ def _plugin_rewrite_name(module: str) -> str | None:
             return ".".join(parts[: i + 1])
         search_path = list(spec.submodule_search_locations)
     return None
+
+
+def _normalize_distribution_name(name: str) -> str:
+    """Normalize a distribution name as in PEP 503, so that e.g. "pytest_bdd"
+    and "pytest-bdd" compare equal."""
+    return re.sub(r"[-_.]+", "-", name).lower()
 
 
 def _is_editable_install(dist: importlib.metadata.Distribution) -> bool:

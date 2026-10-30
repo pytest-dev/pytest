@@ -1,0 +1,1 @@
+A plugin can now be disabled with ``-p no:NAME`` using the name shown in the ``plugins:`` line of the test session header, which is the name of its distribution without a ``pytest-`` prefix -- for example ``-p no:bdd`` for ``pytest-bdd``. Before, only the plugin's entry point name worked, which often differs from the name shown.

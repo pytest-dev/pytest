@@ -2038,6 +2038,84 @@ def test_plugin_preparse_prevents_setuptools_loading(
         )
 
 
+@pytest.mark.parametrize(
+    "block_arg",
+    [
+        # As shown in the "plugins:" line of the header (#5661).
+        "no:foo-bar",
+        "no:pytest-foo-bar",
+        "no:pytest_foo_bar",
+        # The entry point name keeps working.
+        "no:myplugin_ep",
+        None,
+    ],
+)
+def test_plugin_blocked_by_distribution_name(
+    pytester: Pytester, monkeypatch: MonkeyPatch, block_arg: str | None
+) -> None:
+    """A plugin can be disabled with -p no:NAME using the name shown in the
+    "plugins:" line of the header, which comes from the distribution name and
+    often differs from the entry point name (#5661)."""
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+    plugin_module_placeholder = object()
+
+    class DummyEntryPoint:
+        name = "myplugin_ep"
+        group = "pytest11"
+
+        def load(self):
+            return plugin_module_placeholder
+
+    class Distribution:
+        version = "1.0"
+        files = ("foo.txt",)
+        metadata = {"name": "pytest-foo-bar"}
+        entry_points = (DummyEntryPoint(),)
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    args = ("-p", block_arg) if block_arg else ()
+    config = pytester.parseconfig(*args)
+    plugin = config.pluginmanager.get_plugin("myplugin_ep")
+    if block_arg:
+        assert plugin is None
+        assert config.pluginmanager.is_blocked("myplugin_ep")
+    else:
+        assert plugin is plugin_module_placeholder
+
+
+def test_plugin_block_by_unrelated_name_keeps_distribution_plugins(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Only the distribution with the given name is affected (#5661)."""
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+    plugin_module_placeholder = object()
+
+    class DummyEntryPoint:
+        name = "myplugin_ep"
+        group = "pytest11"
+
+        def load(self):
+            return plugin_module_placeholder
+
+    class Distribution:
+        version = "1.0"
+        files = ("foo.txt",)
+        metadata = {"name": "pytest-foo-bar"}
+        entry_points = (DummyEntryPoint(),)
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    config = pytester.parseconfig("-p", "no:foo")
+    assert config.pluginmanager.get_plugin("myplugin_ep") is plugin_module_placeholder
+
+
 @pytest.mark.parametrize("disable_plugin_method", ["env_var", "flag", ""])
 @pytest.mark.parametrize("enable_plugin_method", ["env_var", "flag", ""])
 def test_disable_plugin_autoload(
