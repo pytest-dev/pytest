@@ -675,6 +675,24 @@ class TestMetafunc:
         }
         assert res == [expected[id_style]]
 
+    def test_idmaker_long_string_sha256_lone_surrogates(self) -> None:
+        """The sha256 strategy hashes strings that UTF-8 cannot encode, such as
+        lone surrogates, instead of failing collection."""
+        maker = IdMaker(
+            "a",
+            [pytest.param("\ud800" * 101)],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": "sha256"}),
+            ),
+            None,
+        )
+        assert maker.make_unique_parameterset_ids() == [
+            "04fb6c67762ed24116dbbf0d6b21c20f35be8b2dd96159e81b1cb629af948897"
+        ]
+
     @pytest.mark.parametrize(
         "kind",
         [
