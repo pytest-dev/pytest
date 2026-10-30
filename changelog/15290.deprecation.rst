@@ -1,0 +1,1 @@
+Numeric strings such as ``"2"`` for :confval:`verbosity_assertions`, :confval:`verbosity_test_cases`, :confval:`verbosity_subtests` and :confval:`tmp_path_retention_count` in native TOML configuration are deprecated, use integers instead -- see :ref:`toml-numeric-strings`.
