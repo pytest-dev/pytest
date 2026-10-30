@@ -898,6 +898,41 @@ class TestApprox:
         # see issue #12114 for test case
         assert vec1 != approx(vec2)
 
+    @pytest.mark.parametrize("values", (42, [42, 43], [[42, 43], [44, 45]]))
+    def test_custom_array_unimplemented_flat(self, values) -> None:
+        """Test handling of an array which raises NotImplementedError from
+        `flat`, as is done by JAX (#15284)."""
+        np = pytest.importorskip("numpy")
+
+        class CustomArray:
+            def __init__(self, values, /):
+                self.values = values
+                self.array_conversions = 0
+
+            def __array__(self, dtype=None, copy=None):
+                self.array_conversions += 1
+                return np.array(self.values, dtype=dtype, copy=copy)
+
+            def __getitem__(self, _):
+                raise AssertionError("Should not be called")  # pragma: no cover
+
+            def __len__(self):
+                raise AssertionError("Should not be called")  # pragma: no cover
+
+            @property
+            def flat(self):
+                raise NotImplementedError("this class does not provide .flat")
+
+        actual = np.array(values)
+        expected = CustomArray(values)
+
+        assert actual == approx(expected, rel=1e-3)
+        assert expected.array_conversions == 1
+        assert actual + 1e-4 == approx(expected, rel=1e-3)
+        assert expected.array_conversions == 2
+        assert actual + 1 != approx(expected, rel=1e-3)
+        assert expected.array_conversions == 3
+
     def test_numpy_array_protocol(self):
         """
         array-like objects such as tensorflow's DeviceArray are handled like ndarray.
