@@ -3120,6 +3120,83 @@ class TestPytestPluginsVariable:
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         assert msg not in res.stdout.str()
 
+    @pytest.mark.parametrize("module", ["test_a", "test_b"])
+    @pytest.mark.filterwarnings("default")
+    def test_pytest_plugins_in_test_module_warns(
+        self, pytester: Pytester, module: str
+    ) -> None:
+        """Using pytest_plugins in a test module affects the whole suite (#13030).
+
+        Covers both the first collected module (warned retroactively) and a later one.
+        """
+        pytester.makepyfile(
+            test_a="def test_a(): pass",
+            test_b="def test_b(): pass",
+        )
+        pytester.makepyfile(
+            **{
+                module: f"""
+                    pytest_plugins = ['capture']
+
+                    def {module}(): pass
+                """
+            }
+        )
+        res = pytester.runpytest()
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(
+            [
+                f"*{module}.py:1: PytestDeprecationWarning: Defining 'pytest_plugins' "
+                f"in test module {module}.py affects the entire test suite*",
+                "*2 passed, 1 warning*",
+            ]
+        )
+
+    def test_pytest_plugins_in_single_test_module_no_warning(
+        self, pytester: Pytester
+    ) -> None:
+        """A single-file test suite (e.g. a plugin's own tests) stays quiet (#13030)."""
+        pytester.makepyfile(
+            """
+            pytest_plugins = ['capture']
+
+            def test_func(): pass
+            """
+        )
+        res = pytester.runpytest()
+        assert res.ret == 0
+        assert "Defining 'pytest_plugins' in test module" not in res.stdout.str()
+
+    @pytest.mark.parametrize("module", ["test_a", "test_b"])
+    def test_pytest_plugins_in_test_module_as_error(
+        self, pytester: Pytester, module: str
+    ) -> None:
+        """As an error, it is a collection error of the defining module (#13030)."""
+        pytester.makepyfile(
+            test_a="def test_a(): pass",
+            test_b="def test_b(): pass",
+        )
+        pytester.makepyfile(
+            **{
+                module: f"""
+                    pytest_plugins = ['capture']
+
+                    def {module}(): pass
+                """
+            }
+        )
+        res = pytester.runpytest("-W", "error::pytest.PytestDeprecationWarning")
+        assert res.ret == pytest.ExitCode.INTERRUPTED
+        res.stdout.fnmatch_lines(
+            [
+                f"*ERROR collecting {module}.py*",
+                f"*in test module {module}.py affects*",
+                "*1 error*",
+            ]
+        )
+        other = "test_b" if module == "test_a" else "test_a"
+        res.stdout.no_fnmatch_line(f"*ERROR collecting {other}.py*")
+
 
 def test_conftest_import_error_repr(tmp_path: Path) -> None:
     """`ConftestImportFailure` should use a short error message and readable
