@@ -545,6 +545,25 @@ class TestXFail:
         """
         )
 
+    def test_runxfail_with_empty_parameter_set_mark_xfail(
+        self, pytester: Pytester
+    ) -> None:
+        """--runxfail on an empty xfail set fails cleanly, not crashes (#4497)."""
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(("a", "b"), ())
+            def test(a, b):
+                pass
+            """
+        )
+        result = pytester.runpytest(
+            p, "--runxfail", "-o", "empty_parameter_set_mark=xfail"
+        )
+        result.stdout.fnmatch_lines(["*no direct parameter (empty parameter set)*"])
+        result.assert_outcomes(errors=1)
+
     def xtest_dynamic_xfail_set_during_setup(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
