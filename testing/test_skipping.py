@@ -327,6 +327,60 @@ class TestXFail:
         assert callreport.passed
         assert callreport.wasxfail == "this is an xfail"
 
+    @pytest.mark.parametrize("reason", ["reason pytest.fail", None])
+    def test_xfail_mark_wins_over_explicit_fail(
+        self, pytester: Pytester, reason: str | None
+    ) -> None:
+        """`pytest.fail()` inside an xfailed test keeps the mark's reason.
+
+        `pytest.fail()` raises `Failed`, not `xfail.Exception`, so the call is
+        reported against the mark and `wasxfail` is the mark's reason whether or
+        not the `pytest.fail()` call passes one of its own. See #14090.
+        """
+        arg = "" if reason is None else f"{reason!r}"
+        item = pytester.getitem(
+            f"""
+            import pytest
+            @pytest.mark.xfail(reason="reason mark.xfail")
+            def test_func():
+                pytest.fail({arg})
+        """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == "reason mark.xfail"
+
+    @pytest.mark.parametrize(
+        ("reason", "expected"),
+        [("reason pytest.xfail", "reason pytest.xfail"), (None, "")],
+    )
+    def test_explicit_xfail_wins_over_xfail_mark(
+        self, pytester: Pytester, reason: str | None, expected: str
+    ) -> None:
+        """An explicit `pytest.xfail()` takes precedence over the mark's reason.
+
+        Unlike `pytest.fail()`, this raises `xfail.Exception`, which is handled
+        before the mark is considered, so `wasxfail` is the message given to
+        `pytest.xfail()` -- the empty string when it is called without one.
+        See #14090.
+        """
+        arg = "" if reason is None else f"{reason!r}"
+        item = pytester.getitem(
+            f"""
+            import pytest
+            @pytest.mark.xfail(reason="reason mark.xfail")
+            def test_func():
+                pytest.xfail({arg})
+        """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == expected
+
     def test_xfail_using_platform(self, pytester: Pytester) -> None:
         """Verify that platform can be used with xfail statements."""
         item = pytester.getitem(
