@@ -1060,7 +1060,11 @@ class IdMaker:
             case "short":
                 return None
             case "sha256":
-                encoded = val.encode("utf-8") if isinstance(val, str) else val
+                encoded = (
+                    val.encode("utf-8", "surrogatepass")
+                    if isinstance(val, str)
+                    else val
+                )
                 return hashlib.sha256(encoded).hexdigest()
             case "disallow":  # pragma: no branch -- fail() raises, confuses coverage
                 prefix = self._make_error_prefix()
