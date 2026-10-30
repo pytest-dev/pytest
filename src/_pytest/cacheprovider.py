@@ -105,7 +105,7 @@ class Cache:
         self, cachedir: Path, config: Config, *, _ispytest: bool = False
     ) -> None:
         check_ispytest(_ispytest)
-        self._cachedir = cachedir
+        self._cachedir = Path(os.path.normpath(cachedir))
         self._config = config
 
     @classmethod
@@ -139,7 +139,11 @@ class Cache:
         :meta private:
         """
         check_ispytest(_ispytest)
-        return resolve_from_str(config.getini("cache_dir"), config.rootpath)
+        return Path(
+            os.path.normpath(
+                resolve_from_str(config.getini("cache_dir"), config.rootpath)
+            )
+        )
 
     def warn(self, fmt: str, *, _ispytest: bool = False, **args: object) -> None:
         """Issue a cache warning.
@@ -170,6 +174,7 @@ class Cache:
         lexically and re-checking containment rejects both, while still
         allowing a ``..`` that cancels out within ``base``.
         """
+        base = Path(os.path.normpath(base))
         path = Path(os.path.normpath(base.joinpath(name)))
         if not path.is_relative_to(base):
             raise ValueError(f"{name!r} is not allowed to escape the cache directory")
