@@ -217,7 +217,7 @@ def test_unhandled_thread_exception_after_teardown(pytester: Pytester) -> None:
     assert result.ret == pytest.ExitCode.INTERNAL_ERROR
 
     result.assert_outcomes(passed=1)
-    result.stderr.fnmatch_lines("ValueError: Oops")
+    result.stdout.fnmatch_lines("INTERNALERROR>*ValueError: Oops*")
 
 
 @pytest.mark.filterwarnings("error::pytest.PytestUnhandledThreadExceptionWarning")

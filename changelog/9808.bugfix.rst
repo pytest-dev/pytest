@@ -1,0 +1,1 @@
+Exceptions raised in ``pytest_unconfigure`` hooks are now reported as an internal error (exit code 3) instead of exiting with code 1.
