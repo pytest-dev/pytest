@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Mapping
 from collections.abc import MutableMapping
@@ -122,6 +123,21 @@ def _is_data_descriptor(cls: type, name: str) -> bool:
             descr_type = type(klass.__dict__[name])
             return hasattr(descr_type, "__set__") or hasattr(descr_type, "__delete__")
     return False
+
+
+class _LazyAnnotationsState:
+    """Recorded lazy ``__annotations__`` state of a class (PEP 649/749).
+
+    Assigning to a class's ``__annotations__`` on Python 3.14+ drops the lazy
+    ``__annotate__`` function in favor of an eager cache, so restoring the
+    annotation dict alone would permanently lose the lazy state (#15286).
+    """
+
+    __slots__ = ("annotate", "cache")
+
+    def __init__(self, annotate: Callable[[int], dict[str, Any]], cache: Any) -> None:
+        self.annotate = annotate
+        self.cache = cache
 
 
 @final
@@ -258,6 +274,31 @@ class MonkeyPatch:
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, NOTSET)
+            if oldval is NOTSET and name == "__annotations__":
+                # Python 3.14+ (PEP 649): class annotations are computed by a
+                # lazy __annotate__ function (cached under an internal name
+                # once read or set), so the plain-dict lookup above misses
+                # them and undo() would lose the original annotations (#15286).
+                # Read PEP 749's __annotate__ through type's own descriptor,
+                # so a metaclass attribute of the same name cannot shadow the
+                # real lazy state.
+                annotate_getset = type.__dict__.get("__annotate__")
+                annotate = (
+                    annotate_getset.__get__(target, type(target))
+                    if annotate_getset is not None
+                    else None
+                )
+                if annotate is not None:
+                    oldval = _LazyAnnotationsState(
+                        annotate, target.__dict__.get("__annotations_cache__", NOTSET)
+                    )
+                else:
+                    # Eagerly assigned annotations (PEP 649): no lazy function
+                    # remains, so record the cached value itself; undo()
+                    # restores it with a plain setattr. On other versions or
+                    # interpreters the key is simply absent and oldval stays
+                    # NOTSET.
+                    oldval = target.__dict__.get("__annotations_cache__", NOTSET)
         elif not _is_data_descriptor(type(target), name):
             # With no data descriptor in the way, the `setattr()` below writes
             # into the instance `__dict__`, so `undo()` has to restore that
@@ -431,7 +472,17 @@ class MonkeyPatch:
             Prefer to use :meth:`context() <pytest.MonkeyPatch.context>` instead.
         """
         for obj, name, value in reversed(self._setattr):
-            if value is not NOTSET:
+            if isinstance(value, _LazyAnnotationsState):
+                # PEP 749: assigning __annotate__ restores the lazy function
+                # and clears the eager cache in one operation (#15286). Go
+                # through type's own descriptor so a metaclass attribute of
+                # the same name cannot intercept the write.
+                type.__dict__["__annotate__"].__set__(obj, value.annotate)
+                if value.cache is not NOTSET:
+                    # Restore the materialized annotations as they were -
+                    # they may have been mutated in place before patching.
+                    setattr(obj, "__annotations_cache__", value.cache)
+            elif value is not NOTSET:
                 setattr(obj, name, value)
             else:
                 delattr(obj, name)
