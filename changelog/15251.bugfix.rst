@@ -1,0 +1,1 @@
+Reused a parent directory's collection results when multiple test files from that directory are supplied as explicit command-line arguments.
