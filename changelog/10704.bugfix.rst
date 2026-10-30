@@ -1,0 +1,1 @@
+Show whitespace escape codes (such as ``\t``, ``\r``, ``\v``, ``\f``, ``\u00a0``) in string comparison diffs when non-printable whitespace characters differ.
