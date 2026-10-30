@@ -339,6 +339,17 @@ class TestTraceback_f_g_h:
             f()
         assert excinfo._getreprcrash() is None
 
+    def test_getreprcrash_syntax_error(self):
+        with pytest.raises(SyntaxError) as excinfo:
+            raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.path == "file.py"
+        assert reprcrash.lineno == 1
+        assert reprcrash.column == 5
+        assert reprcrash.message == "SyntaxError: bad syntax"
+        assert str(reprcrash) == "file.py:1:5: SyntaxError: bad syntax"
+
 
 def test_excinfo_exconly_tryshort_assert() -> None:
     """Rewritten asserts lose their 'AssertionError: ' prefix, also when the
@@ -1145,6 +1156,23 @@ raise ValueError()
         assert repr.reprcrash.lineno == 3
         assert repr.reprcrash.message == "ValueError"
         assert str(repr.reprcrash).endswith("mod.py:3: ValueError")
+
+    def test_syntax_error_tb_line(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=line")
+        result.stdout.fnmatch_lines(["file.py:1:5: SyntaxError: bad syntax"])
+
+    def test_syntax_error_collection(self, pytester: Pytester) -> None:
+        pytester.makepyfile("def broken(:\n    pass\n")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*.py:1:*: SyntaxError*"])
 
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(
