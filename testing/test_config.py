@@ -3645,3 +3645,19 @@ class TestNativeTomlOptionTypes:
         pytester.maketoml("[pytest]\nverbosity_assertions = 2\n")
         config = pytester.parseconfig()
         assert config.get_verbosity(Config.VERBOSITY_ASSERTIONS) == 2
+
+    @pytest.mark.parametrize(
+        ("name", "value", "expected"),
+        [
+            ("verbosity_assertions", '"2"', 2),
+            ("verbosity_subtests", '"-1"', -1),
+            ("verbosity_test_cases", '"3"', 3),
+        ],
+    )
+    def test_verbosity_accepts_numeric_strings_in_toml(
+        self, pytester: Pytester, name: str, value: str, expected: int
+    ) -> None:
+        pytester.maketoml(f"[pytest]\n{name} = {value}\n")
+        config = pytester.parseconfig()
+        assert config.getini(name) == expected
+        assert config.get_verbosity(name.removeprefix("verbosity_")) == expected

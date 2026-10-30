@@ -1,0 +1,1 @@
+Restore support for numeric strings in the ``verbosity_assertions``, ``verbosity_subtests``, and ``verbosity_test_cases`` TOML configuration options.
