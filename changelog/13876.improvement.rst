@@ -1,0 +1,1 @@
+JUnit XML reports now include a separate testcase for every subtest, with distinct names for repeated contexts, alongside the parent test.
