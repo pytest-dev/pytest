@@ -1301,6 +1301,16 @@ class FixtureDef(Generic[FixtureValue]):
             result: FixtureValue = ihook.pytest_fixture_setup(
                 fixturedef=self, request=request
             )
+        except BaseException:
+            if self.cached_result is None:
+                # The setup failed without the failure being cached, for
+                # example an exception in resolve_fixture_function, before
+                # the fixture function itself was called. The finalizers
+                # registered above belong to the aborted execution and
+                # finish() will not run them in this state, so remove them
+                # to let a subsequent execute() start from a clean state.
+                self._finalizers.clear()
+            raise
         finally:
             # Schedule our finalizer, even if the setup failed.
             request.node.addfinalizer(finalizer)
