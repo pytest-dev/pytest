@@ -127,6 +127,46 @@ def test_higher_scope_instance_method_is_deprecated(
     )
 
 
+def test_higher_scope_instance_method_error_repeated_for_each_test(
+    pytester: Pytester,
+) -> None:
+    """Regression test for #14775.
+
+    When the deprecation warning is turned into an error, every test
+    requesting the fixture errors with the warning. Previously, the
+    first failure left stale finalizers behind and subsequent tests
+    failed with an internal AssertionError from FixtureDef.execute
+    instead.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.fixture(scope="class")
+            def fix(self):
+                yield
+
+            def test_foo(self, fix):
+                pass
+
+            def test_bar(self, fix):
+                pass
+        """
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(errors=2)
+    # Both tests error with the warning itself (one matching line in each
+    # test's error section).
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestRemovedIn10Warning: *-scoped fixtures defined as instance methods*",
+            "*PytestRemovedIn10Warning: *-scoped fixtures defined as instance methods*",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*AssertionError*")
+
+
 @pytest.mark.parametrize(
     "scope", [Scope.Class, Scope.Module, Scope.Package, Scope.Session]
 )
