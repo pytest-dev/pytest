@@ -1,0 +1,1 @@
+Fixed the assertion diff for mappings whose ``keys()`` returns a list, such as ``starlette.datastructures.Headers``, which failed with a ``TypeError`` since :pr:`14463`.
