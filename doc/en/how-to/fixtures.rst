@@ -389,7 +389,16 @@ to cause a ``smtp_connection`` fixture function, responsible to create a connect
 once per test *module* (the default is to invoke once per test *function*).
 Multiple test functions in a test module will thus
 each receive the same ``smtp_connection`` fixture instance, thus saving time.
-Possible values for ``scope`` are: ``function``, ``class``, ``module``, ``package`` or ``session``.
+Possible values for ``scope`` are: ``function``, ``definition``, ``class``,
+``module``, ``package`` or ``session``.
+
+.. note::
+
+    ``definition`` shares one fixture instance across all the invocations
+    generated from a single test definition -- that is, across the parameter
+    sets of one parametrized test, but not between two different tests. It
+    requires the definition to be a node of the collection tree, see
+    :confval:`collect_function_definition`.
 
 The next example puts the fixture function into a separate ``conftest.py`` file
 so that tests from multiple test modules in the directory can

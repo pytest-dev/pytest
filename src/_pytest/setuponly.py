@@ -61,6 +61,20 @@ def pytest_fixture_post_finalizer(
                 del fixturedef.cached_param
 
 
+# Use smaller indentation the higher the scope. Spelled out rather than derived
+# from the Scope order, so that adding a scope does not shift the output of the
+# existing ones; Definition shares Function's indentation and is told apart by
+# the scope letter.
+_SCOPE_INDENTS = {
+    Scope.Session: 0,
+    Scope.Package: 1,
+    Scope.Module: 2,
+    Scope.Class: 3,
+    Scope.Definition: 4,
+    Scope.Function: 4,
+}
+
+
 def _show_fixture_action(
     fixturedef: FixtureDef[object], config: Config, msg: str
 ) -> None:
@@ -70,9 +84,7 @@ def _show_fixture_action(
 
     tw = config.get_terminal_writer()
     tw.line()
-    # Use smaller indentation the higher the scope: Session = 0, Package = 1, etc.
-    scope_indent = list(reversed(Scope)).index(fixturedef._scope)
-    tw.write(" " * 2 * scope_indent)
+    tw.write(" " * 2 * _SCOPE_INDENTS[fixturedef._scope])
 
     scopename = fixturedef.scope[0].upper()
     tw.write(f"{msg:<8} {scopename} {fixturedef.argname}")

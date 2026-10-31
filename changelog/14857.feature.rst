@@ -1,0 +1,23 @@
+Added the ``"definition"`` fixture scope, which shares one fixture instance
+across all invocations generated from a single test definition -- that is,
+across the parameter sets of one parametrized test, but not between two
+different tests:
+
+.. code-block:: python
+
+    @pytest.fixture(scope="definition")
+    def resource(): ...
+
+
+    @pytest.mark.parametrize("n", [1, 2, 3])
+    def test_it(resource, n):
+        # one `resource` for all three parameter sets
+        ...
+
+The scope needs the test definition to be a node of the collection tree, so it
+requires :confval:`collect_function_definition` to be set to ``pedantic`` (or
+``messy``). Using it without that fails with an explicit error rather than
+silently degrading to function scope.
+
+``@pytest.mark.parametrize(..., scope="definition")`` is supported as well and
+groups the invocations of one definition by parameter value.
