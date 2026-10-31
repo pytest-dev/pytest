@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
+import importlib
+import importlib.metadata
 import locale
 import os
 from pathlib import Path
@@ -10,6 +13,10 @@ import subprocess
 import sys
 
 from _pytest.config import argparsing as parseopt
+from _pytest.config import Config
+from _pytest.config import get_config
+from _pytest.config import PluginImportFailure
+from _pytest.config import PytestPluginManager
 from _pytest.config.exceptions import UsageError
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -339,6 +346,259 @@ class TestParser:
         parser.parse(["-h"])
         help = parser.optparser.format_help()
         assert "--preferences=value1 value2 value3" in help
+
+
+class TestConflictingOptionOrigin:
+    """Conflict errors name the plugins that registered the conflicting options."""
+
+    @staticmethod
+    def _parseconfig(pytester: Pytester, *plugins: str):
+        pytester.syspathinsert()
+        args: list[str] = []
+        for plugin in plugins:
+            args += ["-p", plugin]
+        return pytester.parseconfig(*args)
+
+    def test_same_group_conflict_names_plugins(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            plugin_a="def pytest_addoption(parser):\n"
+            "    parser.addoption('--browser', action='store')\n",
+            plugin_b="def pytest_addoption(parser):\n"
+            "    parser.addoption('--browser', action='store')\n",
+        )
+        with pytest.raises(ValueError) as err:
+            self._parseconfig(pytester, "plugin_a", "plugin_b")
+        assert str(err.value) == (
+            "option names {'--browser'} already added "
+            "by plugins: ['plugin_a', 'plugin_b']"
+        )
+
+    def test_cross_group_conflict_names_plugins(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            plugin_a="def pytest_addoption(parser):\n"
+            "    parser.getgroup('one').addoption('--browser', dest='one', action='store')\n",
+            plugin_b="def pytest_addoption(parser):\n"
+            "    parser.getgroup('two').addoption('--browser', dest='two', action='store')\n",
+        )
+        with pytest.raises(argparse.ArgumentError) as err:
+            self._parseconfig(pytester, "plugin_a", "plugin_b")
+        assert str(err.value) == (
+            "argument --browser: conflicting option string: --browser "
+            "added by plugins: ['plugin_a', 'plugin_b']"
+        )
+
+    def test_plugin_registering_other_options_is_not_named(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            plugin_a="def pytest_addoption(parser):\n"
+            "    parser.addoption('--browser', action='store')\n",
+            plugin_b="def pytest_addoption(parser):\n"
+            "    parser.addoption('--other', action='store')\n",
+            plugin_c="def pytest_addoption(parser):\n"
+            "    parser.addoption('--browser', action='store')\n",
+        )
+        with pytest.raises(ValueError) as err:
+            self._parseconfig(pytester, "plugin_a", "plugin_b", "plugin_c")
+        assert str(err.value) == (
+            "option names {'--browser'} already added "
+            "by plugins: ['plugin_a', 'plugin_c']"
+        )
+
+    def test_alias_conflict_names_plugins(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            plugin_a="def pytest_addoption(parser):\n"
+            "    parser.addoption('-E', '--example', action='store_true')\n",
+            plugin_b="def pytest_addoption(parser):\n"
+            "    parser.addoption('--example', action='store_true')\n",
+        )
+        with pytest.raises(ValueError) as err:
+            self._parseconfig(pytester, "plugin_a", "plugin_b")
+        assert str(err.value) == (
+            "option names {'--example'} already added "
+            "by plugins: ['plugin_a', 'plugin_b']"
+        )
+
+    def test_conflict_follows_registration_order(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            plugin_a="def pytest_addoption(parser):\n"
+            "    parser.addoption('--browser', action='store')\n",
+            plugin_b="def pytest_addoption(parser):\n"
+            "    parser.addoption('--browser', action='store')\n",
+        )
+        with pytest.raises(ValueError) as err:
+            self._parseconfig(pytester, "plugin_b", "plugin_a")
+        assert str(err.value).endswith("by plugins: ['plugin_b', 'plugin_a']")
+
+    def test_no_conflict_registers_normally(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            plugin_a="def pytest_addoption(parser):\n"
+            "    parser.addoption('--browser', action='store', default='x')\n",
+            plugin_b="def pytest_addoption(parser):\n"
+            "    parser.addoption('--other', action='store', default='y')\n",
+        )
+        config = self._parseconfig(pytester, "plugin_a", "plugin_b")
+        assert config.getoption("browser") == "x"
+        assert config.getoption("other") == "y"
+
+    def test_unknown_origin_gets_generic_message(self) -> None:
+        parser = parseopt.Parser(_ispytest=True)
+        group = parser.getgroup("custom")
+        group.addoption("--browser", action="store")
+        with pytest.raises(ValueError) as err:
+            group.addoption("--browser", action="store")
+        assert str(err.value) == (
+            "option names {'--browser'} already added by an unidentified source"
+        )
+
+    @staticmethod
+    def _plugin_source(*opts: str, group: str | None = None, **attrs: object) -> str:
+        target = f"parser.getgroup({group!r})" if group else "parser"
+        return (
+            "def pytest_addoption(parser):\n"
+            f"    {target}.addoption(*{opts!r}, **{attrs!r})\n"
+        )
+
+    def test_conflict_with_options_owned_by_different_plugins(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            plugin_a=self._plugin_source("-E", action="store_true"),
+            plugin_b=self._plugin_source("--example", action="store_true"),
+            plugin_c=self._plugin_source("-E", "--example", action="store_true"),
+        )
+        with pytest.raises(ValueError) as err:
+            self._parseconfig(pytester, "plugin_a", "plugin_b", "plugin_c")
+        assert str(err.value).endswith(
+            "already added by plugins: ['plugin_a', 'plugin_b', 'plugin_c']"
+        )
+
+    def test_registration_stops_at_first_conflict(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            plugin_a=self._plugin_source("--browser"),
+            plugin_b=self._plugin_source("--browser"),
+            plugin_c=self._plugin_source("--browser"),
+        )
+        with pytest.raises(ValueError) as err:
+            self._parseconfig(pytester, "plugin_a", "plugin_b", "plugin_c")
+        assert str(err.value).endswith("by plugins: ['plugin_a', 'plugin_b']")
+
+    def test_cross_group_conflict_keeps_argparse_error_details(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            plugin_a=self._plugin_source("--browser", group="one", dest="one"),
+            plugin_b=self._plugin_source("--browser", group="two", dest="two"),
+        )
+        with pytest.raises(argparse.ArgumentError) as err:
+            self._parseconfig(pytester, "plugin_a", "plugin_b")
+        assert err.value.argument_name == "--browser"
+        assert err.value.message.startswith("conflicting option string: --browser")
+        assert str(err.value) == f"argument --browser: {err.value.message}"
+        assert err.value.message.endswith("added by plugins: ['plugin_a', 'plugin_b']")
+
+    def test_implicit_dest_conflict_across_groups_names_plugins(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            plugin_a=self._plugin_source("--browser", group="one"),
+            plugin_b=self._plugin_source("--browser", group="two"),
+        )
+        with pytest.raises(ValueError) as err:
+            self._parseconfig(pytester, "plugin_a", "plugin_b")
+        message = str(err.value)
+        assert message.startswith("option dest 'browser' already used by ['--browser']")
+        assert message.endswith("(registered by plugins: ['plugin_a', 'plugin_b'])")
+
+    def test_conftest_conflict_names_conftest_path(self, pytester: Pytester) -> None:
+        pytester.makepyfile(plugin_a=self._plugin_source("--browser"))
+        conftest = pytester.makeconftest(self._plugin_source("--browser"))
+        with pytest.raises(ValueError) as err:
+            self._parseconfig(pytester, "plugin_a")
+        assert str(err.value).endswith(f"by plugins: ['plugin_a', {str(conftest)!r}]")
+
+    def test_entry_point_conflict_names_entry_point(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        @dataclasses.dataclass
+        class DummyEntryPoint:
+            name: str
+            module: str
+            group: str = "pytest11"
+
+            def load(self):
+                return importlib.import_module(self.module)
+
+        @dataclasses.dataclass
+        class DummyDist:
+            entry_points: object
+            files: object = ()
+            version: str = "1.0"
+
+            @property
+            def metadata(self):
+                return {"name": "dummy"}
+
+        pytester.makepyfile(
+            plugin_a=self._plugin_source("--browser"),
+            plugin_b=self._plugin_source("--browser"),
+        )
+        pytester.syspathinsert()
+        monkeypatch.setattr(
+            importlib.metadata,
+            "distributions",
+            lambda: [DummyDist([DummyEntryPoint("ep_b", "plugin_b")])],
+        )
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        with pytest.raises(PluginImportFailure) as err:
+            pytester.parseconfig("-p", "plugin_a")
+        # Entry point load errors are wrapped; the original error is the cause.
+        assert str(err.value.__cause__).endswith("by plugins: ['plugin_a', 'ep_b']")
+
+    def test_failed_registration_does_not_leak_plugin_name(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            plugin_a=self._plugin_source("--browser"),
+            plugin_b=self._plugin_source("--browser"),
+        )
+        pytester.syspathinsert()
+        config = get_config()
+        config.pluginmanager.import_plugin("plugin_a")
+        with pytest.raises(ValueError):
+            config.pluginmanager.import_plugin("plugin_b")
+        with pytest.raises(ValueError) as err:
+            config._parser.addoption("--browser")
+        assert str(err.value).endswith(
+            "by plugins: ['plugin_a'] and an unidentified source"
+        )
+
+    def test_plugin_registered_before_config_is_not_misattributed(self) -> None:
+        class Early:
+            def pytest_addoption(self, parser: parseopt.Parser) -> None:
+                parser.addoption("--browser")
+
+        pluginmanager = PytestPluginManager()
+        pluginmanager.register(Early(), "early")
+        Config(pluginmanager)
+        with pytest.raises(ValueError) as err:
+            pluginmanager.register(Early(), "late")
+        assert str(err.value).endswith(
+            "by plugins: ['late'] and an unidentified source"
+        )
+
+    def test_unnamed_plugin_instance_is_not_given_an_invented_name(self) -> None:
+        class Plugin:
+            def pytest_addoption(self, parser: parseopt.Parser) -> None:
+                parser.addoption("--browser")
+
+        pluginmanager = get_config().pluginmanager
+        pluginmanager.register(Plugin(), "named")
+        with pytest.raises(ValueError) as err:
+            pluginmanager.register(Plugin())
+        assert str(err.value).endswith(
+            "by plugins: ['named'] and an unidentified source"
+        )
 
 
 def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
