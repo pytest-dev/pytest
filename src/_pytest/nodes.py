@@ -423,6 +423,25 @@ class Node(abc.ABC, metaclass=NodeMeta):
                 return node
         return None
 
+    def traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
+        """Return the traceback to display for a failure.
+
+        Override this method to customize traceback filtering while retaining
+        pytest's standard failure formatting. It is not called when
+        ``--full-trace`` is used.
+
+        The default implementation delegates to ``_traceback_filter`` for
+        compatibility with existing overrides. If both methods are overridden,
+        this public method takes precedence. Use ``super().traceback_filter``
+        to apply the inherited filtering before your own.
+
+        :param excinfo: Exception information for the failure being formatted.
+        :returns: The filtered traceback.
+
+        .. versionadded:: 10.0
+        """
+        return self._traceback_filter(excinfo)
+
     def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         return excinfo.traceback
 
@@ -446,7 +465,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
             style = "long"
             tbfilter = False
         else:
-            tbfilter = self._traceback_filter
+            tbfilter = self.traceback_filter
             if style == "auto":
                 style = "long"
         # XXX should excinfo.getrepr record all data and toterminal() process it?
