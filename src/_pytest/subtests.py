@@ -216,7 +216,7 @@ class _SubTestContextManager:
     def __enter__(self) -> None:
         __tracebackhide__ = True
 
-        self._timing = timing.Instant()
+        self._start = timing.Instant()
         self._exc_info = None
 
         self._exit_stack = ExitStack()
@@ -241,14 +241,10 @@ class _SubTestContextManager:
 
         self._exit_stack.close()
 
-        duration = self._timing.elapsed()
-
         call_info = CallInfo[None](
-            None,
-            exc_info,
-            start=duration.start.time,
-            stop=duration.stop.time,
-            duration=duration.seconds,
+            result=None,
+            excinfo=exc_info,
+            duration=self._start.elapsed(),
             when="call",
             _ispytest=True,
         )

@@ -3479,19 +3479,20 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       file_or_dir
 
     general:
-      -k EXPRESSION         Only run tests matching the given keyword expression,
-                            e.g. -k 'test_method or test_other', -k 'not (slow or
-                            network)'.
-                            Names in the expression are matched case-insensitively
-                            as substrings of the test's keywords, which are:
+      -k EXPRESSION         Only run tests matching the given keyword
+                            expression, e.g. -k 'test_method or test_other', -k
+                            'not (slow or network)'.
+                            Names in the expression are matched
+                            case-insensitively as substrings of the test's
+                            keywords, which are:
                             - its own name, including any parametrization id
                             - the names of its class, module and directories
                             - the names of the markers applied to it or to its
                               parents
                             - attributes assigned directly to the test function
                             - any names in its 'extra_keyword_matches' set
-                            Use -m to match marker names exactly, including their
-                            arguments.
+                            Use -m to match marker names exactly, including
+                            their arguments.
       -m MARKEXPR           Only run tests matching given mark expression. For
                             example: -m 'mark1 and not mark2'.
       --markers             show markers (builtin, plugin and per-project ones).
@@ -3595,8 +3596,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       --collect-only, --co  Only collect tests, don't execute them
       --pyargs              Try to interpret all arguments as Python packages
       --ignore=path         Ignore path during collection (multi-allowed)
-      --ignore-glob=path    Ignore path pattern during collection (multi-
-                            allowed)
+      --ignore-glob=path    Ignore path pattern during collection
+                            (multi-allowed)
       --deselect=nodeid_prefix
                             Deselect item (via node id prefix) during collection
                             (multi-allowed)
@@ -3740,6 +3741,15 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       strict_parametrization_ids (bool):
                             Emit an error if non-unique parameter set IDs are
                             detected
+      parametrize_long_str_id_strategy ('short' | 'sha256' | 'legacy' | 'disallow'):
+                            strategy for long str/bytes parameter values in
+                            auto-generated ids
+                            - short (default): values over 100 chars fall back
+                              to argname+index
+                            - sha256: replace value with its sha256 hex digest
+                            - legacy: keep the full value (for temporary
+                              backward compatibility)
+                            - disallow: raise an error requesting explicit ids
       console_output_style ('classic' | 'progress' | 'count' | 'times' | 'progress-even-when-capture-no'):
                             Console output: "classic", or with additional
                             progress information ("progress" (percentage) |

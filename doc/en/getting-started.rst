@@ -56,7 +56,7 @@ of your operating system (see :ref:`install-package-with-pip`).
 .. code-block:: bash
 
     $ pytest --version
-    pytest 9.1.1
+    pytest 9.2.0
 
 See :ref:`install-package-with-pip` for how to install the project you are
 testing into the same environment.
