@@ -6304,6 +6304,7 @@ def test_find_wrapped_fixture_def_skips_mock_call_without_unwrap(
     only stops at the recursion limit (slow + huge memory with a raised limit).
     """
     import inspect
+    from typing import cast
     from unittest.mock import call
 
     from _pytest.fixtures import FixtureManager
@@ -6316,7 +6317,10 @@ def test_find_wrapped_fixture_def_skips_mock_call_without_unwrap(
         return real_unwrap(*args, **kwargs)
 
     monkeypatch.setattr(inspect, "unwrap", counting_unwrap)
-    assert FixtureManager._find_wrapped_fixture_def(None, call) is None
+    # `_find_wrapped_fixture_def` does not use `self`; call it on the class
+    # with a dummy instance to avoid constructing a full `FixtureManager`.
+    manager = cast(FixtureManager, object())
+    assert FixtureManager._find_wrapped_fixture_def(manager, call) is None
     assert calls == []
 
 
