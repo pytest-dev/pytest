@@ -1,1 +1,1 @@
-``contains one more item`` now reports the actual extra item in sequence diffs.
+Single-item insertions in sequence comparisons now identify the inserted item when the remaining elements align.

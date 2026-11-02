@@ -1122,7 +1122,7 @@ class TestAssert_reprcompare:
             "(1, 2) == (3, 4, 5)",
             "",
             "At index 0 diff: 1 != 3",
-            "Right contains one more item: 3",
+            "Right contains one more item: 5",
             "",
             "Full diff: (-: missing in left side, +: extra in left side)",
             "  (",
@@ -1178,6 +1178,8 @@ class TestAssert_reprcompare:
             ([1, 2, 3], [1, 2, 3, 4], "Right contains one more item: 4"),
             ([1, 2, 3], [1, 2, 0, 3], "Right contains one more item: 0"),
             ([1, 2, 0, 3], [1, 2, 3], "Left contains one more item: 0"),
+            ([1, 2, 9], [1, 3], "Left contains one more item: 9"),
+            ([1, 3], [1, 2, 9], "Right contains one more item: 9"),
             (
                 [1, 2, 3],
                 [0, 1, 2, 3, 4],
