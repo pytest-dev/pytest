@@ -1,0 +1,4 @@
+Fixed an ``INTERNALERROR`` at startup when the cache directory path contains a
+``..`` segment (e.g. tox with a ``toxworkdir`` outside the ``tox.ini``
+directory): the base directory is now normalized the same way as the joined
+path before checking containment.

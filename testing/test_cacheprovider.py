@@ -68,6 +68,18 @@ class TestNewAPI:
         config.cache.set("plugin/sub/../value", 42)
         assert config.cache.get("plugin/value", None) == 42
 
+    def test_cache_dir_with_dotdot(self, pytester: Pytester) -> None:
+        """A `..` inside cache_dir itself (e.g. tox's `$TOX_ENV_DIR`, see
+        #15295) must not break cache access as long as the key stays
+        inside."""
+        base = pytester.path / "sub"
+        base.mkdir()
+        cache_dir = base / ".." / ".pytest_cache"
+        config = pytester.parseconfigure("-o", f"cache_dir={cache_dir}")
+        assert config.cache is not None
+        config.cache.set("plugin/value", 42)
+        assert config.cache.get("plugin/value", None) == 42
+
     def test_cache_dir_permissions(self, pytester: Pytester) -> None:
         """The .pytest_cache directory should have world-readable permissions
         (depending on umask).
