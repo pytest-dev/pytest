@@ -17,10 +17,12 @@ from typing import Any
 from typing import final
 from typing import Literal
 
+from .pathlib import _force_symlink
 from .pathlib import cleanup_dead_symlinks
+from .pathlib import find_suffixes
 from .pathlib import LOCK_TIMEOUT
-from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
+from .pathlib import parse_num
 from .pathlib import rm_rf
 from _pytest.compat import get_user_id
 from _pytest.config import Config
@@ -79,6 +81,9 @@ class TempPathFactory:
         # Register cleanups for session finish. Also called atexit as a last
         # resort if sessionfinish for some reason doesn't happen.
         self._exit_stack = ExitStack()
+        # Lower-cased prefix -> next number to try, so numbered directories
+        # do not require listing basetemp on every call.
+        self._next_number: dict[str, int] = {}
 
     @classmethod
     def from_config(
@@ -122,9 +127,10 @@ class TempPathFactory:
 
         :param numbered:
             If ``True``, ensure the directory is unique by adding a numbered
-            suffix greater than any existing one: ``basename="foo-"`` and ``numbered=True``
+            suffix: ``basename="foo-"`` and ``numbered=True``
             means that this function will create directories named ``"foo-0"``,
-            ``"foo-1"``, ``"foo-2"`` and so on.
+            ``"foo-1"``, ``"foo-2"`` and so on. Names that already exist in the
+            base temporary directory are skipped.
 
         :returns:
             The path to the new directory.
@@ -134,9 +140,47 @@ class TempPathFactory:
             p = self.getbasetemp().joinpath(basename)
             p.mkdir(mode=0o700)
         else:
-            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename, mode=0o700)
+            p = self._make_counted_dir(basename)
             self._trace("mktemp", p)
         return p
+
+    def _make_counted_dir(self, prefix: str) -> Path:
+        """Create ``<prefix><n>`` in basetemp, using a per-prefix counter.
+
+        Counting starts at 0 without listing basetemp, as basetemp is created
+        by this factory. mkdir decides uniqueness:
+        names it fails on are skipped, a run of 10 failures makes basetemp be
+        listed once to jump past it, and 20 failures raise OSError.
+        """
+        root = self.getbasetemp()
+        key = prefix.lower()
+        number = self._next_number.get(key, 0)
+        collisions = 0
+        while True:
+            path = root.joinpath(f"{prefix}{number}")
+            try:
+                path.mkdir(mode=0o700)
+            except OSError as e:
+                # Usually FileExistsError; on Windows also PermissionError for
+                # a name that is still being deleted.
+                collisions += 1
+                if collisions == 10:
+                    listed = max(
+                        map(parse_num, find_suffixes(root, prefix)), default=-1
+                    )
+                    number = max(number, listed) + 1
+                elif collisions == 20:
+                    raise OSError(
+                        f"could not create numbered dir with prefix {prefix} in {root}"
+                        f" after {collisions} tries"
+                    ) from e
+                else:
+                    number += 1
+            else:
+                break
+        self._next_number[key] = number + 1
+        _force_symlink(root, prefix + "current", path)
+        return path
 
     def getbasetemp(self) -> Path:
         """Return the base temporary directory, creating it if needed.

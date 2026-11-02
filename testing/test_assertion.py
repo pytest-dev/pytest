@@ -33,6 +33,69 @@ from _pytest.pytester import Pytester
 import pytest
 
 
+class _MockTerminalWriter:
+    def _highlight(self, source, lexer="python"):
+        return source
+
+
+class _MockPluginManager:
+    def __init__(self, has_terminalreporter: bool) -> None:
+        self._has_terminalreporter = has_terminalreporter
+
+    def has_plugin(self, name: str) -> bool:
+        return self._has_terminalreporter
+
+
+class _MockConfig:
+    def __init__(
+        self,
+        verbose: int,
+        assertion_override: int | None,
+        assertion_text_diff_style: _AssertionTextDiffStyle,
+        truncation_limit_lines: str,
+        truncation_limit_chars: str,
+        has_terminalreporter: bool,
+    ) -> None:
+        self._verbose = verbose
+        self._assertion_override = assertion_override
+        self._assertion_text_diff_style = assertion_text_diff_style
+        self._truncation_limit_lines = truncation_limit_lines
+        self._truncation_limit_chars = truncation_limit_chars
+        self._has_terminalreporter = has_terminalreporter
+        self.pluginmanager = _MockPluginManager(has_terminalreporter)
+
+    def get_terminal_writer(self):
+        # When the terminalreporter plugin is absent the dispatcher must
+        # fall back to the plaintext highlighter without reaching for a
+        # terminal writer (#14377); make that misuse fail loudly.
+        assert self._has_terminalreporter, (
+            "get_terminal_writer() must not be called without terminalreporter"
+        )
+        return _MockTerminalWriter()
+
+    def get_verbosity(self, verbosity_type: str | None = None) -> int:
+        if verbosity_type is None:
+            return self._verbose
+        if verbosity_type == _Config.VERBOSITY_ASSERTIONS:
+            if self._assertion_override is not None:
+                return self._assertion_override
+            return self._verbose
+
+        raise KeyError(f"Not mocked out: {verbosity_type}")
+
+    def getini(self, name: str) -> str:
+        if name == "assertion_text_diff_style":
+            return self._assertion_text_diff_style
+        # Truncation defaults to disabled (``"0"``) so ``callop``-style
+        # tests can compare against the full explanation; the dispatcher
+        # tests pass explicit limits to exercise the budget wiring.
+        if name == "truncation_limit_lines":
+            return self._truncation_limit_lines
+        if name == "truncation_limit_chars":
+            return self._truncation_limit_chars
+        raise KeyError(f"Not mocked out: {name}")
+
+
 def mock_config(
     verbose: int = 0,
     assertion_override: int | None = None,
@@ -41,49 +104,14 @@ def mock_config(
     truncation_limit_chars: str = "0",
     has_terminalreporter: bool = True,
 ):
-    class TerminalWriter:
-        def _highlight(self, source, lexer="python"):
-            return source
-
-    class PluginManager:
-        def has_plugin(self, name: str) -> bool:
-            return has_terminalreporter
-
-    class Config:
-        pluginmanager = PluginManager()
-
-        def get_terminal_writer(self):
-            # When the terminalreporter plugin is absent the dispatcher must
-            # fall back to the plaintext highlighter without reaching for a
-            # terminal writer (#14377); make that misuse fail loudly.
-            assert has_terminalreporter, (
-                "get_terminal_writer() must not be called without terminalreporter"
-            )
-            return TerminalWriter()
-
-        def get_verbosity(self, verbosity_type: str | None = None) -> int:
-            if verbosity_type is None:
-                return verbose
-            if verbosity_type == _Config.VERBOSITY_ASSERTIONS:
-                if assertion_override is not None:
-                    return assertion_override
-                return verbose
-
-            raise KeyError(f"Not mocked out: {verbosity_type}")
-
-        def getini(self, name: str) -> str:
-            if name == "assertion_text_diff_style":
-                return assertion_text_diff_style
-            # Truncation defaults to disabled (``"0"``) so ``callop``-style
-            # tests can compare against the full explanation; the dispatcher
-            # tests pass explicit limits to exercise the budget wiring.
-            if name == "truncation_limit_lines":
-                return truncation_limit_lines
-            if name == "truncation_limit_chars":
-                return truncation_limit_chars
-            raise KeyError(f"Not mocked out: {name}")
-
-    return Config()
+    return _MockConfig(
+        verbose,
+        assertion_override,
+        assertion_text_diff_style,
+        truncation_limit_lines,
+        truncation_limit_chars,
+        has_terminalreporter,
+    )
 
 
 class TestMockConfig:
@@ -268,42 +296,8 @@ class TestImportHookInstallation:
         result = pytester.runpytest_subprocess("--assert=rewrite")
         assert result.ret == 0
 
-    @pytest.mark.parametrize("mode", ["plain", "rewrite"])
-    @pytest.mark.parametrize("disable_plugin_autoload", ["env_var", "cli", ""])
-    @pytest.mark.parametrize("explicit_specify", ["env_var", "cli", ""])
-    def test_installed_plugin_rewrite(
-        self,
-        pytester: Pytester,
-        mode: str,
-        monkeypatch: pytest.MonkeyPatch,
-        disable_plugin_autoload: str,
-        explicit_specify: str,
-    ) -> None:
-        args = ["mainwrapper.py", "-s", f"--assert={mode}"]
-        if disable_plugin_autoload == "env_var":
-            monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-        elif disable_plugin_autoload == "cli":
-            monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
-            args.append("--disable-plugin-autoload")
-        else:
-            assert disable_plugin_autoload == ""
-            monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
-
-        name = "spamplugin"
-
-        if explicit_specify == "env_var":
-            monkeypatch.setenv("PYTEST_PLUGINS", name)
-        elif explicit_specify == "cli":
-            args.append("-p")
-            args.append(name)
-        else:
-            assert explicit_specify == ""
-
-        # Make sure the hook is installed early enough so that plugins
-        # installed via distribution package are rewritten.
-        pytester.mkdir("hampkg")
-        contents = {
-            "hampkg/__init__.py": """\
+    _INSTALLED_PLUGIN_FILES = {
+        "hampkg/__init__.py": """\
                 import pytest
 
                 @pytest.fixture
@@ -312,7 +306,7 @@ class TestImportHookInstallation:
                         assert values.pop(0) == value
                     return check
             """,
-            "spamplugin.py": """\
+        "spamplugin.py": """\
             import pytest
             from hampkg import check_first2
 
@@ -322,7 +316,7 @@ class TestImportHookInstallation:
                     assert values.pop(0) == value
                 return check
             """,
-            "mainwrapper.py": """\
+        "mainwrapper.py": """\
             import importlib.metadata
             import pytest
 
@@ -347,22 +341,73 @@ class TestImportHookInstallation:
             importlib.metadata.distributions = distributions
             pytest.main()
             """,
-            "test_foo.py": """\
+        "test_foo.py": """\
             def test(check_first):
                 check_first([10, 30], 30)
 
             def test2(check_first2):
                 check_first2([10, 30], 30)
             """,
-        }
-        pytester.makepyfile(**contents)
-        result = pytester.run(sys.executable, *args)
-        if mode == "plain":
-            expected = "E       AssertionError"
-        elif mode == "rewrite":
-            expected = "*assert 10 == 30*"
+    }
+
+    _EXPECTED_FAILURE_LINE = {
+        "plain": "E       AssertionError",
+        "rewrite": "*assert 10 == 30*",
+    }
+
+    @pytest.fixture
+    def installed_plugin_project(self, pytester: Pytester) -> None:
+        # Make sure the hook is installed early enough so that plugins
+        # installed via distribution package are rewritten.
+        pytester.mkdir("hampkg")
+        pytester.makepyfile(**self._INSTALLED_PLUGIN_FILES)
+
+    @staticmethod
+    def _plugin_loading_args(
+        monkeypatch: pytest.MonkeyPatch,
+        disable_plugin_autoload: str,
+        explicit_specify: str,
+    ) -> list[str]:
+        """Set the environment for the scenario and return its extra CLI args."""
+        args = []
+        if disable_plugin_autoload == "env_var":
+            monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+        elif disable_plugin_autoload == "cli":
+            monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+            args.append("--disable-plugin-autoload")
         else:
-            assert 0
+            assert disable_plugin_autoload == ""
+            monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+        name = "spamplugin"
+
+        if explicit_specify == "env_var":
+            monkeypatch.setenv("PYTEST_PLUGINS", name)
+        elif explicit_specify == "cli":
+            args.append("-p")
+            args.append(name)
+        else:
+            assert explicit_specify == ""
+        return args
+
+    @pytest.mark.parametrize("mode", ["plain", "rewrite"])
+    @pytest.mark.parametrize("disable_plugin_autoload", ["env_var", "cli", ""])
+    @pytest.mark.parametrize("explicit_specify", ["env_var", "cli", ""])
+    @pytest.mark.usefixtures("installed_plugin_project")
+    def test_installed_plugin_rewrite(
+        self,
+        pytester: Pytester,
+        mode: str,
+        monkeypatch: pytest.MonkeyPatch,
+        disable_plugin_autoload: str,
+        explicit_specify: str,
+    ) -> None:
+        args = ["mainwrapper.py", "-s", f"--assert={mode}"]
+        args += self._plugin_loading_args(
+            monkeypatch, disable_plugin_autoload, explicit_specify
+        )
+        result = pytester.run(sys.executable, *args)
+        expected = self._EXPECTED_FAILURE_LINE[mode]
 
         if not disable_plugin_autoload or explicit_specify:
             result.assert_outcomes(failed=2)
@@ -898,6 +943,7 @@ class TestAssert_reprcompare:
             "  }",
         ]
 
+    def test_dict_wrap_long_values(self) -> None:
         long_a = "a" * 80
         sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped " * 3}}
         d1 = {"env": {"sub": sub}}
@@ -1137,6 +1183,8 @@ class TestAssert_reprcompare:
             "-     5,",
             "  )",
         ]
+
+    def test_sequence_left_has_more_items(self) -> None:
         lines = callequal((1, 2, 3), (4,), verbose=2)
         assert lines == [
             "(1, 2, 3) == (4,)",
@@ -1154,6 +1202,8 @@ class TestAssert_reprcompare:
             "+     3,",
             "  )",
         ]
+
+    def test_sequence_different_item_in_the_middle(self) -> None:
         lines = callequal((1, 2, 3), (1, 20, 3), verbose=2)
         assert lines == [
             "(1, 2, 3) == (1, 20, 3)",
@@ -1970,6 +2020,25 @@ class TestTruncateExplanation:
         result.stdout.fnmatch_lines(["*Full output truncated, use '-vv' to show*"])
 
 
+class _Tracked:
+    """Element whose ``repr`` calls are counted in ``_Tracked.reprs``."""
+
+    reprs = 0
+
+    def __init__(self, v: int) -> None:
+        self.v = v
+
+    def __repr__(self) -> str:
+        _Tracked.reprs += 1
+        return f"T({self.v})"
+
+    def __eq__(self, o: object) -> bool:
+        return isinstance(o, _Tracked) and self.v == o.v
+
+    def __hash__(self) -> int:
+        return hash(self.v)
+
+
 class TestMaterializeWithTruncation:
     """Tests for ``truncate.materialize_with_truncation``."""
 
@@ -2080,6 +2149,36 @@ class TestMaterializeWithTruncation:
         )
         return truncate.materialize_with_truncation(src, config)
 
+    @staticmethod
+    def _make_near_identical_pair(shape: str, n: int) -> tuple[object, object]:
+        # Two near-identical containers differing in one spot, so the
+        # explanation is a real (truncated) diff.
+        if shape in ("list", "tuple"):
+            seq_left = [_Tracked(i) for i in range(n)]
+            seq_right = [_Tracked(i) for i in range(n)]
+            seq_right[0] = _Tracked(-1)
+            if shape == "tuple":
+                return tuple(seq_left), tuple(seq_right)
+            return seq_left, seq_right
+        if shape == "dict":
+            map_left = {i: _Tracked(i) for i in range(n)}
+            map_right = {i: _Tracked(i) for i in range(n)}
+            map_right[0] = _Tracked(-1)
+            return map_left, map_right
+        # set
+        set_left = {_Tracked(i) for i in range(n)}
+        set_right = {_Tracked(i) for i in range(n)}
+        set_right.discard(_Tracked(0))
+        set_right.add(_Tracked(-1))
+        return set_left, set_right
+
+    def _formatting_work(self, shape: str, n: int) -> tuple[int, int]:
+        left, right = self._make_near_identical_pair(shape, n)
+        _Tracked.reprs = 0  # count only the formatting, not the construction
+        out = self._explain_capped(left, right)
+        assert any("truncated" in line for line in out)
+        return len(out), _Tracked.reprs
+
     @pytest.mark.parametrize("shape", ["list", "tuple", "dict", "set"])
     def test_formatting_work_is_bounded_for_a_10_line_display(self, shape: str) -> None:
         """A huge comparison whose display is truncated to ~10 lines must
@@ -2088,54 +2187,8 @@ class TestMaterializeWithTruncation:
         Element ``repr`` calls are counted as a deterministic proxy for
         the formatting work (wall-clock would flake in CI).
         """
-
-        class Tracked:
-            reprs = 0
-
-            def __init__(self, v: int) -> None:
-                self.v = v
-
-            def __repr__(self) -> str:
-                Tracked.reprs += 1
-                return f"T({self.v})"
-
-            def __eq__(self, o: object) -> bool:
-                return isinstance(o, Tracked) and self.v == o.v
-
-            def __hash__(self) -> int:
-                return hash(self.v)
-
-        def make(n: int) -> tuple[object, object]:
-            # Two near-identical containers differing in one spot, so the
-            # explanation is a real (truncated) diff.
-            if shape in ("list", "tuple"):
-                seq_left = [Tracked(i) for i in range(n)]
-                seq_right = [Tracked(i) for i in range(n)]
-                seq_right[0] = Tracked(-1)
-                if shape == "tuple":
-                    return tuple(seq_left), tuple(seq_right)
-                return seq_left, seq_right
-            if shape == "dict":
-                map_left = {i: Tracked(i) for i in range(n)}
-                map_right = {i: Tracked(i) for i in range(n)}
-                map_right[0] = Tracked(-1)
-                return map_left, map_right
-            # set
-            set_left = {Tracked(i) for i in range(n)}
-            set_right = {Tracked(i) for i in range(n)}
-            set_right.discard(Tracked(0))
-            set_right.add(Tracked(-1))
-            return set_left, set_right
-
-        def work(n: int) -> tuple[int, int]:
-            left, right = make(n)
-            Tracked.reprs = 0  # count only the formatting, not the construction
-            out = self._explain_capped(left, right)
-            assert any("truncated" in line for line in out)
-            return len(out), Tracked.reprs
-
-        lines_small, reprs_small = work(1_000)
-        lines_big, reprs_big = work(100_000)
+        lines_small, reprs_small = self._formatting_work(shape, 1_000)
+        lines_big, reprs_big = self._formatting_work(shape, 100_000)
         assert lines_small == lines_big
         assert reprs_small == reprs_big
         assert reprs_big < 200  # nowhere near the 100_000-element input

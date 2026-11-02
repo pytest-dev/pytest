@@ -4,13 +4,23 @@
 Good Integration Practices
 =================================================
 
-Install package with pip
+.. _`install-package-with-pip`:
+
+Install package in a virtual environment
 -------------------------------------------------
 
-For development, we recommend you use :mod:`venv` for virtual environments and
-:doc:`pip:index` for installing your application and any dependencies,
-as well as the ``pytest`` package itself.
+For development, we recommend that you install your application, its dependencies
+and the ``pytest`` package itself into a virtual environment.
 This ensures your code and dependencies are isolated from your system Python installation.
+
+.. note::
+
+    Many systems, such as recent Debian, Ubuntu and Fedora releases, refuse a plain
+    ``pip install`` outside a virtual environment with
+    ``error: externally-managed-environment`` (see :pep:`668`).
+    Do not work around this with ``--break-system-packages``,
+    which can break tools of your operating system;
+    create a virtual environment instead.
 
 Create a ``pyproject.toml`` file in the root of your repository as described in
 :doc:`packaging:tutorials/packaging-projects`.
@@ -26,15 +36,64 @@ The first few lines should look like this:
     name = "PACKAGENAME"
     version = "PACKAGEVERSION"
 
+    [dependency-groups]
+    dev = ["pytest"]
+
 where ``PACKAGENAME`` and ``PACKAGEVERSION`` are the name and version of your package respectively.
+The ``dev`` :doc:`dependency group <packaging:specifications/dependency-groups>` lists the
+tools you need for development, such as ``pytest``.
 
-You can then install your package in "editable" mode by running from the same directory:
+You can then create a virtual environment and install your package in "editable" mode,
+together with the ``dev`` group, by running from the same directory:
 
-.. code-block:: bash
+.. tab:: venv + pip
 
-    pip install -e .
+    Uses :mod:`venv` and :doc:`pip <pip:index>`
+    (``pip install --group`` needs pip 25.1 or newer):
+
+    .. code-block:: bash
+
+        python3 -m venv .venv
+        source .venv/bin/activate   # on Windows: .venv\Scripts\activate
+        pip install -e . --group dev
+        pytest
+
+.. tab:: uv
+
+    `uv <https://docs.astral.sh/uv/>`__ creates ``.venv``, installs your
+    package in editable mode and installs the ``dev`` group by default:
+
+    .. code-block:: bash
+
+        uv sync
+        uv run pytest
+
+.. tab:: virtualenv
+
+    Same as with :mod:`venv`, but the environment is created by
+    :doc:`virtualenv <virtualenv:index>`:
+
+    .. code-block:: bash
+
+        virtualenv .venv
+        source .venv/bin/activate   # on Windows: .venv\Scripts\activate
+        pip install -e . --group dev
+        pytest
 
 which lets you change your source code (both tests and application) and rerun tests at will.
+
+.. _`system-pytest`:
+
+Using pytest from the operating system
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some projects deliberately use the ``pytest`` provided by the operating system,
+for example to test software that is itself built and packaged by a distribution,
+or where a test suite only needs ``pytest`` to be available as a command.
+In that case install ``pytest`` with the system package manager
+(for example ``apt install python3-pytest`` or ``dnf install python3-pytest``),
+not with ``pip`` into the system Python.
+The version is then the one your distribution ships, which may be older than the latest release.
 
 .. _`test discovery`:
 .. _`Python test discovery`:

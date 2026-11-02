@@ -1,0 +1,2438 @@
+arquivo,smell,metodo,linhas
+TEMPY/main.py,Conditional Test Logic,test_file_selection_window,132
+TEMPY/main.py,Unknown Test,test_file_selection_window,114
+TEMPY/main.py,Non-Functional Statement,get_selected_test_file,34
+TEMPY/main.py,Non-Functional Statement,get_selected_test_file,49
+TEMPY/main.py,Non-Functional Statement,get_all_test_file,78
+TEMPY/main.py,Non-Functional Statement,get_all_test_file,93
+TEMPY/main.py,Non-Functional Statement,select_file,214
+TEMPY/main.py,Non-Functional Statement,set_github_url,240
+bench/manyparam.py,Unknown Test,test_it,11
+bench/manyparam.py,Unknown Test,test_it2,15
+bench/skip.py,Conditional Test Logic,test_foo,11
+bench/skip.py,Unknown Test,test_foo,10
+doc/en/example/multipython.py,Unknown Test,test_basic_objects,68
+doc/en/example/multipython.py,Programming Paradigms Blend,(nível do módulo),13;27
+doc/en/example/xfail_demo.py,Unknown Test,test_hello6,34
+doc/en/example/xfail_demo.py,Unknown Test,test_hello7,39
+doc/en/example/assertion/failure_demo.py,Conditional Test Logic,test_some_error,185
+doc/en/example/assertion/failure_demo.py,Exception Handling,test_try_finally,251
+doc/en/example/assertion/failure_demo.py,Redundant Print,test_reinterpret_fails_with_print_for_the_fun_of_it,181
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_simple_multiline,34
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_raises,166
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_raises_doesnt,170
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_raise,173
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_tupleerror,176
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_reinterpret_fails_with_print_for_the_fun_of_it,179
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_some_error,184
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_complex_error,208
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_z1_unpack_error,217
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_z2_type_error,221
+doc/en/example/assertion/failure_demo.py,Unknown Test,test_dynamic_compile_shows_nicely,193
+doc/en/example/assertion/failure_demo.py,Programming Paradigms Blend,(nível do módulo),7;24
+doc/en/example/assertion/failure_demo.py,Non-Functional Statement,test_some_error,186
+doc/en/example/fixtures/test_fixtures_order_autouse_multiple_scopes.py,Programming Paradigms Blend,(nível do módulo),6;26
+doc/en/example/fixtures/test_fixtures_order_autouse_temp_effects.py,Programming Paradigms Blend,(nível do módulo),6;21
+doc/en/example/fixtures/test_fixtures_order_scope.py,Programming Paradigms Blend,(nível do módulo),6;36
+doc/en/example/fixtures/test_fixtures_request_different_scope.py,Programming Paradigms Blend,(nível do módulo),6;16
+doc/en/example/nonpython/conftest.py,Programming Paradigms Blend,(nível do módulo),7;12
+src/_pytest/approx.py,Conditional Test Logic,test__repr_compare,197
+src/_pytest/approx.py,Conditional Test Logic,test__repr_compare,210
+src/_pytest/approx.py,Conditional Test Logic,test__repr_compare,221
+src/_pytest/approx.py,Conditional Test Logic,test__repr_compare,224
+src/_pytest/approx.py,Conditional Test Logic,test__repr_compare,227
+src/_pytest/approx.py,Conditional Test Logic,test__repr_compare,243
+src/_pytest/approx.py,Conditional Test Logic,__init__,697
+src/_pytest/approx.py,Conditional Test Logic,__init__,702
+src/_pytest/approx.py,Conditional Test Logic,__init__,707
+src/_pytest/approx.py,Conditional Test Logic,__init__,714
+src/_pytest/approx.py,Conditional Test Logic,__init__,719
+src/_pytest/approx.py,Conditional Test Logic,__init__,721
+src/_pytest/approx.py,Conditional Test Logic,__init__,722
+src/_pytest/approx.py,Conditional Test Logic,__init__,727
+src/_pytest/approx.py,Conditional Test Logic,__init__,729
+src/_pytest/approx.py,Conditional Test Logic,__init__,731
+src/_pytest/approx.py,Conditional Test Logic,__init__,736
+src/_pytest/approx.py,Conditional Test Logic,__init__,742
+src/_pytest/approx.py,Verbose Test,test__repr_compare,186;252
+src/_pytest/approx.py,Verbose Test,_repr_compare,311;375
+src/_pytest/approx.py,Verbose Test,_repr_compare,416;469
+src/_pytest/approx.py,Verbose Test,__init__,689;746
+src/_pytest/approx.py,Verbose Test,approx,774;1024
+src/_pytest/approx.py,Programming Paradigms Blend,(nível do módulo),31;95
+src/_pytest/approx.py,Non-Functional Statement,_repr_compare,356
+src/_pytest/approx.py,Non-Functional Statement,_repr_compare,444
+src/_pytest/approx.py,Undefined Test,__init__,689
+src/_pytest/faulthandler.py,Conditional Test Logic,test_get_stderr_fileno,67
+src/_pytest/faulthandler.py,Exception Handling,test_get_stderr_fileno,63
+src/_pytest/faulthandler.py,Undefined Test,get_exit_on_timeout_config_value,82
+src/_pytest/helpconfig.py,Conditional Test Logic,showhelp,199
+src/_pytest/helpconfig.py,Conditional Test Logic,showhelp,201
+src/_pytest/helpconfig.py,Conditional Test Logic,showhelp,207
+src/_pytest/helpconfig.py,Conditional Test Logic,showhelp,210
+src/_pytest/helpconfig.py,Conditional Test Logic,showhelp,215
+src/_pytest/helpconfig.py,Conditional Test Logic,showhelp,217
+src/_pytest/helpconfig.py,Conditional Test Logic,showhelp,237
+src/_pytest/helpconfig.py,Conditional Test Logic,showhelp,250
+src/_pytest/helpconfig.py,Verbose Test,pytest_addoption,61;121
+src/_pytest/helpconfig.py,Verbose Test,showhelp,182;251
+src/_pytest/helpconfig.py,Undefined Test,showhelp,182
+src/_pytest/junitxml.py,Conditional Test Logic,record_testreport,163
+src/_pytest/junitxml.py,Conditional Test Logic,record_testreport,172
+src/_pytest/junitxml.py,Conditional Test Logic,record_testreport,174
+src/_pytest/junitxml.py,Conditional Test Logic,record_testreport,180
+src/_pytest/junitxml.py,Conditional Test Logic,record_testreport,186
+src/_pytest/junitxml.py,Conditional Test Logic,record_testreport,187
+src/_pytest/junitxml.py,Conditional Test Logic,append_failure,240
+src/_pytest/junitxml.py,Conditional Test Logic,append_failure,247
+src/_pytest/junitxml.py,Conditional Test Logic,append_error,265
+src/_pytest/junitxml.py,Conditional Test Logic,append_error,270
+src/_pytest/junitxml.py,Conditional Test Logic,append_skipped,279
+src/_pytest/junitxml.py,Conditional Test Logic,node_reporter,567
+src/_pytest/junitxml.py,Verbose Test,pytest_runtest_logreport,587;680
+src/_pytest/junitxml.py,Verbose Test,pytest_addoption,421;467
+src/_pytest/junitxml.py,Programming Paradigms Blend,(nível do módulo),40;129
+src/_pytest/junitxml.py,Undefined Test,record_testreport,159
+src/_pytest/junitxml.py,Undefined Test,append_failure,238
+src/_pytest/junitxml.py,Undefined Test,append_collect_error,254
+src/_pytest/junitxml.py,Undefined Test,append_error,262
+src/_pytest/junitxml.py,Undefined Test,append_skipped,278
+src/_pytest/junitxml.py,Undefined Test,node_reporter,552
+src/_pytest/pastebin.py,Conditional Test Logic,test_pytest_terminal_summary,106
+src/_pytest/pastebin.py,Conditional Test Logic,test_pytest_terminal_summary,108
+src/_pytest/pastebin.py,Conditional Test Logic,test_pytest_terminal_summary,110
+src/_pytest/pastebin.py,Exception Handling,test_pytest_terminal_summary,111
+src/_pytest/raises.py,Conditional Test Logic,_check_match,479
+src/_pytest/raises.py,Conditional Test Logic,_check_match,491
+src/_pytest/raises.py,Conditional Test Logic,_check_match,494
+src/_pytest/raises.py,Conditional Test Logic,_check_match,502
+src/_pytest/raises.py,Conditional Test Logic,_check_match,518
+src/_pytest/raises.py,Conditional Test Logic,__exit__,695
+src/_pytest/raises.py,Conditional Test Logic,__exit__,696
+src/_pytest/raises.py,Conditional Test Logic,__exit__,698
+src/_pytest/raises.py,Conditional Test Logic,__exit__,708
+src/_pytest/raises.py,Conditional Test Logic,__exit__,709
+src/_pytest/raises.py,Conditional Test Logic,matches,1111
+src/_pytest/raises.py,Conditional Test Logic,matches,1114
+src/_pytest/raises.py,Conditional Test Logic,matches,1118
+src/_pytest/raises.py,Conditional Test Logic,matches,1124
+src/_pytest/raises.py,Conditional Test Logic,matches,1127
+src/_pytest/raises.py,Conditional Test Logic,matches,1138
+src/_pytest/raises.py,Conditional Test Logic,matches,1141
+src/_pytest/raises.py,Conditional Test Logic,matches,1144
+src/_pytest/raises.py,Conditional Test Logic,matches,1163
+src/_pytest/raises.py,Conditional Test Logic,matches,1172
+src/_pytest/raises.py,Conditional Test Logic,matches,1195
+src/_pytest/raises.py,Conditional Test Logic,matches,1199
+src/_pytest/raises.py,Conditional Test Logic,_check_expected,1224
+src/_pytest/raises.py,Conditional Test Logic,_check_expected,1227
+src/_pytest/raises.py,Conditional Test Logic,_check_expected,1230
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1274
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1275
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1278
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1286
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1290
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1297
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1298
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1299
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1307
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1312
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1319
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1322
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1329
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1339
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1344
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1349
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1352
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1356
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1357
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1368
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1370
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1372
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1374
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1376
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1379
+src/_pytest/raises.py,Conditional Test Logic,_check_exceptions,1386
+src/_pytest/raises.py,Conditional Test Logic,__exit__,1405
+src/_pytest/raises.py,Conditional Test Logic,__exit__,1416
+src/_pytest/raises.py,Conditional Test Logic,__exit__,1420
+src/_pytest/raises.py,Conditional Test Logic,no_match_for_expected,1482
+src/_pytest/raises.py,Conditional Test Logic,no_match_for_expected,1483
+src/_pytest/raises.py,Conditional Test Logic,no_match_for_expected,1485
+src/_pytest/raises.py,Conditional Test Logic,no_match_for_actual,1490
+src/_pytest/raises.py,Conditional Test Logic,no_match_for_actual,1491
+src/_pytest/raises.py,Conditional Test Logic,no_match_for_actual,1493
+src/_pytest/raises.py,Verbose Test,__init__,367;417
+src/_pytest/raises.py,Verbose Test,__init__,940;1001
+src/_pytest/raises.py,Verbose Test,matches,1092;1213
+src/_pytest/raises.py,Verbose Test,_check_exceptions,1255;1396
+src/_pytest/raises.py,Verbose Test,raises,104;281
+src/_pytest/raises.py,Programming Paradigms Blend,(nível do módulo),26;364
+src/_pytest/raises.py,Undefined Test,_check_match,478
+src/_pytest/raises.py,Undefined Test,__exit__,688
+src/_pytest/raises.py,Undefined Test,matches,1092
+src/_pytest/raises.py,Undefined Test,_check_expected,1216
+src/_pytest/raises.py,Undefined Test,_check_exceptions,1255
+src/_pytest/raises.py,Undefined Test,__exit__,1398
+src/_pytest/raises.py,Undefined Test,get_result,1473
+src/_pytest/raises.py,Undefined Test,no_match_for_expected,1481
+src/_pytest/raises.py,Undefined Test,no_match_for_actual,1489
+src/_pytest/recwarn.py,Conditional Test Logic,__enter__,237
+src/_pytest/recwarn.py,Verbose Test,__exit__,298;378
+src/_pytest/recwarn.py,Verbose Test,warns,109;172
+src/_pytest/recwarn.py,Programming Paradigms Blend,(nível do módulo),19;175
+src/_pytest/recwarn.py,Undefined Test,__enter__,236
+src/_pytest/recwarn.py,Undefined Test,matches,292
+src/_pytest/skipping.py,Conditional Test Logic,pytest_runtest_makereport,282
+src/_pytest/skipping.py,Conditional Test Logic,pytest_runtest_makereport,289
+src/_pytest/skipping.py,Conditional Test Logic,pytest_runtest_makereport,291
+src/_pytest/skipping.py,Conditional Test Logic,pytest_runtest_makereport,306
+src/_pytest/skipping.py,Verbose Test,evaluate_condition,89;159
+src/_pytest/skipping.py,Programming Paradigms Blend,(nível do módulo),29;163
+src/_pytest/skipping.py,Undefined Test,pytest_runtest_makereport,277
+src/_pytest/threadexception.py,Programming Paradigms Blend,(nível do módulo),19;23
+src/_pytest/timing.py,Programming Paradigms Blend,(nível do módulo),20;25
+src/_pytest/unittest.py,Conditional Test Logic,runtest,388
+src/_pytest/unittest.py,Conditional Test Logic,runtest,400
+src/_pytest/unittest.py,Conditional Test Logic,addSubTest,462
+src/_pytest/unittest.py,Conditional Test Logic,addSubTest,468
+src/_pytest/unittest.py,Conditional Test Logic,addSubTest,473
+src/_pytest/unittest.py,Conditional Test Logic,addSubTest,476
+src/_pytest/unittest.py,Conditional Test Logic,addSubTest,478
+src/_pytest/unittest.py,Conditional Test Logic,_obtain_errors_and_skips,488
+src/_pytest/unittest.py,Conditional Test Logic,_obtain_errors_and_skips,493
+src/_pytest/unittest.py,Conditional Test Logic,_obtain_errors_and_skips,494
+src/_pytest/unittest.py,Conditional Test Logic,_obtain_errors_and_skips,499
+src/_pytest/unittest.py,Conditional Test Logic,_obtain_errors_and_skips,500
+src/_pytest/unittest.py,Conditional Test Logic,_handle_twisted_exc_info,622
+src/_pytest/unittest.py,Conditional Test Logic,_handle_twisted_exc_info,631
+src/_pytest/unittest.py,Conditional Test Logic,_handle_twisted_exc_info,638
+src/_pytest/unittest.py,Conditional Test Logic,_handle_twisted_exc_info,641
+src/_pytest/unittest.py,Conditional Test Logic,_handle_twisted_exc_info,643
+src/_pytest/unittest.py,Exception Handling,runtest,407
+src/_pytest/unittest.py,Verbose Test,_register_unittest_setup_class_fixture,127;179
+src/_pytest/unittest.py,Verbose Test,addSubTest,423;479
+src/_pytest/unittest.py,Programming Paradigms Blend,(nível do módulo),43;79
+src/_pytest/unittest.py,Non-Functional Statement,addError,304
+src/_pytest/unittest.py,Non-Functional Statement,pytest_runtest_makereport,514
+src/_pytest/unittest.py,Undefined Test,_getinstance,233
+src/_pytest/unittest.py,Undefined Test,runtest,379
+src/_pytest/unittest.py,Undefined Test,addSubTest,423
+src/_pytest/unittest.py,Undefined Test,_obtain_errors_and_skips,481
+src/_pytest/unittest.py,Undefined Test,_handle_twisted_exc_info,613
+src/_pytest/unraisableexception.py,Programming Paradigms Blend,(nível do módulo),19;32
+src/_pytest/warnings.py,Conditional Test Logic,catch_warnings_for_item,36
+src/_pytest/warnings.py,Conditional Test Logic,catch_warnings_for_item,37
+src/_pytest/warnings.py,Conditional Test Logic,catch_warnings_for_item,38
+src/_pytest/warnings.py,Conditional Test Logic,catch_warnings_for_item,44
+src/_pytest/warnings.py,Conditional Test Logic,catch_warnings_for_item,48
+src/_pytest/warnings.py,Exception Handling,catch_warnings_for_item,41
+src/_pytest/warnings.py,Undefined Test,catch_warnings_for_item,19
+src/_pytest/_code/code.py,Conditional Test Logic,match,799
+src/_pytest/_code/code.py,Verbose Test,getrepr,711;784
+src/_pytest/_code/code.py,Verbose Test,get_source,943;994
+src/_pytest/_code/code.py,Verbose Test,repr_traceback_entry,1078;1128
+src/_pytest/_code/code.py,Verbose Test,_truncate_recursive_traceback,1165;1212
+src/_pytest/_code/code.py,Verbose Test,repr_excinfo,1214;1269
+src/_pytest/_code/code.py,Verbose Test,_write_entry_lines,1428;1475
+src/_pytest/_code/code.py,Programming Paradigms Blend,(nível do módulo),52;60
+src/_pytest/_code/code.py,Non-Functional Statement,ishidden,334
+src/_pytest/_code/code.py,Non-Functional Statement,getfslineno,1593
+src/_pytest/_code/code.py,Undefined Test,statement,269
+src/_pytest/_code/code.py,Undefined Test,from_exception,525
+src/_pytest/_code/code.py,Undefined Test,from_current,566
+src/_pytest/_code/code.py,Undefined Test,fill_unfilled,590
+src/_pytest/_code/code.py,Undefined Test,type,596
+src/_pytest/_code/code.py,Undefined Test,value,604
+src/_pytest/_code/code.py,Undefined Test,tb,612
+src/_pytest/_code/code.py,Undefined Test,typename,632
+src/_pytest/_code/code.py,Undefined Test,match,786
+src/_pytest/_code/code.py,Undefined Test,group_contains,835
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,exec_module,163
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,exec_module,165
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,exec_module,174
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,exec_module,177
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,703
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,711
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,714
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,719
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,729
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,750
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,753
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,754
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,756
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,757
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,run,762
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,864
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,884
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,895
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,899
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,937
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,948
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,964
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,969
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,970
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,visit_Assert,971
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,_get_assertion_exprs,599
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,_get_assertion_exprs,600
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,_get_assertion_exprs,604
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,_get_assertion_exprs,609
+src/_pytest/assertion/rewrite.py,Conditional Test Logic,_get_assertion_exprs,615
+src/_pytest/assertion/rewrite.py,Exception Handling,exec_module,179
+src/_pytest/assertion/rewrite.py,Verbose Test,run,701;771
+src/_pytest/assertion/rewrite.py,Verbose Test,visit_Assert,856;975
+src/_pytest/assertion/rewrite.py,Verbose Test,visit_BoolOp,1021;1076
+src/_pytest/assertion/rewrite.py,Verbose Test,_read_pyc,345;393
+src/_pytest/assertion/rewrite.py,Verbose Test,_get_assertion_exprs,580;631
+src/_pytest/assertion/rewrite.py,Programming Paradigms Blend,(nível do módulo),28;73
+src/_pytest/assertion/rewrite.py,Non-Functional Statement,run,723
+src/_pytest/assertion/rewrite.py,Undefined Test,exec_module,145
+src/_pytest/assertion/rewrite.py,Undefined Test,run,701
+src/_pytest/assertion/rewrite.py,Undefined Test,generic_visit,850
+src/_pytest/assertion/rewrite.py,Undefined Test,visit_Assert,856
+src/_pytest/assertion/rewrite.py,Undefined Test,_get_assertion_exprs,580
+src/_pytest/config/__init__.py,Conditional Test Logic,__init__,534
+src/_pytest/config/__init__.py,Conditional Test Logic,_importconftest,773
+src/_pytest/config/__init__.py,Conditional Test Logic,_importconftest,781
+src/_pytest/config/__init__.py,Conditional Test Logic,_importconftest,802
+src/_pytest/config/__init__.py,Conditional Test Logic,_importconftest,803
+src/_pytest/config/__init__.py,Conditional Test Logic,_importconftest,804
+src/_pytest/config/__init__.py,Conditional Test Logic,_importconftest,805
+src/_pytest/config/__init__.py,Conditional Test Logic,import_plugin,930
+src/_pytest/config/__init__.py,Conditional Test Logic,import_plugin,936
+src/_pytest/config/__init__.py,Conditional Test Logic,import_plugin,938
+src/_pytest/config/__init__.py,Conditional Test Logic,import_plugin,942
+src/_pytest/config/__init__.py,Conditional Test Logic,import_plugin,952
+src/_pytest/config/__init__.py,Conditional Test Logic,_capture_plugin_import_warnings,1349
+src/_pytest/config/__init__.py,Conditional Test Logic,_do_configure,1362
+src/_pytest/config/__init__.py,Conditional Test Logic,_consider_importhook,1499
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1694
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1696
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1731
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1739
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1742
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1751
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1753
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1759
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1763
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1784
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1785
+src/_pytest/config/__init__.py,Conditional Test Logic,parse,1795
+src/_pytest/config/__init__.py,Conditional Test Logic,_getini_value,1984
+src/_pytest/config/__init__.py,Conditional Test Logic,_getini_value,1987
+src/_pytest/config/__init__.py,Conditional Test Logic,_getini_value,1992
+src/_pytest/config/__init__.py,Conditional Test Logic,_getini_value,1998
+src/_pytest/config/__init__.py,Conditional Test Logic,_getconftest_pathlist,2169
+src/_pytest/config/__init__.py,Conditional Test Logic,_getconftest_pathlist,2170
+src/_pytest/config/__init__.py,Conditional Test Logic,get_verbosity,2261
+src/_pytest/config/__init__.py,Conditional Test Logic,get_verbosity,2265
+src/_pytest/config/__init__.py,Conditional Test Logic,get_verbosity,2269
+src/_pytest/config/__init__.py,Conditional Test Logic,_get_legacy_hook_marks,465
+src/_pytest/config/__init__.py,Conditional Test Logic,_get_legacy_hook_marks,471
+src/_pytest/config/__init__.py,Conditional Test Logic,_get_legacy_hook_marks,473
+src/_pytest/config/__init__.py,Conditional Test Logic,_get_legacy_hook_marks,481
+src/_pytest/config/__init__.py,Exception Handling,__init__,537
+src/_pytest/config/__init__.py,Exception Handling,_importconftest,782
+src/_pytest/config/__init__.py,Exception Handling,_importconftest,787
+src/_pytest/config/__init__.py,Exception Handling,import_plugin,941
+src/_pytest/config/__init__.py,Exception Handling,_capture_plugin_import_warnings,1346
+src/_pytest/config/__init__.py,Exception Handling,_consider_importhook,1502
+src/_pytest/config/__init__.py,Exception Handling,parse,1790
+src/_pytest/config/__init__.py,Exception Handling,parse,1805
+src/_pytest/config/__init__.py,Exception Handling,_getconftest_pathlist,2162
+src/_pytest/config/__init__.py,Exception Handling,_assertion_supported,2326
+src/_pytest/config/__init__.py,Verbose Test,__init__,502;552
+src/_pytest/config/__init__.py,Verbose Test,_set_initial_conftests,648;697
+src/_pytest/config/__init__.py,Verbose Test,_importconftest,763;814
+src/_pytest/config/__init__.py,Verbose Test,import_plugin,917;964
+src/_pytest/config/__init__.py,Verbose Test,__init__,1216;1272
+src/_pytest/config/__init__.py,Verbose Test,parse,1684;1817
+src/_pytest/config/__init__.py,Verbose Test,_getini,1923;1972
+src/_pytest/config/__init__.py,Verbose Test,_getini_ini,2007;2073
+src/_pytest/config/__init__.py,Verbose Test,_getini_toml,2075;2157
+src/_pytest/config/__init__.py,Verbose Test,get_verbosity,2220;2272
+src/_pytest/config/__init__.py,Verbose Test,_iter_rewritable_modules,1052;1114
+src/_pytest/config/__init__.py,Verbose Test,parse_warning_filter,2377;2454
+src/_pytest/config/__init__.py,Programming Paradigms Blend,(nível do módulo),88;108
+src/_pytest/config/__init__.py,Non-Functional Statement,__init__,545
+src/_pytest/config/__init__.py,Non-Functional Statement,_importconftest,785
+src/_pytest/config/__init__.py,Non-Functional Statement,getini,1899
+src/_pytest/config/__init__.py,Non-Functional Statement,_getini,1966
+src/_pytest/config/__init__.py,Undefined Test,__init__,502
+src/_pytest/config/__init__.py,Undefined Test,_importconftest,763
+src/_pytest/config/__init__.py,Undefined Test,import_plugin,917
+src/_pytest/config/__init__.py,Undefined Test,_capture_plugin_import_warnings,1341
+src/_pytest/config/__init__.py,Undefined Test,_do_configure,1359
+src/_pytest/config/__init__.py,Undefined Test,get_terminal_writer,1386
+src/_pytest/config/__init__.py,Undefined Test,_consider_importhook,1487
+src/_pytest/config/__init__.py,Undefined Test,parse,1684
+src/_pytest/config/__init__.py,Undefined Test,addinivalue_line,1854
+src/_pytest/config/__init__.py,Undefined Test,_getini_value,1974
+src/_pytest/config/__init__.py,Undefined Test,_getconftest_pathlist,2159
+src/_pytest/config/__init__.py,Undefined Test,get_verbosity,2220
+src/_pytest/config/__init__.py,Undefined Test,print_plugin_import_error,190
+src/_pytest/config/__init__.py,Undefined Test,_get_legacy_hook_marks,460
+src/_pytest/config/__init__.py,Undefined Test,_assertion_supported,2325
+src/_pytest/mark/__init__.py,Programming Paradigms Blend,(nível do módulo),32;164
+src/_pytest/mark/structures.py,Conditional Test Logic,param,122
+src/_pytest/mark/structures.py,Conditional Test Logic,param,126
+src/_pytest/mark/structures.py,Conditional Test Logic,param,132
+src/_pytest/mark/structures.py,Conditional Test Logic,param,133
+src/_pytest/mark/structures.py,Conditional Test Logic,combined_with,316
+src/_pytest/mark/structures.py,Conditional Test Logic,combined_with,317
+src/_pytest/mark/structures.py,Conditional Test Logic,store_mark,506
+src/_pytest/mark/structures.py,Verbose Test,_for_parametrize,196;259
+src/_pytest/mark/structures.py,Programming Paradigms Blend,(nível do módulo),38;48
+src/_pytest/mark/structures.py,Non-Functional Statement,extract_from,165
+src/_pytest/mark/structures.py,Undefined Test,param,116
+src/_pytest/mark/structures.py,Undefined Test,combined_with,303
+src/_pytest/mark/structures.py,Undefined Test,get_empty_parameterset_mark,60
+src/_pytest/mark/structures.py,Undefined Test,store_mark,497
+testing/acceptance_test.py,Conditional Test Logic,test_early_load_setuptools_name,154
+testing/acceptance_test.py,Conditional Test Logic,test_docstring_on_hookspec,407
+testing/acceptance_test.py,Conditional Test Logic,test_docstring_on_hookspec,408
+testing/acceptance_test.py,Conditional Test Logic,test_issue134_report_error_when_collecting_member,435
+testing/acceptance_test.py,Conditional Test Logic,check_tests_in_output,1043
+testing/acceptance_test.py,Conditional Test Logic,check_tests_in_output,1044
+testing/acceptance_test.py,Conditional Test Logic,check_tests_in_output,1046
+testing/acceptance_test.py,Exception Handling,test_issue_9765,1745
+testing/acceptance_test.py,Unknown Test,test_issue88_initial_file_multinodes,247
+testing/acceptance_test.py,Unknown Test,test_unknown_option,480
+testing/acceptance_test.py,Unknown Test,test_getsourcelines_error_issue553,488
+testing/acceptance_test.py,Unknown Test,test_parametrized_with_bytes_regex,525
+testing/acceptance_test.py,Unknown Test,test_double_pytestcmdline,610
+testing/acceptance_test.py,Unknown Test,test_invoke_with_invalid_type,643
+testing/acceptance_test.py,Unknown Test,test_invoke_test_and_doctestmodules,838
+testing/acceptance_test.py,Unknown Test,test_doctest_id,936
+testing/acceptance_test.py,Unknown Test,test_pytest_plugins_as_module,1265
+testing/acceptance_test.py,Unknown Test,test_deferred_hook_checking,1279
+testing/acceptance_test.py,Unknown Test,test_fixture_values_leak,1350
+testing/acceptance_test.py,Unknown Test,test_frame_leak_on_failing_test,1386
+testing/acceptance_test.py,Unknown Test,test_fixture_mock_integration,1419
+testing/acceptance_test.py,Unknown Test,test_function_return_non_none_warning,1646
+testing/acceptance_test.py,Unknown Test,test_doctest_and_normal_imports_with_importlib,1657
+testing/acceptance_test.py,Unknown Test,test_issue_9765,1736
+testing/acceptance_test.py,Programming Paradigms Blend,(nível do módulo),22;29
+testing/acceptance_test.py,Non-Functional Statement,test_namespace_import_doesnt_confuse_import_hook,471
+testing/acceptance_test.py,Non-Functional Statement,test_frame_leak_on_failing_test,1400
+testing/acceptance_test.py,Non-Functional Statement,test_error_on_sync_test_async_fixture,1496
+testing/acceptance_test.py,Non-Functional Statement,test_error_on_sync_test_async_autouse_fixture,1548
+testing/acceptance_test.py,Undefined Test,check_tests_in_output,1038
+testing/conftest.py,Conditional Test Logic,tw_mock,112
+testing/conftest.py,Conditional Test Logic,tw_mock,114
+testing/conftest.py,Programming Paradigms Blend,(nível do módulo),16;171
+testing/conftest.py,Undefined Test,tw_mock,95
+testing/deprecated_test.py,Conditional Test Logic,test_deprecation_warning_instance_not_shared_across_raises,387
+testing/deprecated_test.py,Unknown Test,test_private_is_deprecated,88
+testing/deprecated_test.py,Programming Paradigms Blend,(nível do módulo),14;174
+testing/test_argcomplete.py,Conditional Test Logic,test_compare_with_compgen,88
+testing/test_argcomplete.py,Conditional Test Logic,test_remove_dir_prefix,98
+testing/test_argcomplete.py,Programming Paradigms Blend,(nível do módulo),15;39
+testing/test_assertion.py,Conditional Test Logic,test_conftest_assertion_rewrite,184
+testing/test_assertion.py,Conditional Test Logic,test_pytest_plugins_rewrite,246
+testing/test_assertion.py,Conditional Test Logic,_plugin_loading_args,373
+testing/test_assertion.py,Conditional Test Logic,_plugin_loading_args,384
+testing/test_assertion.py,Conditional Test Logic,test_installed_plugin_rewrite,412
+testing/test_assertion.py,Conditional Test Logic,test_text_skipping,624
+testing/test_assertion.py,Conditional Test Logic,test_text_skipping_trailing,633
+testing/test_assertion.py,Conditional Test Logic,test_text_skipping_trailing_when_prefix_differs,641
+testing/test_assertion.py,Conditional Test Logic,test_dict_omitting,984
+testing/test_assertion.py,Conditional Test Logic,test_mojibake,1331
+testing/test_assertion.py,Conditional Test Logic,test_attrs,1484
+testing/test_assertion.py,Conditional Test Logic,test_attrs_recursive,1504
+testing/test_assertion.py,Conditional Test Logic,test_attrs_with_attribute_comparison_off,1556
+testing/test_assertion.py,Conditional Test Logic,test_truncation_with_ini,1941
+testing/test_assertion.py,Conditional Test Logic,test_truncation_with_ini,1943
+testing/test_assertion.py,Conditional Test Logic,test_truncation_with_ini,1949
+testing/test_assertion.py,Conditional Test Logic,test_does_not_over_consume_the_stream,2097
+testing/test_assertion.py,Conditional Test Logic,test_pull_count_is_independent_of_input_size,2119
+testing/test_assertion.py,Conditional Test Logic,_explain_capped,2138
+testing/test_assertion.py,Conditional Test Logic,test_set_extra_item,2381
+testing/test_assertion.py,Conditional Test Logic,test_set_extra_item,2388
+testing/test_assertion.py,Conditional Test Logic,test_dict_items_view_subset,2440
+testing/test_assertion.py,Unknown Test,test_get_unsupported_type_error,145
+testing/test_assertion.py,Unknown Test,test_getini_unsupported_error,151
+testing/test_assertion.py,Unknown Test,test_rewrite_ast,424
+testing/test_assertion.py,Unknown Test,test_register_assert_rewrite_checks_types,469
+testing/test_assertion.py,Unknown Test,test_pytest_assertrepr_compare_called,478
+testing/test_assertion.py,Unknown Test,test_iterable_full_diff_ci,810
+testing/test_assertion.py,Unknown Test,test_full_output_truncated,1858
+testing/test_assertion.py,Unknown Test,test_truncation_with_ini,1916
+testing/test_assertion.py,Unknown Test,test_truncation_limits_accept_int_and_string,2001
+testing/test_assertion.py,Unknown Test,test_set_extra_item,2364
+testing/test_assertion.py,Unknown Test,test_set_proper_superset_equal,2397
+testing/test_assertion.py,Unknown Test,test_pytest_assertrepr_compare_integration,2416
+testing/test_assertion.py,Unknown Test,test_dict_items_view_subset,2438
+testing/test_assertion.py,Unknown Test,test_assertrepr_loaded_per_dir,2470
+testing/test_assertion.py,Unknown Test,test_triple_quoted_string_issue113,2510
+testing/test_assertion.py,Unknown Test,test_warn_missing,2634
+testing/test_assertion.py,Unknown Test,test_recursion_source_decode,2641
+testing/test_assertion.py,Unknown Test,test_raise_unprintable_assertion_error,2746
+testing/test_assertion.py,Unknown Test,test_raise_assertion_error_raising_repr,2759
+testing/test_assertion.py,Unknown Test,test_exit_from_assertrepr_compare,2790
+testing/test_assertion.py,Unknown Test,test_exception_before_first_yield_emits_summary_and_notice,2875
+testing/test_assertion.py,Unknown Test,test_reprcompare_verbose_long,2914
+testing/test_assertion.py,Unknown Test,test_comparisons_handle_colors,2975
+testing/test_assertion.py,Unknown Test,test_assertion_text_diff_style_invalid,3124
+testing/test_assertion.py,Verbose Test,test_traceback_failure,2522;2574
+testing/test_assertion.py,Verbose Test,test_fine_grained_assertion_verbosity,2991;3057
+testing/test_assertion.py,Undefined Test,get_terminal_writer,67
+testing/test_assertion.py,Undefined Test,_plugin_loading_args,366
+testing/test_assertion.py,Undefined Test,_explain_capped,2128
+testing/test_assertion.py,Undefined Test,_formatting_work,2175
+testing/test_assertrewrite.py,Conditional Test Logic,test_place_initial_imports,82
+testing/test_assertrewrite.py,Conditional Test Logic,test_place_initial_imports,90
+testing/test_assertrewrite.py,Conditional Test Logic,test_place_initial_imports,99
+testing/test_assertrewrite.py,Conditional Test Logic,test_place_initial_imports,107
+testing/test_assertrewrite.py,Conditional Test Logic,test_place_initial_imports,114
+testing/test_assertrewrite.py,Conditional Test Logic,test_location_is_set,132
+testing/test_assertrewrite.py,Conditional Test Logic,test_location_is_set,133
+testing/test_assertrewrite.py,Conditional Test Logic,test_location_is_set,135
+testing/test_assertrewrite.py,Conditional Test Logic,test_location_is_set,137
+testing/test_assertrewrite.py,Conditional Test Logic,test_positions_are_preserved,163
+testing/test_assertrewrite.py,Conditional Test Logic,test_positions_are_preserved,167
+testing/test_assertrewrite.py,Conditional Test Logic,test_positions_are_preserved,216
+testing/test_assertrewrite.py,Conditional Test Logic,test_positions_are_preserved,235
+testing/test_assertrewrite.py,Conditional Test Logic,test_positions_are_preserved,278
+testing/test_assertrewrite.py,Conditional Test Logic,test_positions_are_preserved,299
+testing/test_assertrewrite.py,Conditional Test Logic,test_assertrepr_compare_same_width,438
+testing/test_assertrewrite.py,Conditional Test Logic,test_orphaned_pyc_file,1138
+testing/test_assertrewrite.py,Conditional Test Logic,test_moved_test_file_updates_code_filename,1181
+testing/test_assertrewrite.py,Conditional Test Logic,test_moved_test_file_updates_code_filename,1182
+testing/test_assertrewrite.py,Conditional Test Logic,test_read_pyc_more_invalid,1529
+testing/test_assertrewrite.py,Exception Handling,test_pycache_is_readonly,1038
+testing/test_assertrewrite.py,Exception Handling,test_zipfile,1047
+testing/test_assertrewrite.py,Exception Handling,test_readonly,1096
+testing/test_assertrewrite.py,Unknown Test,test_rewrites_plugin_as_a_package,360
+testing/test_assertrewrite.py,Unknown Test,test_assert_handling_raise_in__iter__,942
+testing/test_assertrewrite.py,Unknown Test,test_assert_fixture,1001
+testing/test_assertrewrite.py,Unknown Test,test_rewrite_warning,1275
+testing/test_assertrewrite.py,Unknown Test,test_rewrite_warning_using_pytest_plugins,1336
+testing/test_assertrewrite.py,Unknown Test,test_rewrite_warning_using_pytest_plugins_env_var,1351
+testing/test_assertrewrite.py,Unknown Test,test_reload_is_same_and_reloads,1580
+testing/test_assertrewrite.py,Unknown Test,test_get_data_support,1612
+testing/test_assertrewrite.py,Unknown Test,test_simple_case,1652
+testing/test_assertrewrite.py,Unknown Test,test_long_case,1662
+testing/test_assertrewrite.py,Unknown Test,test_many_brackets,1672
+testing/test_assertrewrite.py,Unknown Test,test_rewrite_python_files_contain_subdirs,1684
+testing/test_assertrewrite.py,Unknown Test,test_cwd_changed,2028
+testing/test_assertrewrite.py,Unknown Test,test_hook_call,2072
+testing/test_assertrewrite.py,Unknown Test,test_hook_call_with_parens,2093
+testing/test_assertrewrite.py,Unknown Test,test_default_verbosity,2386
+testing/test_assertrewrite.py,Unknown Test,test_increased_verbosity,2391
+testing/test_assertrewrite.py,Unknown Test,test_max_increased_verbosity,2396
+testing/test_assertrewrite.py,Unknown Test,test_issue731,1632
+testing/test_assertrewrite.py,Verbose Test,test_positions_are_preserved,143;341
+testing/test_assertrewrite.py,Verbose Test,test_boolop,598;675
+testing/test_assertrewrite.py,Verbose Test,test_call,764;833
+testing/test_assertrewrite.py,Verbose Test,test_moved_test_file_updates_code_filename,1165;1222
+testing/test_assertrewrite.py,Programming Paradigms Blend,(nível do módulo),44;77
+testing/test_assertrewrite.py,Non-Functional Statement,test_name,422
+testing/test_assertrewrite.py,Non-Functional Statement,test_hook_not_called_without_hookimpl,2114
+testing/test_assertrewrite.py,Non-Functional Statement,test_hook_not_called_without_cmd_option,2141
+testing/test_assertrewrite.py,Non-Functional Statement,test_source_mtime_long_long,1893
+testing/test_assertrewrite_coverage.py,Unknown Test,test_get_failure_message_fails_on_passing_assert,207
+testing/test_assertrewrite_coverage.py,Unknown Test,test_assert_single_evaluation,257
+testing/test_assertrewrite_coverage.py,Unknown Test,test_assert_passes_when_true,266
+testing/test_assertrewrite_coverage.py,Unknown Test,test_assert_semantically_equivalent_passing,272
+testing/test_assertrewrite_coverage.py,Unknown Test,test_assert_semantically_equivalent_failing,278
+testing/test_assertrewrite_coverage.py,Unknown Test,test_assert_semantically_equivalent_detects_mismatch,284
+testing/test_assertrewrite_coverage.py,Unknown Test,test_assert_evaluation_order_passing,293
+testing/test_assertrewrite_coverage.py,Unknown Test,test_assert_evaluation_order_detects_value_mismatch,301
+testing/test_assertrewrite_coverage.py,Unknown Test,test_subscript_semantics_preserved,538
+testing/test_assertrewrite_coverage.py,Unknown Test,test_ifexp_semantics_preserved,560
+testing/test_assertrewrite_coverage.py,Unknown Test,test_ifexp_short_circuit_true,567
+testing/test_assertrewrite_coverage.py,Unknown Test,test_ifexp_short_circuit_false,575
+testing/test_assertrewrite_coverage.py,Unknown Test,test_list_literal_semantics_preserved,587
+testing/test_assertrewrite_coverage.py,Unknown Test,test_dict_literal_semantics_preserved,593
+testing/test_assertrewrite_coverage.py,Unknown Test,test_listcomp_semantics_preserved,603
+testing/test_assertrewrite_coverage.py,Unknown Test,test_fstring_semantics_preserved,622
+testing/test_assertrewrite_coverage.py,Unknown Test,test_walrus_semantics_preserved,670
+testing/test_assertrewrite_coverage.py,Unknown Test,test_call_in_compare_evaluated_once,726
+testing/test_assertrewrite_coverage.py,Unknown Test,test_call_in_boolean_and_evaluated_once,735
+testing/test_assertrewrite_coverage.py,Unknown Test,test_call_in_unary_evaluated_once,760
+testing/test_assertrewrite_coverage.py,Unknown Test,test_call_in_binop_evaluated_once,769
+testing/test_assertrewrite_coverage.py,Unknown Test,test_attribute_access_evaluated_once,778
+testing/test_assertrewrite_coverage.py,Unknown Test,test_subscript_evaluated_once,790
+testing/test_assertrewrite_coverage.py,Unknown Test,test_walrus_in_compare_evaluated_once,801
+testing/test_assertrewrite_coverage.py,Unknown Test,test_walrus_in_boolean_evaluated_once,810
+testing/test_assertrewrite_coverage.py,Unknown Test,test_walrus_in_chained_compare_evaluated_once,819
+testing/test_assertrewrite_coverage.py,Unknown Test,test_method_call_evaluated_once,828
+testing/test_assertrewrite_coverage.py,Unknown Test,test_ifexp_condition_evaluated_once,866
+testing/test_assertrewrite_coverage.py,Unknown Test,test_comprehension_generator_evaluated_once,875
+testing/test_assertrewrite_coverage.py,Unknown Test,test_compare_left_operand_precedes_walrus,901
+testing/test_assertrewrite_coverage.py,Unknown Test,test_call_earlier_argument_precedes_walrus,926
+testing/test_assertrewrite_coverage.py,Unknown Test,test_call_later_argument_sees_walrus_value,941
+testing/test_assertrewrite_coverage.py,Unknown Test,test_boolop_chain_rebinds_in_order,955
+testing/test_assertrewrite_coverage.py,Unknown Test,test_binop_left_operand_precedes_walrus,966
+testing/test_assertrewrite_coverage.py,Unknown Test,test_chained_compare_operands_in_order,979
+testing/test_assertrewrite_coverage.py,Unknown Test,test_container_literal_operand_in_order,992
+testing/test_assertrewrite_coverage.py,Unknown Test,test_fstring_operand_in_order,1006
+testing/test_assertrewrite_coverage.py,Unknown Test,test_attribute_operand_in_order,1020
+testing/test_assertrewrite_coverage.py,Unknown Test,test_subscript_container_in_order,1037
+testing/test_assertrewrite_coverage.py,Unknown Test,test_method_receiver_in_order,1053
+testing/test_assertrewrite_coverage.py,Unknown Test,test_keyword_argument_precedes_walrus,1070
+testing/test_assertrewrite_coverage.py,Unknown Test,test_double_star_argument_precedes_walrus,1085
+testing/test_assertrewrite_coverage.py,Unknown Test,test_ifexp_branches_in_order,1100
+testing/test_assertrewrite_coverage.py,Unknown Test,test_walrus_in_subscript,1163
+testing/test_assertrewrite_coverage.py,Unknown Test,test_method_call_single_evaluation,1172
+testing/test_assertrewrite_coverage.py,Unknown Test,test_subscript_single_evaluation,1184
+testing/test_assertrewrite_coverage.py,Unknown Test,test_ifexp_condition_single_evaluation,1200
+testing/test_assertrewrite_coverage.py,Unknown Test,test_complex_assertion_semantics,1210
+testing/test_assertrewrite_coverage.py,Programming Paradigms Blend,(nível do módulo),29;197
+testing/test_assertrewrite_coverage.py,Non-Functional Statement,assert_single_evaluation,117
+testing/test_cacheprovider.py,Conditional Test Logic,test_lastfailed_usecase,412
+testing/test_cacheprovider.py,Conditional Test Logic,test_terminal_report_lastfailed,529
+testing/test_cacheprovider.py,Conditional Test Logic,test_lf_and_ff_prints_no_needless_message,771
+testing/test_cacheprovider.py,Conditional Test Logic,test_lf_and_ff_prints_no_needless_message,777
+testing/test_cacheprovider.py,Conditional Test Logic,test_cache_reportheader,265
+testing/test_cacheprovider.py,Conditional Test Logic,test_gitignore,1384
+testing/test_cacheprovider.py,Conditional Test Logic,test_gitignore,1396
+testing/test_cacheprovider.py,Unknown Test,test_failedfirst_order,417
+testing/test_cacheprovider.py,Unknown Test,test_lastfailed_failedfirst_order,436
+testing/test_cacheprovider.py,Unknown Test,test_lastfailed_difference_invocations,449
+testing/test_cacheprovider.py,Unknown Test,test_lastfailed_usecase_splice,480
+testing/test_cacheprovider.py,Unknown Test,test_non_serializable_parametrize,509
+testing/test_cacheprovider.py,Unknown Test,test_terminal_report_lastfailed,528
+testing/test_cacheprovider.py,Unknown Test,test_terminal_report_failedfirst,585
+testing/test_cacheprovider.py,Unknown Test,test_lastfailed_no_failures_behavior_empty_cache,893
+testing/test_cacheprovider.py,Unknown Test,test_lastfailed_skip_collection,909
+testing/test_cacheprovider.py,Unknown Test,test_lastfailed_skip_collection_with_nesting,961
+testing/test_cacheprovider.py,Unknown Test,test_lastfailed_with_known_failures_not_being_selected,988
+testing/test_cacheprovider.py,Unknown Test,test_non_python_file_skipped,1202
+testing/test_cacheprovider.py,Unknown Test,test_newfirst_usecase,1226
+testing/test_cacheprovider.py,Unknown Test,test_newfirst_parametrize,1284
+testing/test_cacheprovider.py,Unknown Test,test_cache_reportheader,261
+testing/test_cacheprovider.py,Unknown Test,test_cache_reportheader_external_abspath,275
+testing/test_cacheprovider.py,Verbose Test,test_lastfailed_usecase,369;415
+testing/test_cacheprovider.py,Verbose Test,test_terminal_report_lastfailed,528;583
+testing/test_cacheprovider.py,Verbose Test,test_lastfailed_failure_subset,637;693
+testing/test_cacheprovider.py,Verbose Test,test_cache_cumulative,787;849
+testing/test_cacheprovider.py,Verbose Test,test_lastfailed_skip_collection,909;959
+testing/test_cacheprovider.py,Verbose Test,test_lastfailed_with_known_failures_not_being_selected,988;1046
+testing/test_cacheprovider.py,Verbose Test,test_lastfailed_args_with_deselected,1048;1096
+testing/test_cacheprovider.py,Verbose Test,test_newfirst_usecase,1226;1282
+testing/test_cacheprovider.py,Verbose Test,test_newfirst_parametrize,1284;1346
+testing/test_cacheprovider.py,Verbose Test,test_cache_show,293;342
+testing/test_cacheprovider.py,Programming Paradigms Blend,(nível do módulo),22;25
+testing/test_cacheprovider.py,Non-Functional Statement,test_terminal_report_lastfailed,536
+testing/test_cacheprovider.py,Non-Functional Statement,test_xfail_strict_considered_failure,726
+testing/test_cacheprovider.py,Non-Functional Statement,test_cache_cumulative,792
+testing/test_cacheprovider.py,Non-Functional Statement,test_cache_cumulative,798
+testing/test_cacheprovider.py,Non-Functional Statement,test_cache_cumulative,811
+testing/test_cacheprovider.py,Non-Functional Statement,test_cache_cumulative,833
+testing/test_cacheprovider.py,Non-Functional Statement,test_lastfailed_no_failures_behavior_all_passed,856
+testing/test_cacheprovider.py,Non-Functional Statement,test_lastfailed_no_failures_behavior_empty_cache,898
+testing/test_cacheprovider.py,Non-Functional Statement,test_lastfailed_skip_collection,920
+testing/test_cacheprovider.py,Non-Functional Statement,test_lastfailed_skip_collection,948
+testing/test_cacheprovider.py,Non-Functional Statement,test_lastfailed_skip_collection_with_nesting,967
+testing/test_cacheprovider.py,Non-Functional Statement,test_lastfailed_args_with_deselected,1057
+testing/test_cacheprovider.py,Non-Functional Statement,test_lastfailed_with_class_items,1104
+testing/test_cacheprovider.py,Non-Functional Statement,test_lastfailed_with_all_filtered,1151
+testing/test_cacheprovider.py,Undefined Test,get_cached_last_failed,782
+testing/test_cacheprovider.py,Undefined Test,check_readme,1350
+testing/test_capture.py,Conditional Test Logic,test_capturing_basic_api,80
+testing/test_capture.py,Conditional Test Logic,test_capturing_basic_api,88
+testing/test_capture.py,Conditional Test Logic,test_logging_and_immediate_setupteardown,329
+testing/test_capture.py,Conditional Test Logic,test_logging_and_crossscope_fixtures,355
+testing/test_capture.py,Conditional Test Logic,test_disabled_capture_fixture,698
+testing/test_capture.py,Conditional Test Logic,test_simple_many,1052
+testing/test_capture.py,Conditional Test Logic,test_many,1315
+testing/test_capture.py,Exception Handling,test_capturing_basic_api,68
+testing/test_capture.py,Exception Handling,test_init_capturing,96
+testing/test_capture.py,Exception Handling,lsof_check,1018
+testing/test_capture.py,Exception Handling,test_fdcapture_tmpfile_remains_the_same,1424
+testing/test_capture.py,Redundant Print,test_capturing_basic_api,77
+testing/test_capture.py,Redundant Print,test_capturing_basic_api,85
+testing/test_capture.py,Redundant Print,test_logging_and_immediate_setupteardown,330
+testing/test_capture.py,Redundant Print,test_logging_and_crossscope_fixtures,356
+testing/test_capture.py,Redundant Print,test_cafd_preserves_newlines,586
+testing/test_capture.py,Redundant Print,test_stderr,1070
+testing/test_capture.py,Redundant Print,test_capturing_reset_simple,1164
+testing/test_capture.py,Redundant Print,test_capturing_readouterr,1172
+testing/test_capture.py,Redundant Print,test_capturing_readouterr_unicode,1191
+testing/test_capture.py,Redundant Print,test_reset_twice_error,1197
+testing/test_capture.py,Redundant Print,test_capturing_modify_sysouterr_in_between,1212
+testing/test_capture.py,Redundant Print,test_capturing_error_recursive,1222
+testing/test_capture.py,Redundant Print,test_capturing_error_recursive,1224
+testing/test_capture.py,Redundant Print,test_stdin_nulled_by_default,1254
+testing/test_capture.py,Redundant Print,test_stdin_nulled_by_default,1255
+testing/test_capture.py,Redundant Print,test_stdin_nulled_by_default,1256
+testing/test_capture.py,Redundant Print,test_capturing_error_recursive,1269
+testing/test_capture.py,Redundant Print,test_capturing_error_recursive,1271
+testing/test_capture.py,Redundant Print,test_using_capsys_fixture_works_with_sys_stdout_encoding,1407
+testing/test_capture.py,Redundant Print,test_libedit_workaround,1763
+testing/test_capture.py,Redundant Print,test_libedit_workaround,1769
+testing/test_capture.py,Unknown Test,test_init_capturing,94
+testing/test_capture.py,Unknown Test,test_capture_and_fixtures,156
+testing/test_capture.py,Unknown Test,test_capture_scope_cache,183
+testing/test_capture.py,Unknown Test,test_teardown_capturing,225
+testing/test_capture.py,Unknown Test,test_teardown_capturing_final,250
+testing/test_capture.py,Unknown Test,test_capturing_outerr,270
+testing/test_capture.py,Unknown Test,test_capsyscapfd,502
+testing/test_capture.py,Unknown Test,test_capturing_getfixturevalue,522
+testing/test_capture.py,Unknown Test,test_capsyscapfdbinary,545
+testing/test_capture.py,Unknown Test,test_capture_is_represented_on_failure_issue128,558
+testing/test_capture.py,Unknown Test,test_capsysbinary,604
+testing/test_capture.py,Unknown Test,test_partial_setup_failure,640
+testing/test_capture.py,Unknown Test,test_disabled_capture_fixture_twice,703
+testing/test_capture.py,Unknown Test,test_fixture_use_by_other_fixtures,732
+testing/test_capture.py,Unknown Test,test_unicode_and_str_mixture,906
+testing/test_capture.py,Unknown Test,test_unicode_and_str_mixture,933
+testing/test_capture.py,Unknown Test,test_simple_many,1051
+testing/test_capture.py,Unknown Test,test_simple_many_check_open_files,1055
+testing/test_capture.py,Unknown Test,test_simple_fail_second_start,1060
+testing/test_capture.py,Unknown Test,test_stdin_nulled_by_default,1253
+testing/test_capture.py,Unknown Test,test_simple_only_fd,1281
+testing/test_capture.py,Unknown Test,test_many,1313
+testing/test_capture.py,Unknown Test,test_capturing_unicode,107
+testing/test_capture.py,Unknown Test,test_capturing_bytes_in_utf8_encoding,123
+testing/test_capture.py,Unknown Test,test_collect_capturing,134
+testing/test_capture.py,Unknown Test,test_setup_failure_does_not_kill_capturing,794
+testing/test_capture.py,Unknown Test,test_capture_badoutput_issue412,823
+testing/test_capture.py,Unknown Test,test_error_during_readouterr,879
+testing/test_capture.py,Unknown Test,test_capture_not_started_but_reset,1397
+testing/test_capture.py,Unknown Test,test_close_and_capture_again,1434
+testing/test_capture.py,Unknown Test,test_windowsconsoleio_workaround_non_standard_streams,1516
+testing/test_capture.py,Verbose Test,test_global_capture_with_live_logging,1582;1637
+testing/test_capture.py,Programming Paradigms Blend,(nível do módulo),33;63
+testing/test_capture.py,Non-Functional Statement,test_teardown_capturing,235
+testing/test_capture.py,Non-Functional Statement,test_dontreadfrominput,974
+testing/test_capture.py,Undefined Test,lsof_check,1016
+testing/test_collect_imported_tests.py,Conditional Test Logic,test_collect_imports_enabled,86
+testing/test_collect_imported_tests.py,Unknown Test,test_collect_imports_enabled,81
+testing/test_collect_imported_tests.py,Non-Functional Statement,setup_files,22
+testing/test_collection.py,Conditional Test Logic,test_check_equality,64
+testing/test_collection.py,Conditional Test Logic,test_ignored_certain_directories,151
+testing/test_collection.py,Conditional Test Logic,test_testpaths_ini,254
+testing/test_collection.py,Conditional Test Logic,test_testpaths_ini,260
+testing/test_collection.py,Conditional Test Logic,test_pytest_collect_file,289
+testing/test_collection.py,Conditional Test Logic,test_collect_protocol_method,558
+testing/test_collection.py,Conditional Test Logic,test_global_file,699
+testing/test_collection.py,Conditional Test Logic,test_pkgfile,722
+testing/test_collection.py,Conditional Test Logic,test_check_collect_hashes,740
+testing/test_collection.py,Conditional Test Logic,test_check_collect_hashes,741
+testing/test_collection.py,Conditional Test Logic,test_check_collect_hashes,742
+testing/test_collection.py,Conditional Test Logic,test_no_under,874
+testing/test_collection.py,Conditional Test Logic,test_keyword_matching_is_case_insensitive_by_default,926
+testing/test_collection.py,Conditional Test Logic,test_collect_sub_with_symlinks,1546
+testing/test_collection.py,Conditional Test Logic,test_collect_short_file_windows,1776
+testing/test_collection.py,Conditional Test Logic,test_collect_short_file_windows,1777
+testing/test_collection.py,Conditional Test Logic,test_do_not_collect_symlink_siblings,1889
+testing/test_collection.py,Exception Handling,test_missing_permissions_on_unselected_directory_doesnt_crash,271
+testing/test_collection.py,Redundant Print,test_example_items1,780
+testing/test_collection.py,Unknown Test,test_can_skip_class_with_test_attr,124
+testing/test_collection.py,Unknown Test,test_custom_repr_failure,300
+testing/test_collection.py,Unknown Test,test_collect_report_postprocessing,327
+testing/test_collection.py,Unknown Test,test_collection_error_traceback_is_clean,346
+testing/test_collection.py,Unknown Test,test_pytest_fs_collect_hooks_are_seen,452
+testing/test_collection.py,Unknown Test,test_pytest_collect_file_from_sister_dir,468
+testing/test_collection.py,Unknown Test,test_collect_duplicate_names,1641
+testing/test_collection.py,Unknown Test,test_conftest,1658
+testing/test_collection.py,Unknown Test,test_modules_importable_as_side_effect,1692
+testing/test_collection.py,Unknown Test,test_modules_not_importable_as_side_effect,1699
+testing/test_collection.py,Unknown Test,test_using_python_path,1714
+testing/test_collection.py,Unknown Test,test_parent_child,2057
+testing/test_collection.py,Unknown Test,test_multiple_nested_paths,2090
+testing/test_collection.py,Unknown Test,test_same_path_twice,2125
+testing/test_collection.py,Unknown Test,test_keep_duplicates_flag,2148
+testing/test_collection.py,Unknown Test,test_specific_file_then_parent_dir,2180
+testing/test_collection.py,Unknown Test,test_execution_order_preserved,2242
+testing/test_collection.py,Unknown Test,test_overlapping_node_ids_class_and_method,2271
+testing/test_collection.py,Unknown Test,test_overlapping_node_ids_file_and_class,2322
+testing/test_collection.py,Unknown Test,test_same_node_id_twice,2372
+testing/test_collection.py,Unknown Test,test_overlapping_with_parametrization,2396
+testing/test_collection.py,Unknown Test,test_root_and_subdir,2448
+testing/test_collection.py,Unknown Test,test_complex_combined_handling,2476
+testing/test_collection.py,Unknown Test,test_collect_init_tests,1184
+testing/test_collection.py,Unknown Test,test_collect_invalid_signature_message,1259
+testing/test_collection.py,Unknown Test,test_collect_pkg_init_and_file_in_args,1490
+testing/test_collection.py,Unknown Test,test_collect_pkg_init_only,1527
+testing/test_collection.py,Unknown Test,test_collect_sub_with_symlinks,1543
+testing/test_collection.py,Unknown Test,test_respect_system_exceptions,1911
+testing/test_collection.py,Unknown Test,test_namespace_packages,1992
+testing/test_collection.py,Verbose Test,test_overlapping_node_ids_class_and_method,2271;2320
+testing/test_collection.py,Verbose Test,test_overlapping_node_ids_file_and_class,2322;2370
+testing/test_collection.py,Verbose Test,test_overlapping_with_parametrization,2396;2445
+testing/test_collection.py,Verbose Test,test_complex_combined_handling,2476;2719
+testing/test_collection.py,Verbose Test,test_collect_init_tests,1184;1256
+testing/test_collection.py,Verbose Test,test_namespace_packages,1992;2049
+testing/test_collection.py,Programming Paradigms Blend,(nível do módulo),27;34
+testing/test_collection.py,Non-Functional Statement,test_pytest_collect_file_from_sister_dir,475
+testing/test_collection.py,Non-Functional Statement,test_pytest_collect_file_from_sister_dir,486
+testing/test_collection.py,Non-Functional Statement,test_unpacked_marks_added_to_keywords,956
+testing/test_collection.py,Non-Functional Statement,test_directory_ignored_if_none,1022
+testing/test_collection.py,Non-Functional Statement,test_parent_child,2062
+testing/test_collection.py,Non-Functional Statement,test_parent_child,2066
+testing/test_collection.py,Non-Functional Statement,test_multiple_nested_paths,2095
+testing/test_collection.py,Non-Functional Statement,test_multiple_nested_paths,2098
+testing/test_collection.py,Non-Functional Statement,test_multiple_nested_paths,2101
+testing/test_collection.py,Non-Functional Statement,test_same_path_twice,2130
+testing/test_collection.py,Non-Functional Statement,test_keep_duplicates_flag,2153
+testing/test_collection.py,Non-Functional Statement,test_keep_duplicates_flag,2156
+testing/test_collection.py,Non-Functional Statement,test_specific_file_then_parent_dir,2185
+testing/test_collection.py,Non-Functional Statement,test_specific_file_then_parent_dir,2188
+testing/test_collection.py,Non-Functional Statement,test_package_scope_fixture_with_overlapping_paths,2233
+testing/test_collection.py,Non-Functional Statement,test_execution_order_preserved,2247
+testing/test_collection.py,Non-Functional Statement,test_execution_order_preserved,2250
+testing/test_collection.py,Non-Functional Statement,test_overlapping_node_ids_class_and_method,2276
+testing/test_collection.py,Non-Functional Statement,test_overlapping_node_ids_class_and_method,2280
+testing/test_collection.py,Non-Functional Statement,test_overlapping_node_ids_file_and_class,2327
+testing/test_collection.py,Non-Functional Statement,test_overlapping_node_ids_file_and_class,2330
+testing/test_collection.py,Non-Functional Statement,test_overlapping_node_ids_file_and_class,2332
+testing/test_collection.py,Non-Functional Statement,test_same_node_id_twice,2376
+testing/test_collection.py,Non-Functional Statement,test_overlapping_with_parametrization,2403
+testing/test_collection.py,Non-Functional Statement,test_overlapping_with_parametrization,2407
+testing/test_collection.py,Non-Functional Statement,test_root_and_subdir,2452
+testing/test_collection.py,Non-Functional Statement,test_root_and_subdir,2456
+testing/test_collection.py,Non-Functional Statement,test_complex_combined_handling,2483
+testing/test_collection.py,Non-Functional Statement,test_complex_combined_handling,2486
+testing/test_collection.py,Non-Functional Statement,test_complex_combined_handling,2488
+testing/test_collection.py,Non-Functional Statement,test_complex_combined_handling,2493
+testing/test_collection.py,Non-Functional Statement,test_complex_combined_handling,2499
+testing/test_collection.py,Non-Functional Statement,test_collect_handles_raising_on_dunder_class,1286
+testing/test_compat.py,Conditional Test Logic,test_real_func_loop_limit,29
+testing/test_compat.py,Conditional Test Logic,test_assert_never_union,146
+testing/test_compat.py,Conditional Test Logic,test_assert_never_union,152
+testing/test_compat.py,Conditional Test Logic,test_assert_never_enum,164
+testing/test_compat.py,Conditional Test Logic,test_assert_never_enum,170
+testing/test_compat.py,Conditional Test Logic,test_assert_never_literal,181
+testing/test_compat.py,Conditional Test Logic,test_assert_never_literal,187
+testing/test_compat.py,Unknown Test,test_real_func_loop_limit,20
+testing/test_compat.py,Unknown Test,test_helper_failures,95
+testing/test_compat.py,Programming Paradigms Blend,(nível do módulo),20;81
+testing/test_compat.py,Non-Functional Statement,test_assert_never_union,147
+testing/test_compat.py,Non-Functional Statement,test_assert_never_union,153
+testing/test_compat.py,Non-Functional Statement,test_assert_never_union,155
+testing/test_compat.py,Non-Functional Statement,test_assert_never_enum,165
+testing/test_compat.py,Non-Functional Statement,test_assert_never_enum,171
+testing/test_compat.py,Non-Functional Statement,test_assert_never_enum,173
+testing/test_compat.py,Non-Functional Statement,test_assert_never_literal,182
+testing/test_compat.py,Non-Functional Statement,test_assert_never_literal,188
+testing/test_compat.py,Non-Functional Statement,test_assert_never_literal,190
+testing/test_config.py,Conditional Test Logic,test_invalid_config_options,486
+testing/test_config.py,Conditional Test Logic,test_missing_required_plugins,680
+testing/test_config.py,Conditional Test Logic,test_config_getoption_declared_option_name,876
+testing/test_config.py,Conditional Test Logic,test_addini,934
+testing/test_config.py,Conditional Test Logic,test_addini_paths,966
+testing/test_config.py,Conditional Test Logic,test_addini_bool,1074
+testing/test_config.py,Conditional Test Logic,test_addini_int,1092
+testing/test_config.py,Conditional Test Logic,test_addini_float,1131
+testing/test_config.py,Conditional Test Logic,test_addini_literal_type,1280
+testing/test_config.py,Conditional Test Logic,test_addini_union_with_literal_toml,1334
+testing/test_config.py,Conditional Test Logic,test_with_ini,2354
+testing/test_config.py,Conditional Test Logic,test_override_ini_handled_asap,2730
+testing/test_config.py,Conditional Test Logic,test_pytest_plugins_in_non_top_level_conftest_unsupported_pyargs,3073
+testing/test_config.py,Conditional Test Logic,test_plugin_preparse_prevents_setuptools_loading,2032
+testing/test_config.py,Conditional Test Logic,test_disable_plugin_autoload,2077
+testing/test_config.py,Conditional Test Logic,test_disable_plugin_autoload,2086
+testing/test_config.py,Conditional Test Logic,test_consider_args_after_options_for_rootdir,2183
+testing/test_config.py,Conditional Test Logic,test_consider_args_after_options_for_rootdir,2184
+testing/test_config.py,Conditional Test Logic,test_load_initial_conftest_last_ordering,2273
+testing/test_config.py,Conditional Test Logic,test_config_blocked_default_plugins,2981
+testing/test_config.py,Conditional Test Logic,test_config_blocked_default_plugins,2992
+testing/test_config.py,Conditional Test Logic,test_config_blocked_default_plugins,2998
+testing/test_config.py,Exception Handling,test_conftest_import_error_repr,3132
+testing/test_config.py,Unknown Test,test_silence_unknown_key_warning,494
+testing/test_config.py,Unknown Test,test_disable_warnings_plugin_disables_config_warnings,529
+testing/test_config.py,Unknown Test,test_missing_required_plugins,633
+testing/test_config.py,Unknown Test,test_early_config_cmdline,686
+testing/test_config.py,Unknown Test,test_parsing_again_fails,727
+testing/test_config.py,Unknown Test,test_explicitly_specified_config_file_missing,804
+testing/test_config.py,Unknown Test,test_explicitly_specified_config_file_unsupported_format,816
+testing/test_config.py,Unknown Test,test_explicitly_specified_config_file_is_a_directory,824
+testing/test_config.py,Unknown Test,test_config_getvalueorskip_None,910
+testing/test_config.py,Unknown Test,test_addini_args_ini_files,997
+testing/test_config.py,Unknown Test,test_addini_args_pyproject_toml,1007
+testing/test_config.py,Unknown Test,test_addini_linelist_ini_files,1033
+testing/test_config.py,Unknown Test,test_addini_linelist_pprojecttoml,1044
+testing/test_config.py,Unknown Test,test_addini_int_invalid,1102
+testing/test_config.py,Unknown Test,test_addini_float_invalid,1141
+testing/test_config.py,Unknown Test,test_addini_union_type_invalid_value,1226
+testing/test_config.py,Unknown Test,test_addini_invalid_type,1258
+testing/test_config.py,Unknown Test,test_addini_union_type_requires_default,1263
+testing/test_config.py,Unknown Test,test_addini_literal_type_invalid_value,1306
+testing/test_config.py,Unknown Test,test_addini_union_with_literal_invalid_value,1353
+testing/test_config.py,Unknown Test,test_addini_union_with_literal_non_str_choice,1364
+testing/test_config.py,Unknown Test,test_addini_literal_type_requires_default,1369
+testing/test_config.py,Unknown Test,test_addini_literal_type_non_str_choice,1376
+testing/test_config.py,Unknown Test,test_addini_aliases_conflict_error,1595
+testing/test_config.py,Unknown Test,test_addini_aliases_duplicate_error,1612
+testing/test_config.py,Unknown Test,test_override_ini_paths,2640
+testing/test_config.py,Unknown Test,test_override_multiple_and_default,2665
+testing/test_config.py,Unknown Test,test_override_ini_usage_error_bad_style,2711
+testing/test_config.py,Unknown Test,test_override_ini_handled_asap,2726
+testing/test_config.py,Unknown Test,test_override_ini_invalid_option,2834
+testing/test_config.py,Unknown Test,test_pytest_setup_cfg_unsupported,3005
+testing/test_config.py,Unknown Test,test_pytest_custom_cfg_unsupported,3016
+testing/test_config.py,Unknown Test,test_debug_help,3240
+testing/test_config.py,Unknown Test,test_conflict_between_native_and_ini_options,3378
+testing/test_config.py,Unknown Test,test_type_errors,3399
+testing/test_config.py,Unknown Test,test_prog_in_error_message_programmatic,3557
+testing/test_config.py,Unknown Test,test_prog_in_error_message_cli,3566
+testing/test_config.py,Unknown Test,test_prog_in_usage_programmatic,3575
+testing/test_config.py,Unknown Test,test_prog_in_usage_cli,3580
+testing/test_config.py,Unknown Test,test_console_main_deprecated,3585
+testing/test_config.py,Unknown Test,test_invalid_value,3638
+testing/test_config.py,Unknown Test,test_setuptools_usage_error_passes_through,1951
+testing/test_config.py,Unknown Test,test_importlib_metadata_broken_distribution,1978
+testing/test_config.py,Unknown Test,test_invalid_options_show_extra_information,2142
+testing/test_config.py,Unknown Test,test_consider_args_after_options_for_rootdir,2170
+testing/test_config.py,Unknown Test,test_collect_pytest_prefix_bug_integration,2304
+testing/test_config.py,Unknown Test,test_conftest_import_error_repr,3124
+testing/test_config.py,Unknown Test,test_parse_warning_filter_failure,3194
+testing/test_config.py,Verbose Test,test_missing_required_plugins,633;684
+testing/test_config.py,Verbose Test,test_explicitly_specified_config_file_is_loaded,732;799
+testing/test_config.py,Verbose Test,test_inifilename,1812;1858
+testing/test_config.py,Verbose Test,test_type_errors,3399;3489
+testing/test_config.py,Verbose Test,test_disable_plugin_autoload,2043;2115
+testing/test_config.py,Non-Functional Statement,test_add_cleanup,1762
+testing/test_config.py,Non-Functional Statement,test_collect_pytest_prefix_bug,2316
+testing/test_config.py,Non-Functional Statement,test_invocation_args,2945
+testing/test_config.py,Undefined Test,check_config_args,1017
+testing/test_config.py,Undefined Test,check_config_linelist,1054
+testing/test_conftest.py,Conditional Test Logic,test_issue151_load_all_conftests,157
+testing/test_conftest.py,Conditional Test Logic,test_setinitial_conftest_subdirs,260
+testing/test_conftest.py,Conditional Test Logic,test_conftest_symlink_files,386
+testing/test_conftest.py,Conditional Test Logic,test_search_conftest_up_to_inifile,720
+testing/test_conftest.py,Conditional Test Logic,test_search_conftest_up_to_inifile,724
+testing/test_conftest.py,Conditional Test Logic,test_search_conftest_up_to_inifile,726
+testing/test_conftest.py,Redundant Print,test_parsefactories_relative_node_ids,660
+testing/test_conftest.py,Redundant Print,test_parsefactories_relative_node_ids,661
+testing/test_conftest.py,Redundant Print,test_parsefactories_relative_node_ids,662
+testing/test_conftest.py,Unknown Test,test_value_access_not_existing,98
+testing/test_conftest.py,Unknown Test,test_conftest_in_nonpkg_with_init,133
+testing/test_conftest.py,Unknown Test,test_conftest_confcutdir,268
+testing/test_conftest.py,Unknown Test,test_conftest_existing_junitxml,428
+testing/test_conftest.py,Unknown Test,test_fixture_dependency,489
+testing/test_conftest.py,Unknown Test,test_conftest_found_with_double_dash,536
+testing/test_conftest.py,Unknown Test,test_search_conftest_up_to_inifile,677
+testing/test_conftest.py,Unknown Test,test_hook_proxy,768
+testing/test_conftest.py,Unknown Test,test_conftest_fixture_scoping_with_testpaths_outside_rootdir,790
+testing/test_conftest.py,Unknown Test,test_conftest_fixture_from_ancestor_above_rootdir,874
+testing/test_conftest.py,Unknown Test,test_rootdir_conftest_visible_outside_rootdir,915
+testing/test_conftest.py,Verbose Test,_setup_tree,558;626
+testing/test_conftest.py,Verbose Test,test_search_conftest_up_to_inifile,677;728
+testing/test_conftest.py,Verbose Test,test_conftest_fixture_scoping_with_testpaths_outside_rootdir,790;871
+testing/test_conftest.py,Verbose Test,test_rootdir_conftest_visible_outside_rootdir,915;960
+testing/test_conftest.py,Verbose Test,test_fixture_closure_order_independence_with_parametrize,963;1069
+testing/test_conftest.py,Programming Paradigms Blend,(nível do módulo),20;44
+testing/test_conftest.py,Non-Functional Statement,test_search_conftest_up_to_inifile,692
+testing/test_conftest.py,Non-Functional Statement,test_search_conftest_up_to_inifile,713
+testing/test_debugging.py,Conditional Test Logic,test_pdb_on_fail,131
+testing/test_debugging.py,Conditional Test Logic,flush,197
+testing/test_debugging.py,Conditional Test Logic,test_pdb_print_captured_logs,297
+testing/test_debugging.py,Conditional Test Logic,test_pdb_interaction_on_internal_error,376
+testing/test_debugging.py,Conditional Test Logic,test_pdb_interaction_on_internal_error,377
+testing/test_debugging.py,Conditional Test Logic,test_pdb_continue_with_recursive_debug,768
+testing/test_debugging.py,Conditional Test Logic,test_pdb_continue_with_recursive_debug,789
+testing/test_debugging.py,Conditional Test Logic,test_pdb_used_outside_test,803
+testing/test_debugging.py,Conditional Test Logic,test_pdb_used_in_generate_tests,824
+testing/test_debugging.py,Conditional Test Logic,test_enter_leave_pdb_hooks_are_called,881
+testing/test_debugging.py,Conditional Test Logic,test_enter_leave_pdb_hooks_are_called,887
+testing/test_debugging.py,Conditional Test Logic,test_trace_with_parametrize_handles_shared_fixtureinfo,1200
+testing/test_debugging.py,Redundant Print,test_trace_after_runpytest,1241
+testing/test_debugging.py,Redundant Print,test_trace_after_runpytest,1242
+testing/test_debugging.py,Unknown Test,test_pdb_unittest_skip,223
+testing/test_debugging.py,Unknown Test,test_pdb_interaction_exception,325
+testing/test_debugging.py,Unknown Test,test_pdb_interaction_on_collection_issue181,346
+testing/test_debugging.py,Unknown Test,test_pdb_prevent_ConftestImportFailure_hiding_exception,386
+testing/test_debugging.py,Unknown Test,test_pdb_and_capsys,468
+testing/test_debugging.py,Unknown Test,test_pdb_with_caplog_on_pdb_invocation,488
+testing/test_debugging.py,Unknown Test,test_set_trace_capturing_afterwards,506
+testing/test_debugging.py,Unknown Test,test_pdb_without_capture,686
+testing/test_debugging.py,Unknown Test,test_pdb_used_outside_test,795
+testing/test_debugging.py,Unknown Test,test_pdb_used_in_generate_tests,813
+testing/test_debugging.py,Unknown Test,test_pdb_collection_failure_is_shown,834
+testing/test_debugging.py,Unknown Test,test_pdb_custom_cls_invalid,907
+testing/test_debugging.py,Unknown Test,test_pdb_custom_cls_with_set_trace,931
+testing/test_debugging.py,Unknown Test,test_pdb_exception_chain_navigation,968
+testing/test_debugging.py,Unknown Test,test_sys_breakpointhook_configure_and_unconfigure,1028
+testing/test_debugging.py,Unknown Test,test_environ_custom_class,1077
+testing/test_debugging.py,Verbose Test,test_pdb_with_injected_do_debug,611;684
+testing/test_debugging.py,Verbose Test,test_pdb_continue_with_recursive_debug,703;793
+testing/test_debugging.py,Verbose Test,test_enter_leave_pdb_hooks_are_called,842;895
+testing/test_debugging.py,Verbose Test,test_trace_with_parametrize_handles_shared_fixtureinfo,1178;1223
+testing/test_debugging.py,Verbose Test,test_pdbcls_via_local_module,1332;1382
+testing/test_debugging.py,Programming Paradigms Blend,(nível do módulo),13;108
+testing/test_debugging.py,Non-Functional Statement,test_pdb_continue_with_recursive_debug,716
+testing/test_debugging.py,Non-Functional Statement,test_sys_breakpointhook_configure_and_unconfigure,1053
+testing/test_debugging.py,Non-Functional Statement,test_environ_custom_class,1100
+testing/test_debugging.py,Non-Functional Statement,test_quit_with_swallowed_SystemExit,1269
+testing/test_debugging.py,Undefined Test,flush,196
+testing/test_debugging.py,Undefined Test,runpdb_and_get_report,36
+testing/test_doctest.py,Conditional Test Logic,test_collect_testtextfile,34
+testing/test_doctest.py,Conditional Test Logic,test_collect_module_empty,46
+testing/test_doctest.py,Conditional Test Logic,test_collect_module_single_modulelevel_doctest,52
+testing/test_doctest.py,Conditional Test Logic,test_collect_module_two_doctest_one_modulelevel,66
+testing/test_doctest.py,Conditional Test Logic,test_collect_module_two_doctest_no_modulelevel,99
+testing/test_doctest.py,Conditional Test Logic,test_doctest_unexpected_exception,228
+testing/test_doctest.py,Conditional Test Logic,test_optionflags_restored_after_outcome,297
+testing/test_doctest.py,Conditional Test Logic,test_optionflags_do_not_leak_between_docstrings,759
+testing/test_doctest.py,Conditional Test Logic,test_allow_unicode,1048
+testing/test_doctest.py,Conditional Test Logic,test_allow_bytes,1083
+testing/test_doctest.py,Conditional Test Logic,test_number_re,1141
+testing/test_doctest.py,Conditional Test Logic,test_number_re,1165
+testing/test_doctest.py,Conditional Test Logic,test_number_precision,1172
+testing/test_doctest.py,Conditional Test Logic,makedoctest,1295
+testing/test_doctest.py,Conditional Test Logic,test_fixture_module_doctest_scopes,1521
+testing/test_doctest.py,Redundant Print,test_number_re,1161
+testing/test_doctest.py,Redundant Print,test_number_re,1166
+testing/test_doctest.py,Unknown Test,test_encoding,188
+testing/test_doctest.py,Unknown Test,test_doctest_unexpected_exception,207
+testing/test_doctest.py,Unknown Test,test_doctest_outcomes,239
+testing/test_doctest.py,Unknown Test,test_docstring_partial_context_around_error,304
+testing/test_doctest.py,Unknown Test,test_docstring_full_context_around_error,348
+testing/test_doctest.py,Unknown Test,test_doctest_linedata_missing,378
+testing/test_doctest.py,Unknown Test,test_doctest_linedata_on_property,398
+testing/test_doctest.py,Unknown Test,test_doctest_no_linedata_on_overridden_property,428
+testing/test_doctest.py,Unknown Test,test_doctest_unex_importerror_only_txt,459
+testing/test_doctest.py,Unknown Test,test_doctest_unex_importerror_with_module,476
+testing/test_doctest.py,Unknown Test,test_doctestmodule_external_and_issue116,533
+testing/test_doctest.py,Unknown Test,test_txtfile_failing,561
+testing/test_doctest.py,Unknown Test,test_contains_unicode,840
+testing/test_doctest.py,Unknown Test,test_unicode_doctest,888
+testing/test_doctest.py,Unknown Test,test_unicode_doctest_module,910
+testing/test_doctest.py,Unknown Test,test_print_unicode_value,928
+testing/test_doctest.py,Unknown Test,test_valid_setup_py,983
+testing/test_doctest.py,Unknown Test,test_main_py_does_not_cause_import_errors,1002
+testing/test_doctest.py,Unknown Test,test_invalid_setup_py,1007
+testing/test_doctest.py,Unknown Test,test_doctest_module_session_fixture,1406
+testing/test_doctest.py,Unknown Test,test_fixture_scopes,1474
+testing/test_doctest.py,Unknown Test,test_fixture_module_doctest_scopes,1506
+testing/test_doctest.py,Unknown Test,test_auto_use_request_attributes,1540
+testing/test_doctest.py,Unknown Test,test_doctest_report_udiff,1735
+testing/test_doctest.py,Unknown Test,test_doctest_report_cdiff,1741
+testing/test_doctest.py,Unknown Test,test_doctest_report_ndiff,1757
+testing/test_doctest.py,Unknown Test,test_doctest_report_none_or_only_first_failure,1772
+testing/test_doctest.py,Unknown Test,test_doctest_report_invalid,1789
+testing/test_doctest.py,Unknown Test,test_doctest_mock_objects_dont_recurse_missbehaved,1799
+testing/test_doctest.py,Verbose Test,test_number_precision,1170;1239
+testing/test_doctest.py,Verbose Test,test_namespace_fixture_from_rootdir_when_modules_outside_rootdir,1658;1711
+testing/test_doctest.py,Non-Functional Statement,test_ignored_whitespace,779
+testing/test_doctest.py,Non-Functional Statement,test_non_ignored_whitespace,800
+testing/test_doctest.py,Non-Functional Statement,test_junit_report_for_doctest,882
+testing/test_doctest.py,Non-Functional Statement,test_unicode_string,1114
+testing/test_doctest.py,Undefined Test,makedoctest,1292
+testing/test_faulthandler.py,Conditional Test Logic,test_timeout,113
+testing/test_faulthandler.py,Conditional Test Logic,test_timeout_and_exit,166
+testing/test_findpaths.py,Unknown Test,test_unsupported_pytest_section_in_cfg_file,61
+testing/test_findpaths.py,Unknown Test,test_invalid_toml_file,68
+testing/test_findpaths.py,Unknown Test,test_custom_toml_file_with_both_table_styles,95
+testing/test_findpaths.py,Unknown Test,test_custom_toml_file_with_top_level_options,113
+testing/test_findpaths.py,Unknown Test,test_native_and_ini_conflict,192
+testing/test_helpconfig.py,Conditional Test Logic,test_version_verbose,15
+testing/test_helpconfig.py,Unknown Test,test_none_help_param_raises_exception,113
+testing/test_helpconfig.py,Unknown Test,test_parse_known_args_doesnt_quit_on_help,146
+testing/test_helpconfig.py,Unknown Test,test_traceconfig,179
+testing/test_junitxml.py,Conditional Test Logic,__call__,52
+testing/test_junitxml.py,Conditional Test Logic,__call__,56
+testing/test_junitxml.py,Conditional Test Logic,test_junit_duration_report,350
+testing/test_junitxml.py,Conditional Test Logic,test_failure_function,608
+testing/test_junitxml.py,Conditional Test Logic,test_failure_function,614
+testing/test_junitxml.py,Conditional Test Logic,test_failure_function,622
+testing/test_junitxml.py,Conditional Test Logic,test_failure_function,633
+testing/test_junitxml.py,Conditional Test Logic,test_failure_escape,722
+testing/test_junitxml.py,Conditional Test Logic,test_pass_captures_stdout,932
+testing/test_junitxml.py,Conditional Test Logic,test_pass_captures_stdout,936
+testing/test_junitxml.py,Conditional Test Logic,test_pass_captures_stderr,959
+testing/test_junitxml.py,Conditional Test Logic,test_pass_captures_stderr,963
+testing/test_junitxml.py,Conditional Test Logic,test_setup_error_captures_stdout,991
+testing/test_junitxml.py,Conditional Test Logic,test_setup_error_captures_stdout,995
+testing/test_junitxml.py,Conditional Test Logic,test_setup_error_captures_stderr,1024
+testing/test_junitxml.py,Conditional Test Logic,test_setup_error_captures_stderr,1028
+testing/test_junitxml.py,Conditional Test Logic,test_avoid_double_stdout,1058
+testing/test_junitxml.py,Conditional Test Logic,test_avoid_double_stdout,1062
+testing/test_junitxml.py,Conditional Test Logic,test_dont_configure_on_workers,1080
+testing/test_junitxml.py,Conditional Test Logic,test_nullbyte,1152
+testing/test_junitxml.py,Conditional Test Logic,test_nullbyte,1154
+testing/test_junitxml.py,Conditional Test Logic,test_nullbyte_replace,1173
+testing/test_junitxml.py,Conditional Test Logic,test_nullbyte_replace,1175
+testing/test_junitxml.py,Conditional Test Logic,test_invalid_xml_escape,1200
+testing/test_junitxml.py,Conditional Test Logic,test_invalid_xml_escape,1202
+testing/test_junitxml.py,Conditional Test Logic,test_invalid_xml_escape,1207
+testing/test_junitxml.py,Conditional Test Logic,test_record_property_on_test_and_teardown_failure,1382
+testing/test_junitxml.py,Conditional Test Logic,test_record_fixtures_xunit2,1479
+testing/test_junitxml.py,Conditional Test Logic,test_random_report_log_xdist,1509
+testing/test_junitxml.py,Conditional Test Logic,test_random_report_log_xdist,1510
+testing/test_junitxml.py,Conditional Test Logic,test_fancy_items_regression,1606
+testing/test_junitxml.py,Conditional Test Logic,test_global_properties,1646
+testing/test_junitxml.py,Conditional Test Logic,test_set_suite_name,1741
+testing/test_junitxml.py,Conditional Test Logic,test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430,1885
+testing/test_junitxml.py,Redundant Print,test_assertion_binchars,914
+testing/test_junitxml.py,Unknown Test,test_node_get_first_lookup,198
+testing/test_junitxml.py,Unknown Test,test_assertion_binchars,899
+testing/test_junitxml.py,Unknown Test,test_logxml_check_isdir,1249
+testing/test_junitxml.py,Unknown Test,test_unicode_issue368,1309
+testing/test_junitxml.py,Unknown Test,test_record_fixtures_xunit2,1455
+testing/test_junitxml.py,Unknown Test,test_no_message_quiet,1897
+testing/test_junitxml.py,Verbose Test,test_failure_function,575;640
+testing/test_junitxml.py,Verbose Test,test_fancy_items_regression,1566;1620
+testing/test_junitxml.py,Programming Paradigms Blend,(nível do módulo),33;41
+testing/test_junitxml.py,Undefined Test,__call__,46
+testing/test_junitxml.py,Undefined Test,get_unique_child,127
+testing/test_junitxml.py,Undefined Test,text,157
+testing/test_legacypath.py,Conditional Test Logic,test_addini_paths,126
+testing/test_legacypath.py,Unknown Test,test_session_scoped_unavailable_attributes,109
+testing/test_legacypath.py,Unknown Test,test_testdir_makefile_ext_none_raises_type_error,38
+testing/test_legacypath.py,Unknown Test,test_override_ini_paths,149
+testing/test_legacypath.py,Unknown Test,test_inifile_from_cmdline_main_hook,173
+testing/test_legacypath.py,Programming Paradigms Blend,(nível do módulo),13;103
+testing/test_link_resolve.py,Conditional Test Logic,subst_path_windows,17
+testing/test_link_resolve.py,Conditional Test Logic,subst_path_windows,19
+testing/test_link_resolve.py,Conditional Test Logic,test_link_resolve,70
+testing/test_link_resolve.py,Exception Handling,subst_path_windows,31
+testing/test_link_resolve.py,Non-Functional Statement,subst_path_linux,51
+testing/test_link_resolve.py,Undefined Test,subst_path_windows,16
+testing/test_main.py,Conditional Test Logic,test_pypath,194
+testing/test_main.py,Conditional Test Logic,test_wrap_session_notify_exception,42
+testing/test_main.py,Conditional Test Logic,test_wrap_session_notify_exception,50
+testing/test_main.py,Conditional Test Logic,test_wrap_session_notify_exception,62
+testing/test_main.py,Conditional Test Logic,test_wrap_session_exit_sessionfinish,80
+testing/test_main.py,Conditional Test Logic,test_validate_basetemp_fails,99
+testing/test_main.py,Unknown Test,test_path_parametrization_not_allowed,255
+testing/test_main.py,Unknown Test,test_does_not_exist,263
+testing/test_main.py,Unknown Test,test_validate_basetemp_ok,89
+testing/test_main.py,Unknown Test,test_validate_basetemp_fails,95
+testing/test_main.py,Unknown Test,test_validate_basetemp_integration,104
+testing/test_main.py,Unknown Test,test_very_long_cmdline_arg,344
+testing/test_main.py,Verbose Test,test_file,121;167
+testing/test_main.py,Verbose Test,test_pypath,192;239
+testing/test_main.py,Programming Paradigms Blend,(nível do módulo),18;109
+testing/test_mark.py,Conditional Test Logic,test_merging_markers_deep,698
+testing/test_mark.py,Conditional Test Logic,test_select_simple,1010
+testing/test_mark.py,Conditional Test Logic,test_keyword_matches_marks_from_parents,1186
+testing/test_mark.py,Conditional Test Logic,test_keyword_does_not_match_mark_arguments,1204
+testing/test_mark.py,Conditional Test Logic,test_strict_prohibits_unregistered_markers,214
+testing/test_mark.py,Conditional Test Logic,test_parameterset_for_parametrize_marks,1293
+testing/test_mark.py,Conditional Test Logic,test_parameterset_for_parametrize_marks,1307
+testing/test_mark.py,Conditional Test Logic,test_parameterset_for_parametrize_marks,1312
+testing/test_mark.py,Redundant Print,test_merging_markers_deep,699
+testing/test_mark.py,Redundant Print,test_mark_should_not_pass_to_siebling_class,748
+testing/test_mark.py,Redundant Print,test_select_extra_keywords,1047
+testing/test_mark.py,Unknown Test,test_pytest_mark_notcallable,32
+testing/test_mark.py,Unknown Test,test_pytest_mark_name_starts_with_underscore,51
+testing/test_mark.py,Unknown Test,test_unknown_marker_with_strict_markers,266
+testing/test_mark.py,Unknown Test,test_unknown_marker_with_strict,272
+testing/test_mark.py,Unknown Test,test_registered_marker_passes,278
+testing/test_mark.py,Unknown Test,test_no_validation_without_strict,283
+testing/test_mark.py,Unknown Test,test_mark_dynamically_in_funcarg,833
+testing/test_mark.py,Unknown Test,test_markers_option,98
+testing/test_mark.py,Unknown Test,test_markers_option_with_plugin_in_current_dir,155
+testing/test_mark.py,Unknown Test,test_parametrized_collect_with_wrong_args,592
+testing/test_mark.py,Unknown Test,test_parametrized_collect_with_non_sequence_values,615
+testing/test_mark.py,Unknown Test,test_paramset_empty_no_idfunc,1374
+testing/test_mark.py,Unknown Test,test_fixture_disallow_on_marked_functions,1619
+testing/test_mark.py,Unknown Test,test_fixture_disallow_marks_on_fixtures,1633
+testing/test_mark.py,Unknown Test,test_fixture_disallowed_between_marks,1647
+testing/test_mark.py,Non-Functional Statement,test_no_match_on_ignored_function_attributes,1085
+testing/test_mark.py,Non-Functional Statement,test_no_match_on_ignored_function_attributes,1088
+testing/test_mark.py,Non-Functional Statement,test_no_match_on_ignored_function_attributes,1091
+testing/test_mark.py,Non-Functional Statement,test_no_match_directories_outside_the_suite,1149
+testing/test_mark.py,Non-Functional Statement,test_keyword_matches_marks_from_parents,1177
+testing/test_mark.py,Non-Functional Statement,test_keyword_matches_marks_from_parents,1181
+testing/test_mark.py,Non-Functional Statement,test_keyword_matches_marks_from_parents,1183
+testing/test_mark.py,Non-Functional Statement,test_keyword_does_not_match_mark_arguments,1201
+testing/test_mark.py,Non-Functional Statement,test_keyword_matches_dynamically_added_mark,1222
+testing/test_mark.py,Non-Functional Statement,test_keyword_matches_item_extra_keyword_matches,1244
+testing/test_mark.py,Non-Functional Statement,test_mark_expressions_no_smear,1411
+testing/test_mark.py,Non-Functional Statement,test_mark_expressions_no_smear,1415
+testing/test_mark.py,Non-Functional Statement,test_mark_mro,1530
+testing/test_mark.py,Non-Functional Statement,test_mark_mro,1534
+testing/test_mark.py,Non-Functional Statement,test_mark_mro,1538
+testing/test_mark.py,Non-Functional Statement,test_mark_fixture_order_mro,1571
+testing/test_mark_expression.py,Unknown Test,test_invalid_idents,218
+testing/test_mark_expression.py,Unknown Test,test_invalid_kwarg_name_or_value,253
+testing/test_mark_expression.py,Unknown Test,test_keyword_expressions_with_numbers,292
+testing/test_mark_expression.py,Unknown Test,test_builtin_matchers_keyword_expressions,312
+testing/test_mark_expression.py,Unknown Test,test_str_keyword_expressions,335
+testing/test_mark_expression.py,Unknown Test,test_expression_idents,354
+testing/test_meta.py,Unknown Test,test_no_warnings,27
+testing/test_monkeypatch.py,Conditional Test Logic,test_setenv_deleted_meanwhile,169
+testing/test_monkeypatch.py,Conditional Test Logic,test_setenv_deleted_meanwhile,175
+testing/test_monkeypatch.py,Conditional Test Logic,test_delenv,280
+testing/test_monkeypatch.py,Conditional Test Logic,test_syspath_prepend_with_namespace_packages,651
+testing/test_monkeypatch.py,Exception Handling,test_delenv,271
+testing/test_monkeypatch.py,Exception Handling,test_syspath_prepend_double_undo,339
+testing/test_monkeypatch.py,Exception Handling,test_issue1338_name_resolving,613
+testing/test_monkeypatch.py,Unknown Test,test_wrong_target,76
+testing/test_monkeypatch.py,Unknown Test,test_unknown_import,80
+testing/test_monkeypatch.py,Unknown Test,test_unknown_attr,84
+testing/test_monkeypatch.py,Unknown Test,test_setattr_failure_does_not_corrupt_undo,94
+testing/test_monkeypatch.py,Unknown Test,test_setenv_non_str_warning,293
+testing/test_monkeypatch.py,Unknown Test,test_issue185_time_breaks,374
+testing/test_monkeypatch.py,Unknown Test,test_importerror,392
+testing/test_monkeypatch.py,Unknown Test,test_issue1338_name_resolving,610
+testing/test_monkeypatch.py,Verbose Test,test_syspath_prepend_with_namespace_packages,645;690
+testing/test_monkeypatch.py,Programming Paradigms Blend,(nível do módulo),18;55
+testing/test_monkeypatch.py,Non-Functional Statement,test_undo_class_descriptors_delattr,457
+testing/test_monkeypatch.py,Non-Functional Statement,test_undo_inherited_attribute_on_instance,483
+testing/test_nodeid.py,Unknown Test,test_child_raises_on_parameterised_id,48
+testing/test_nodeid.py,Unknown Test,test_with_params_raises_on_parameterised_id,55
+testing/test_nodes.py,Conditional Test Logic,test_subclassing_both_item_and_collector_deprecated,58
+testing/test_nodes.py,Unknown Test,test_node_from_parent_disallowed_arguments,15
+testing/test_nodes.py,Unknown Test,test_node_direct_construction_deprecated,22
+testing/test_nodes.py,Unknown Test,test_node_warn_is_no_longer_only_pytest_warnings,68
+testing/test_nodes.py,Unknown Test,test_node_warning_enforces_warning_types,81
+testing/test_nodes.py,Unknown Test,test_failure_with_changed_cwd,140
+testing/test_nodes.py,Programming Paradigms Blend,(nível do módulo),15;94
+testing/test_parseopt.py,Conditional Test Logic,test_argcomplete,345
+testing/test_parseopt.py,Conditional Test Logic,test_argcomplete,361
+testing/test_parseopt.py,Conditional Test Logic,test_argcomplete,385
+testing/test_parseopt.py,Exception Handling,test_argcomplete,350
+testing/test_parseopt.py,Unknown Test,test_no_help_by_default,25
+testing/test_parseopt.py,Unknown Test,test_drop_short_0,265
+testing/test_parseopt.py,Unknown Test,test_argcomplete,344
+testing/test_parseopt.py,Verbose Test,test_argcomplete,344;399
+testing/test_parseopt.py,Programming Paradigms Blend,(nível do módulo),19;24
+testing/test_pathlib.py,Conditional Test Logic,test_check_filepath_consistency,308
+testing/test_pathlib.py,Conditional Test Logic,test_import_module_using_spec,858
+testing/test_pathlib.py,Conditional Test Logic,test_import_module_using_spec,890
+testing/test_pathlib.py,Conditional Test Logic,setup_directories,1460
+testing/test_pathlib.py,Conditional Test Logic,test_detect_meta_path,1654
+testing/test_pathlib.py,Conditional Test Logic,test_full_ns_packages_without_init_files,1696
+testing/test_pathlib.py,Conditional Test Logic,test_long_path_during_cleanup,479
+testing/test_pathlib.py,Exception Handling,test_visit_ignores_errors,550
+testing/test_pathlib.py,Unknown Test,test_import_path_missing_file,203
+testing/test_pathlib.py,Unknown Test,test_renamed_dir_creates_mismatch,209
+testing/test_pathlib.py,Unknown Test,test_invalid_path,343
+testing/test_pathlib.py,Unknown Test,test_importlib_root_is_package,967
+testing/test_pathlib.py,Unknown Test,test_importlib_same_name_as_stl,984
+testing/test_pathlib.py,Unknown Test,test_import_using_normal_mechanism_first_integration,1169
+testing/test_pathlib.py,Verbose Test,setuptestfs,147;194
+testing/test_pathlib.py,Verbose Test,test_importmode_importlib_with_pickle_separate_modules,700;758
+testing/test_pathlib.py,Verbose Test,test_import_module_using_spec,847;898
+testing/test_pathlib.py,Verbose Test,test_importlib_package,912;965
+testing/test_pathlib.py,Verbose Test,create_installed_doctests_and_tests_dir,1014;1100
+testing/test_pathlib.py,Verbose Test,test_import_using_normal_mechanism_first,1102;1167
+testing/test_pathlib.py,Verbose Test,test_import_path_imports_correct_file,1199;1245
+testing/test_pathlib.py,Verbose Test,setup_directories,1417;1463
+testing/test_pathlib.py,Verbose Test,test_resolve_pkg_root_and_module_name_ns_multiple_levels,1466;1521
+testing/test_pathlib.py,Verbose Test,test_detect_meta_path,1631;1687
+testing/test_pathlib.py,Programming Paradigms Blend,(nível do módulo),52;66
+testing/test_pathlib.py,Undefined Test,path1,134
+testing/test_pathlib.py,Undefined Test,create_installed_doctests_and_tests_dir,1014
+testing/test_pathlib.py,Undefined Test,setup_directories,1417
+testing/test_pluginmanager.py,Exception Handling,test_hook_tracing,163
+testing/test_pluginmanager.py,Unknown Test,test_hook_with_addoption,206
+testing/test_pluginmanager.py,Unknown Test,test_consider_env_fails_to_import,333
+testing/test_pluginmanager.py,Unknown Test,test_consider_conftest_deps,508
+testing/test_pluginmanager.py,Unknown Test,test_default_markers,237
+testing/test_pluginmanager.py,Programming Paradigms Blend,(nível do módulo),24;29
+testing/test_pytester.py,Conditional Test Logic,test_preserve_modules,346
+testing/test_pytester.py,Conditional Test Logic,test_restore,383
+testing/test_pytester.py,Conditional Test Logic,test_make_hook_recorder,28
+testing/test_pytester.py,Conditional Test Logic,test_linematcher_no_matching,554
+testing/test_pytester.py,Conditional Test Logic,test_linematcher_no_matching,573
+testing/test_pytester.py,Conditional Test Logic,test_linematcher_no_matching,578
+testing/test_pytester.py,Redundant Print,test_popen_default_stdin_stderr_and_stdin_None,691
+testing/test_pytester.py,Redundant Print,test_popen_default_stdin_stderr_and_stdin_None,692
+testing/test_pytester.py,Unknown Test,test_makepyfile_unicode,207
+testing/test_pytester.py,Unknown Test,test_pytester_run_timeout_expires,468
+testing/test_pytester.py,Unknown Test,test_pytester_makefile_dot_prefixes_extension_with_warning,803
+testing/test_pytester.py,Unknown Test,test_pytester_subprocess_with_non_string_plugins,854
+testing/test_pytester.py,Verbose Test,test_make_hook_recorder,22;75
+testing/test_pytester.py,Verbose Test,test_linematcher_no_matching,553;598
+testing/test_pytester.py,Programming Paradigms Blend,(nível do módulo),22;221
+testing/test_pytester.py,Non-Functional Statement,test_pytester_subprocess_with_non_string_plugins,859
+testing/test_recwarn.py,Conditional Test Logic,test_deprecated_call_no_warning,197
+testing/test_recwarn.py,Conditional Test Logic,test_deprecated_call_modes,219
+testing/test_recwarn.py,Conditional Test Logic,test_deprecated_call_modes,221
+testing/test_recwarn.py,Conditional Test Logic,test_deprecated_call_specificity,236
+testing/test_recwarn.py,Unknown Test,test_pop_raises_if_no_match,70
+testing/test_recwarn.py,Unknown Test,test_warn_stacklevel,104
+testing/test_recwarn.py,Unknown Test,test_typechecking,110
+testing/test_recwarn.py,Unknown Test,test_invalid_enter_exit,120
+testing/test_recwarn.py,Unknown Test,test_deprecated_call_raises,148
+testing/test_recwarn.py,Unknown Test,test_deprecated_call,153
+testing/test_recwarn.py,Unknown Test,test_deprecated_explicit_call_raises,175
+testing/test_recwarn.py,Unknown Test,test_deprecated_explicit_call,180
+testing/test_recwarn.py,Unknown Test,test_deprecated_call_no_warning,187
+testing/test_recwarn.py,Unknown Test,test_deprecated_call_specificity,227
+testing/test_recwarn.py,Unknown Test,test_deprecated_call_supports_match,248
+testing/test_recwarn.py,Unknown Test,test_check_callable,261
+testing/test_recwarn.py,Unknown Test,test_several_messages,266
+testing/test_recwarn.py,Unknown Test,test_function,277
+testing/test_recwarn.py,Unknown Test,test_warning_tuple,282
+testing/test_recwarn.py,Unknown Test,test_record_only_none_type_error,356
+testing/test_recwarn.py,Unknown Test,test_double_test,383
+testing/test_recwarn.py,Unknown Test,test_match_regex,399
+testing/test_recwarn.py,Unknown Test,test_one_from_multiple_warns,413
+testing/test_recwarn.py,Unknown Test,test_none_of_multiple_warns,424
+testing/test_recwarn.py,Unknown Test,test_re_emit_single,475
+testing/test_recwarn.py,Unknown Test,test_re_emit_multiple,481
+testing/test_recwarn.py,Unknown Test,test_re_emit_match_single,486
+testing/test_recwarn.py,Unknown Test,test_re_emit_match_multiple,492
+testing/test_recwarn.py,Unknown Test,test_re_emit_non_match_single,499
+testing/test_recwarn.py,Unknown Test,test_re_emit_filename_derived_module,505
+testing/test_recwarn.py,Unknown Test,test_catch_warning_within_raise,530
+testing/test_recwarn.py,Unknown Test,test_raise_type_error_on_invalid_warning,608
+testing/test_recwarn.py,Unknown Test,test_no_raise_type_error_on_valid_warning,624
+testing/test_recwarn.py,Unknown Test,test_raise_type_error_on_invalid_warning_message_cpython,635
+testing/test_recwarn.py,Unknown Test,test_multiple_arg_custom_warning,644
+testing/test_recwarn.py,Verbose Test,test_as_contextmanager,292;338
+testing/test_recwarn.py,Programming Paradigms Blend,(nível do módulo),14;45
+testing/test_recwarn.py,Non-Functional Statement,test_as_contextmanager,319
+testing/test_recwarn.py,Non-Functional Statement,test_record_by_subclass,370
+testing/test_recwarn.py,Non-Functional Statement,test_record_by_subclass,373
+testing/test_recwarn.py,Non-Functional Statement,test_warns_context_manager_with_kwargs,472
+testing/test_reports.py,Conditional Test Logic,test_xdist_report_longrepr_reprcrash_130,62
+testing/test_reports.py,Conditional Test Logic,test_xdist_report_longrepr_reprcrash_130,63
+testing/test_reports.py,Conditional Test Logic,test_xdist_report_longrepr_reprcrash_130,65
+testing/test_reports.py,Conditional Test Logic,test_reprentries_serialization_170,125
+testing/test_reports.py,Conditional Test Logic,test_reprentries_serialization_196,169
+testing/test_reports.py,Conditional Test Logic,test_itemreport_outcomes,192
+testing/test_reports.py,Conditional Test Logic,test_itemreport_outcomes,198
+testing/test_reports.py,Conditional Test Logic,test_itemreport_outcomes,204
+testing/test_reports.py,Conditional Test Logic,test_collectreport_passed,211
+testing/test_reports.py,Conditional Test Logic,test_collectreport_fail,223
+testing/test_reports.py,Conditional Test Logic,test_collectreport_fail,229
+testing/test_reports.py,Conditional Test Logic,test_extended_report_deserialization,237
+testing/test_reports.py,Conditional Test Logic,test_extended_report_deserialization,245
+testing/test_reports.py,Conditional Test Logic,test_chained_exceptions,316
+testing/test_reports.py,Conditional Test Logic,test_report_timestamps_match_duration,453
+testing/test_reports.py,Conditional Test Logic,test_test_report,549
+testing/test_reports.py,Conditional Test Logic,test_collect_report,571
+testing/test_reports.py,Unknown Test,test_report_prevent_ConftestImportFailure_hiding_exception,427
+testing/test_reports.py,Verbose Test,test_chained_exceptions,297;368
+testing/test_reports.py,Verbose Test,test_chained_exceptions_no_reprcrash,370;425
+testing/test_reports.py,Non-Functional Statement,test_itemreport_outcomes,178
+testing/test_reports.py,Non-Functional Statement,test_itemreport_outcomes,181
+testing/test_reports.py,Non-Functional Statement,test_invalid_report_types,591
+testing/test_runner.py,Conditional Test Logic,test_logstart_logfinish_hooks,337
+testing/test_runner.py,Conditional Test Logic,test_exact_teardown_issue90,368
+testing/test_runner.py,Conditional Test Logic,test_exact_teardown_issue90,374
+testing/test_runner.py,Conditional Test Logic,test_report_extra_parameters,570
+testing/test_runner.py,Conditional Test Logic,test_makereport_getsource_dynamic_code,1002
+testing/test_runner.py,Conditional Test Logic,test_store_except_info_on_error,1035
+testing/test_runner.py,Conditional Test Logic,test_store_except_info_on_error,1045
+testing/test_runner.py,Conditional Test Logic,test_store_except_info_on_error,1056
+testing/test_runner.py,Exception Handling,test_systemexit_does_not_bail_out,450
+testing/test_runner.py,Exception Handling,test_exit_propagates,464
+testing/test_runner.py,Exception Handling,test_keyboardinterrupt_propagates,486
+testing/test_runner.py,Exception Handling,test_keyboardinterrupt_clears_request_and_funcargs,519
+testing/test_runner.py,Exception Handling,test_outcomeexception_passes_except_Exception,644
+testing/test_runner.py,Exception Handling,test_exception_printing_skip,790
+testing/test_runner.py,Exception Handling,test_importorskip,804
+testing/test_runner.py,Exception Handling,test_importorskip_dev_module,882
+testing/test_runner.py,Exception Handling,test_store_except_info_on_error,1038
+testing/test_runner.py,Redundant Print,test_skip_in_setup_function,240
+testing/test_runner.py,Redundant Print,test_failure_in_teardown_function,278
+testing/test_runner.py,Redundant Print,test_exact_teardown_issue90,367
+testing/test_runner.py,Redundant Print,test_exact_teardown_issue1206,396
+testing/test_runner.py,Redundant Print,test_failure_in_setup_function_ignores_custom_repr,440
+testing/test_runner.py,Unknown Test,test_teardown_exact_stack_empty,39
+testing/test_runner.py,Unknown Test,test_setup_fails_and_failure_is_cached,47
+testing/test_runner.py,Unknown Test,test_module_not_found_skips_by_default,841
+testing/test_runner.py,Unknown Test,test_import_error_is_propagated_by_default,847
+testing/test_runner.py,Unknown Test,test_import_error_can_be_captured_explicitly,854
+testing/test_runner.py,Unknown Test,test_runtest_in_module_ordering,605
+testing/test_runner.py,Unknown Test,test_outcomeexception_passes_except_Exception,642
+testing/test_runner.py,Unknown Test,test_pytest_exit_msg,663
+testing/test_runner.py,Unknown Test,test_pytest_fail_notrace_runtest,717
+testing/test_runner.py,Unknown Test,test_pytest_fail_notrace_collection,733
+testing/test_runner.py,Unknown Test,test_pytest_fail_notrace_non_ascii,748
+testing/test_runner.py,Unknown Test,test_importorskip_module_level,894
+testing/test_runner.py,Unknown Test,test_importorskip_custom_reason,909
+testing/test_runner.py,Unknown Test,test_failure_in_setup,966
+testing/test_runner.py,Unknown Test,test_makereport_getsource,979
+testing/test_runner.py,Unknown Test,test_makereport_getsource_dynamic_code,992
+testing/test_runner.py,Programming Paradigms Blend,(nível do módulo),24;28
+testing/test_runner.py,Non-Functional Statement,test_setup_fails_and_failure_is_cached,52
+testing/test_runner.py,Non-Functional Statement,test_cached_exception_doesnt_get_longer,153
+testing/test_runner.py,Non-Functional Statement,test_exit_propagates,473
+testing/test_runner.py,Non-Functional Statement,test_keyboardinterrupt_propagates,494
+testing/test_runner.py,Non-Functional Statement,test_keyboardinterrupt_clears_request_and_funcargs,522
+testing/test_runner.py,Non-Functional Statement,test_collect_result,537
+testing/test_runner.py,Non-Functional Statement,test_runtest_in_module_ordering,623
+testing/test_runner.py,Non-Functional Statement,test_store_except_info_on_error,1041
+testing/test_runner.py,Non-Functional Statement,test_teardown_session_failed,1250
+testing/test_runner.py,Non-Functional Statement,test_teardown_session_stopped,1275
+testing/test_runner_xunit.py,Unknown Test,test_setup_funcarg_setup_when_outer_scope_fails,217
+testing/test_runner_xunit.py,Verbose Test,test_setup_teardown_function_level_with_optional_argument,246;297
+testing/test_runner_xunit.py,Non-Functional Statement,test_setup_teardown_function_level_with_optional_argument,271
+testing/test_runner_xunit.py,Non-Functional Statement,test_setup_teardown_function_level_with_optional_argument,278
+testing/test_session.py,Conditional Test Logic,test_deselect,322
+testing/test_session.py,Exception Handling,test_skip_file_by_conftest,175
+testing/test_session.py,Unknown Test,test_plugin_specify,257
+testing/test_session.py,Unknown Test,test_collection_args_do_not_duplicate_modules,344
+testing/test_session.py,Unknown Test,test_rootdir_option_arg,395
+testing/test_session.py,Unknown Test,test_rootdir_wrong_option_arg,421
+testing/test_session.py,Verbose Test,test_collection_args_do_not_duplicate_modules,344;391
+testing/test_session.py,Non-Functional Statement,test_skip_file_by_conftest,172
+testing/test_session.py,Non-Functional Statement,test_collect_only_with_various_situations,223
+testing/test_session.py,Non-Functional Statement,test_deselect,303
+testing/test_session.py,Non-Functional Statement,test_deselect,306
+testing/test_session.py,Non-Functional Statement,test_deselect,309
+testing/test_session.py,Non-Functional Statement,test_deselect,311
+testing/test_session.py,Non-Functional Statement,test_collection_args_do_not_duplicate_modules,353
+testing/test_session.py,Non-Functional Statement,test_shouldfail_is_sticky,448
+testing/test_session.py,Non-Functional Statement,test_shouldstop_is_sticky,478
+testing/test_setuponly.py,Unknown Test,test_capturing,240
+testing/test_setupplan.py,Conditional Test Logic,test_show_multi_test_fixture_setup_and_teardown_correctly_simple,66
+testing/test_setupplan.py,Conditional Test Logic,test_show_multi_test_fixture_setup_and_teardown_correctly_simple,67
+testing/test_setupplan.py,Conditional Test Logic,test_show_multi_test_fixture_setup_and_teardown_correctly_simple,69
+testing/test_setupplan.py,Conditional Test Logic,test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show,113
+testing/test_setupplan.py,Conditional Test Logic,test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show,114
+testing/test_setupplan.py,Conditional Test Logic,test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show,118
+testing/test_setupplan.py,Conditional Test Logic,test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show,119
+testing/test_setupplan.py,Verbose Test,test_show_multi_test_fixture_setup_and_teardown_correctly_simple,29;75
+testing/test_skipping.py,Conditional Test Logic,test_marked_one_arg_twice,79
+testing/test_skipping.py,Conditional Test Logic,test_strict_xfail,669
+testing/test_skipping.py,Unknown Test,test_xfail_run_anyway,361
+testing/test_skipping.py,Unknown Test,test_xfail_run_with_skip_mark,390
+testing/test_skipping.py,Unknown Test,test_xfail_not_report_default,419
+testing/test_skipping.py,Unknown Test,test_xfail_not_run_xfail_reporting,433
+testing/test_skipping.py,Unknown Test,test_xfail_not_run_no_setup_run,483
+testing/test_skipping.py,Unknown Test,test_xfail_imperative,510
+testing/test_skipping.py,Unknown Test,test_xfail_imperative_in_setup_function,525
+testing/test_skipping.py,Unknown Test,test_dynamic_xfail_no_run,563
+testing/test_skipping.py,Unknown Test,test_dynamic_xfail_set_during_funcarg_setup,577
+testing/test_skipping.py,Unknown Test,test_xfail_raises,627
+testing/test_skipping.py,Unknown Test,test_failing_setup_issue9,766
+testing/test_skipping.py,Unknown Test,test_failing_teardown_issue9,781
+testing/test_skipping.py,Unknown Test,test_xfail_call_and_teardown_reports_show_phase,796
+testing/test_skipping.py,Unknown Test,test_xfail_setup_report_shows_phase,823
+testing/test_skipping.py,Unknown Test,test_arg_as_reason,878
+testing/test_skipping.py,Unknown Test,test_skip_no_reason,890
+testing/test_skipping.py,Unknown Test,test_skip_with_reason,902
+testing/test_skipping.py,Unknown Test,test_only_skips_marked_test,914
+testing/test_skipping.py,Unknown Test,test_strict_and_skip,931
+testing/test_skipping.py,Unknown Test,test_wrong_skip_usage,943
+testing/test_skipping.py,Unknown Test,test_skipif_using_platform,990
+testing/test_skipping.py,Unknown Test,test_skipif,1317
+testing/test_skipping.py,Unknown Test,test_skipif_noreason,1336
+testing/test_skipping.py,Unknown Test,test_xfail,1352
+testing/test_skipping.py,Unknown Test,test_skip_not_report_default,1025
+testing/test_skipping.py,Unknown Test,test_skipif_class,1042
+testing/test_skipping.py,Unknown Test,test_reportchars,1116
+testing/test_skipping.py,Unknown Test,test_reportchars_error,1138
+testing/test_skipping.py,Unknown Test,test_reportchars_all,1153
+testing/test_skipping.py,Unknown Test,test_reportchars_all_error,1186
+testing/test_skipping.py,Unknown Test,test_errors_in_xfail_skip_expressions,1201
+testing/test_skipping.py,Unknown Test,test_xfail_skipif_with_globals,1238
+testing/test_skipping.py,Unknown Test,test_default_markers,1255
+testing/test_skipping.py,Unknown Test,test_imperativeskip_on_xfail_test,1286
+testing/test_skipping.py,Unknown Test,test_module_level_skip_error,1392
+testing/test_skipping.py,Unknown Test,test_module_level_skip_with_allow_module_level,1409
+testing/test_skipping.py,Unknown Test,test_invalid_skip_keyword_parameter,1424
+testing/test_skipping.py,Unknown Test,test_summary_list_after_errors,1466
+testing/test_skipping.py,Unknown Test,test_importorskip,1485
+testing/test_skipping.py,Unknown Test,test_relpath_rootdir,1493
+testing/test_skipping.py,Unknown Test,test_skip_from_fixture,1510
+testing/test_skipping.py,Unknown Test,test_exit_with_reason_works_ok,1559
+testing/test_skipping.py,Verbose Test,test_skipif_markeval_namespace_multiple,188;269
+testing/test_stash.py,Verbose Test,test_stash,8;69
+testing/test_stepwise.py,Conditional Test Logic,test_stop_on_collection_errors,207
+testing/test_stepwise.py,Unknown Test,test_run_without_stepwise,99
+testing/test_stepwise.py,Unknown Test,test_stepwise_output_summary,106
+testing/test_stepwise.py,Unknown Test,test_stop_on_collection_errors,201
+testing/test_stepwise.py,Unknown Test,test_xfail_handling,213
+testing/test_stepwise.py,Unknown Test,test_sw_skip_help,290
+testing/test_stepwise.py,Unknown Test,test_do_not_reset_cache_if_disabled,368
+testing/test_stepwise.py,Unknown Test,test_reset,412
+testing/test_stepwise.py,Unknown Test,test_change_test_count,454
+testing/test_stepwise.py,Verbose Test,stepwise_pytester,16;63
+testing/test_stepwise.py,Verbose Test,test_xfail_handling,213;262
+testing/test_stepwise.py,Verbose Test,test_change_test_count,454;512
+testing/test_stepwise.py,Non-Functional Statement,test_xfail_handling,222
+testing/test_stepwise.py,Non-Functional Statement,test_xfail_handling,227
+testing/test_stepwise.py,Non-Functional Statement,test_do_not_reset_cache_if_disabled,382
+testing/test_stepwise.py,Non-Functional Statement,test_reset,415
+testing/test_stepwise.py,Non-Functional Statement,test_change_test_count,458
+testing/test_stepwise.py,Non-Functional Statement,test_change_test_count,477
+testing/test_stepwise.py,Non-Functional Statement,test_change_test_count,497
+testing/test_stepwise.py,Non-Functional Statement,test_cache_error,518
+testing/test_subtests.py,Unknown Test,test_failures,437
+testing/test_subtests.py,Unknown Test,test_assert_crash_line,467
+testing/test_subtests.py,Unknown Test,test_passes,490
+testing/test_subtests.py,Unknown Test,test_skip,519
+testing/test_subtests.py,Unknown Test,test_non_subtest_skip,540
+testing/test_subtests.py,Unknown Test,test_xfail,565
+testing/test_subtests.py,Unknown Test,test_only_original_skip_is_called,590
+testing/test_subtests.py,Unknown Test,test_skip_with_failure,613
+testing/test_subtests.py,Unknown Test,test_msg_not_a_string,678
+testing/test_subtests.py,Unknown Test,test_capturing,731
+testing/test_subtests.py,Unknown Test,test_no_capture,753
+testing/test_subtests.py,Unknown Test,test_capture_with_fixture,770
+testing/test_subtests.py,Unknown Test,test_capturing_info,819
+testing/test_subtests.py,Unknown Test,test_capturing_debug,837
+testing/test_subtests.py,Unknown Test,test_caplog,855
+testing/test_subtests.py,Unknown Test,test_no_logging,879
+testing/test_subtests.py,Unknown Test,test_pdb_fixture,928
+testing/test_subtests.py,Unknown Test,test_pdb_unittest,940
+testing/test_subtests.py,Unknown Test,test_failures,17
+testing/test_subtests.py,Unknown Test,test_passes,99
+testing/test_subtests.py,Unknown Test,test_skip,149
+testing/test_subtests.py,Unknown Test,test_xfail,214
+testing/test_subtests.py,Unknown Test,test_typing_exported,276
+testing/test_subtests.py,Unknown Test,test_subtests_and_parametrization,289
+testing/test_subtests.py,Unknown Test,test_subtests_fail_top_level_test,336
+testing/test_subtests.py,Unknown Test,test_subtests_do_not_overwrite_top_level_failure,355
+testing/test_subtests.py,Unknown Test,test_msg_not_a_string,376
+testing/test_subtests.py,Unknown Test,test_subtests_last_failed_step_wise,407
+testing/test_subtests.py,Unknown Test,test_do_not_swallow_pytest_exit,997
+testing/test_subtests.py,Unknown Test,test_nested,1017
+testing/test_subtests.py,Verbose Test,test_skip_with_failure,613;676
+testing/test_subtests.py,Verbose Test,test_failures,17;96
+testing/test_subtests.py,Verbose Test,test_passes,99;146
+testing/test_subtests.py,Verbose Test,test_skip,149;211
+testing/test_subtests.py,Verbose Test,test_xfail,214;273
+testing/test_subtests.py,Programming Paradigms Blend,(nível do módulo),14;434
+testing/test_subtests.py,Non-Functional Statement,test_failures,457
+testing/test_subtests.py,Non-Functional Statement,test_passes,501
+testing/test_subtests.py,Non-Functional Statement,test_passes,505
+testing/test_subtests.py,Non-Functional Statement,test_passes,509
+testing/test_subtests.py,Non-Functional Statement,test_failures,32
+testing/test_subtests.py,Non-Functional Statement,test_passes,105
+testing/test_subtests.py,Non-Functional Statement,test_passes,109
+testing/test_subtests.py,Non-Functional Statement,test_do_not_swallow_pytest_exit,1005
+testing/test_subtests.py,Non-Functional Statement,test_serialization_xdist,1087
+testing/test_subtests.py,Non-Functional Statement,test_serialization_xdist,1093
+testing/test_subtests.py,Undefined Test,runpytest_and_check_pdb,954
+testing/test_terminal.py,Conditional Test Logic,test_pass_skip_fail,102
+testing/test_terminal.py,Conditional Test Logic,test_console_output_style_times_with_subtests,169
+testing/test_terminal.py,Conditional Test Logic,test_console_output_style_times_with_subtests,170
+testing/test_terminal.py,Conditional Test Logic,test_console_output_style_times_with_subtests,174
+testing/test_terminal.py,Conditional Test Logic,test_console_output_style_times_with_subtests_xdist,206
+testing/test_terminal.py,Conditional Test Logic,test_console_output_style_times_with_subtests_xdist,207
+testing/test_terminal.py,Conditional Test Logic,test_console_output_style_times_with_subtests_xdist,211
+testing/test_terminal.py,Conditional Test Logic,test_console_output_style_times_slow_teardown_does_not_leak,246
+testing/test_terminal.py,Conditional Test Logic,test_keyboard_interrupt,451
+testing/test_terminal.py,Conditional Test Logic,test_header_trailer_info,1060
+testing/test_terminal.py,Conditional Test Logic,test_no_header_trailer_info,1078
+testing/test_terminal.py,Conditional Test Logic,test_verbose_reporting_xdist,1265
+testing/test_terminal.py,Conditional Test Logic,test_tb_option,1731
+testing/test_terminal.py,Conditional Test Logic,test_tb_option,1735
+testing/test_terminal.py,Conditional Test Logic,test_tb_option,1739
+testing/test_terminal.py,Conditional Test Logic,test_xdist_verbose,2536
+testing/test_terminal.py,Conditional Test Logic,test_fail_extra_reporting,1395
+testing/test_terminal.py,Conditional Test Logic,test_color_yes_collection_on_non_atty,1550
+testing/test_terminal.py,Conditional Test Logic,test_color_yes_collection_on_non_atty,1556
+testing/test_terminal.py,Conditional Test Logic,test_line_with_reprcrash,2759
+testing/test_terminal.py,Conditional Test Logic,test_line_with_reprcrash,2769
+testing/test_terminal.py,Exception Handling,test_passes,1032
+testing/test_terminal.py,Redundant Print,test_tb_option,1732
+testing/test_terminal.py,Redundant Print,test_summary_stats,2193
+testing/test_terminal.py,Redundant Print,test_summary_stats,2194
+testing/test_terminal.py,Redundant Print,test_summary_stats,2196
+testing/test_terminal.py,Unknown Test,test_pass_skip_fail,89
+testing/test_terminal.py,Unknown Test,test_runtest_location_shown_before_test_starts,314
+testing/test_terminal.py,Unknown Test,test_itemreport_subclasses_show_subclassed_file,357
+testing/test_terminal.py,Unknown Test,test_keyboard_interrupt,430
+testing/test_terminal.py,Unknown Test,test_collect_single_item,479
+testing/test_terminal.py,Unknown Test,test_verbose_skip_reason,526
+testing/test_terminal.py,Unknown Test,test_collectonly_basic,628
+testing/test_terminal.py,Unknown Test,test_collectonly_skipped_module,644
+testing/test_terminal.py,Unknown Test,test_collectonly_displays_test_description,654
+testing/test_terminal.py,Unknown Test,test_collectonly_failed_module,683
+testing/test_terminal.py,Unknown Test,test_collectonly_quiet,745
+testing/test_terminal.py,Unknown Test,test_collectonly_more_quiet,750
+testing/test_terminal.py,Unknown Test,test_collect_only_summary_status,755
+testing/test_terminal.py,Unknown Test,test_teardown_fixture_error,821
+testing/test_terminal.py,Unknown Test,test_teardown_fixture_error_and_test_failure,843
+testing/test_terminal.py,Unknown Test,test_setup_teardown_output_and_test_failure,869
+testing/test_terminal.py,Unknown Test,test_header_trailer_info,1039
+testing/test_terminal.py,Unknown Test,test_no_header_trailer_info,1063
+testing/test_terminal.py,Unknown Test,test_header,1081
+testing/test_terminal.py,Unknown Test,test_header_absolute_testpath,1110
+testing/test_terminal.py,Unknown Test,test_no_header,1131
+testing/test_terminal.py,Unknown Test,test_no_summary,1151
+testing/test_terminal.py,Unknown Test,test_no_summary_still_runs_terminal_summary_hook,1161
+testing/test_terminal.py,Unknown Test,test_showlocals,1176
+testing/test_terminal.py,Unknown Test,test_noshowlocals_addopts_override,1194
+testing/test_terminal.py,Unknown Test,test_showlocals_short,1210
+testing/test_terminal.py,Unknown Test,test_report_collectionfinish_hook,1298
+testing/test_terminal.py,Unknown Test,test_collect_fail,1673
+testing/test_terminal.py,Unknown Test,test_maxfailures,1680
+testing/test_terminal.py,Unknown Test,test_maxfailures_with_interrupted,1701
+testing/test_terminal.py,Unknown Test,test_tb_line_show_capture,1747
+testing/test_terminal.py,Unknown Test,test_tb_crashline_pytrace_false,1781
+testing/test_terminal.py,Unknown Test,test_pytest_report_header,1794
+testing/test_terminal.py,Unknown Test,test_files,2223
+testing/test_terminal.py,Unknown Test,test_normal_verbosity,2236
+testing/test_terminal.py,Unknown Test,test_verbose,2247
+testing/test_terminal.py,Unknown Test,test_quiet,2260
+testing/test_terminal.py,Unknown Test,test_zero_tests_collected,2314
+testing/test_terminal.py,Unknown Test,test_normal,2332
+testing/test_terminal.py,Unknown Test,test_colored_progress,2342
+testing/test_terminal.py,Unknown Test,test_count,2394
+testing/test_terminal.py,Unknown Test,test_times,2410
+testing/test_terminal.py,Unknown Test,test_times_multiline,2426
+testing/test_terminal.py,Unknown Test,test_verbose,2456
+testing/test_terminal.py,Unknown Test,test_verbose_count,2466
+testing/test_terminal.py,Unknown Test,test_verbose_times,2482
+testing/test_terminal.py,Unknown Test,test_xdist_normal,2498
+testing/test_terminal.py,Unknown Test,test_xdist_normal_count,2506
+testing/test_terminal.py,Unknown Test,test_xdist_verbose,2520
+testing/test_terminal.py,Unknown Test,test_xdist_times,2550
+testing/test_terminal.py,Unknown Test,test_capture_no,2570
+testing/test_terminal.py,Unknown Test,test_capture_no_progress_enabled,2579
+testing/test_terminal.py,Unknown Test,test_teardown_simple,2631
+testing/test_terminal.py,Unknown Test,test_teardown_with_test_also_failing,2643
+testing/test_terminal.py,Unknown Test,test_teardown_many,2661
+testing/test_terminal.py,Unknown Test,test_teardown_many_verbose,2667
+testing/test_terminal.py,Unknown Test,test_xdist_normal,2684
+testing/test_terminal.py,Unknown Test,test_code_highlight_simple,2969
+testing/test_terminal.py,Unknown Test,test_code_highlight_continuation,2987
+testing/test_terminal.py,Unknown Test,test_code_highlight_custom_theme,3010
+testing/test_terminal.py,Unknown Test,test_code_highlight_invalid_theme,3032
+testing/test_terminal.py,Unknown Test,test_code_highlight_invalid_theme_mode,3048
+testing/test_terminal.py,Unknown Test,test_execute_positive,3209
+testing/test_terminal.py,Unknown Test,test_execute_0_global_1,3227
+testing/test_terminal.py,Unknown Test,test_execute_negative,3242
+testing/test_terminal.py,Unknown Test,test_execute_skipped_positive_2,3255
+testing/test_terminal.py,Unknown Test,test_execute_skipped_positive_1,3275
+testing/test_terminal.py,Unknown Test,test_execute_skipped__0_global_1,3293
+testing/test_terminal.py,Unknown Test,test_execute_skipped_negative,3312
+testing/test_terminal.py,Unknown Test,test__collect_only_positive,3330
+testing/test_terminal.py,Unknown Test,test_collect_only_0_global_1,3353
+testing/test_terminal.py,Unknown Test,test_collect_only_negative_1,3372
+testing/test_terminal.py,Unknown Test,test_collect_only_negative_2,3389
+testing/test_terminal.py,Unknown Test,test_nodeid_handling_windows_paths,3559
+testing/test_terminal.py,Unknown Test,test_fail_extra_reporting,1392
+testing/test_terminal.py,Unknown Test,test_fail_reporting_on_pass,1412
+testing/test_terminal.py,Unknown Test,test_pass_extra_reporting,1418
+testing/test_terminal.py,Unknown Test,test_pass_reporting_on_fail,1426
+testing/test_terminal.py,Unknown Test,test_color_yes,1472
+testing/test_terminal.py,Unknown Test,test_terminalreporter_reportopt_addopts,1620
+testing/test_terminal.py,Unknown Test,test_fdopen_kept_alive_issue124,1906
+testing/test_terminal.py,Unknown Test,test_tbstyle_native_setup_error,1924
+testing/test_terminal.py,Unknown Test,test_terminal_summary,1942
+testing/test_terminal.py,Unknown Test,test_terminal_no_summary_warnings_header_once,2025
+testing/test_terminal.py,Unknown Test,test_short_summary_with_verbose,2806
+testing/test_terminal.py,Unknown Test,test_collecterror,2937
+testing/test_terminal.py,Unknown Test,test_no_summary_collecterror,2954
+testing/test_terminal.py,Unknown Test,test_via_exec,2960
+testing/test_terminal.py,Unknown Test,test_warning_when_init_trumps_pyproject_toml,3089
+testing/test_terminal.py,Unknown Test,test_warning_when_init_trumps_multiple_files,3110
+testing/test_terminal.py,Unknown Test,test_no_warning_when_init_but_pyproject_toml_has_no_entry,3142
+testing/test_terminal.py,Unknown Test,test_no_warning_on_terminal_with_a_single_config_file,3163
+testing/test_terminal.py,Unknown Test,test_xfail_tb_default,3456
+testing/test_terminal.py,Unknown Test,test_xfail_tb_true,3475
+testing/test_terminal.py,Unknown Test,test_xfail_tb_line,3498
+testing/test_terminal.py,Unknown Test,test_xpass_output,3535
+testing/test_terminal.py,Verbose Test,test_itemreport_subclasses_show_subclassed_file,357;408
+testing/test_terminal.py,Verbose Test,test_verbose_skip_reason,526;614
+testing/test_terminal.py,Verbose Test,test_show_capture,1813;1862
+testing/test_terminal.py,Verbose Test,test_colored_progress,2342;2392
+testing/test_terminal.py,Verbose Test,test_session_lifecycle,3678;3731
+testing/test_terminal.py,Verbose Test,test_color_yes,1472;1528
+testing/test_terminal.py,Verbose Test,test_getreportopt,1561;1617
+testing/test_terminal.py,Verbose Test,test_line_with_reprcrash,2725;2803
+testing/test_terminal.py,Non-Functional Statement,test_console_output_style_times_with_subtests,149
+testing/test_terminal.py,Non-Functional Statement,test_console_output_style_times_with_subtests_xdist,187
+testing/test_terminal.py,Non-Functional Statement,test_itemreport_subclasses_show_subclassed_file,372
+testing/test_terminal.py,Non-Functional Statement,test_itemreport_subclasses_show_subclassed_file,379
+testing/test_terminal.py,Non-Functional Statement,test_collect_only_summary_status,759
+testing/test_terminal.py,Non-Functional Statement,test_collect_only_summary_status,762
+testing/test_terminal.py,Non-Functional Statement,test_files,2229
+testing/test_terminal.py,Non-Functional Statement,many_tests_files,2285
+testing/test_terminal.py,Non-Functional Statement,many_tests_files,2290
+testing/test_terminal.py,Non-Functional Statement,many_tests_files,2295
+testing/test_terminal.py,Non-Functional Statement,more_tests_files,2305
+testing/test_terminal.py,Non-Functional Statement,more_tests_files,2310
+testing/test_terminal.py,Non-Functional Statement,test_colored_progress,2355
+testing/test_terminal.py,Non-Functional Statement,test_colored_progress,2363
+testing/test_terminal.py,Non-Functional Statement,test_skip_reasons_folding,2698
+testing/test_terminal.py,Non-Functional Statement,test_line_with_reprcrash,2749
+testing/test_threadexception.py,Non-Functional Statement,test_unhandled_thread_exception,21
+testing/test_threadexception.py,Non-Functional Statement,test_unhandled_thread_exception_in_setup,56
+testing/test_threadexception.py,Non-Functional Statement,test_unhandled_thread_exception_in_teardown,93
+testing/test_threadexception.py,Non-Functional Statement,test_unhandled_thread_exception_warning_error,128
+testing/test_threadexception.py,Non-Functional Statement,test_threadexception_warning_multiple_errors,154
+testing/test_threadexception.py,Non-Functional Statement,test_unraisable_collection_failure,183
+testing/test_tmpdir.py,Conditional Test Logic,getini,49
+testing/test_tmpdir.py,Conditional Test Logic,test_policy_none_delete_all,124
+testing/test_tmpdir.py,Conditional Test Logic,test_retention_count,163
+testing/test_tmpdir.py,Conditional Test Logic,test_policy_failed_removes_only_passed_dir,186
+testing/test_tmpdir.py,Conditional Test Logic,test_policy_failed_removes_basedir_when_all_passed,218
+testing/test_tmpdir.py,Conditional Test Logic,test_policy_failed_removes_dir_when_skipped_from_fixture,253
+testing/test_tmpdir.py,Conditional Test Logic,test_policy_all_keeps_dir_when_skipped_from_fixture,283
+testing/test_tmpdir.py,Conditional Test Logic,test_make,441
+testing/test_tmpdir.py,Conditional Test Logic,test_make,447
+testing/test_tmpdir.py,Conditional Test Logic,test_rm_rf_with_no_exec_permission_directories,584
+testing/test_tmpdir.py,Conditional Test Logic,test_rm_rf_with_no_exec_permission_directories,585
+testing/test_tmpdir.py,Conditional Test Logic,test_on_rm_rf_error_chmod_retry_walks_parents,744
+testing/test_tmpdir.py,Conditional Test Logic,test_on_rm_rf_error_chmod_retry_walks_parents,745
+testing/test_tmpdir.py,Conditional Test Logic,test_mktemp,319
+testing/test_tmpdir.py,Exception Handling,test_lock_register_cleanup_removal,464
+testing/test_tmpdir.py,Redundant Print,test_cleanup_keep,495
+testing/test_tmpdir.py,Unknown Test,test_cleanup_lock_create,452
+testing/test_tmpdir.py,Unknown Test,test_cleanup_keep,492
+testing/test_tmpdir.py,Unknown Test,test_cleanup_ignores_symlink,514
+testing/test_tmpdir.py,Unknown Test,test_tmp_path_fixture,31
+testing/test_tmpdir.py,Programming Paradigms Blend,(nível do módulo),31;38
+testing/test_tmpdir.py,Non-Functional Statement,test_get_user_handles_getpass_oserror,876
+testing/test_tmpdir.py,Undefined Test,getini,48
+testing/test_unittest.py,Conditional Test Logic,test_unittest_expected_failure_for_failing_test_is_xfail,818
+testing/test_unittest.py,Conditional Test Logic,test_unittest_expected_failure_for_passing_test_is_fail,846
+testing/test_unittest.py,Conditional Test Logic,test_plain_unittest_does_not_support_async,1412
+testing/test_unittest.py,Unknown Test,test_trial_error,564
+testing/test_unittest.py,Unknown Test,test_trial_pdb,628
+testing/test_unittest.py,Unknown Test,test_runTest_method,28
+testing/test_unittest.py,Unknown Test,test_setUpModule,89
+testing/test_unittest.py,Unknown Test,test_function_item_obj_is_instance,147
+testing/test_unittest.py,Unknown Test,test_testcase_adderrorandfailure_defers,384
+testing/test_unittest.py,Unknown Test,test_testcase_custom_exception_info,407
+testing/test_unittest.py,Unknown Test,test_unittest_not_shown_in_traceback,755
+testing/test_unittest.py,Unknown Test,test_unittest_setup_interaction,863
+testing/test_unittest.py,Unknown Test,test_cleanup_functions,949
+testing/test_unittest.py,Unknown Test,test_unittest_raise_skip_issue748,1003
+testing/test_unittest.py,Unknown Test,test_unittest_skip_issue1169,1022
+testing/test_unittest.py,Unknown Test,test_error_message_with_parametrized_fixtures,1184
+testing/test_unittest.py,Unknown Test,test_setup_inheritance_skipping,1204
+testing/test_unittest.py,Unknown Test,test_exit_outcome,1231
+testing/test_unittest.py,Unknown Test,test_plain_unittest_does_not_support_async,1402
+testing/test_unittest.py,Verbose Test,test_trial_exceptions_with_skips,514;562
+testing/test_unittest.py,Verbose Test,test_trial_error,564;626
+testing/test_unittest.py,Verbose Test,test_djangolike_testcase,697;752
+testing/test_unittest.py,Verbose Test,test_usefixtures_marker_on_unittest,1060;1117
+testing/test_unittest.py,Programming Paradigms Blend,(nível do módulo),12;483
+testing/test_unittest.py,Non-Functional Statement,test_unorderable_types,774
+testing/test_unittest.py,Non-Functional Statement,test_unorderable_types,778
+testing/test_unittest.py,Non-Functional Statement,test_raising_unittest_skiptest_during_collection,1699
+testing/test_unittest.py,Non-Functional Statement,test_raising_unittest_skiptest_during_collection,1705
+testing/test_unittest.py,Non-Functional Statement,test_abstract_testcase_is_not_collected,1727
+testing/test_unittest.py,Non-Functional Statement,test_abstract_testcase_is_not_collected,1730
+testing/test_unittest.py,Non-Functional Statement,test_abstract_testcase_is_not_collected,1732
+testing/test_unittest.py,Non-Functional Statement,test_abstract_testcase_is_not_collected,1735
+testing/test_unittest.py,Non-Functional Statement,test_abstract_testcase_is_not_collected,1738
+testing/test_unraisableexception.py,Verbose Test,test_unraisable_decouples_from_cleanup_stack_order,403;462
+testing/test_unraisableexception.py,Non-Functional Statement,test_unraisable,45
+testing/test_unraisableexception.py,Non-Functional Statement,test_unraisable_in_setup,82
+testing/test_unraisableexception.py,Non-Functional Statement,test_unraisable_in_teardown,121
+testing/test_unraisableexception.py,Non-Functional Statement,test_unraisable_warning_error,156
+testing/test_unraisableexception.py,Non-Functional Statement,test_unraisable_warning_multiple_errors,180
+testing/test_unraisableexception.py,Non-Functional Statement,test_unraisable_collection_failure,205
+testing/test_unraisableexception.py,Non-Functional Statement,test_unraisable_collection_failure,210
+testing/test_warning_types.py,Unknown Test,test_pytest_warnings_repr_integration_test,27
+testing/test_warning_types.py,Unknown Test,test_warn_explicit_for_annotates_errors_with_location,45
+testing/test_warnings.py,Conditional Test Logic,test_shown_by_default,478
+testing/test_warnings.py,Conditional Test Logic,test_as_errors,91
+testing/test_warnings.py,Conditional Test Logic,test_ignore,113
+testing/test_warnings.py,Conditional Test Logic,test_filterwarnings_mark,182
+testing/test_warnings.py,Conditional Test Logic,test_warning_recorded_hook,284
+testing/test_warnings.py,Conditional Test Logic,test_warning_recorded_hook,292
+testing/test_warnings.py,Conditional Test Logic,test_hide_pytest_internal_warnings,357
+testing/test_warnings.py,Conditional Test Logic,test_hide_pytest_internal_warnings,366
+testing/test_warnings.py,Conditional Test Logic,test_hide_pytest_internal_warnings,370
+testing/test_warnings.py,Conditional Test Logic,test_option_precedence_cmdline_over_ini,402
+testing/test_warnings.py,Conditional Test Logic,test_removed_in_x_warning_as_error,581
+testing/test_warnings.py,Conditional Test Logic,test_removed_in_x_warning_as_error,592
+testing/test_warnings.py,Conditional Test Logic,test_removed_in_x_warning_as_error,596
+testing/test_warnings.py,Conditional Test Logic,test_resource_warning,978
+testing/test_warnings.py,Conditional Test Logic,test_resource_warning,991
+testing/test_warnings.py,Exception Handling,test_resource_warning,948
+testing/test_warnings.py,Unknown Test,test_shown_by_default,475
+testing/test_warnings.py,Unknown Test,test_hidden_by_mark,509
+testing/test_warnings.py,Unknown Test,test_conftest_warning_captured,871
+testing/test_warnings.py,Unknown Test,test_issue4445_issue5928_mark_generator,906
+testing/test_warnings.py,Unknown Test,test_max_warnings_exceeded_message,1047
+testing/test_warnings.py,Unknown Test,test_normal_flow,42
+testing/test_warnings.py,Unknown Test,test_setup_teardown_warnings,59
+testing/test_warnings.py,Unknown Test,test_as_errors,89
+testing/test_warnings.py,Unknown Test,test_unicode,127
+testing/test_warnings.py,Unknown Test,test_works_with_filterwarnings,154
+testing/test_warnings.py,Unknown Test,test_filterwarnings_mark,179
+testing/test_warnings.py,Unknown Test,test_non_string_warning_argument,212
+testing/test_warnings.py,Unknown Test,test_collection_warnings,301
+testing/test_warnings.py,Unknown Test,test_option_precedence_cmdline_over_ini,383
+testing/test_warnings.py,Unknown Test,test_option_precedence_mark,408
+testing/test_warnings.py,Unknown Test,test_accept_unknown_category,428
+testing/test_warnings.py,Unknown Test,test_warnings_checker_twice,621
+testing/test_warnings.py,Unknown Test,test_group_warnings_by_message,631
+testing/test_warnings.py,Unknown Test,test_group_warnings_by_message_summary,662
+testing/test_warnings.py,Unknown Test,test_warning_on_testpaths_not_found,929
+testing/test_warnings.py,Unknown Test,test_resource_warning,943
+testing/test_warnings.py,Verbose Test,test_warning_recorded_hook,243;297
+testing/test_warnings.py,Verbose Test,test_resource_warning,943;994
+testing/test_warnings.py,Programming Paradigms Blend,(nível do módulo),14;455
+testing/test_warnings.py,Non-Functional Statement,test_works_with_filterwarnings,161
+testing/typing_checks.py,Unknown Test,test_hidden_param,66
+testing/typing_checks.py,Non-Functional Statement,check_raises_is_a_context_manager,54
+testing/typing_checks.py,Undefined Test,check_raises_is_a_context_manager,52
+testing/typing_checks.py,Undefined Test,check_testreport_attributes,59
+testing/typing_checks.py,Undefined Test,check_scope_typing,71
+testing/typing_raises_group.py,Conditional Test Logic,test_basic_matches,44
+testing/typing_raises_group.py,Conditional Test Logic,test_basic_matches,48
+testing/typing_raises_group.py,Conditional Test Logic,test_matches_with_different_exception_type,60
+testing/typing_raises_group.py,Conditional Test Logic,test_nested_raisesgroups_matches,173
+testing/typing_raises_group.py,Undefined Test,check_raisesexc_typevar_default,28
+testing/_py/test_local.py,Conditional Test Logic,test_visit_nofilter,198
+testing/_py/test_local.py,Conditional Test Logic,test_visit_norecurse,205
+testing/_py/test_local.py,Conditional Test Logic,test_visit_filterfunc_is_string,212
+testing/_py/test_local.py,Conditional Test Logic,test_visit_endswith,224
+testing/_py/test_local.py,Conditional Test Logic,test_visit_filesonly,328
+testing/_py/test_local.py,Conditional Test Logic,test_visit_nodotfiles,335
+testing/_py/test_local.py,Conditional Test Logic,test_visit_breadthfirst,343
+testing/_py/test_local.py,Conditional Test Logic,test_visit_breadthfirst,345
+testing/_py/test_local.py,Conditional Test Logic,test_visit_breadthfirst,346
+testing/_py/test_local.py,Conditional Test Logic,test_visit_breadthfirst,347
+testing/_py/test_local.py,Conditional Test Logic,test_visit_sort,355
+testing/_py/test_local.py,Conditional Test Logic,test_visit_sort,357
+testing/_py/test_local.py,Conditional Test Logic,test_visit_sort,358
+testing/_py/test_local.py,Conditional Test Logic,test_copy_file,382
+testing/_py/test_local.py,Conditional Test Logic,test_copy_dir,396
+testing/_py/test_local.py,Conditional Test Logic,test_move_file,440
+testing/_py/test_local.py,Conditional Test Logic,test_remove_routes_ignore_errors,610
+testing/_py/test_local.py,Conditional Test Logic,test_long_filenames,811
+testing/_py/test_local.py,Conditional Test Logic,test_make_numbered_dir_multiprocess_safe,875
+testing/_py/test_local.py,Conditional Test Logic,test_make_numbered_dir_multiprocess_safe,877
+testing/_py/test_local.py,Conditional Test Logic,test_sysexec,924
+testing/_py/test_local.py,Conditional Test Logic,test_make_numbered_dir,938
+testing/_py/test_local.py,Conditional Test Logic,test_make_numbered_dir,944
+testing/_py/test_local.py,Conditional Test Logic,test_make_numbered_dir,946
+testing/_py/test_local.py,Conditional Test Logic,test_make_numbered_dir,948
+testing/_py/test_local.py,Conditional Test Logic,test_locked_make_numbered_dir,985
+testing/_py/test_local.py,Conditional Test Logic,test_locked_make_numbered_dir,989
+testing/_py/test_local.py,Conditional Test Logic,test_pyimport_check_filepath_consistency,1085
+testing/_py/test_local.py,Conditional Test Logic,test_chmod_rec_int,1453
+testing/_py/test_local.py,Conditional Test Logic,test_chmod_rec_int,1457
+testing/_py/test_local.py,Conditional Test Logic,test_chmod_rec_int,1460
+testing/_py/test_local.py,Conditional Test Logic,test_copy_stat_dir,1490
+testing/_py/test_local.py,Conditional Test Logic,test_copy_stat_dir,1496
+testing/_py/test_local.py,Conditional Test Logic,test_join_ensure,1526
+testing/_py/test_local.py,Conditional Test Logic,test_listdir,1534
+testing/_py/test_local.py,Conditional Test Logic,batch_make_numbered_dirs,548
+testing/_py/test_local.py,Conditional Test Logic,test_samefile,1206
+testing/_py/test_local.py,Exception Handling,test_copy_file,376
+testing/_py/test_local.py,Exception Handling,test_copy_dir,388
+testing/_py/test_local.py,Exception Handling,test_move_file,435
+testing/_py/test_local.py,Exception Handling,test_dump,724
+testing/_py/test_local.py,Exception Handling,test_setmtime,740
+testing/_py/test_local.py,Exception Handling,test_mkdtemp_creation,759
+testing/_py/test_local.py,Exception Handling,test_tmproot,767
+testing/_py/test_local.py,Exception Handling,test_chdir,775
+testing/_py/test_local.py,Exception Handling,test_sysfind_no_permission_ignored,899
+testing/_py/test_local.py,Exception Handling,test_sysexec_failing,928
+testing/_py/test_local.py,Exception Handling,test_chmod_simple_int,1249
+testing/_py/test_local.py,Exception Handling,test_chmod_simple_int,1441
+testing/_py/test_local.py,Exception Handling,test_chmod_rec_int,1456
+testing/_py/test_local.py,Exception Handling,test_chown_dangling_link,1513
+testing/_py/test_local.py,Exception Handling,test_isimportable,1172
+testing/_py/test_local.py,Exception Handling,test_samefile_symlink,1216
+testing/_py/test_local.py,Redundant Print,test_chmod_simple_int,1250
+testing/_py/test_local.py,Redundant Print,test_chmod_simple_int,1251
+testing/_py/test_local.py,Unknown Test,test_relto_wrong_type,316
+testing/_py/test_local.py,Unknown Test,test_fspath_open,462
+testing/_py/test_local.py,Unknown Test,test_sysexec_failing,927
+testing/_py/test_local.py,Unknown Test,test_error_preservation,992
+testing/_py/test_local.py,Unknown Test,test_pyimport_renamed_dir_creates_mismatch,1015
+testing/_py/test_local.py,Unknown Test,test_pyimport_messy_name,1031
+testing/_py/test_local.py,Unknown Test,test_pyimport_dir_fails,1131
+testing/_py/test_local.py,Unknown Test,test_pyimport_relative_import_fails,1142
+testing/_py/test_local.py,Unknown Test,test_owner_group_not_implemented,1239
+testing/_py/test_local.py,Unknown Test,test_chown_identity,1503
+testing/_py/test_local.py,Unknown Test,test_chown_dangling_link,1508
+testing/_py/test_local.py,Unknown Test,test_chown_identity_rec_mayfail,1518
+testing/_py/test_local.py,Programming Paradigms Blend,(nível do módulo),19;26
+testing/_py/test_local.py,Undefined Test,path1,528
+testing/_py/test_local.py,Undefined Test,batch_make_numbered_dirs,547
+testing/code/test_code.py,Conditional Test Logic,test_bad_getsource,162
+testing/code/test_code.py,Conditional Test Logic,test_getsource,178
+testing/code/test_code.py,Exception Handling,test_bad_getsource,161
+testing/code/test_code.py,Exception Handling,test_getsource,177
+testing/code/test_code.py,Exception Handling,test_tb_entry_str,191
+testing/code/test_code.py,Exception Handling,test_ExceptionChainRepr,215
+testing/code/test_code.py,Unknown Test,test_from_current_with_missing,170
+testing/code/test_code.py,Unknown Test,test_code_from_function_with_class,34
+testing/code/test_code.py,Unknown Test,test_unicode_handling,85
+testing/code/test_code.py,Programming Paradigms Blend,(nível do módulo),18;159
+testing/code/test_code.py,Non-Functional Statement,test_code_from_function_with_class,36
+testing/code/test_excinfo.py,Conditional Test Logic,test_traceback_entries,136
+testing/code/test_excinfo.py,Conditional Test Logic,test_traceback_cut_excludepath,189
+testing/code/test_excinfo.py,Conditional Test Logic,test_traceback_filter_selective,232
+testing/code/test_excinfo.py,Conditional Test Logic,test_traceback_recursion_index,240
+testing/code/test_excinfo.py,Conditional Test Logic,test_traceback_only_specific_recursion_errors,252
+testing/code/test_excinfo.py,Conditional Test Logic,test_repr_source_excinfo,684
+testing/code/test_excinfo.py,Conditional Test Logic,test_repr_traceback_and_excinfo,1049
+testing/code/test_excinfo.py,Conditional Test Logic,test_repr_traceback_with_invalid_cwd,1088
+testing/code/test_excinfo.py,Conditional Test Logic,test_repr_traceback_recursion,1163
+testing/code/test_excinfo.py,Conditional Test Logic,test_reprexcinfo_getrepr,1182
+testing/code/test_excinfo.py,Conditional Test Logic,test_reprexcinfo_getrepr,1183
+testing/code/test_excinfo.py,Conditional Test Logic,test_reprexcinfo_getrepr,1188
+testing/code/test_excinfo.py,Conditional Test Logic,test_toterminal_long_filenames,1319
+testing/code/test_excinfo.py,Conditional Test Logic,test_traceback_repr_style,1403
+testing/code/test_excinfo.py,Conditional Test Logic,test_traceback_repr_style,1407
+testing/code/test_excinfo.py,Conditional Test Logic,test_exc_chain_repr,1457
+testing/code/test_excinfo.py,Conditional Test Logic,test_exc_chain_repr,1513
+testing/code/test_excinfo.py,Conditional Test Logic,test_exc_repr_chain_suppression,1552
+testing/code/test_excinfo.py,Conditional Test Logic,test_exc_chain_repr_without_traceback_multiple_links,1707
+testing/code/test_excinfo.py,Conditional Test Logic,test_exc_chain_repr_cycle,1766
+testing/code/test_excinfo.py,Conditional Test Logic,test_excinfo_no_python_sourcecode,437
+testing/code/test_excinfo.py,Conditional Test Logic,test_excinfo_no_python_sourcecode,440
+testing/code/test_excinfo.py,Conditional Test Logic,test_repr_traceback_with_unicode,1822
+testing/code/test_excinfo.py,Conditional Test Logic,test_exception_repr_extraction_error_on_recursion,1884
+testing/code/test_excinfo.py,Conditional Test Logic,test_all_entries_hidden,2149
+testing/code/test_excinfo.py,Conditional Test Logic,test_all_entries_hidden,2151
+testing/code/test_excinfo.py,Conditional Test Logic,test_check_error_notes_success,2275
+testing/code/test_excinfo.py,Conditional Test Logic,test_check_error_notes_failure,2293
+testing/code/test_excinfo.py,Exception Handling,test_traceback_entries,137
+testing/code/test_excinfo.py,Exception Handling,test_traceback_entry_getsource_in_construct,151
+testing/code/test_excinfo.py,Exception Handling,test_traceback_entry_getsource_in_construct,156
+testing/code/test_excinfo.py,Exception Handling,test_traceback_entry_getsource_in_construct,168
+testing/code/test_excinfo.py,Exception Handling,test_traceback_no_recursion_index,274
+testing/code/test_excinfo.py,Exception Handling,test_repr_source_excinfo,668
+testing/code/test_excinfo.py,Exception Handling,test_repr_source_not_existing,695
+testing/code/test_excinfo.py,Exception Handling,test_repr_many_line_source_not_existing,713
+testing/code/test_excinfo.py,Exception Handling,test_repr_source_failing_fullsource,724
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr,1461
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr,1483
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr,1499
+testing/code/test_excinfo.py,Exception Handling,test_exc_repr_chain_suppression,1556
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_exception_group_with_cause,1636
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_exception_group_with_cause,1637
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_exception_group_with_context,1654
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_exception_group_with_context,1659
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_nested_exception_group_with_cause,1671
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_nested_exception_group_with_cause,1672
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_without_traceback_multiple_links,1701
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_mixed_traceback,1726
+testing/code/test_excinfo.py,Exception Handling,test_exc_chain_repr_mixed_traceback,1730
+testing/code/test_excinfo.py,Exception Handling,test_excinfo_simple,47
+testing/code/test_excinfo.py,Exception Handling,test_excinfo_from_exc_info_simple,55
+testing/code/test_excinfo.py,Exception Handling,test_excinfo_from_exception_simple,64
+testing/code/test_excinfo.py,Exception Handling,test_excinfo_getstatement,84
+testing/code/test_excinfo.py,Exception Handling,test_excinfo_no_sourcecode,416
+testing/code/test_excinfo.py,Exception Handling,test_entrysource_Queue_example,445
+testing/code/test_excinfo.py,Exception Handling,test_codepath_Queue_example,457
+testing/code/test_excinfo.py,Exception Handling,test_raises_exception_escapes_generic_group,524
+testing/code/test_excinfo.py,Exception Handling,test_repr_traceback_with_unicode,1826
+testing/code/test_excinfo.py,Redundant Print,test_traceback_filter_selective,229
+testing/code/test_excinfo.py,Redundant Print,test_traceback_filter_selective,230
+testing/code/test_excinfo.py,Redundant Print,test_traceback_messy_recursion,290
+testing/code/test_excinfo.py,Redundant Print,test_repr_source_excinfo,685
+testing/code/test_excinfo.py,Redundant Print,test_traceback_repr_style,1408
+testing/code/test_excinfo.py,Redundant Print,test_exc_chain_repr,1458
+testing/code/test_excinfo.py,Redundant Print,test_exc_repr_chain_suppression,1553
+testing/code/test_excinfo.py,Redundant Print,test_excinfo_no_python_sourcecode,438
+testing/code/test_excinfo.py,Unknown Test,test_exc_chain_repr_without_traceback,1582
+testing/code/test_excinfo.py,Unknown Test,test_exec_type_error_filter,1805
+testing/code/test_excinfo.py,Unknown Test,test_excinfo_from_exception_missing_traceback_assertion,72
+testing/code/test_excinfo.py,Unknown Test,test_excinfo_no_sourcecode,415
+testing/code/test_excinfo.py,Unknown Test,test_match_succeeds,468
+testing/code/test_excinfo.py,Unknown Test,test_raises_rejects_specific_generic_group,512
+testing/code/test_excinfo.py,Unknown Test,test_cwd_deleted,1835
+testing/code/test_excinfo.py,Unknown Test,test_regression_negative_line_index,1852
+testing/code/test_excinfo.py,Unknown Test,test_exception_repr_extraction_error_on_recursion,1876
+testing/code/test_excinfo.py,Unknown Test,test_native_exceptiongroup,2044
+testing/code/test_excinfo.py,Unknown Test,test_exceptiongroup,2050
+testing/code/test_excinfo.py,Unknown Test,test_check_error_notes_success,2272
+testing/code/test_excinfo.py,Unknown Test,test_check_error_notes_failure,2290
+testing/code/test_excinfo.py,Verbose Test,test_repr_traceback_with_invalid_cwd,1065;1116
+testing/code/test_excinfo.py,Verbose Test,test_traceback_repr_style,1384;1431
+testing/code/test_excinfo.py,Verbose Test,test_exc_chain_repr,1433;1527
+testing/code/test_excinfo.py,Verbose Test,test_exc_chain_repr_cycle,1740;1803
+testing/code/test_excinfo.py,Verbose Test,_exceptiongroup_common,1966;2036
+testing/code/test_excinfo.py,Verbose Test,test_exceptiongroup_short_summary_info,2056;2130
+testing/code/test_excinfo.py,Verbose Test,test_tracebackhide_in_exceptiongroup_is_respected,2200;2250
+testing/code/test_excinfo.py,Programming Paradigms Blend,(nível do módulo),30;123
+testing/code/test_excinfo.py,Non-Functional Statement,test_traceback_entries,140
+testing/code/test_excinfo.py,Non-Functional Statement,test_exc_chain_repr,1438
+testing/code/test_excinfo.py,Non-Functional Statement,test_exc_chain_repr_cycle,1745
+testing/code/test_source.py,Conditional Test Logic,test_getstatement,124
+testing/code/test_source.py,Conditional Test Logic,test_getline_finally,240
+testing/code/test_source.py,Conditional Test Logic,test_getfslineno,406
+testing/code/test_source.py,Conditional Test Logic,test_comments,479
+testing/code/test_source.py,Conditional Test Logic,test_comments,481
+testing/code/test_source.py,Conditional Test Logic,test_comments,483
+testing/code/test_source.py,Conditional Test Logic,test_comment_in_statement,492
+testing/code/test_source.py,Exception Handling,test_getline_finally,237
+testing/code/test_source.py,Exception Handling,test_single_line_finally,531
+testing/code/test_source.py,Unknown Test,test_getrange_step_not_supported,94
+testing/code/test_source.py,Unknown Test,test_getstatementrange_with_syntaxerror_issue7,213
+testing/code/test_source.py,Unknown Test,test_issue55,535
+testing/code/test_source.py,Unknown Test,test_getstartingblock_multiline,672
+testing/code/test_source.py,Unknown Test,test_patched_compile,688
+testing/code/test_source.py,Unknown Test,test_statement_linenos_are_memoized_per_node,712
+testing/code/test_source.py,Programming Paradigms Blend,(nível do módulo),21;78
+testing/code/test_source.py,Non-Functional Statement,test_getstatementrange_within_constructs,148
+testing/code/test_source.py,Non-Functional Statement,test_getstatementrange_bug,171
+testing/code/test_source.py,Non-Functional Statement,test_getstatementrange_ast_issue58,200
+testing/code/test_source.py,Non-Functional Statement,test_getfuncsource_with_multiline_string,262
+testing/code/test_source.py,Non-Functional Statement,test_getfuncsource_with_multiline_string,268
+testing/code/test_source.py,Non-Functional Statement,test_getfslineno,390
+testing/code/test_source.py,Non-Functional Statement,test_getfslineno,402
+testing/code/test_source.py,Non-Functional Statement,test_code_of_object_instance_with_call,414
+testing/example_scripts/issue_519.py,Unknown Test,test_one,49
+testing/example_scripts/issue_519.py,Unknown Test,test_two,53
+testing/example_scripts/issue_519.py,Undefined Test,checked_order,18
+testing/example_scripts/fixtures/test_fixture_named_request.py,Unknown Test,test,12
+testing/example_scripts/fixtures/fill_fixtures/test_detect_recursive_dependency_error.py,Unknown Test,test,17
+testing/example_scripts/fixtures/fill_fixtures/test_extend_fixture_module_class.py,Programming Paradigms Blend,(nível do módulo),7;12
+testing/example_scripts/fixtures/fill_fixtures/test_funcarg_basic.py,Unknown Test,test_func,17
+testing/example_scripts/fixtures/fill_fixtures/test_funcarg_lookup_modulelevel.py,Programming Paradigms Blend,(nível do módulo),7;12
+testing/example_scripts/fixtures/fill_fixtures/test_funcarg_lookupfails.py,Unknown Test,test_func,12
+testing/example_scripts/marks/marks_considered_keywords/test_marks_as_keywords.py,Unknown Test,test_mark,8
+testing/example_scripts/unittest/test_parametrized_fixture_error_message.py,Unknown Test,test_two,16
+testing/example_scripts/unittest/test_parametrized_fixture_error_message.py,Programming Paradigms Blend,(nível do módulo),9;15
+testing/example_scripts/unittest/test_setup_skip_class.py,Undefined Test,setUpClass,11
+testing/example_scripts/unittest/test_setup_skip_module.py,Programming Paradigms Blend,(nível do módulo),9;14
+testing/example_scripts/unittest/test_setup_skip_module.py,Undefined Test,setUpModule,9
+testing/example_scripts/unittest/test_unittest_asyncio.py,Programming Paradigms Blend,(nível do módulo),7;10
+testing/example_scripts/warnings/test_group_warnings_by_message.py,Unknown Test,test_foo,14
+testing/example_scripts/warnings/test_group_warnings_by_message.py,Unknown Test,test_foo_1,18
+testing/example_scripts/warnings/test_group_warnings_by_message.py,Unknown Test,test_bar,23
+testing/example_scripts/warnings/test_group_warnings_by_message_summary/test_1.py,Unknown Test,test_foo,14
+testing/example_scripts/warnings/test_group_warnings_by_message_summary/test_1.py,Unknown Test,test_foo_1,18
+testing/example_scripts/warnings/test_group_warnings_by_message_summary/test_1.py,Unknown Test,test_bar,23
+testing/io/test_pprint.py,Conditional Test Logic,test_nested_element_respects_line_budget,565
+testing/io/test_pprint.py,Unknown Test,test_invalid_constructor_args_raise,615
+testing/io/test_pprint.py,Programming Paradigms Blend,(nível do módulo),23;24
+testing/io/test_pprint.py,Non-Functional Statement,test_simplenamespace_subclass_uses_class_name,648
+testing/io/test_saferepr.py,Conditional Test Logic,test_baseexception,81
+testing/io/test_saferepr.py,Exception Handling,test_exceptions,58
+testing/io/test_saferepr.py,Exception Handling,test_baseexception,77
+testing/io/test_saferepr.py,Redundant Print,test_baseexception,124
+testing/io/test_saferepr.py,Verbose Test,test_baseexception,69;127
+testing/io/test_saferepr.py,Non-Functional Statement,test_baseexception,80
+testing/io/test_terminalwriter.py,Conditional Test Logic,test_line_write_markup,145
+testing/io/test_terminalwriter.py,Unknown Test,test_markup_bad,134
+testing/io/test_terminalwriter.py,Programming Paradigms Blend,(nível do módulo),22;69
+testing/logging/test_fixture.py,Exception Handling,test_with_statement_filtering_already_present,232
+testing/logging/test_fixture.py,Exception Handling,test_messages,293
+testing/logging/test_fixture.py,Unknown Test,test_fixture_help,30
+testing/logging/test_fixture.py,Unknown Test,test_change_level_undo,67
+testing/logging/test_fixture.py,Unknown Test,test_change_disabled_level_undo,93
+testing/logging/test_fixture.py,Programming Paradigms Blend,(nível do módulo),13;209
+testing/logging/test_fixture.py,Undefined Test,logging_during_setup_and_teardown,331
+testing/logging/test_fixture.py,Undefined Test,private_assert_caplog_records_is_setup_call,341
+testing/logging/test_reporting.py,Conditional Test Logic,test_log_cli_enabled_disabled,235
+testing/logging/test_reporting.py,Conditional Test Logic,test_log_cli_enabled_disabled,243
+testing/logging/test_reporting.py,Conditional Test Logic,test_log_cli_auto_enable,662
+testing/logging/test_reporting.py,Conditional Test Logic,test_live_logging_suspends_capture,1015
+testing/logging/test_reporting.py,Conditional Test Logic,test_collection_collect_only_live_logging,1050
+testing/logging/test_reporting.py,Unknown Test,test_log_cli_default_level_multiple_tests,290
+testing/logging/test_reporting.py,Unknown Test,test_log_cli_default_level_sections,327
+testing/logging/test_reporting.py,Unknown Test,test_live_logs_unknown_sections,403
+testing/logging/test_reporting.py,Unknown Test,test_log_level_not_changed_by_default,812
+testing/logging/test_reporting.py,Unknown Test,test_collection_live_logging,1022
+testing/logging/test_reporting.py,Unknown Test,test_collection_collect_only_live_logging,1038
+testing/logging/test_reporting.py,Verbose Test,test_log_cli_default_level_sections,327;400
+testing/logging/test_reporting.py,Verbose Test,test_live_logs_unknown_sections,403;464
+testing/logging/test_reporting.py,Verbose Test,test_sections_single_new_line_after_test_outcome,467;544
+testing/logging/test_reporting.py,Verbose Test,test_log_cli_level,547;594
+testing/logging/test_reporting.py,Verbose Test,test_live_logging_suspends_capture,973;1019
+testing/logging/test_reporting.py,Verbose Test,test_log_set_path_with_log_file_mode,1221;1278
+testing/logging/test_reporting.py,Verbose Test,test_log_file_cli_fallback_options,1572;1628
+testing/plugins_integration/bdd_wallet.py,Unknown Test,test_publish,13
+testing/plugins_integration/bdd_wallet.py,Undefined Test,check,41
+testing/plugins_integration/pytest_rerunfailures_integration.py,Conditional Test Logic,test_fail_the_first_time,11
+testing/plugins_integration/pytest_rerunfailures_integration.py,Unknown Test,test_fail_the_first_time,9
+testing/plugins_integration/pytest_twisted_integration.py,Unknown Test,test_inlineCallbacks,15
+testing/python/approx.py,Conditional Test Logic,test_error_messages_with_different_verbosity,290
+testing/python/approx.py,Conditional Test Logic,test_error_messages_with_different_verbosity,335
+testing/python/approx.py,Conditional Test Logic,test_exactly_equal,444
+testing/python/approx.py,Conditional Test Logic,test_opposite_sign,449
+testing/python/approx.py,Conditional Test Logic,test_zero_tolerance,454
+testing/python/approx.py,Conditional Test Logic,test_inf_tolerance,487
+testing/python/approx.py,Conditional Test Logic,test_default_tolerances,530
+testing/python/approx.py,Conditional Test Logic,test_relative_tolerance,551
+testing/python/approx.py,Conditional Test Logic,test_absolute_tolerance,557
+testing/python/approx.py,Conditional Test Logic,test_expecting_zero,572
+testing/python/approx.py,Conditional Test Logic,test_expecting_inf,584
+testing/python/approx.py,Conditional Test Logic,test_expecting_nan,595
+testing/python/approx.py,Conditional Test Logic,test_int,604
+testing/python/approx.py,Conditional Test Logic,test_decimal,615
+testing/python/approx.py,Conditional Test Logic,test_fraction,642
+testing/python/approx.py,Conditional Test Logic,test_complex,655
+testing/python/approx.py,Conditional Test Logic,test_numpy_tolerance_args,810
+testing/python/approx.py,Conditional Test Logic,test_numpy_expecting_nan,829
+testing/python/approx.py,Conditional Test Logic,test_numpy_expecting_inf,847
+testing/python/approx.py,Conditional Test Logic,test_exact_tolerance_does_not_warn,1153
+testing/python/approx.py,Conditional Test Logic,test_exact_tolerance_does_not_warn,1154
+testing/python/approx.py,Unknown Test,test_negative_tolerance,472
+testing/python/approx.py,Unknown Test,test_negative_tolerance_message,477
+testing/python/approx.py,Unknown Test,test_inf_tolerance_expecting_zero,493
+testing/python/approx.py,Unknown Test,test_nan_tolerance,501
+testing/python/approx.py,Unknown Test,test_numpy_actual_not_convertible,852
+testing/python/approx.py,Unknown Test,test_unicode_plus_minus,941
+testing/python/approx.py,Unknown Test,test_expected_value_type_error,973
+testing/python/approx.py,Unknown Test,test_mixed_nested_containers_raise_instead_of_comparing_unequal,989
+testing/python/approx.py,Unknown Test,test_comparison_operator_type_error,1059
+testing/python/approx.py,Unknown Test,test_inexact_float_tolerance_warns,1129
+testing/python/approx.py,Unknown Test,test_scalar_rel_type_validation,1381
+testing/python/approx.py,Unknown Test,test_scalar_rel_abs_expected_validation,1387
+testing/python/approx.py,Unknown Test,test_scalar_abs_type_validation,1394
+testing/python/approx.py,Unknown Test,test_requires_tolerance,1464
+testing/python/approx.py,Unknown Test,test_datetime_rejects_rel,1470
+testing/python/approx.py,Unknown Test,test_abs_must_be_timedelta,1480
+testing/python/approx.py,Unknown Test,test_timedelta_rel_must_be_number,1486
+testing/python/approx.py,Unknown Test,test_timedelta_rel_must_be_non_negative,1492
+testing/python/approx.py,Unknown Test,test_timedelta_rel_must_not_be_nan,1498
+testing/python/approx.py,Unknown Test,test_timedelta_rel_must_not_be_infinite,1504
+testing/python/approx.py,Unknown Test,test_timedelta_abs_must_be_non_negative,1510
+testing/python/approx.py,Unknown Test,test_rejects_nan_ok,1544
+testing/python/approx.py,Unknown Test,test_bool_context_raises,1633
+testing/python/approx.py,Verbose Test,test_error_messages_native_dtypes,102;202
+testing/python/approx.py,Verbose Test,test_error_messages_numpy_dtypes,204;260
+testing/python/approx.py,Verbose Test,test_error_messages_with_different_verbosity,288;338
+testing/python/approx.py,Programming Paradigms Blend,(nível do módulo),24;101
+testing/python/collect.py,Conditional Test Logic,test_show_traceback_import_error,130
+testing/python/collect.py,Conditional Test Logic,test_function_originalname,828
+testing/python/collect.py,Conditional Test Logic,test_check_equality,875
+testing/python/collect.py,Conditional Test Logic,test_skip_simple,1144
+testing/python/collect.py,Conditional Test Logic,test_package_with_modules,1582
+testing/python/collect.py,Exception Handling,test_filter_traceback_generated_code,1236
+testing/python/collect.py,Exception Handling,test_filter_traceback_path_no_longer_valid,1265
+testing/python/collect.py,Unknown Test,test_failing_import,22
+testing/python/collect.py,Unknown Test,test_import_duplicate,27
+testing/python/collect.py,Unknown Test,test_syntax_error_in_module,75
+testing/python/collect.py,Unknown Test,test_module_considers_pluginmanager_at_import,82
+testing/python/collect.py,Unknown Test,test_invalid_test_module_name,87
+testing/python/collect.py,Unknown Test,test_class_with_init_warning,152
+testing/python/collect.py,Unknown Test,test_class_with_new_warning,168
+testing/python/collect.py,Unknown Test,test_class_subclassobject,184
+testing/python/collect.py,Unknown Test,test_static_method,194
+testing/python/collect.py,Unknown Test,test_setup_teardown_class_as_classmethod,216
+testing/python/collect.py,Unknown Test,test_issue1579_namedtuple,245
+testing/python/collect.py,Unknown Test,test_function_as_object_instance_ignored,368
+testing/python/collect.py,Unknown Test,test_pyfunc_call,672
+testing/python/collect.py,Unknown Test,test_parametrize_skipif,724
+testing/python/collect.py,Unknown Test,test_parametrize_skip,739
+testing/python/collect.py,Unknown Test,test_parametrize_skipif_no_skip,754
+testing/python/collect.py,Unknown Test,test_parametrize_xfail,769
+testing/python/collect.py,Unknown Test,test_parametrize_passed,784
+testing/python/collect.py,Unknown Test,test_parametrize_xfail_passed,799
+testing/python/collect.py,Unknown Test,test_function_with_square_brackets,837
+testing/python/collect.py,Unknown Test,test_ordered_by_definition_order,904
+testing/python/collect.py,Unknown Test,test_pytest_pycollect_module,936
+testing/python/collect.py,Unknown Test,test_pytest_pycollect_makeitem,1015
+testing/python/collect.py,Unknown Test,test_issue2369_collect_module_fileext,1030
+testing/python/collect.py,Unknown Test,test_dont_collect_non_function_callable,1419
+testing/python/collect.py,Unknown Test,test_syntax_error_with_non_ascii_chars,1477
+testing/python/collect.py,Unknown Test,test_collect_error_with_fulltrace,1484
+testing/python/collect.py,Unknown Test,test_skip_duplicates_by_default,1503
+testing/python/collect.py,Unknown Test,test_keep_duplicates,1524
+testing/python/collect.py,Unknown Test,test_package_collection_infinite_recursion,1545
+testing/python/collect.py,Unknown Test,test_collection_hierarchy,1649
+testing/python/collect.py,Verbose Test,test_collection_hierarchy,1649;1751
+testing/python/collect.py,Non-Functional Statement,test_class_subclassobject,188
+testing/python/collect.py,Non-Functional Statement,test_abstract_class_is_not_collected,341
+testing/python/collect.py,Non-Functional Statement,test_abstract_class_is_not_collected,344
+testing/python/collect.py,Non-Functional Statement,test_abstract_class_is_not_collected,346
+testing/python/collect.py,Non-Functional Statement,test_abstract_class_is_not_collected,349
+testing/python/collect.py,Non-Functional Statement,test_abstract_class_is_not_collected,352
+testing/python/collect.py,Non-Functional Statement,test_check_equality,857
+testing/python/collect.py,Non-Functional Statement,test_ordered_by_definition_order,908
+testing/python/collect.py,Non-Functional Statement,test_ordered_by_definition_order,911
+testing/python/collect.py,Non-Functional Statement,test_ordered_by_definition_order,914
+testing/python/collect.py,Non-Functional Statement,test_pytest_pycollect_module,941
+testing/python/collect.py,Non-Functional Statement,test_pytest_pycollect_makeitem,1020
+testing/python/collect.py,Non-Functional Statement,test_early_ignored_attributes,1085
+testing/python/collect.py,Non-Functional Statement,test_class_reportinfo,1308
+testing/python/collect.py,Non-Functional Statement,test_unorderable_types,1403
+testing/python/collect.py,Non-Functional Statement,test_unorderable_types,1407
+testing/python/collect.py,Non-Functional Statement,test_class_injection_does_not_break_collection,1466
+testing/python/fixtures.py,Conditional Test Logic,test_fixture_finalizer,3435
+testing/python/fixtures.py,Conditional Test Logic,test_class_scope_with_normal_tests,3463
+testing/python/fixtures.py,Conditional Test Logic,test_deterministic_fixture_collection,3731
+testing/python/fixtures.py,Conditional Test Logic,test_deterministic_fixture_collection,3732
+testing/python/fixtures.py,Conditional Test Logic,test_deterministic_fixture_collection,3736
+testing/python/fixtures.py,Conditional Test Logic,test_deterministic_fixture_collection,3737
+testing/python/fixtures.py,Conditional Test Logic,test_show_fixtures_conftest,3948
+testing/python/fixtures.py,Exception Handling,test_request_garbage,855
+testing/python/fixtures.py,Redundant Print,test_request_addfinalizer,1119
+testing/python/fixtures.py,Unknown Test,test_detect_recursive_dependency_error,226
+testing/python/fixtures.py,Unknown Test,test_funcarg_lookup_classlevel,249
+testing/python/fixtures.py,Unknown Test,test_extend_fixture_module_class,261
+testing/python/fixtures.py,Unknown Test,test_extend_fixture_conftest_module,268
+testing/python/fixtures.py,Unknown Test,test_extend_fixture_conftest_conftest,275
+testing/python/fixtures.py,Unknown Test,test_override_parametrized_fixture_conftest_module,345
+testing/python/fixtures.py,Unknown Test,test_override_parametrized_fixture_conftest_conftest,375
+testing/python/fixtures.py,Unknown Test,test_override_non_parametrized_fixture_conftest_module,416
+testing/python/fixtures.py,Unknown Test,test_override_non_parametrized_fixture_conftest_conftest,449
+testing/python/fixtures.py,Unknown Test,test_override_autouse_fixture_with_parametrized_fixture_conftest_conftest,493
+testing/python/fixtures.py,Unknown Test,test_override_fixture_reusing_super_fixture_parametrization,539
+testing/python/fixtures.py,Unknown Test,test_override_parametrize_fixture_and_indirect,569
+testing/python/fixtures.py,Unknown Test,test_override_top_level_fixture_reusing_super_fixture_parametrization,605
+testing/python/fixtures.py,Unknown Test,test_override_parametrized_fixture_with_new_parametrized_fixture,639
+testing/python/fixtures.py,Unknown Test,test_funcarg_lookup_error,729
+testing/python/fixtures.py,Unknown Test,test_request_garbage,854
+testing/python/fixtures.py,Unknown Test,test_getfixturevalue_teardown,914
+testing/python/fixtures.py,Unknown Test,test_request_addfinalizer_partial_setup_failure,1160
+testing/python/fixtures.py,Unknown Test,test_request_fixturenames_dynamic_fixture,1256
+testing/python/fixtures.py,Unknown Test,test_session_scoped_unavailable_attributes,1378
+testing/python/fixtures.py,Unknown Test,test_receives_funcargs_scope_mismatch,1495
+testing/python/fixtures.py,Unknown Test,test_receives_funcargs_scope_mismatch_issue660,1522
+testing/python/fixtures.py,Unknown Test,test_invalid_scope,1551
+testing/python/fixtures.py,Unknown Test,test_parameters_without_eq_semantics,1569
+testing/python/fixtures.py,Unknown Test,test_funcarg_parametrized_and_used_twice,1598
+testing/python/fixtures.py,Unknown Test,test_factory_uses_unknown_funcarg_as_dependency_error,1620
+testing/python/fixtures.py,Unknown Test,test_empty_usefixtures_marker,1690
+testing/python/fixtures.py,Unknown Test,test_usefixtures_seen_in_showmarkers,1736
+testing/python/fixtures.py,Unknown Test,test_setup_functions_as_fixtures,1790
+testing/python/fixtures.py,Unknown Test,test_parameterized_fixture_caching,1829
+testing/python/fixtures.py,Unknown Test,test_collect_custom_items,2185
+testing/python/fixtures.py,Unknown Test,test_autouse_in_conftests,2318
+testing/python/fixtures.py,Unknown Test,test_dynamic_scope_bad_return,3006
+testing/python/fixtures.py,Unknown Test,test_scope_mismatch,3068
+testing/python/fixtures.py,Unknown Test,test_module_parametrized_ordering,3111
+testing/python/fixtures.py,Unknown Test,test_dynamic_parametrized_ordering,3170
+testing/python/fixtures.py,Unknown Test,test_class_ordering,3219
+testing/python/fixtures.py,Unknown Test,test_fixture_finalizer,3403
+testing/python/fixtures.py,Unknown Test,test_params_and_ids,3664
+testing/python/fixtures.py,Unknown Test,test_params_and_ids_yieldfixture,3681
+testing/python/fixtures.py,Unknown Test,test_issue498_fixture_finalizer_failing,3813
+testing/python/fixtures.py,Unknown Test,test_show_fixtures,3893
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_verbose,3904
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_testmodule,3915
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_conftest,3939
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_trimmed_doc,3965
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_indented_doc,4002
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_indented_doc_first_line_unindented,4028
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_indented_in_class,4057
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_different_files,4085
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_with_same_name,4126
+testing/python/fixtures.py,Unknown Test,test_fixture_disallow_twice,4166
+testing/python/fixtures.py,Unknown Test,test_show_fixtures_deprecated_nodeid_fixture,4175
+testing/python/fixtures.py,Unknown Test,test_simple,4202
+testing/python/fixtures.py,Unknown Test,test_scoped,4230
+testing/python/fixtures.py,Unknown Test,test_setup_exception,4255
+testing/python/fixtures.py,Unknown Test,test_teardown_exception,4275
+testing/python/fixtures.py,Unknown Test,test_yields_more_than_one,4295
+testing/python/fixtures.py,Unknown Test,test_custom_name,4315
+testing/python/fixtures.py,Unknown Test,test_call_from_fixture,4331
+testing/python/fixtures.py,Unknown Test,test_call_from_test,4361
+testing/python/fixtures.py,Unknown Test,test_external_fixture,4387
+testing/python/fixtures.py,Unknown Test,test_non_relative_path,4418
+testing/python/fixtures.py,Unknown Test,test_fixture_named_request,5321
+testing/python/fixtures.py,Verbose Test,test_parsefactories_relative_node_ids,2030;2085
+testing/python/fixtures.py,Verbose Test,test_package_xunit_fixture,2087;2140
+testing/python/fixtures.py,Verbose Test,test_module_parametrized_ordering,3111;3168
+testing/python/fixtures.py,Verbose Test,test_dynamic_parametrized_ordering,3170;3217
+testing/python/fixtures.py,Verbose Test,test_class_ordering,3219;3277
+testing/python/fixtures.py,Verbose Test,test_parametrize_separated_order_higher_scope_first,3279;3355
+testing/python/fixtures.py,Verbose Test,test_non_relative_path,4418;4479
+testing/python/fixtures.py,Verbose Test,test_func_closure_with_native_fixtures,4736;4803
+testing/python/fixtures.py,Verbose Test,test_multiple_packages,5124;5196
+testing/python/fixtures.py,Verbose Test,test_fixture_post_finalizer_called_once,4525;4584
+testing/python/fixtures.py,Verbose Test,test_fixture_post_finalizer_hook_exception,4587;4638
+testing/python/fixtures.py,Verbose Test,test_indirect_fixture_does_not_break_scope,5332;5380
+testing/python/fixtures.py,Verbose Test,test_scoped_fixture_teardown_order,5584;5636
+testing/python/fixtures.py,Verbose Test,test_subfixture_teardown_order,5639;5688
+testing/python/fixtures.py,Programming Paradigms Blend,(nível do módulo),22;182
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_not_found_nodeid_fallback,214
+testing/python/fixtures.py,Non-Functional Statement,test_funcarg_lookup_error,735
+testing/python/fixtures.py,Non-Functional Statement,test_funcarg_lookup_error,738
+testing/python/fixtures.py,Non-Functional Statement,test_funcarg_lookup_error,741
+testing/python/fixtures.py,Non-Functional Statement,test_funcarg_lookup_error,744
+testing/python/fixtures.py,Non-Functional Statement,test_request_attributes,799
+testing/python/fixtures.py,Non-Functional Statement,test_request_garbage,858
+testing/python/fixtures.py,Non-Functional Statement,test_getfixturevalue,1075
+testing/python/fixtures.py,Non-Functional Statement,test_request_addfinalizer,1106
+testing/python/fixtures.py,Non-Functional Statement,test_scope_mismatch_already_computed_dynamic,2943
+testing/python/fixtures.py,Non-Functional Statement,test_scope_mismatch_already_computed_dynamic,2946
+testing/python/fixtures.py,Non-Functional Statement,test_cached_exception_doesnt_get_longer,3869
+testing/python/fixtures.py,Non-Functional Statement,test_show_fixtures_different_files,4094
+testing/python/fixtures.py,Non-Functional Statement,test_show_fixtures_different_files,4107
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_module_auto,4719
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_module_auto,4725
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_module,4811
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_module,4814
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_scopes_reordered,4834
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_scopes_reordered,4837
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_scopes_reordered,4840
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_scopes_reordered,4843
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_scopes_reordered,4848
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_same_scope_closer_root_first,4868
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_same_scope_closer_root_first,4877
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_same_scope_closer_root_first,4880
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_same_scope_closer_root_first,4887
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_same_scope_closer_root_first,4890
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_all_scopes_complex,4909
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_all_scopes_complex,4912
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_all_scopes_complex,4921
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_all_scopes_complex,4924
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_all_scopes_complex,4927
+testing/python/fixtures.py,Non-Functional Statement,test_func_closure_all_scopes_complex,4930
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_by_param_value_across_parametrize_calls,4998
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_by_param_value_across_parametrize_calls,5001
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_by_param_value_across_parametrize_calls,5004
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_unhashable_params_fall_back_to_index,5036
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_unhashable_params_fall_back_to_index,5039
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_mixed_hashable_unhashable_params,5070
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_mixed_hashable_unhashable_params,5073
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_mixed_hashable_unhashable_params,5076
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_params_with_exotic_eq,5114
+testing/python/fixtures.py,Non-Functional Statement,test_reorder_params_with_exotic_eq,5117
+testing/python/fixtures.py,Non-Functional Statement,test_getfuncargnames_staticmethod_inherited,138
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_class,5271
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_arg_ordering,5428
+testing/python/fixtures.py,Non-Functional Statement,test_scoped_fixture_teardown_order,5632
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides,5782
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides,5785
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides,5794
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides,5799
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_intermediary,5825
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_intermediary,5828
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_intermediary,5831
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_intermediary,5840
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_intermediary,5845
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_parametrization,5868
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_parametrization,5871
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_parametrization,5880
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_overrides_and_parametrization,5885
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_broken_override_chain,5912
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_broken_override_chain,5915
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_broken_override_chain,5924
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_broken_override_chain,5929
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_circular_dependencies,5955
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_circular_dependencies,5958
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_circular_dependencies,5962
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_circular_dependencies,5965
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_circular_dependencies,5968
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_diamond_dependencies,5986
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_diamond_dependencies,5989
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_diamond_dependencies,5992
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_handles_diamond_dependencies,5995
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_complex_override_and_shared_deps,6015
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_complex_override_and_shared_deps,6018
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_complex_override_and_shared_deps,6021
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_complex_override_and_shared_deps,6024
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_complex_override_and_shared_deps,6034
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_complex_override_and_shared_deps,6039
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_parametrize_ignore,6057
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_parametrize_ignore,6060
+testing/python/fixtures.py,Non-Functional Statement,test_fixture_closure_with_parametrize_ignore,6063
+testing/python/integration.py,Unknown Test,test_rerun,227
+testing/python/integration.py,Unknown Test,test_idfn_marker,361
+testing/python/integration.py,Unknown Test,test_idfn_fixture,382
+testing/python/integration.py,Unknown Test,test_param_rejects_usefixtures,410
+testing/python/integration.py,Programming Paradigms Blend,(nível do módulo),11;29
+testing/python/integration.py,Non-Functional Statement,test_function_instance,431
+testing/python/integration.py,Non-Functional Statement,test_function_instance,434
+testing/python/integration.py,Non-Functional Statement,test_function_instance,437
+testing/python/integration.py,Non-Functional Statement,test_function_instance,440
+testing/python/metafunc.py,Conditional Test Logic,test_unicode_idval,399
+testing/python/metafunc.py,Conditional Test Logic,test_unicode_idval_with_config,414
+testing/python/metafunc.py,Conditional Test Logic,test_bytes_idval,427
+testing/python/metafunc.py,Conditional Test Logic,test_class_or_function_idval,443
+testing/python/metafunc.py,Conditional Test Logic,test_idmaker_idfn,572
+testing/python/metafunc.py,Conditional Test Logic,test_idmaker_with_idfn_and_config,621
+testing/python/metafunc.py,Conditional Test Logic,test_idmaker_with_ids_and_config,643
+testing/python/metafunc.py,Conditional Test Logic,test_idmaker_with_param_id_and_config,773
+testing/python/metafunc.py,Conditional Test Logic,test_simple_mark,2113
+testing/python/metafunc.py,Unknown Test,test_parametrize_error,154
+testing/python/metafunc.py,Unknown Test,test_parametrize_bad_scope,203
+testing/python/metafunc.py,Unknown Test,test_parametrize_request_name,214
+testing/python/metafunc.py,Unknown Test,test_parametrize_with_wrong_number_of_ids,304
+testing/python/metafunc.py,Unknown Test,test_idmaker_long_string_disallow,685
+testing/python/metafunc.py,Unknown Test,test_idmaker_long_string_unknown_strategy,728
+testing/python/metafunc.py,Unknown Test,test_parametrize_ids_exception,791
+testing/python/metafunc.py,Unknown Test,test_parametrize_ids_returns_non_string,816
+testing/python/metafunc.py,Unknown Test,test_parametrize_indirect_wrong_type,925
+testing/python/metafunc.py,Unknown Test,test_parametrize_positional_indirect_error,936
+testing/python/metafunc.py,Unknown Test,test_parametrize_indirect_list_functional,948
+testing/python/metafunc.py,Unknown Test,test_parametrize_indirect_list_error,976
+testing/python/metafunc.py,Unknown Test,test_parametrize_uses_no_fixture_error_indirect_false,986
+testing/python/metafunc.py,Unknown Test,test_parametrize_uses_no_fixture_error_indirect_true,1008
+testing/python/metafunc.py,Unknown Test,test_parametrize_indirect_uses_no_fixture_error_indirect_string,1030
+testing/python/metafunc.py,Unknown Test,test_parametrize_indirect_uses_no_fixture_error_indirect_list,1049
+testing/python/metafunc.py,Unknown Test,test_parametrize_argument_not_in_indirect_list,1068
+testing/python/metafunc.py,Unknown Test,test_parametrize_gives_indicative_error_on_function_with_default_argument,1087
+testing/python/metafunc.py,Unknown Test,test_parametrize_functional,1104
+testing/python/metafunc.py,Unknown Test,test_high_scoped_parametrize_reordering,1151
+testing/python/metafunc.py,Unknown Test,test_parametrize_iterator_deprecation,1258
+testing/python/metafunc.py,Unknown Test,test_two_functions,1308
+testing/python/metafunc.py,Unknown Test,test_generate_tests_in_class,1346
+testing/python/metafunc.py,Unknown Test,test_two_functions_not_same_instance,1360
+testing/python/metafunc.py,Unknown Test,test_parametrize_functional2,1393
+testing/python/metafunc.py,Unknown Test,test_parametrize_and_inner_getfixturevalue,1443
+testing/python/metafunc.py,Unknown Test,test_parametrize_on_setup_arg,1467
+testing/python/metafunc.py,Unknown Test,test_parametrize_without_ids,1514
+testing/python/metafunc.py,Unknown Test,test_fixture_parametrized_empty_ids,1556
+testing/python/metafunc.py,Unknown Test,test_parametrized_empty_ids,1573
+testing/python/metafunc.py,Unknown Test,test_parametrized_ids_invalid_type,1587
+testing/python/metafunc.py,Unknown Test,test_parametrize_misspelling,1736
+testing/python/metafunc.py,Unknown Test,test_parametrize_generator_multiple_runs,1872
+testing/python/metafunc.py,Unknown Test,test_parametrize_auto_scope,1936
+testing/python/metafunc.py,Unknown Test,test_parametrize_auto_scope_indirect,1958
+testing/python/metafunc.py,Unknown Test,test_parametrize_auto_scope_override_fixture,1981
+testing/python/metafunc.py,Unknown Test,test_parametrize_all_indirects,1998
+testing/python/metafunc.py,Unknown Test,test_pytest_make_parametrize_id,2305
+testing/python/metafunc.py,Unknown Test,test_pytest_make_parametrize_id_with_argname,2324
+testing/python/metafunc.py,Unknown Test,test_parametrize_iterator,2364
+testing/python/metafunc.py,Unknown Test,test_multiple_hidden_param_is_forbidden,2453
+testing/python/metafunc.py,Unknown Test,test_multiple_hidden_param_is_forbidden_idmaker,2484
+testing/python/metafunc.py,Unknown Test,test_idmaker_error_without_nodeid,2497
+testing/python/metafunc.py,Verbose Test,test_infer_parametrize_scope,227;280
+testing/python/metafunc.py,Verbose Test,test_reordering_with_scopeless_and_just_indirect_parametrization,1811;1870
+testing/python/metafunc.py,Programming Paradigms Blend,(nível do módulo),32;40
+testing/python/metafunc.py,Non-Functional Statement,test_parametrize_with_userobjects,364
+testing/python/metafunc.py,Non-Functional Statement,test_class_or_function_idval,437
+testing/python/metafunc.py,Non-Functional Statement,test_parametrize_missing_scope_doesnt_crash,1773
+testing/python/raises.py,Conditional Test Logic,test_raises_cyclic_reference,254
+testing/python/raises.py,Exception Handling,test_raises_callable_no_exception,67
+testing/python/raises.py,Exception Handling,test_no_raise_message,224
+testing/python/raises.py,Exception Handling,test_no_raise_message,232
+testing/python/raises.py,Redundant Print,test_raises_repr_inflight,87
+testing/python/raises.py,Redundant Print,test_raises_repr_inflight,88
+testing/python/raises.py,Unknown Test,test_check_callable,19
+testing/python/raises.py,Unknown Test,test_raises_does_not_allow_none,33
+testing/python/raises.py,Unknown Test,test_raises_false_and_arg,44
+testing/python/raises.py,Unknown Test,test_raises_does_not_allow_empty_tuple,55
+testing/python/raises.py,Unknown Test,test_raises_callable_no_exception,62
+testing/python/raises.py,Unknown Test,test_raises_falsey_type_error,72
+testing/python/raises.py,Unknown Test,test_raises_repr_inflight,77
+testing/python/raises.py,Unknown Test,test_raises_as_contextmanager,94
+testing/python/raises.py,Unknown Test,test_does_not_raise,122
+testing/python/raises.py,Unknown Test,test_does_not_raise_does_raise,143
+testing/python/raises.py,Unknown Test,test_raises_with_invalid_regex,162
+testing/python/raises.py,Unknown Test,test_noclass,209
+testing/python/raises.py,Unknown Test,test_invalid_arguments_to_raises,214
+testing/python/raises.py,Unknown Test,test_tuple,219
+testing/python/raises.py,Unknown Test,test_raises_match_wrong_type,341
+testing/python/raises.py,Unknown Test,test_raises_exception_looks_iterable,354
+testing/python/raises.py,Unknown Test,test_raises_context_manager_with_kwargs,386
+testing/python/raises.py,Unknown Test,test_expected_exception_is_not_a_baseexception,399
+testing/python/raises.py,Unknown Test,test_issue_11872,426
+testing/python/raises.py,Unknown Test,test_raises_match_compiled_regex,443
+testing/python/raises.py,Programming Paradigms Blend,(nível do módulo),14;18
+testing/python/raises.py,Non-Functional Statement,test_raises_callable_no_exception,70
+testing/python/raises.py,Non-Functional Statement,test_raises_repr_inflight,81
+testing/python/raises.py,Non-Functional Statement,test_no_raise_message,234
+testing/python/raises.py,Non-Functional Statement,test_raises_exception_looks_iterable,363
+testing/python/raises.py,Non-Functional Statement,test_raises_with_raising_dunder_class,383
+testing/python/raises.py,Non-Functional Statement,test_raises_context_manager_with_kwargs,397
+testing/python/raises.py,Non-Functional Statement,test_expected_exception_is_not_a_baseexception,408
+testing/python/raises_group.py,Conditional Test Logic,test_unwrapped_match_check,466
+testing/python/raises_group.py,Conditional Test Logic,test_parametrizing_conditional_raisesgroup,1293
+testing/python/raises_group.py,Unknown Test,test_raises_group,36
+testing/python/raises_group.py,Unknown Test,test_incorrect_number_exceptions,90
+testing/python/raises_group.py,Unknown Test,test_flatten_subgroups,152
+testing/python/raises_group.py,Unknown Test,test_catch_unwrapped_exceptions,279
+testing/python/raises_group.py,Unknown Test,test_match,359
+testing/python/raises_group.py,Unknown Test,test_check,408
+testing/python/raises_group.py,Unknown Test,test_message,481
+testing/python/raises_group.py,Unknown Test,test_assert_message,553
+testing/python/raises_group.py,Unknown Test,test_message_indent,676
+testing/python/raises_group.py,Unknown Test,test_suggestion_on_nested_and_brief_error,744
+testing/python/raises_group.py,Unknown Test,test_assert_message_nested,811
+testing/python/raises_group.py,Unknown Test,test_check_no_patched_repr,906
+testing/python/raises_group.py,Unknown Test,test_misordering_example,931
+testing/python/raises_group.py,Unknown Test,test_brief_error_on_one_fail,966
+testing/python/raises_group.py,Unknown Test,test_identity_oopsies,1011
+testing/python/raises_group.py,Unknown Test,test_raisesexc,1072
+testing/python/raises_group.py,Unknown Test,test_raisesexc_match,1123
+testing/python/raises_group.py,Unknown Test,test_RaisesExc_check,1161
+testing/python/raises_group.py,Unknown Test,test_parametrizing_conditional_raisesgroup,1289
+testing/python/raises_group.py,Unknown Test,test_tuples,1333
+testing/python/raises_group.py,Unknown Test,test_expected_matching_only_on_matching,1355
+testing/python/raises_group.py,Verbose Test,test_raises_group,36;87
+testing/python/raises_group.py,Verbose Test,test_incorrect_number_exceptions,90;149
+testing/python/raises_group.py,Verbose Test,test_flatten_subgroups,152;276
+testing/python/raises_group.py,Verbose Test,test_catch_unwrapped_exceptions,279;356
+testing/python/raises_group.py,Verbose Test,test_match,359;405
+testing/python/raises_group.py,Verbose Test,test_message,481;550
+testing/python/raises_group.py,Verbose Test,test_assert_message,553;673
+testing/python/raises_group.py,Verbose Test,test_message_indent,676;741
+testing/python/raises_group.py,Verbose Test,test_suggestion_on_nested_and_brief_error,744;808
+testing/python/raises_group.py,Verbose Test,test_assert_message_nested,811;897
+testing/python/raises_group.py,Verbose Test,test_identity_oopsies,1011;1069
+testing/python/raises_group.py,Verbose Test,test_raisesexc,1072;1120
+testing/python/raises_group.py,Non-Functional Statement,test_flatten_subgroups,194
+testing/python/raises_group.py,Non-Functional Statement,test_flatten_subgroups,232
+testing/python/raises_group.py,Undefined Test,fails_raises_group,28
+testing/python/show_fixtures_per_test.py,Verbose Test,test_should_show_parametrized_fixtures_used_by_test,280;328

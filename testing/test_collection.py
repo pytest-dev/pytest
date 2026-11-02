@@ -42,7 +42,8 @@ class TestCollector:
     def test_check_equality(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol(
             """
-            def test_pass(): pass
+            def test_pass():
+                '''dummy'''
             def test_fail(): assert 0
         """
         )
@@ -308,7 +309,7 @@ class TestPrunetraceback:
             def pytest_collect_file(file_path, parent):
                 return MyFile.from_parent(path=file_path, parent=parent)
             class MyError(Exception):
-                pass
+                '''custom error'''
             class MyFile(pytest.File):
                 def collect(self):
                     raise MyError()
@@ -453,7 +454,7 @@ class TestCustomConftests:
             """
             import pytest
             class MyModule(pytest.Module):
-                pass
+                '''dummy module'''
             def pytest_collect_file(file_path, parent):
                 if file_path.suffix == ".py":
                     return MyModule.from_parent(path=file_path, parent=parent)
@@ -863,7 +864,8 @@ class TestNodeKeywords:
     def test_no_under(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol(
             """
-            def test_pass(): pass
+            def test_pass():
+                '''dummy'''
             def test_fail(): assert 0
         """
         )
@@ -932,7 +934,8 @@ class TestNodeKeywords:
             pytestmark = pytest.mark.kw
             class TestClass:
                 pytestmark = pytest.mark.kw
-                def test_method(self): pass
+                def test_method(self):
+                    '''dummy'''
                 test_method.kw = 'method'
         """,
             "test_method",

@@ -1,2 +1,0 @@
-Native TOML numeric values are now accepted for the ``faulthandler_timeout``
-configuration option.

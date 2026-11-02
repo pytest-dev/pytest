@@ -36,10 +36,10 @@ class TestMark:
 
     def test_mark_with_param(self):
         def some_function(abc):
-            pass
+            """Dummy"""
 
         class SomeClass:
-            pass
+            """dummy"""
 
         assert pytest.mark.foo(some_function) is some_function
         marked_with_args = pytest.mark.foo.with_args(some_function)
@@ -707,14 +707,17 @@ class TestFunctional:
             import pytest
 
             @pytest.mark.a
-            class Base(object): pass
+            class Base(object):
+                '''dummy'''
 
             @pytest.mark.b
             class Test1(Base):
-                def test_foo(self): pass
+                def test_foo(self):
+                    '''dummy'''
 
             class Test2(Base):
-                def test_bar(self): pass
+                def test_bar(self):
+                    '''dummy'''
         """
         )
         items, _rec = pytester.inline_genitems(p)
@@ -728,15 +731,15 @@ class TestFunctional:
 
             class TestBase(object):
                 def test_foo(self):
-                    pass
+                    '''dummy'''
 
             @pytest.mark.b
             class TestSub(TestBase):
-                pass
+                '''dummy'''
 
 
             class TestOtherSub(TestBase):
-                pass
+                '''dummy'''
 
         """
         )
@@ -754,18 +757,22 @@ class TestFunctional:
             import pytest
 
             @pytest.mark.a
-            class Base(object): pass
+            class Base(object):
+                '''dummy'''
 
             @pytest.mark.b
-            class Base2(Base): pass
+            class Base2(Base):
+                '''dummy'''
 
             @pytest.mark.c
             class Test1(Base2):
-                def test_foo(self): pass
+                def test_foo(self):
+                    '''dummy'''
 
             class Test2(Base2):
                 @pytest.mark.d
-                def test_bar(self): pass
+                def test_bar(self):
+                    '''dummy'''
         """
         )
         items, _rec = pytester.inline_genitems(p)
@@ -814,9 +821,9 @@ class TestFunctional:
             """
                 import pytest
                 class pytestmark(object):
-                    pass
+                    '''dummy'''
                 def test_func():
-                    pass
+                    '''dummy'''
         """
         )
         values = reprec.getfailedcollections()

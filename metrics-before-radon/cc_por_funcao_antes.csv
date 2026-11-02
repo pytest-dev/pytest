@@ -1,4 +1,4 @@
-arquivo,origem,tipo,classe,nome,rank_cc,complexity,linha_ini,linha_fim
+arquivo,origem,tipo,classe,gnome,rank_cc,complexity,linha_ini,linha_fim
 src/_pytest/approx.py,fonte,method,Approx,__init__,A,1,110,124
 src/_pytest/approx.py,fonte,method,Approx,__repr__,A,1,127,128
 src/_pytest/approx.py,fonte,method,Approx,_repr_compare,A,1,130,134

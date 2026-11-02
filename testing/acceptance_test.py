@@ -725,36 +725,45 @@ class TestInvocationVariants:
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*not*found*test_missing*"])
 
-    @pytest.mark.skipif(
+    requires_pkg_resources = pytest.mark.skipif(
         int(setuptools.__version__.split(".")[0]) >= 80,
         reason="modern setuptools removing pkg_resources",
     )
-    def test_cmdline_python_legacy_namespace_package(
-        self, pytester: Pytester, monkeypatch
-    ) -> None:
-        """Test --pyargs option with legacy namespace packages (#1567).
 
-        Ref: https://packaging.python.org/guides/packaging-namespace-packages/
+    @staticmethod
+    def _make_legacy_namespace_package(pytester: Pytester, dirname: str) -> Path:
+        """Create ``<dirname>/ns_pkg/<dirname>/test_<dirname>.py``.
+
+        ``ns_pkg`` is declared as a legacy (``pkg_resources``) namespace package.
         """
+        d = pytester.mkdir(dirname)
+        ns = d.joinpath("ns_pkg")
+        ns.mkdir()
+        ns.joinpath("__init__.py").write_text(
+            "__import__('pkg_resources').declare_namespace(__name__)",
+            encoding="utf-8",
+        )
+        lib = ns.joinpath(dirname)
+        lib.mkdir()
+        lib.joinpath("__init__.py").touch()
+        lib.joinpath(f"test_{dirname}.py").write_text(
+            f"def test_{dirname}(): pass\ndef test_other():pass",
+            encoding="utf-8",
+        )
+        return d
+
+    @pytest.fixture
+    def legacy_namespace_packages(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Create the ``hello`` and ``world`` legacy namespace packages that share
+        ``ns_pkg`` (#1567) and make both of them importable."""
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
-        search_path = []
-        for dirname in "hello", "world":
-            d = pytester.mkdir(dirname)
-            search_path.append(d)
-            ns = d.joinpath("ns_pkg")
-            ns.mkdir()
-            ns.joinpath("__init__.py").write_text(
-                "__import__('pkg_resources').declare_namespace(__name__)",
-                encoding="utf-8",
-            )
-            lib = ns.joinpath(dirname)
-            lib.mkdir()
-            lib.joinpath("__init__.py").touch()
-            lib.joinpath(f"test_{dirname}.py").write_text(
-                f"def test_{dirname}(): pass\ndef test_other():pass",
-                encoding="utf-8",
-            )
+        search_path = [
+            self._make_legacy_namespace_package(pytester, dirname)
+            for dirname in ("hello", "world")
+        ]
 
         # The structure of the test directory is now:
         # .
@@ -776,6 +785,15 @@ class TestInvocationVariants:
         for p in search_path:
             monkeypatch.syspath_prepend(p)
 
+    @requires_pkg_resources
+    @pytest.mark.usefixtures("legacy_namespace_packages")
+    def test_cmdline_python_legacy_namespace_package(
+        self, pytester: Pytester, monkeypatch
+    ) -> None:
+        """Test --pyargs option with legacy namespace packages (#1567).
+
+        Ref: https://packaging.python.org/guides/packaging-namespace-packages/
+        """
         # mixed module and filenames:
         monkeypatch.chdir("world")
 
@@ -801,6 +819,12 @@ class TestInvocationVariants:
             ]
         )
 
+    @requires_pkg_resources
+    @pytest.mark.usefixtures("legacy_namespace_packages")
+    def test_cmdline_python_legacy_namespace_package_single_test(
+        self, pytester: Pytester
+    ) -> None:
+        """Test --pyargs with a single test of a legacy namespace package (#1567)."""
         # specify tests within a module
         pytester.chdir()
         result = pytester.runpytest(
@@ -821,17 +845,10 @@ class TestInvocationVariants:
         result = pytester.runpytest(str(p) + "::test", "--doctest-modules")
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_cmdline_python_package_symlink(
-        self, pytester: Pytester, monkeypatch
-    ) -> None:
-        """
-        --pyargs with packages with path containing symlink can have conftest.py in
-        their package (#2985)
-        """
-        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
-
-        dirname = "lib"
-        d = pytester.mkdir(dirname)
+    @staticmethod
+    def _make_lib_package(pytester: Pytester) -> Path:
+        """Create ``lib/foo/bar`` with a test module and a ``conftest.py``."""
+        d = pytester.mkdir("lib")
         foo = d.joinpath("foo")
         foo.mkdir()
         foo.joinpath("__init__.py").touch()
@@ -844,7 +861,16 @@ class TestInvocationVariants:
         lib.joinpath("conftest.py").write_text(
             "import pytest\n@pytest.fixture\ndef a_fixture():pass", encoding="utf-8"
         )
+        return d
 
+    @pytest.fixture
+    def symlinked_lib_on_path(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Create ``symlink_root/lib -> lib`` and make both paths importable (#2985)."""
+        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+
+        d = self._make_lib_package(pytester)
         d_local = pytester.mkdir("symlink_root")
         symlink_location = d_local / "lib"
         symlink_or_skip(d, symlink_location, target_is_directory=True)
@@ -867,6 +893,12 @@ class TestInvocationVariants:
         for p in search_path:
             monkeypatch.syspath_prepend(p)
 
+    @pytest.mark.usefixtures("symlinked_lib_on_path")
+    def test_cmdline_python_package_symlink(self, pytester: Pytester) -> None:
+        """
+        --pyargs with packages with path containing symlink can have conftest.py in
+        their package (#2985)
+        """
         # module picked up in symlink-ed directory:
         # It picks up symlink_root/lib/foo/bar (symlink) via sys.path.
         result = pytester.runpytest("--pyargs", "-v", "foo.bar")
@@ -1272,10 +1304,9 @@ def test_deferred_hook_checking(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
-def test_fixture_values_leak(pytester: Pytester) -> None:
-    """Ensure that fixture objects are properly destroyed by the garbage collector at the end of their expected
-    life-times (#2981).
-    """
+@pytest.fixture
+def fixture_leak_module(pytester: Pytester) -> None:
+    """Create a module whose fixtures keep weak references to their own values."""
     pytester.makepyfile(
         """
         import dataclasses
@@ -1313,6 +1344,13 @@ def test_fixture_values_leak(pytester: Pytester) -> None:
             assert fix_of_test1_ref() is None
     """
     )
+
+
+@pytest.mark.usefixtures("fixture_leak_module")
+def test_fixture_values_leak(pytester: Pytester) -> None:
+    """Ensure that fixture objects are properly destroyed by the garbage collector at the end of their expected
+    life-times (#2981).
+    """
     # Running on subprocess does not activate the HookRecorder
     # which holds itself a reference to objects in case of the
     # pytest_assert_reprcompare hook
@@ -1649,12 +1687,10 @@ def test_doctest_and_normal_imports_with_importlib(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines("*1 passed*")
 
 
-@pytest.mark.skip(reason="Test is not isolated")
-def test_issue_9765(pytester: Pytester) -> None:
-    """Reproducer for issue #9765 on Windows
-
-    https://github.com/pytest-dev/pytest/issues/9765
-    """
+@pytest.fixture
+def my_package_project(pytester: Pytester) -> None:
+    """Create the project of issue #9765: an installable package with a plugin
+    loaded through ``addopts``."""
     pytester.makepyprojecttoml(
         """
         [tool.pytest.ini_options]
@@ -1692,6 +1728,14 @@ def test_issue_9765(pytester: Pytester) -> None:
         }
     )
 
+
+@pytest.mark.skip(reason="Test is not isolated")
+@pytest.mark.usefixtures("my_package_project")
+def test_issue_9765() -> None:
+    """Reproducer for issue #9765 on Windows
+
+    https://github.com/pytest-dev/pytest/issues/9765
+    """
     subprocess.run(
         [sys.executable, "-Im", "pip", "install", "-e", "."],
         check=True,
