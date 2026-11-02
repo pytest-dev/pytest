@@ -1,0 +1,1 @@
+﻿Refactored the internal test suite to resolve multiple test smells (Non-Functional Statement, Verbose Test, Sleepy Test, Undefined Test, and Verifying in Setup) identified during static analysis.
