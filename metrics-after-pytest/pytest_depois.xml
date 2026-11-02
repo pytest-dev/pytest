@@ -3,7 +3,7 @@ assert_approx_raises_regex = &lt;function assert_approx_raises_regex.&lt;locals&
 
     def test_error_messages_numpy_dtypes(self, assert_approx_raises_regex):
         np = pytest.importorskip("numpy")
-    
+
         a = np.linspace(0, 100, 20)
         b = np.linspace(0, 100, 20)
         a[10] += 0.5
@@ -20,7 +20,7 @@ assert_approx_raises_regex = &lt;function assert_approx_raises_regex.&lt;locals&
             ],
         )
 
-testing\python\approx.py:210: 
+testing\python\approx.py:210:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 lhs = array([  0.        ,   5.26315789,  10.52631579,  15.78947368,
@@ -34,11 +34,11 @@ verbosity_level = 0
 
     def do_assert(lhs, rhs, expected_message, verbosity_level=0):
         import re
-    
+
         with temporary_verbosity(pytestconfig, verbosity_level):
             with pytest.raises(AssertionError) as e:
                 assert lhs == approx(rhs)
-    
+
         nl = "\n"
         obtained_message = str(e.value).splitlines()[1:]
         assert len(obtained_message) == len(expected_message), (
@@ -48,7 +48,7 @@ verbosity_level = 0
             "Expected regex:\n"
             f"{nl.join(expected_message)}\n\n"
         )
-    
+
         for i, (obtained_line, expected_line) in enumerate(
             zip(obtained_message, expected_message, strict=True)
         ):
@@ -61,21 +61,21 @@ verbosity_level = 0
                 f"With verbosity level = {verbosity_level}, on line {i}"
             )
 E           AssertionError: Unexpected error message:
-E               
+E
 E               comparison failed
 E               Obtained: [  0.           5.26315789  10.52631579  15.78947368  21.05263158\n  26.31578947  31.57894737  36.84210526  42.10526316  47.36842105\n  53.13157895  57.89473684  63.15789474  68.42105263  73.68421053\n  78.94736842  84.21052632  89.47368421  94.73684211 100.        ]
 E               Expected: approx([0.0 ± 1.0e-12, 5.2631578947368425 ± 5.3e-06, 10.526315789473685 ± 1.1e-05, 15.789473684210527 ± 1.6e-05, 21.05263157894737 ± 2.1e-05, 26.315789473684212 ± 2.6e-05, 31.578947368421055 ± 3.2e-05, 36.8421052631579 ± 3.7e-05, 42.10526315789474 ± 4.2e-05, 47.3684210526315...
-E               
+E
 E               ...Full output truncated, use '-vv' to show
-E             
+E
 E             Did not match regex:
-E             
+E
 E               comparison failed. Mismatched elements: 1 / 20:
 E               Max absolute difference: [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s*
 E               Max relative difference: [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s*
 E               Index \| Obtained\s+\| Expected
 E               \(10,\) \| [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s* \| [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s* ± [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s*
-E             
+E
 E             With verbosity level = 0, on line 1
 E           assert None is not None
 E            +  where None = &lt;built-in method match of re.Pattern object at 0x0000028DE2F73940&gt;('  comparison failed')
@@ -99,7 +99,7 @@ assert_approx_raises_regex = &lt;function assert_approx_raises_regex.&lt;locals&
             ]
         )
 E       AssertionError: assert '  \n  compar... ± 5.0e-06]])' == '  \n  Imposs...1) and (2, 2)'
-E         
+E
 E         #x1B[0m#x1B[90m #x1B[39;49;00m   #x1B[90m#x1B[39;49;00m
 E         #x1B[91m-   Impossible to compare arrays with different shapes.#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[91m-   Shapes: (2, 1) and (2, 2)#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
@@ -125,7 +125,7 @@ assert_approx_raises_regex = &lt;function assert_approx_raises_regex.&lt;locals&
                 ],
                 verbosity_level=v,
             )
-    
+
         a = np.linspace(1, 101, 20)
         b = np.linspace(2, 102, 20)
 &gt;       assert_approx_raises_regex(
@@ -145,7 +145,7 @@ assert_approx_raises_regex = &lt;function assert_approx_raises_regex.&lt;locals&
             verbosity_level=0,
         )
 
-testing\python\approx.py:306: 
+testing\python\approx.py:306:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 lhs = array([  1.        ,   6.26315789,  11.52631579,  16.78947368,
@@ -159,11 +159,11 @@ verbosity_level = 0
 
     def do_assert(lhs, rhs, expected_message, verbosity_level=0):
         import re
-    
+
         with temporary_verbosity(pytestconfig, verbosity_level):
             with pytest.raises(AssertionError) as e:
                 assert lhs == approx(rhs)
-    
+
         nl = "\n"
         obtained_message = str(e.value).splitlines()[1:]
 &gt;       assert len(obtained_message) == len(expected_message), (
@@ -175,13 +175,13 @@ verbosity_level = 0
         )
 E       AssertionError: Regex message length doesn't match obtained.
 E         Obtained:
-E           
+E
 E           comparison failed
 E           Obtained: [  1.           6.26315789  11.52631579  16.78947368  22.05263158\n  27.31578947  32.57894737  37.84210526  43.10526316  48.36842105\n  53.63157895  58.89473684  64.15789474  69.42105263  74.68421053\n  79.94736842  85.21052632  90.47368421  95.73684211 101.        ]
 E           Expected: approx([2.0 ± 2.0e-06, 7.2631578947368425 ± 7.3e-06, 12.526315789473685 ± 1.3e-05, 17.789473684210527 ± 1.8e-05, 23.05263157894737 ± 2.3e-05, 28.315789473684212 ± 2.8e-05, 33.578947368421055 ± 3.4e-05, 38.8421052631579 ± 3.9e-05, 44.10526315789474 ± 4.4e-05, 49.3684210526315...
-E           
+E
 E           ...Full output truncated, use '-vv' to show
-E         
+E
 E         Expected regex:
 E         ^  $
 E         ^  comparison failed. Mismatched elements: 20 / 20:$
@@ -192,8 +192,8 @@ E         ^  \(0,\)\s+\| [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s* \|
 E         ^  \(1,\)\s+\| [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s* \| [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s* ± [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s*e-[0-9]+\s*\.\.\.$
 E         ^  $
 E         ^  ...Full output truncated, use '-vv' to show$
-E         
-E         
+E
+E
 E       assert 6 == 9
 E        +  where 6 = len(['  ', '  comparison failed', '  Obtained: [  1.           6.26315789  11.52631579  16.78947368  22.05263158\\n  27.31578947  32.57894737  37.84210526  43.10526316  48.36842105\\n  53.63157895  58.89473684  64.15789474  69.42105263  74.68421053\\n  79.94736842  85.21052632  90.47368421  95.73684211 101.        ]', '  Expected: approx([2.0 ± 2.0e-06, 7.2631578947368425 ± 7.3e-06, 12.526315789473685 ± 1.3e-05, 17.789473684210527 ± 1.8e-05, 23.05263157894737 ± 2.3e-05, 28.315789473684212 ± 2.8e-05, 33.578947368421055 ± 3.4e-05, 38.8421052631579 ± 3.9e-05, 44.10526315789474 ± 4.4e-05, 49.3684210526315...', '  ', "  ...Full output truncated, use '-vv' to show"])
 E        +  and   9 = len(['^  $', '^  comparison failed. Mismatched elements: 20 / 20:$', '^  Max absolute difference: [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\\s*$', '^  Max relative difference: [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\\s*$', '^  Index \\| Obtained\\s+\\| Expected\\s+$', '^  \\(0,\\)\\s+\\| [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\\s* \\| [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\\s* ± [+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\\s*e-[0-9]+\\s*$', ...])
@@ -220,7 +220,7 @@ pytester = &lt;Pytester WindowsPath('C:/Users/ed/AppData/Local/Temp/pytest-of-ed
 &gt;       result = pytester.runpython_c("import pytest;help(pytest)")
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-C:\Users\ed\git\UFC\pytest-smells\testing\acceptance_test.py:591: 
+C:\Users\ed\git\UFC\pytest-smells\testing\acceptance_test.py:591:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 C:\Users\ed\git\UFC\pytest-smells\src\_pytest\pytester.py:1501: in runpython_c
     return self.run(sys.executable, "-c", command)
@@ -295,7 +295,7 @@ pytester = &lt;Pytester WindowsPath('C:/Users/ed/AppData/Local/Temp/pytest-of-ed
         pytester.makepyfile(
             """
             import collections
-    
+
             TestCase = collections.namedtuple('TestCase', ['a'])
         """
         )
@@ -321,7 +321,7 @@ pytester = &lt;Pytester WindowsPath('C:/Users/ed/AppData/Local/Temp/pytest-of-ed
         pytester.makepyfile(
             """
             import pytest
-    
+
             @pytest.mark.usefixtures()
             def test_one():
                 assert 1 == 1
@@ -375,7 +375,7 @@ C:\Users\ed\git\UFC\pytest-smells\testing\test_pastebin.py:35: AssertionError</f
                 stdin=subprocess.PIPE,
                 timeout=0.1,
             )
-    
+
         with pytest.raises(pytester.TimeoutExpired):
             result = pytester.run(
                 sys.executable,
@@ -384,7 +384,7 @@ C:\Users\ed\git\UFC\pytest-smells\testing\test_pastebin.py:35: AssertionError</f
                 stdin=b"input\n2ndline",
                 timeout=0.1,
             )
-    
+
         result = pytester.run(
             sys.executable,
             "-c",
@@ -394,7 +394,7 @@ C:\Users\ed\git\UFC\pytest-smells\testing\test_pastebin.py:35: AssertionError</f
         assert result.stdout.lines == ["input", "2ndline"]
 &gt;       assert result.stderr.str() == ""
 E       assert 'C:\\Users\\e...ude-ignored")' == ''
-E         
+E
 E         #x1B[0m#x1B[92m+ C:\Users\ed\git\UFC\pytest-smells\venv\Lib\site-packages\coverage\inorout.py:513: CoverageWarning: --include is ignored because --source is set (include-ignored); see https://coverage.readthedocs.io/en/7.17.0/messages.html#warning-include-ignored#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[92m+   self.warn("--include is ignored because --source is set", slug="include-ignored")#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 
@@ -412,14 +412,14 @@ C:\Users\ed\git\UFC\pytest-smells\testing\test_pytester.py:646: AssertionError</
         assert stdout.decode("utf8").splitlines() == ["input", "2ndline"]
 &gt;       assert stderr == b""
 E       assert b'C:\\Users\\...ignored")\r\n' == b''
-E         
+E
 E         Full diff: (-: missing in left side, +: extra in left side)
 E         #x1B[0m#x1B[91m- b''#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+ (b'C:\\Users\\ed\\git\\UFC\\pytest-smells\\venv\\Lib\\site-packages\\coverag'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b'e\\inorout.py:513: CoverageWarning: --include is ignored because --source'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b' is set (include-ignored); see https://coverage.readthedocs.io/en/7.17.0/mes'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b'sages.html#warning-include-ignored\r\n  self.warn("--include is ignored be'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m...
-E         
+E
 E         ...Full output truncated, use '-vv' to show
 
 C:\Users\ed\git\UFC\pytest-smells\testing\test_pytester.py:660: AssertionError</failure></testcase><testcase classname="testing.test_pytester" name="test_popen_stdin_bytes" time="1.788"><failure message="assert b'C:\\Users\\...ignored&quot;)\r\n' == b''&#10;  &#10;  Full diff: (-: missing in left side, +: extra in left side)&#10;  #x1B[0m#x1B[91m- b''#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  #x1B[0m#x1B[92m+ (b'C:\\Users\\ed\\git\\UFC\\pytest-smells\\venv\\Lib\\site-packages\\coverag'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  #x1B[0m#x1B[92m+  b'e\\inorout.py:513: CoverageWarning: --include is ignored because --source'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;[+4 more lines; full report in element text]">pytester = &lt;Pytester WindowsPath('C:/Users/ed/AppData/Local/Temp/pytest-of-ed/pytest-0/test_popen_stdin_bytes0')&gt;
@@ -435,14 +435,14 @@ C:\Users\ed\git\UFC\pytest-smells\testing\test_pytester.py:660: AssertionError</
         assert stdout.decode("utf8").splitlines() == ["input", "2ndline"]
 &gt;       assert stderr == b""
 E       assert b'C:\\Users\\...ignored")\r\n' == b''
-E         
+E
 E         Full diff: (-: missing in left side, +: extra in left side)
 E         #x1B[0m#x1B[91m- b''#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+ (b'C:\\Users\\ed\\git\\UFC\\pytest-smells\\venv\\Lib\\site-packages\\coverag'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b'e\\inorout.py:513: CoverageWarning: --include is ignored because --source'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b' is set (include-ignored); see https://coverage.readthedocs.io/en/7.17.0/mes'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[0m#x1B[92m+  b'sages.html#warning-include-ignored\r\n  self.warn("--include is ignored be'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m...
-E         
+E
 E         ...Full output truncated, use '-vv' to show
 
 C:\Users\ed\git\UFC\pytest-smells\testing\test_pytester.py:673: AssertionError</failure></testcase><testcase classname="testing.test_pytester" name="test_popen_default_stdin_stderr_and_stdin_None" time="1.277"><failure message="assert &lt;ExitCode.TESTS_FAILED: 1&gt; == 0&#10; +  where &lt;ExitCode.TESTS_FAILED: 1&gt; = &lt;RunResult ret=1 len(stdout.lines)=35 len(stderr.lines)=0 duration=1.23s&gt;.ret">pytester = &lt;Pytester WindowsPath('C:/Users/ed/AppData/Local/Temp/pytest-of-ed/pytest-0/test_popen_default_stdin_stderr_and_stdin_None0')&gt;
@@ -456,7 +456,7 @@ C:\Users\ed\git\UFC\pytest-smells\testing\test_pytester.py:673: AssertionError</
         p1 = pytester.makepyfile(
             '''
             import sys
-    
+
             def test_inner(pytester):
                 p1 = pytester.makepyfile(
                     """
@@ -493,7 +493,7 @@ pytester = &lt;Pytester WindowsPath('C:/Users/ed/AppData/Local/Temp/pytest-of-ed
             result, "assertion is always true, perhaps remove parentheses?"
         )
 
-C:\Users\ed\git\UFC\pytest-smells\testing\test_warnings.py:616: 
+C:\Users\ed\git\UFC\pytest-smells\testing\test_warnings.py:616:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 result = &lt;RunResult ret=0 len(stdout.lines)=8 len(stderr.lines)=0 duration=0.16s&gt;
@@ -547,25 +547,25 @@ monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000028D8AA829E0&g
             """
             import threading
             import sys
-    
+
             printing = threading.Event()
-    
+
             def spam():
                 f = sys.stderr
                 print('SPAMBEFORE', end='', file=f)
                 printing.set()
-    
+
                 while True:
                     try:
                         f.flush()
                     except (OSError, ValueError):
                         break
-    
+
             def test_spam_in_thread():
                 t = threading.Thread(target=spam)
                 t.daemon = True
                 t.start()
-    
+
                 printing.wait()
         """
         )
@@ -575,7 +575,7 @@ monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000028D8AA829E0&g
         assert result.ret == 0
 &gt;       assert result.stderr.str() == ""
 E       assert 'C:\\Users\\e...ude-ignored")' == ''
-E         
+E
 E         #x1B[0m#x1B[92m+ C:\Users\ed\git\UFC\pytest-smells\venv\Lib\site-packages\coverage\inorout.py:513: CoverageWarning: --include is ignored because --source is set (include-ignored); see https://coverage.readthedocs.io/en/7.17.0/messages.html#warning-include-ignored#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 E         #x1B[92m+   self.warn("--include is ignored because --source is set", slug="include-ignored")#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
 
