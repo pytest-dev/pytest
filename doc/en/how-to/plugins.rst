@@ -126,7 +126,9 @@ plugin will not work.
 ``NAME`` can also be the name of an installed plugin as shown in the
 ``plugins:`` line at the top of the test session output (the name of its
 distribution, without a ``pytest-`` prefix): for example ``-p no:bdd``
-disables the plugins of the ``pytest-bdd`` distribution.
+disables the plugins of the ``pytest-bdd`` distribution. If both a ``foo``
+and a ``pytest-foo`` distribution are installed, ``-p no:foo`` disables the
+plugins of both and issues a warning.
 
 If you want to unconditionally disable a plugin for a project, you can add
 this option to your configuration file:

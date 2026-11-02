@@ -530,8 +530,11 @@ class PytestPluginManager(PluginManager):
         self.skipped_plugins: list[tuple[str, str]] = []
 
         # Normalized distribution name -> names of its pytest11 entry points,
-        # computed on first use by _get_distribution_entry_point_names.
+        # computed on first use by _get_plugin_distributions.
         self._distribution_entry_point_names: dict[str, list[str]] | None = None
+        # -p no:NAME argument name -> the distributions it disabled, when
+        # there is more than one; Config warns about them.
+        self._ambiguous_plugin_blocks: dict[str, list[str]] = {}
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
@@ -892,8 +895,14 @@ class PytestPluginManager(PluginManager):
             # The "plugins:" line of the header shows distribution names, with
             # a "pytest-" prefix removed, which often differ from the plugin
             # names; accept those as well (#5661).
-            for entry_point_name in self._get_distribution_entry_point_names(name):
-                self.set_blocked(entry_point_name)
+            distributions = self._get_plugin_distributions(name)
+            for entry_point_names in distributions.values():
+                for entry_point_name in entry_point_names:
+                    self.set_blocked(entry_point_name)
+            # Both the NAME and the pytest-NAME distributions are shown as NAME,
+            # so both are disabled; warn about it, in case only one was meant.
+            if len(distributions) > 1:
+                self._ambiguous_plugin_blocks[name] = list(distributions)
         else:
             name = arg
             # Unblock the plugin.
@@ -902,10 +911,10 @@ class PytestPluginManager(PluginManager):
                 self.unblock("pytest_" + name)
             self.import_plugin(arg, consider_entry_points=True)
 
-    def _get_distribution_entry_point_names(self, name: str) -> list[str]:
-        """Return the names of the ``pytest11`` entry points of the installed
-        distribution called ``name`` or ``pytest-<name>``, which is how the
-        "plugins:" line of the header shows it."""
+    def _get_plugin_distributions(self, name: str) -> dict[str, list[str]]:
+        """Return the installed distributions called ``name`` or
+        ``pytest-<name>`` (the "plugins:" line of the header shows both as
+        ``name``), mapped to the names of their ``pytest11`` entry points."""
         if self._distribution_entry_point_names is None:
             self._distribution_entry_point_names = {}
             for dist in importlib.metadata.distributions():
@@ -919,18 +928,14 @@ class PytestPluginManager(PluginManager):
                     self._distribution_entry_point_names.setdefault(
                         dist_name, []
                     ).extend(entry_point_names)
-        return [
-            entry_point_name
-            for dist_name in dict.fromkeys(
-                (
-                    _normalize_distribution_name(name),
-                    _normalize_distribution_name(f"pytest-{name}"),
-                )
+        return {
+            dist_name: self._distribution_entry_point_names[dist_name]
+            for dist_name in (
+                _normalize_distribution_name(name),
+                _normalize_distribution_name(f"pytest-{name}"),
             )
-            for entry_point_name in self._distribution_entry_point_names.get(
-                dist_name, ()
-            )
-        ]
+            if dist_name in self._distribution_entry_point_names
+        }
 
     def consider_conftest(
         self, conftestmodule: types.ModuleType, registration_name: str
@@ -1825,6 +1830,7 @@ class Config:
 
         self._validate_plugins()
         self._warn_about_skipped_plugins()
+        self._warn_about_ambiguous_plugin_blocks()
 
         if self.known_args_namespace.confcutdir is None:
             if self.inipath is not None:
@@ -2363,6 +2369,16 @@ class Config:
         for module_name, msg in self.pluginmanager.skipped_plugins:
             self.issue_config_time_warning(
                 PytestConfigWarning(f"skipped plugin {module_name!r}: {msg}"),
+                stacklevel=2,
+            )
+
+    def _warn_about_ambiguous_plugin_blocks(self) -> None:
+        for name, dist_names in self.pluginmanager._ambiguous_plugin_blocks.items():
+            self.issue_config_time_warning(
+                PytestConfigWarning(
+                    f"-p no:{name} disabled the plugins of several distributions: "
+                    + ", ".join(dist_names)
+                ),
                 stacklevel=2,
             )
 
