@@ -32,14 +32,14 @@ class Instant:
 
     # Creation time of this instant, using time.time(), to measure actual time.
     # Note: using a `lambda` to correctly get the mocked time via `MockTiming`.
+    # Only pass explicitly to represent timings given as plain floats.
     # pylint: disable-next=lambda-assignment
-    time: float = dataclasses.field(default_factory=lambda: time(), init=False)  # noqa: PLW0108
+    time: float = dataclasses.field(default_factory=lambda: time())  # noqa: PLW0108
 
     # Performance counter tick of the instant, used to measure precise elapsed time.
     # Note: using a `lambda` to correctly get the mocked time via `MockTiming`.
     perf_count: float = dataclasses.field(
         default_factory=lambda: perf_counter(),  # noqa: PLW0108
-        init=False,
     )
 
     def elapsed(self) -> Duration:
@@ -62,6 +62,15 @@ class Duration:
     def seconds(self) -> float:
         """Elapsed time of the duration in seconds, measured using a performance counter for precise timing."""
         return self.stop.perf_count - self.start.perf_count
+
+
+#: Placeholder timing for calls pytest cannot measure, e.g. unittest subtests,
+#: which unittest reports only after the fact without a start time.
+#: Shows up as ``start == stop == duration == 0``.
+UNMEASURED = Duration(
+    start=Instant(time=0.0, perf_count=0.0),
+    stop=Instant(time=0.0, perf_count=0.0),
+)
 
 
 @dataclasses.dataclass
