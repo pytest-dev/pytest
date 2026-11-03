@@ -1136,7 +1136,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
                 len(actual_exceptions) == len(self.expected_exceptions) == 1
                 and isinstance(expected := self.expected_exceptions[0], type)
                 # we explicitly break typing here :)
-                and self._check_check(actual_exceptions[0]) is None  # type: ignore[arg-type]
+                and self._check_check(actual_exceptions[0]) is None
             ):
                 suggestion = (self._repr_expected(expected), expected.__name__)
             self._failure = dataclasses.replace(

@@ -66,15 +66,17 @@ def _highlight_arrows_for_line(
     if colno is None or end_colno is None:
         return []
 
-    num_stripped_chars = len(raw_line) - len(line)
-    start_char_offset = _byte_offset_to_character_offset(raw_line, colno)
-    end_char_offset = _byte_offset_to_character_offset(raw_line, end_colno)
+    raw_clean = raw_line.rstrip("\r\n")
+    line_clean = line.rstrip("\r\n")
+    num_stripped_chars = len(raw_clean) - len(line_clean)
+    start_char_offset = _byte_offset_to_character_offset(raw_clean, colno)
+    end_char_offset = _byte_offset_to_character_offset(raw_clean, end_colno)
     num_carets = end_char_offset - start_char_offset
-    if num_carets >= len(line.strip()):
+    if num_carets <= 0 or num_carets >= len(line_clean.strip()):
         return []
 
     highlights = "    "
-    highlights += " " * (start_char_offset - num_stripped_chars)
+    highlights += " " * max(0, start_char_offset - num_stripped_chars)
     highlights += "^" * num_carets
     return [highlights]
 

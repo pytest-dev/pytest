@@ -20,6 +20,7 @@ from types import CodeType
 from types import FrameType
 from types import TracebackType
 from typing import Any
+from typing import cast
 from typing import ClassVar
 from typing import Final
 from typing import final
@@ -299,21 +300,24 @@ class TracebackEntry:
         source = self.frame.code.fullsource
         if source is None:
             return None
-        key = astnode = None
-        if astcache is not None:
-            key = self.frame.code.path
-            if key is not None:
-                astnode = astcache.get(key, None)
         start = self.getfirstlinesource()
-        try:
-            astnode, _, end = getstatementrange_ast(
-                self.lineno, source, astnode=astnode
-            )
-        except SyntaxError:
-            end = self.lineno + 1
+        if sys.version_info >= (3, 11) and self.end_lineno_relative is not None:
+            end = max(start + self.end_lineno_relative + 1, self.lineno + 1)
         else:
-            if key is not None and astcache is not None:
-                astcache[key] = astnode
+            key = astnode = None
+            if astcache is not None:
+                key = self.frame.code.path
+                if key is not None:
+                    astnode = astcache.get(key, None)
+            try:
+                astnode, _, end = getstatementrange_ast(
+                    self.lineno, source, astnode=astnode
+                )
+            except SyntaxError:
+                end = self.lineno + 1
+            else:
+                if key is not None and astcache is not None:
+                    astcache[key] = astnode
         return source[start:end]
 
     source = property(getsource)
@@ -676,9 +680,10 @@ class ExceptionInfo(Generic[E]):
         ) -> BaseException | None:
             if len(eg.exceptions) != 1:
                 return None
-            if isinstance(e := eg.exceptions[0], BaseExceptionGroup):
-                return _get_single_subexc(e)
-            return e
+            first = eg.exceptions[0]
+            if isinstance(first, BaseExceptionGroup):
+                return _get_single_subexc(first)
+            return cast(BaseException, first)
 
         if (
             tryshort
@@ -947,6 +952,8 @@ def _record_frame(
     lineno = entry.lineno + 1
     if sys.version_info >= (3, 11):
         fs = entry.get_python_framesummary()
+        if fs.lineno is not None:
+            lineno = fs.lineno
         end_lineno = fs.end_lineno
         colno = fs.colno
         end_colno = fs.end_colno
@@ -1901,9 +1908,9 @@ def getfslineno(obj: object) -> tuple[str | Path, int]:
     return code.path, code.firstlineno
 
 
-def _byte_offset_to_character_offset(str, offset):
+def _byte_offset_to_character_offset(s: str, offset: int) -> int:
     """Converts a byte based offset in a string to a code-point."""
-    as_utf8 = str.encode("utf-8")
+    as_utf8 = s.encode("utf-8")
     return len(as_utf8[:offset].decode("utf-8", errors="replace"))
 
 

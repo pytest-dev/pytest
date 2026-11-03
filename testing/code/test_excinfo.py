@@ -2329,3 +2329,298 @@ def test_check_error_notes_failure(
     with pytest.raises(AssertionError):
         with pytest.raises(type(error), match=match):
             raise error
+
+
+class TestPep657Carets:
+    """Tests for PEP 657 caret rendering across styles and Python 3.10 fallback."""
+
+    @pytest.fixture
+    def importasmod(self, tmp_path: Path, _sys_snapshot):
+        def importasmod(source: str):
+            source = textwrap.dedent(source)
+            modpath = tmp_path.joinpath("mod.py")
+            tmp_path.joinpath("__init__.py").touch()
+            modpath.write_text(source, encoding="utf-8")
+            importlib.invalidate_caches()
+            return import_path(
+                modpath, root=tmp_path, consider_namespace_packages=False
+            )
+
+        return importasmod
+
+    def test_record_captures_positions(self, importasmod) -> None:
+        from _pytest._code.record import FrameRecord
+
+        mod = importasmod(
+            """
+            def div_by_zero():
+                return 1 / 0
+        """
+        )
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            mod.div_by_zero()
+
+        rec = excinfo.record()
+        frame = rec.frames[-1]
+        assert frame.function.endswith("div_by_zero")
+        if sys.version_info >= (3, 11):
+            assert frame.lineno == 3
+            assert frame.end_lineno == 3
+            assert frame.colno is not None
+            assert frame.end_colno is not None
+            assert frame.end_colno > frame.colno
+        else:
+            assert frame.end_lineno is None
+            assert frame.colno is None
+            assert frame.end_colno is None
+
+        # Round-trip serialization preserves positions
+        data = frame.to_dict()
+        restored = FrameRecord.from_dict(data)
+        assert restored.lineno == frame.lineno
+        assert restored.end_lineno == frame.end_lineno
+        assert restored.colno == frame.colno
+        assert restored.end_colno == frame.end_colno
+
+    @pytest.mark.skipif(
+        "sys.version_info < (3, 11)",
+        reason="Column level traceback info added in python 3.11",
+    )
+    def test_carets_short_style(self, importasmod) -> None:
+        from _pytest._code.render import PytestTraceback
+
+        mod = importasmod(
+            """
+            def div_by_zero():
+                return 1 / 0
+            def func1():
+                return 42 + div_by_zero()
+            def entry():
+                func1()
+        """
+        )
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            mod.entry()
+
+        tb = PytestTraceback(record=excinfo.record(), style="short")
+        rep = tb.to_repr()
+        entries = rep.reprtraceback.reprentries
+
+        # entry() call frame: full-line expression suppresses carets
+        assert len(entries[-3].lines) == 1
+        assert entries[-3].lines[0] == "    func1()"
+
+        # func1() frame: partial-line expression has carets
+        assert len(entries[-2].lines) == 2
+        assert entries[-2].lines[0] == "    return 42 + div_by_zero()"
+        assert entries[-2].lines[1] == "                ^^^^^^^^^^^^^"
+
+        # div_by_zero() frame: partial-line expression has carets
+        assert len(entries[-1].lines) == 3
+        assert entries[-1].lines[0] == "    return 1 / 0"
+        assert entries[-1].lines[1] == "           ^^^^^"
+        assert entries[-1].lines[2].startswith("E   ZeroDivisionError")
+
+    @pytest.mark.skipif(
+        "sys.version_info < (3, 11)",
+        reason="Column level traceback info added in python 3.11",
+    )
+    def test_carets_long_and_auto_style(self, importasmod) -> None:
+        from _pytest._code.render import PytestTraceback
+
+        mod = importasmod(
+            """
+            def div_by_zero():
+                return 1 / 0
+            def func1():
+                return 42 + div_by_zero()
+            def entry():
+                func1()
+        """
+        )
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            mod.entry()
+
+        # In long style: intermediate frames show full function with carets
+        tb_long = PytestTraceback(record=excinfo.record(), style="long")
+        rep_long = tb_long.to_repr()
+        entries_long = rep_long.reprtraceback.reprentries
+
+        func1_lines = entries_long[-2].lines
+        div_idx = next(
+            i
+            for i, line_text in enumerate(func1_lines)
+            if "return 42 + div_by_zero()" in line_text
+        )
+        assert func1_lines[div_idx] == ">       return 42 + div_by_zero()"
+        assert func1_lines[div_idx + 1] == "                    ^^^^^^^^^^^^^"
+
+        div_lines = entries_long[-1].lines
+        err_idx = next(
+            i for i, line_text in enumerate(div_lines) if "return 1 / 0" in line_text
+        )
+        assert div_lines[err_idx] == ">       return 1 / 0"
+        assert div_lines[err_idx + 1] == "               ^^^^^"
+
+        # In auto style: intermediate frame is rendered in short style with carets,
+        # and last frame in long style with carets
+        tb_auto = PytestTraceback(record=excinfo.record(), style="auto")
+        rep_auto = tb_auto.to_repr()
+        entries_auto = rep_auto.reprtraceback.reprentries
+
+        auto_func1_lines = entries_auto[-2].lines
+        assert auto_func1_lines[0] == "    return 42 + div_by_zero()"
+        assert auto_func1_lines[1] == "                ^^^^^^^^^^^^^"
+
+        auto_div_lines = entries_auto[-1].lines
+        auto_err_idx = next(
+            i
+            for i, line_text in enumerate(auto_div_lines)
+            if "return 1 / 0" in line_text
+        )
+        assert auto_div_lines[auto_err_idx] == ">       return 1 / 0"
+        assert auto_div_lines[auto_err_idx + 1] == "               ^^^^^"
+
+    @pytest.mark.skipif(
+        "sys.version_info < (3, 11)",
+        reason="Column level traceback info added in python 3.11",
+    )
+    def test_carets_native_style(self, importasmod) -> None:
+        from _pytest._code.render import PytestTraceback
+
+        mod = importasmod(
+            """
+            def fail():
+                return 1 / 0
+        """
+        )
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            mod.fail()
+
+        tb = PytestTraceback(record=excinfo.record(), style="native")
+        rep = tb.to_repr()
+        lines = rep.reprtraceback.reprentries[0].lines
+        caret_line = next(line_text for line_text in lines if "^^^^^" in line_text)
+        assert "^^^^^" in caret_line
+
+    @pytest.mark.skipif(
+        "sys.version_info < (3, 11)",
+        reason="Column level traceback info added in python 3.11",
+    )
+    def test_carets_rich_style(self, importasmod) -> None:
+        from rich.console import Console
+
+        from _pytest._code.render import PytestTraceback
+
+        mod = importasmod(
+            """
+            def div_by_zero():
+                return 1 / 0
+            def func1():
+                return 42 + div_by_zero()
+            def entry():
+                func1()
+        """
+        )
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            mod.entry()
+
+        rec = excinfo.record()
+        rich_trace = rec.to_rich_trace()
+        last_frame = rich_trace.stacks[0].frames[-1]
+        assert last_frame.last_instruction is not None
+        (l1, c1), (l2, c2) = last_frame.last_instruction
+        assert l1 == l2
+        assert c2 > c1
+
+        tb = PytestTraceback(record=rec, style="rich")
+        console = Console(width=100, force_terminal=True, color_system="standard")
+        with console.capture() as capture:
+            console.print(tb)
+        output = capture.get()
+        assert "ZeroDivisionError" in output
+        assert "\x1b[1;4m" in output or "\x1b[4m" in output
+
+    @pytest.mark.skipif(
+        "sys.version_info < (3, 11)",
+        reason="Column level traceback info added in python 3.11",
+    )
+    def test_carets_utf8_multibyte(self, importasmod) -> None:
+        from _pytest._code.render import PytestTraceback
+
+        mod = importasmod(
+            """
+            def foo():
+                x = "日本語" + div_by_zero()
+        """
+        )
+        with pytest.raises(NameError) as excinfo:
+            mod.foo()
+
+        tb = PytestTraceback(record=excinfo.record(), style="short")
+        rep = tb.to_repr()
+        lines = rep.reprtraceback.reprentries[-1].lines
+        assert lines[0] == '    x = "日本語" + div_by_zero()'
+        assert lines[1] == "                ^^^^^^^^^^^"
+
+    def test_carets_fallback_when_positions_missing(self, importasmod) -> None:
+        import dataclasses
+
+        from _pytest._code.render import PytestTraceback
+
+        mod = importasmod(
+            """
+            def fail():
+                return 42 + div_by_zero()
+        """
+        )
+        with pytest.raises(NameError) as excinfo:
+            mod.fail()
+
+        rec = excinfo.record()
+        frames_no_cols = tuple(
+            dataclasses.replace(f, colno=None, end_colno=None, end_lineno=None)
+            for f in rec.frames
+        )
+        rec_no_cols = dataclasses.replace(rec, frames=frames_no_cols)
+
+        tb_short = PytestTraceback(record=rec_no_cols, style="short")
+        rep_short = tb_short.to_repr()
+        assert not any(
+            "^" in line_text
+            for line_text in rep_short.reprtraceback.reprentries[-1].lines
+        )
+
+        tb_long = PytestTraceback(record=rec_no_cols, style="long")
+        rep_long = tb_long.to_repr()
+        assert not any(
+            "^" in line_text
+            for line_text in rep_long.reprtraceback.reprentries[-1].lines
+        )
+
+    @pytest.mark.skipif(
+        "sys.version_info < (3, 11)",
+        reason="Column level traceback info added in python 3.11",
+    )
+    def test_carets_multiline_expression_no_carets(self, importasmod) -> None:
+        from _pytest._code.render import PytestTraceback
+
+        mod = importasmod(
+            """
+            def fail():
+                return 1 / (
+                    0
+                )
+        """
+        )
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            mod.fail()
+
+        rec = excinfo.record()
+        f = rec.frames[-1]
+        assert f.lineno != f.end_lineno
+
+        tb = PytestTraceback(record=rec, style="short")
+        rep = tb.to_repr()
+        lines = rep.reprtraceback.reprentries[-1].lines
+        assert not any("^" in line_text for line_text in lines)
