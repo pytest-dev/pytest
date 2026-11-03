@@ -11,6 +11,7 @@ from _pytest.approx import approx
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
+from _pytest.compat import ItemLocation
 from _pytest.config import cmdline
 from _pytest.config import Config
 from _pytest.config import console_main
@@ -121,6 +122,7 @@ __all__ = [
     "Function",
     "HookRecorder",
     "Item",
+    "ItemLocation",
     "LineMatcher",
     "LogCaptureFixture",
     "Mark",
