@@ -533,7 +533,9 @@ class ExceptionRecord:
             striptext=str(data.get("striptext", "")),
         )
 
-    def to_rich_trace(self, *, show_hidden: bool = False) -> rich.traceback.Trace:
+    def to_rich_trace(
+        self, *, show_hidden: bool = False, chain: bool = True
+    ) -> rich.traceback.Trace:
         """Convert this record into a :class:`rich.traceback.Trace`."""
         from rich import pretty
         from rich.traceback import _SyntaxError
@@ -605,12 +607,14 @@ class ExceptionRecord:
                 notes=list(cur.notes),
                 is_group=bool(cur.children),
                 exceptions=[
-                    child.to_rich_trace(show_hidden=show_hidden)
+                    child.to_rich_trace(show_hidden=show_hidden, chain=chain)
                     for child in cur.children
                 ],
             )
             stacks.append(stack)
 
+            if not chain:
+                break
             if cur.cause is not None:
                 is_cause = True
                 cur = cur.cause

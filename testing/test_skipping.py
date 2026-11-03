@@ -1567,3 +1567,21 @@ def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines("*_pytest.outcomes.Exit: foo*")
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        'def test_skip(): pytest.skip("unavailable")',
+        'def test_importorskip(): pytest.importorskip("pytest_missing_review_module")',
+        'pytest.skip("collection skip", allow_module_level=True)',
+    ],
+)
+def test_skip_reporting_without_internal_deprecations(pytester: Pytester, source):
+    pytester.makepyfile("import pytest\n" + source)
+    result = pytester.runpytest_subprocess(
+        "-W", "error::pytest.PytestDeprecationWarning"
+    )
+    result.assert_outcomes(skipped=1)
+    assert "INTERNALERROR" not in result.stdout.str()
+    assert "warnings summary" not in result.stdout.str()

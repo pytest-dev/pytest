@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+import json
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
@@ -85,6 +86,47 @@ class TestReportSerialization:
         assert rep.longrepr.sections == a.longrepr.sections
         # Missing section attribute PR171
         assert added_section in a.longrepr.sections
+
+    @pytest.mark.parametrize("style", ["long", "short", "line", "no", "native", "rich"])
+    @pytest.mark.parametrize("internal_flags", [False, True])
+    def test_legacy_repr_constructor_flags(
+        self, pytester: Pytester, style, internal_flags
+    ):
+        reprec = pytester.inline_runsource(
+            """
+            def test_failure():
+                value = 0
+                try:
+                    raise ValueError("cause")
+                except ValueError:
+                    assert value
+            """,
+            f"--tb={style}",
+            "--showlocals",
+        )
+        report = reprec.getreports("pytest_runtest_logreport")[1]
+        wire = json.loads(json.dumps(report._to_json()))
+        assert '"_ispytest"' not in json.dumps(wire)
+
+        def add_internal_flags(data):
+            if isinstance(data, dict):
+                for value in list(data.values()):
+                    add_internal_flags(value)
+                if (
+                    "lines" in data
+                    or "reprentries" in data
+                    or "path" in data
+                    or "args" in data
+                ):
+                    data["_ispytest"] = False
+            elif isinstance(data, list):
+                for value in data:
+                    add_internal_flags(value)
+
+        if internal_flags:
+            add_internal_flags(wire["longrepr"])
+        restored = TestReport._from_json(wire)
+        assert restored.longreprtext == report.longreprtext
 
     def test_to_json_nodeid_wire_shape(self, pytester: Pytester) -> None:
         """The JSON wire payload must keep a plain top-level string "nodeid"

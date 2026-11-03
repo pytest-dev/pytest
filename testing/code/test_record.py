@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import linecache
 from pathlib import Path
 import pickle
 import sys
@@ -262,6 +263,51 @@ class TestRecordCapture:
             single_rec.exconly(tryshort=True)
             == "ValueError('only one') [single exception in ExceptionGroup]"
         )
+
+    def test_repeated_group_members(self) -> None:
+        error = ValueError("shared child")
+        group = ExceptionGroup(
+            "outer", [error, error, ExceptionGroup("nested", [error])]
+        )
+        with pytest.raises(ExceptionGroup) as excinfo:
+            raise group
+
+        record = excinfo.record()
+        assert len(record.children) == 3
+        assert record.children[0] == record.children[1]
+        assert record.children[2].children == (record.children[0],)
+        restored = ExceptionRecord.from_dict(json.loads(json.dumps(record.to_dict())))
+        assert restored == record
+        assert (
+            str(PytestTraceback(restored, style="no")).count("ValueError: shared child")
+            == 3
+        )
+
+    def test_group_member_also_used_as_cause(self) -> None:
+        error = ValueError("shared cause")
+        with pytest.raises(ExceptionGroup) as excinfo:
+            raise ExceptionGroup("outer", [error]) from error
+
+        record = excinfo.record()
+        assert record.cause is not None
+        assert record.children == (record.cause,)
+        assert ExceptionRecord.from_dict(record.to_dict()) == record
+        assert (
+            str(PytestTraceback(record, style="no")).count("ValueError: shared cause")
+            == 2
+        )
+
+    def test_group_child_context_cycle(self) -> None:
+        child = ValueError("child")
+        group = ExceptionGroup("outer", [child, child])
+        child.__context__ = group
+        with pytest.raises(ExceptionGroup) as excinfo:
+            raise group
+
+        record = excinfo.record()
+        assert len(record.children) == 2
+        assert all(child.context is None for child in record.children)
+        assert ExceptionRecord.from_dict(record.to_dict()) == record
 
     def test_syntax_error_details(self) -> None:
         try:
@@ -668,6 +714,131 @@ class TestPytestTraceback:
         )
         console.print(tb)
         assert "outer_group" in console_buf.getvalue()
+
+
+class TestRichSourceSnapshot:
+    @pytest.mark.parametrize("entrypoint", ["to_repr", "toterminal", "rich_console"])
+    @pytest.mark.parametrize("file_change", ["edit", "delete"])
+    @pytest.mark.parametrize("roundtrip", [False, True])
+    @pytest.mark.parametrize(
+        "source",
+        [
+            'def fail():\n    return len("é") + 1 / 0  # ORIGINAL_SOURCE\n',
+            'def fail():\n    return len("é") + (\n        1 / 0  # ORIGINAL_SOURCE\n    )\n',
+        ],
+    )
+    def test_captured_source(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        entrypoint: str,
+        file_change: str,
+        roundtrip: bool,
+        source: str,
+    ) -> None:
+        path = tmp_path / "snapshot.py"
+        path.write_text(source, encoding="utf-8")
+        namespace: dict[str, Any] = {}
+        exec(compile(source, str(path), "exec"), namespace)
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            namespace["fail"]()
+        record = excinfo.record()
+        if roundtrip:
+            record = ExceptionRecord.from_dict(json.loads(json.dumps(record.to_dict())))
+        if file_change == "edit":
+            path.write_text(
+                source.replace("ORIGINAL_SOURCE", "REPLACEMENT_SOURCE"),
+                encoding="utf-8",
+            )
+        else:
+            path.unlink()
+        linecache.clearcache()
+
+        def no_live_source(*args: Any, **kwargs: Any) -> Any:
+            raise AssertionError("renderer must not read linecache")
+
+        renderer = PytestTraceback(record, style="rich")
+        with monkeypatch.context() as patch:
+            patch.setattr(linecache, "getlines", no_live_source)
+            if entrypoint == "to_repr":
+                rendered = str(renderer.to_repr())
+            elif entrypoint == "toterminal":
+                rendered = str(renderer)
+            else:
+                from rich.console import Console
+
+                output = io.StringIO()
+                Console(file=output, width=100).print(renderer)
+                rendered = output.getvalue()
+        assert "ORIGINAL_SOURCE" in rendered
+        assert "REPLACEMENT_SOURCE" not in rendered
+        assert "ZeroDivisionError" in rendered
+        assert "snapshot.py" in rendered
+
+    def test_non_ascii_instruction_highlight(self, tmp_path: Path) -> None:
+        from rich.console import Console
+
+        path = tmp_path / "unicode.py"
+        source = 'def fail():\n    return "é" + str(1 / 0)\n'
+        path.write_text(source, encoding="utf-8")
+        namespace: dict[str, Any] = {}
+        exec(compile(source, str(path), "exec"), namespace)
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            namespace["fail"]()
+        renderer = PytestTraceback(excinfo.record(), style="rich")
+        highlighted = "".join(
+            segment.text
+            for segment in Console(width=100).render(renderer)
+            if segment.style is not None and segment.style.underline
+        )
+        assert "1 / 0" in highlighted
+        assert '"é"' not in highlighted
+
+
+class TestRichChainSelection:
+    @pytest.mark.parametrize("entrypoint", ["to_repr", "toterminal", "rich_console"])
+    @pytest.mark.parametrize("relation", ["cause", "context"])
+    def test_chain_selection(self, entrypoint: str, relation: str) -> None:
+        from rich.console import Console
+
+        hidden = ExceptionRecord("ValueError", "builtins", "HIDDEN_CHAIN_MESSAGE")
+        child = ExceptionRecord(
+            "RuntimeError",
+            "builtins",
+            "VISIBLE_CHILD",
+            cause=hidden if relation == "cause" else None,
+            context=hidden if relation == "context" else None,
+        )
+        record = ExceptionRecord(
+            "ExceptionGroup",
+            "builtins",
+            "VISIBLE_GROUP (1 sub-exception)",
+            children=(child,),
+            cause=hidden if relation == "cause" else None,
+            context=hidden if relation == "context" else None,
+        )
+        original = record.to_dict()
+        renderer = PytestTraceback(record, style="rich", chain=False)
+
+        def render() -> str:
+            if entrypoint == "to_repr":
+                return str(renderer.to_repr())
+            if entrypoint == "toterminal":
+                return str(renderer)
+            output = io.StringIO()
+            Console(file=output, width=100).print(renderer)
+            return output.getvalue()
+
+        rendered = render()
+        assert "VISIBLE_GROUP" in rendered
+        assert "VISIBLE_CHILD" in rendered
+        assert "HIDDEN_CHAIN_MESSAGE" not in rendered
+        trace = record.to_rich_trace(chain=False)
+        assert len(trace.stacks) == 1
+        assert len(trace.stacks[0].exceptions[0].stacks) == 1
+        renderer.chain = True
+        assert "HIDDEN_CHAIN_MESSAGE" in render()
+        assert record.to_dict() == original
 
 
 class TestPublicApiAndDeprecations:

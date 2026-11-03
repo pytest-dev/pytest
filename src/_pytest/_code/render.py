@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from rich.console import Console
     from rich.console import ConsoleOptions
     from rich.console import RenderResult
+    from rich.traceback import Traceback as RichTraceback
 
 
 _ALL_HIDDEN_MSG = (
@@ -543,9 +544,19 @@ class PytestTraceback:
         assert top_tb is not None
         return top_tb, top_crash
 
+    def _rich_traceback(self, width: int) -> RichTraceback:
+        from _pytest._code._rich import RecordedTraceback
+
+        return RecordedTraceback(
+            self.record,
+            show_hidden=self.show_hidden,
+            chain=self.chain,
+            show_locals=self.showlocals,
+            width=width,
+        )
+
     def _render_rich_to_lines(self, width: int = 100) -> list[str]:
         from rich.console import Console
-        from rich.traceback import Traceback as RichTraceback
 
         buf = StringIO()
         console = Console(
@@ -554,11 +565,7 @@ class PytestTraceback:
             force_terminal=False,
             color_system=None,
         )
-        tb = RichTraceback(
-            trace=self.record.to_rich_trace(show_hidden=self.show_hidden),
-            show_locals=self.showlocals,
-            width=width,
-        )
+        tb = self._rich_traceback(width)
         console.print(tb)
         return buf.getvalue().splitlines(keepends=True)
 
@@ -624,7 +631,6 @@ class PytestTraceback:
     def toterminal(self, tw: TerminalWriter) -> None:
         if self.style == "rich":
             from rich.console import Console
-            from rich.traceback import Traceback as RichTraceback
 
             visible_frames = (
                 list(self.record.frames)
@@ -639,11 +645,7 @@ class PytestTraceback:
                 no_color=not tw.hasmarkup,
                 color_system="standard" if tw.hasmarkup else None,
             )
-            tb = RichTraceback(
-                trace=self.record.to_rich_trace(show_hidden=self.show_hidden),
-                show_locals=self.showlocals,
-                width=tw.fullwidth,
-            )
+            tb = self._rich_traceback(tw.fullwidth)
             console.print(tb)
             tw.write_raw(buf.getvalue())
             if self.record.frames and not visible_frames:
@@ -769,7 +771,6 @@ class PytestTraceback:
         self, console: Console, options: ConsoleOptions
     ) -> RenderResult:
         from rich.text import Text
-        from rich.traceback import Traceback as RichTraceback
 
         width = options.max_width or 80
 
@@ -779,11 +780,7 @@ class PytestTraceback:
                 if self.show_hidden
                 else [f for f in self.record.frames if not f.hidden]
             )
-            yield RichTraceback(
-                trace=self.record.to_rich_trace(show_hidden=self.show_hidden),
-                show_locals=self.showlocals,
-                width=width,
-            )
+            yield self._rich_traceback(width)
             if self.record.frames and not visible_frames:
                 yield Text(_ALL_HIDDEN_MSG)
             for name, content, sep in self._all_sections():

@@ -715,7 +715,7 @@ class ExceptionInfo(Generic[E]):
             if not entry.ishidden(self):
                 path, lineno = entry.frame.code.raw.co_filename, entry.lineno
                 exconly = self.exconly(tryshort=True)
-                return ReprFileLocation(path, lineno + 1, exconly)
+                return ReprFileLocation(path, lineno + 1, exconly, _ispytest=True)
         return None
 
     def getrepr(
@@ -901,7 +901,7 @@ class ExceptionInfo(Generic[E]):
     ) -> ExceptionRecord:
         """Capture a plain-data :class:`ExceptionRecord` snapshot of this exception."""
         astcache: dict[str | Path, ast.AST] = {}
-        seen: set[int] = set()
+        ancestors: frozenset[int] = frozenset()
         return _record_exception(
             self.value,
             excinfo=self,
@@ -912,7 +912,7 @@ class ExceptionInfo(Generic[E]):
             tbfilter=tbfilter,
             chain=chain,
             astcache=astcache,
-            seen=seen,
+            ancestors=ancestors,
         )
 
 
@@ -1069,9 +1069,10 @@ def _record_exception(
     tbfilter: TracebackFilter,
     chain: bool,
     astcache: dict[str | Path, ast.AST],
-    seen: set[int],
+    ancestors: frozenset[int],
 ) -> ExceptionRecord:
-    seen.add(id(exc))
+    # Each branch has its own ancestry: repeated siblings are not cycles.
+    ancestors = ancestors | {id(exc)}
     if excinfo is None and exc.__traceback__ is not None:
         excinfo = ExceptionInfo.from_exception(exc)
 
@@ -1148,7 +1149,7 @@ def _record_exception(
     if isinstance(exc, BaseExceptionGroup):
         child_records: list[ExceptionRecord] = []
         for sub_exc in exc.exceptions:
-            if id(sub_exc) in seen:
+            if id(sub_exc) in ancestors:
                 continue
             child_records.append(
                 _record_exception(
@@ -1161,7 +1162,7 @@ def _record_exception(
                     tbfilter=tbfilter,
                     chain=chain,
                     astcache=astcache,
-                    seen=seen,
+                    ancestors=ancestors,
                 )
             )
         children = tuple(child_records)
@@ -1171,7 +1172,7 @@ def _record_exception(
     suppress_context = bool(getattr(exc, "__suppress_context__", False))
     if chain:
         raw_cause = exc.__cause__
-        if raw_cause is not None and id(raw_cause) not in seen:
+        if raw_cause is not None and id(raw_cause) not in ancestors:
             cause_record = _record_exception(
                 raw_cause,
                 excinfo=None,
@@ -1182,14 +1183,14 @@ def _record_exception(
                 tbfilter=tbfilter,
                 chain=chain,
                 astcache=astcache,
-                seen=seen,
+                ancestors=ancestors,
             )
         raw_context = exc.__context__
         if (
             raw_context is not None
             and not suppress_context
             and raw_context is not raw_cause
-            and id(raw_context) not in seen
+            and id(raw_context) not in ancestors
         ):
             context_record = _record_exception(
                 raw_context,
@@ -1201,7 +1202,7 @@ def _record_exception(
                 tbfilter=tbfilter,
                 chain=chain,
                 astcache=astcache,
-                seen=seen,
+                ancestors=ancestors,
             )
 
     return ExceptionRecord(
@@ -1284,7 +1285,7 @@ class ExceptionInfoFormatter:
                 else:
                     str_repr = saferepr(argvalue, maxsize=None)
                 args.append((argname, str_repr))
-            return ReprFuncArgs(args)
+            return ReprFuncArgs(args, _ispytest=True)
         return None
 
     def get_source(
@@ -1419,7 +1420,7 @@ class ExceptionInfoFormatter:
                     #    self._line("%-10s =\\" % (name,))
                     #    # XXX
                     #    pprint.pprint(value, stream=self.excinfowriter)
-            return ReprLocals(lines)
+            return ReprLocals(lines, _ispytest=True)
         return None
 
     def repr_traceback_entry(
@@ -1462,13 +1463,17 @@ class ExceptionInfoFormatter:
                 message = (excinfo and excinfo.typename) or ""
             entry_path = entry.path
             path = self._makepath(entry_path)
-            reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
+            reprfileloc = ReprFileLocation(
+                path, entry.lineno + 1, message, _ispytest=True
+            )
             localsrepr = self.repr_locals(entry.locals)
-            return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
+            return ReprEntry(
+                lines, reprargs, localsrepr, reprfileloc, style, _ispytest=True
+            )
         elif style == "value":
             if excinfo:
                 lines.extend(str(excinfo.value).split("\n"))
-            return ReprEntry(lines, None, None, None, style)
+            return ReprEntry(lines, None, None, None, style, _ispytest=True)
         else:
             if excinfo:
                 lines.extend(self.get_exconly(excinfo, indent=4))
@@ -1476,8 +1481,10 @@ class ExceptionInfoFormatter:
             if entry is not None:
                 message = (excinfo and excinfo.typename) or ""
                 path = self._makepath(entry.path)
-                reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
-            return ReprEntry(lines, None, None, reprfileloc, style)
+                reprfileloc = ReprFileLocation(
+                    path, entry.lineno + 1, message, _ispytest=True
+                )
+            return ReprEntry(lines, None, None, reprfileloc, style, _ispytest=True)
 
     def _makepath(self, path: Path | str) -> str:
         if not self.abspath and isinstance(path, Path):
@@ -1501,18 +1508,18 @@ class ExceptionInfoFormatter:
             if extraline is None:
                 extraline = "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames."
             entries = [self.repr_traceback_entry(None, excinfo)]
-            return ReprTraceback(entries, extraline, style=self.style)
+            return ReprTraceback(entries, extraline, style=self.style, _ispytest=True)
 
         last = traceback[-1]
         if self.style == "value":
             entries = [self.repr_traceback_entry(last, excinfo)]
-            return ReprTraceback(entries, None, style=self.style)
+            return ReprTraceback(entries, None, style=self.style, _ispytest=True)
 
         entries = [
             self.repr_traceback_entry(entry, excinfo if last == entry else None)
             for entry in traceback
         ]
-        return ReprTraceback(entries, extraline, style=self.style)
+        return ReprTraceback(entries, extraline, style=self.style, _ispytest=True)
 
     def _truncate_recursive_traceback(
         self, traceback: Traceback

@@ -653,18 +653,22 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
     This was originally the serialize_report() function from xdist (ca03269).
     """
 
+    def repr_dict_factory(items: list[tuple[str, Any]]) -> dict[str, Any]:
+        # Internal constructor flags are not part of the wire format.
+        return {key: value for key, value in items if key != "_ispytest"}
+
     def serialize_repr_entry(
         entry: ReprEntry | ReprEntryNative,
     ) -> dict[str, Any]:
-        data = dataclasses.asdict(entry)
+        data = dataclasses.asdict(entry, dict_factory=repr_dict_factory)
         for key, value in data.items():
             if hasattr(value, "__dict__"):
-                data[key] = dataclasses.asdict(value)
+                data[key] = dataclasses.asdict(value, dict_factory=repr_dict_factory)
         entry_data = {"type": type(entry).__name__, "data": data}
         return entry_data
 
     def serialize_repr_traceback(reprtraceback: ReprTraceback) -> dict[str, Any]:
-        result = dataclasses.asdict(reprtraceback)
+        result = dataclasses.asdict(reprtraceback, dict_factory=repr_dict_factory)
         result["reprentries"] = [
             serialize_repr_entry(x) for x in reprtraceback.reprentries
         ]
@@ -674,7 +678,7 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
         reprcrash: ReprFileLocation | None,
     ) -> dict[str, Any] | None:
         if reprcrash is not None:
-            return dataclasses.asdict(reprcrash)
+            return dataclasses.asdict(reprcrash, dict_factory=repr_dict_factory)
         else:
             return None
 
@@ -752,9 +756,13 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
             reprfileloc = None
             reprlocals = None
             if data["reprfuncargs"]:
-                reprfuncargs = ReprFuncArgs(**data["reprfuncargs"], _ispytest=True)
+                reprfuncargs = ReprFuncArgs(
+                    **{**data["reprfuncargs"], "_ispytest": True}
+                )
             if data["reprfileloc"]:
-                reprfileloc = ReprFileLocation(**data["reprfileloc"], _ispytest=True)
+                reprfileloc = ReprFileLocation(
+                    **{**data["reprfileloc"], "_ispytest": True}
+                )
             if data["reprlocals"]:
                 reprlocals = ReprLocals(data["reprlocals"]["lines"], _ispytest=True)
 
@@ -776,11 +784,11 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
         repr_traceback_dict["reprentries"] = [
             deserialize_repr_entry(x) for x in repr_traceback_dict["reprentries"]
         ]
-        return ReprTraceback(**repr_traceback_dict, _ispytest=True)
+        return ReprTraceback(**{**repr_traceback_dict, "_ispytest": True})
 
     def deserialize_repr_crash(repr_crash_dict: dict[str, Any] | None):
         if repr_crash_dict is not None:
-            return ReprFileLocation(**repr_crash_dict, _ispytest=True)
+            return ReprFileLocation(**{**repr_crash_dict, "_ispytest": True})
         else:
             return None
 
