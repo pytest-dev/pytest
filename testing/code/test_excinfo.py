@@ -370,6 +370,24 @@ def test_excinfo_exconly_tryshort_assert() -> None:
     assert info.exconly(tryshort=True) == "AssertionError: assert 1 == 2"
 
 
+def test_excinfo_for_later_striptext_is_captured_in_record() -> None:
+    """The text to strip is part of the record, so an ExceptionInfo that was
+    created with ``for_later()`` behaves like any other one (#12175)."""
+    x = 1
+    with pytest.raises(AssertionError) as excinfo:
+        assert x == 2
+    record = excinfo.record()
+    assert record.striptext == "AssertionError: "
+    assert record.exconly(tryshort=True) == excinfo.exconly(tryshort=True)
+    assert record.exconly() == excinfo.exconly()
+
+    with pytest.raises(AssertionError) as excinfo:
+        raise AssertionError("message")
+    record = excinfo.record()
+    assert record.striptext == ""
+    assert record.exconly(tryshort=True) == "AssertionError: message"
+
+
 def test_excinfo_exconly():
     with pytest.raises(ValueError) as excinfo:
         h()

@@ -33,6 +33,7 @@ from typing import TypeVar
 import pluggy
 
 import _pytest
+from _pytest._code.matching import check_regex
 from _pytest._code.record import ExceptionRecord
 from _pytest._code.record import FrameRecord
 from _pytest._code.record import MAX_STATEMENT_LINE_CHARS
@@ -792,15 +793,9 @@ class ExceptionInfo(Generic[E]):
         If it matches `True` is returned, otherwise an `AssertionError` is raised.
         """
         __tracebackhide__ = True
-        value = stringify_exception(self.value)
-        msg = (
-            f"Regex pattern did not match.\n"
-            f"  Expected regex: {regexp!r}\n"
-            f"  Actual message: {value!r}"
-        )
-        if regexp == value:
-            msg += "\n Did you mean to `re.escape()` the regex?"
-        assert re.search(regexp, value), msg
+        failure = check_regex(regexp, stringify_exception(self.value))
+        if failure is not None:
+            raise AssertionError(failure.to_text())
         # Return True to allow for "assert excinfo.match()".
         return True
 
@@ -827,10 +822,11 @@ class ExceptionInfo(Generic[E]):
                 continue
             if not isinstance(exc, expected_exception):
                 continue
-            if match is not None:
-                value = stringify_exception(exc)
-                if not re.search(match, value):
-                    continue
+            if (
+                match is not None
+                and check_regex(match, stringify_exception(exc)) is not None
+            ):
+                continue
             return True
         return False
 
