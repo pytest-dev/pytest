@@ -1172,7 +1172,7 @@ raise ValueError()
     def test_syntax_error_collection(self, pytester: Pytester) -> None:
         pytester.makepyfile("def broken(:\n    pass\n")
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*.py:1:*: SyntaxError*"])
+        result.stdout.fnmatch_lines(["*.py:1:12: SyntaxError: invalid syntax"])
 
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(
