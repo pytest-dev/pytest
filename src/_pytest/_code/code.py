@@ -307,8 +307,7 @@ class TracebackEntry:
             key = astnode = None
             if astcache is not None:
                 key = self.frame.code.path
-                if key is not None:
-                    astnode = astcache.get(key, None)
+                astnode = astcache.get(key, None)
             try:
                 astnode, _, end = getstatementrange_ast(
                     self.lineno, source, astnode=astnode

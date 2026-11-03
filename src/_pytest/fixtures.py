@@ -1121,16 +1121,15 @@ class FixtureLookupErrorRepr(TerminalRepr):
         for tbline in self.tblines:
             yield Text(tbline.rstrip())
         lines = self.errorstring.split("\n")
-        if lines:
+        yield Text(
+            f"{ExceptionInfoFormatter.fail_marker}       {lines[0].strip()}",
+            style="red",
+        )
+        for line in lines[1:]:
             yield Text(
-                f"{ExceptionInfoFormatter.fail_marker}       {lines[0].strip()}",
+                f"{ExceptionInfoFormatter.flow_marker}       {line.strip()}",
                 style="red",
             )
-            for line in lines[1:]:
-                yield Text(
-                    f"{ExceptionInfoFormatter.flow_marker}       {line.strip()}",
-                    style="red",
-                )
         yield Text("")
         yield Text(f"{os.fspath(self.filename)}:{self.firstlineno + 1}")
         for name, content, sep in self.sections:

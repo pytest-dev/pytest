@@ -24,8 +24,8 @@ def _iter_all_modules(
     package, recursively.
 
         >>> import _pytest
-        >>> list(_iter_all_modules(_pytest))
-        ['_pytest._argcomplete', '_pytest._code.code', ...]
+        >>> "_pytest._code.code" in _iter_all_modules(_pytest)
+        True
     """
     import os
     import pkgutil

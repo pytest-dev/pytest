@@ -199,8 +199,7 @@ class SyntaxErrorDetails:
         lines = format_exception_only(SyntaxError, err)
         if lines and qualified_type_name != "SyntaxError":
             last = lines[-1]
-            if last.startswith("SyntaxError"):
-                lines[-1] = qualified_type_name + last.removeprefix("SyntaxError")
+            lines[-1] = qualified_type_name + last.removeprefix("SyntaxError")
         return "".join(lines).rstrip()
 
 
@@ -401,7 +400,10 @@ class ExceptionRecord:
 
     @property
     def reprtraceback(self) -> ReprTraceback:
-        """Compatibility property returning a rendered :class:`ReprTraceback` (deprecated)."""
+        """Compatibility property returning a rendered ``ReprTraceback`` (deprecated).
+
+        :rtype: ``ReprTraceback``
+        """
         from _pytest.deprecated import EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED
 
         warn(
@@ -419,7 +421,13 @@ class ExceptionRecord:
     def chain(
         self,
     ) -> Sequence[tuple[ReprTraceback, ReprFileLocation | None, str | None]]:
-        """Compatibility property returning the rendered exception chain (deprecated)."""
+        """Compatibility property returning the rendered exception chain (deprecated).
+
+        Each item contains a legacy ``ReprTraceback``, an optional
+        ``ReprFileLocation``, and an optional chain description.
+
+        :rtype: ~collections.abc.Sequence
+        """
         from _pytest.deprecated import EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED
 
         warn(
@@ -433,9 +441,8 @@ class ExceptionRecord:
         from _pytest._code.render import PytestTraceback
 
         repr_obj = PytestTraceback(self).to_repr()
-        if isinstance(repr_obj, ExceptionChainRepr):
-            return repr_obj.chain
-        return [(repr_obj.reprtraceback, repr_obj.reprcrash, None)]
+        assert isinstance(repr_obj, ExceptionChainRepr)
+        return repr_obj.chain
 
     def walk(self) -> Iterator[ExceptionRecord]:
         """Yield this record and all reachable cause, context, and child records in pre-order."""
@@ -536,7 +543,7 @@ class ExceptionRecord:
     def to_rich_trace(
         self, *, show_hidden: bool = False, chain: bool = True
     ) -> rich.traceback.Trace:
-        """Convert this record into a :class:`rich.traceback.Trace`."""
+        """Convert this record into a ``rich.traceback.Trace``."""
         from rich import pretty
         from rich.traceback import _SyntaxError
         from rich.traceback import Frame as RichFrame
@@ -627,7 +634,7 @@ class ExceptionRecord:
         return RichTrace(stacks=stacks)
 
     def toterminal(self, tw: TerminalWriter) -> None:
-        """Compatibility shim rendering this record to a :class:`TerminalWriter`."""
+        """Compatibility shim rendering this record to a ``TerminalWriter``."""
         from _pytest._code.render import PytestTraceback
 
         PytestTraceback(self).toterminal(tw)

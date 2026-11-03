@@ -13,12 +13,15 @@ from _pytest._code.matching import MatchFailure
 from _pytest._code.matching import Nested
 from _pytest._code.matching import NoException
 from _pytest._code.matching import NotAnExceptionGroup
+from _pytest._code.matching import PairedWith
 from _pytest._code.matching import PairingDetails
 from _pytest._code.matching import PartiallyMatched
 from _pytest._code.matching import RegexMismatch
 from _pytest._code.matching import TooFewExceptions
 from _pytest._code.matching import TypeMismatch
 from _pytest._code.matching import UnexpectedExceptions
+from _pytest._code.matching import UnmatchedActual
+from _pytest._code.matching import UnmatchedExpected
 import pytest
 from pytest import RaisesExc
 from pytest import RaisesGroup
@@ -280,3 +283,57 @@ class TestRichRendering:
         out = render_rich(failure)
         assert "RaisesExc(ValueError, match='foo')" in out
         assert "Regex pattern did not match." in out
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected"),
+    [
+        (NoException(), ["exception is None"]),
+        (
+            PartiallyMatched(0, TypeMismatch("KeyError", "ValueError")),
+            ["not an instance"],
+        ),
+        (
+            PartiallyMatched(2, TypeMismatch("KeyError", "ValueError")),
+            ["2 matched exceptions.", "not an instance"],
+        ),
+        (
+            FlattenHint(TypeMismatch("KeyError", "ValueError")),
+            ["not an instance", "flatten_subgroups=True"],
+        ),
+        (
+            PairingDetails(
+                1,
+                "too_few",
+                (
+                    UnmatchedExpected(
+                        "TypeError", (PairedWith("TypeError()", "Exception"),)
+                    ),
+                ),
+                (),
+                greedy_hint=True,
+            ),
+            [
+                "Too few exceptions raised!",
+                "Expected exceptions without a match",
+                "paired with",
+                "greedy algorithm",
+            ],
+        ),
+        (
+            PairingDetails(0, "unexpected", (), (UnmatchedActual("KeyError()"),)),
+            [
+                "Unexpected exception(s)!",
+                "Raised exceptions without a match",
+                "KeyError()",
+            ],
+        ),
+    ],
+)
+def test_structured_failure_rendering(
+    failure: MatchFailure, expected: list[str]
+) -> None:
+    assert str(failure) == failure.to_text()
+    rich_output = " ".join(render_rich(failure).split())
+    for text in expected:
+        assert text in rich_output

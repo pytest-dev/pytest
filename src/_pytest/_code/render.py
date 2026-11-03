@@ -335,9 +335,6 @@ class PytestTraceback:
             if frame is not None and frame.repr_style is not None
             else effective_style
         )
-        if style == "auto":
-            style = "long"
-
         if style in ("short", "long") and frame is not None:
             short = style == "short"
             reprargs: ReprFuncArgs | None = None
@@ -367,8 +364,8 @@ class PytestTraceback:
                 lines, reprargs, localsrepr, reprfileloc, style, _ispytest=True
             )
         elif style == "value":
-            if rec_if_last is not None:
-                lines.extend(rec_if_last.message.split("\n"))
+            assert rec_if_last is not None
+            lines.extend(rec_if_last.message.split("\n"))
             return ReprEntry(lines, None, None, None, style, _ispytest=True)
         else:
             if rec_if_last is not None:
@@ -570,7 +567,7 @@ class PytestTraceback:
         return buf.getvalue().splitlines(keepends=True)
 
     def to_repr(self) -> ReprExceptionInfo | ExceptionChainRepr:
-        """Build a legacy :class:`ReprExceptionInfo` or :class:`ExceptionChainRepr` from the record."""
+        """Build a legacy ``ReprExceptionInfo`` or ``ExceptionChainRepr`` from the record."""
         if self.style == "native":
             native_lines: list[str] = []
             for rec, desc in self._iter_chain_records():
@@ -750,8 +747,7 @@ class PytestTraceback:
                     linesofar = ns
                 else:
                     linesofar = f"{linesofar}, {ns}" if linesofar else ns
-            if linesofar:
-                yield Text(linesofar)
+            yield Text(linesofar)
             yield Text("")
 
         yield from render_entry_lines()
@@ -795,6 +791,9 @@ class PytestTraceback:
                 yield Text.assemble((crash.path, "bold red"), f":{crash.lineno}: {msg}")
             else:
                 yield Text(self.record.exconly(tryshort=True), style="bold red")
+            for name, content, sep in self._all_sections():
+                yield Text(f"{sep * 10} {name} {sep * 10}")
+                yield Text(content)
             return
 
         repr_obj = self.to_repr()

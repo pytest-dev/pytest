@@ -7,6 +7,7 @@ from pathlib import Path
 import pickle
 import sys
 from typing import Any
+from unittest.mock import Mock
 import warnings
 
 from _pytest._code import Code
@@ -513,7 +514,8 @@ class TestPytestTraceback:
         elif style == "line":
             assert f"{__file__}:" in rendered
             assert "AssertionError: expected zero" in rendered
-        elif style in ("long", "short", "auto", "native", "rich"):
+        else:
+            assert style in ("long", "short", "auto", "native", "rich")
             assert "AssertionError" in rendered
             assert "expected zero" in rendered
             assert "leaf" in rendered
@@ -602,12 +604,14 @@ class TestPytestTraceback:
         result.stdout.fnmatch_lines(
             [
                 "*Traceback (most recent call last)*",
-                "*in test_rich_failure*",
-                "*in helper*",
                 "*local_msg = 'bad 42'*",
                 "*ValueError: bad 42*",
             ]
         )
+        # Rich may wrap a function name onto the next line after a long path.
+        output = " ".join(result.stdout.str().replace("│", "").split())
+        assert "in test_rich_failure" in output
+        assert "in helper" in output
 
     @pytest.mark.parametrize("tbstyle", ("long", "short", "line", "no"))
     def test_tb_style_preserves_frame_locations_and_record_14720(
@@ -704,7 +708,8 @@ class TestPytestTraceback:
             if style in ("long", "auto"):
                 assert "a_arg = 10" in rendered
                 assert ">       assert a_local == 0" in rendered
-            elif style == "short":
+            else:
+                assert style == "short"
                 assert "in child_a" in rendered
                 assert "in child_b" in rendered
         elif style == "no":
@@ -726,7 +731,8 @@ class TestPytestTraceback:
         elif style == "native":
             assert "+ Exception Group Traceback (most recent call last):" in rendered
             assert "ValueError: from child_b" in rendered
-        elif style == "rich":
+        else:
+            assert style == "rich"
             assert "outer_group" in rendered
             assert "from child_b" in rendered
 
@@ -777,12 +783,13 @@ class TestRichSourceSnapshot:
             path.unlink()
         linecache.clearcache()
 
-        def no_live_source(*args: Any, **kwargs: Any) -> Any:
-            raise AssertionError("renderer must not read linecache")
+        read_source = Mock(
+            side_effect=AssertionError("renderer must not read linecache")
+        )
 
         renderer = PytestTraceback(record, style="rich")
         with monkeypatch.context() as patch:
-            patch.setattr(linecache, "getlines", no_live_source)
+            patch.setattr(linecache, "getlines", read_source)
             if entrypoint == "to_repr":
                 rendered = str(renderer.to_repr())
             elif entrypoint == "toterminal":
@@ -793,10 +800,12 @@ class TestRichSourceSnapshot:
                 output = io.StringIO()
                 Console(file=output, width=100).print(renderer)
                 rendered = output.getvalue()
+        read_source.assert_not_called()
         assert "ORIGINAL_SOURCE" in rendered
         assert "REPLACEMENT_SOURCE" not in rendered
         assert "ZeroDivisionError" in rendered
-        assert "snapshot.py" in rendered
+        # File names can wrap in the middle when temporary paths are long.
+        assert "snapshot.py" in "".join(rendered.replace("│", "").split())
 
     @pytest.mark.skipif(
         sys.version_info < (3, 11), reason="PEP 657 requires Python 3.11 or later"

@@ -661,9 +661,6 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
         entry: ReprEntry | ReprEntryNative,
     ) -> dict[str, Any]:
         data = dataclasses.asdict(entry, dict_factory=repr_dict_factory)
-        for key, value in data.items():
-            if hasattr(value, "__dict__"):
-                data[key] = dataclasses.asdict(value, dict_factory=repr_dict_factory)
         entry_data = {"type": type(entry).__name__, "data": data}
         return entry_data
 

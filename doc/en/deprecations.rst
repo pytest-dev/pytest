@@ -77,6 +77,16 @@ Migrate to the new data model and renderer architecture:
 * Use the :class:`pytest.FailureRecord` protocol when implementing custom failure representations.
 * Use :class:`pytest.PytestTraceback` for terminal and text rendering.
 
+.. py:class:: _pytest._code.code.ReprTraceback
+
+   Deprecated traceback representation returned by legacy compatibility APIs.
+   Use :class:`pytest.PytestTraceback` to render an exception record.
+
+.. py:class:: _pytest._code.code.ReprFileLocation
+
+   Deprecated file location returned by legacy compatibility APIs.
+   Use :class:`pytest.Location` for structured locations.
+
 
 .. _exceptionrecord-compat-properties:
 
