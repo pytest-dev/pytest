@@ -2780,6 +2780,8 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
             self.option = Namespace(verbose=0)
 
     class rep:
+        when = None
+
         def _get_verbose_word_with_markup(self, *args):
             return mocked_verbose_word, {}
 

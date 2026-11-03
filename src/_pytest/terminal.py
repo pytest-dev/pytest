@@ -1583,7 +1583,7 @@ def _get_line_with_reprcrash_message(
     word = tw.markup(verbose_word, **verbose_markup)
     node = _get_node_id_with_markup(tw, config, rep)
 
-    when = getattr(rep, "when", None)
+    when = rep.when
     if when in ("setup", "teardown"):
         line = f"{word} at {when} of {node}"
     else:
