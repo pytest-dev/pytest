@@ -36,6 +36,11 @@ from typing import TypeVar
 import pluggy
 
 import _pytest
+from _pytest._code.record import ExceptionRecord
+from _pytest._code.record import FrameRecord
+from _pytest._code.record import MAX_STATEMENT_LINE_CHARS
+from _pytest._code.record import MAX_STATEMENT_LINES
+from _pytest._code.record import SyntaxErrorDetails
 from _pytest._code.source import findsource
 from _pytest._code.source import getrawcode
 from _pytest._code.source import getstatementrange_ast
@@ -873,6 +878,333 @@ class ExceptionInfo(Generic[E]):
         msg = "`depth` must be >= 1 if specified"
         assert (depth is None) or (depth >= 1), msg
         return self._group_contains(self.value, expected_exception, match, depth)
+
+    def record(
+        self,
+        *,
+        showlocals: bool = False,
+        truncate_locals: bool = True,
+        funcargs: bool = False,
+        truncate_args: bool = True,
+        tbfilter: TracebackFilter = True,
+        chain: bool = True,
+    ) -> ExceptionRecord:
+        """Capture a plain-data :class:`ExceptionRecord` snapshot of this exception."""
+        astcache: dict[str | Path, ast.AST] = {}
+        seen: set[int] = set()
+        return _record_exception(
+            self.value,
+            excinfo=self,
+            showlocals=showlocals,
+            truncate_locals=truncate_locals,
+            funcargs=funcargs,
+            truncate_args=truncate_args,
+            tbfilter=tbfilter,
+            chain=chain,
+            astcache=astcache,
+            seen=seen,
+        )
+
+
+def _extract_exception_notes(exc: BaseException) -> tuple[str, ...]:
+    try:
+        raw_notes = getattr(exc, "__notes__", ())
+    except KeyError:
+        HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
+        if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
+            raw_notes = ()
+        else:  # pragma: no cover
+            raise
+    if not isinstance(raw_notes, Sequence) or isinstance(raw_notes, str | bytes):
+        return ()
+    result: list[str] = []
+    for note in raw_notes:
+        try:
+            result.append(str(note))
+        except Exception:
+            result.append(saferepr(note))
+    return tuple(result)
+
+
+def _record_frame(
+    entry: TracebackEntry,
+    *,
+    hidden: bool,
+    repr_style: Literal["short", "long"] | None,
+    showlocals: bool,
+    truncate_locals: bool,
+    funcargs: bool,
+    truncate_args: bool,
+    astcache: dict[str | Path, ast.AST],
+) -> FrameRecord:
+    entry_path = entry.path
+    if isinstance(entry_path, Path):
+        abs_str = str(entry_path)
+        abspath: str | None = abs_str
+        try:
+            rel = bestrelpath(Path.cwd(), entry_path)
+        except OSError:
+            path = abs_str
+        else:
+            path = rel if len(rel) < len(abs_str) else abs_str
+    else:
+        path = str(entry_path)
+        abspath = None
+
+    lineno = entry.lineno + 1
+    if sys.version_info >= (3, 11):
+        fs = entry.get_python_framesummary()
+        end_lineno = fs.end_lineno
+        colno = fs.colno
+        end_colno = fs.end_colno
+    else:
+        end_lineno = None
+        colno = None
+        end_colno = None
+
+    raw_code = entry.frame.code.raw
+    function = getattr(raw_code, "co_qualname", raw_code.co_name)
+
+    raw_module: object = None
+    try:
+        raw_module = entry.frame.f_globals.get("__name__")
+    except Exception:
+        pass
+    module = raw_module if isinstance(raw_module, str) else None
+
+    source = entry.getsource(astcache)
+    line_index = entry.relline
+    if source is None or line_index < 0 or line_index >= len(source.lines):
+        statement: tuple[str, ...] = ()
+        statement_lineno = lineno
+    else:
+        start_0 = entry.getfirstlinesource()
+        lines_list = source.lines
+        if len(lines_list) > MAX_STATEMENT_LINES:
+            window_start = max(0, line_index - (MAX_STATEMENT_LINES - 1))
+            window_end = min(len(lines_list), window_start + MAX_STATEMENT_LINES)
+            lines_list = lines_list[window_start:window_end]
+            statement_lineno = start_0 + window_start + 1
+        else:
+            statement_lineno = start_0 + 1
+        statement = tuple(
+            line[:MAX_STATEMENT_LINE_CHARS] + "..."
+            if len(line) > MAX_STATEMENT_LINE_CHARS
+            else line
+            for line in lines_list
+        )
+
+    locals_dict: dict[str, str] | None = None
+    if showlocals:
+        locals_dict = {}
+        try:
+            frame_locals = entry.locals
+            keys = [
+                loc
+                for loc in frame_locals
+                if isinstance(loc, str) and not loc.startswith("@")
+            ]
+            keys.sort()
+            for name in keys:
+                value = frame_locals[name]
+                if name == "__builtins__":
+                    locals_dict[name] = "<builtins>"
+                elif truncate_locals:
+                    locals_dict[name] = saferepr(value)
+                else:
+                    locals_dict[name] = safeformat(value)
+        except Exception:
+            pass
+
+    frame_args: tuple[tuple[str, str], ...] | None = None
+    if funcargs:
+        args_list: list[tuple[str, str]] = []
+        for argname, argvalue in entry.frame.getargs(var=True):
+            str_repr = (
+                saferepr(argvalue)
+                if truncate_args
+                else saferepr(argvalue, maxsize=None)
+            )
+            args_list.append((argname, str_repr))
+        frame_args = tuple(args_list)
+
+    return FrameRecord(
+        path=path,
+        abspath=abspath,
+        lineno=lineno,
+        end_lineno=end_lineno,
+        colno=colno,
+        end_colno=end_colno,
+        function=function,
+        module=module,
+        statement=statement,
+        statement_lineno=statement_lineno,
+        locals=locals_dict,
+        args=frame_args,
+        hidden=hidden,
+        repr_style=repr_style,
+    )
+
+
+def _record_exception(
+    exc: BaseException,
+    *,
+    excinfo: ExceptionInfo[BaseException] | None,
+    showlocals: bool,
+    truncate_locals: bool,
+    funcargs: bool,
+    truncate_args: bool,
+    tbfilter: TracebackFilter,
+    chain: bool,
+    astcache: dict[str | Path, ast.AST],
+    seen: set[int],
+) -> ExceptionRecord:
+    seen.add(id(exc))
+    if excinfo is None and exc.__traceback__ is not None:
+        excinfo = ExceptionInfo.from_exception(exc)
+
+    exc_type = type(exc)
+    type_name = getattr(exc_type, "__qualname__", exc_type.__name__)
+    type_module = getattr(exc_type, "__module__", None)
+    if not isinstance(type_module, str):
+        type_module = "<unknown>"
+
+    syntax_error: SyntaxErrorDetails | None = None
+    if isinstance(exc, SyntaxError):
+        syntax_error = SyntaxErrorDetails(
+            filename=exc.filename,
+            lineno=exc.lineno,
+            offset=exc.offset,
+            text=exc.text,
+            end_lineno=getattr(exc, "end_lineno", None),
+            end_offset=getattr(exc, "end_offset", None),
+            msg=str(exc.msg) if exc.msg is not None else "",
+        )
+        message = syntax_error.msg
+    elif isinstance(exc, BaseExceptionGroup):
+        n = len(exc.exceptions)
+        suffix = "sub-exception" if n == 1 else "sub-exceptions"
+        message = f"{exc.message} ({n} {suffix})"
+    else:
+        try:
+            message = str(exc)
+        except Exception:
+            message = f"<unprintable {exc_type.__name__} object>"
+
+    notes = _extract_exception_notes(exc)
+    striptext = excinfo._get_striptext() if excinfo is not None else ""
+
+    frames: tuple[FrameRecord, ...] = ()
+    recursion_index: int | None = None
+    if excinfo is not None:
+        full_tb = excinfo.traceback
+        if callable(tbfilter):
+            filtered_tb = tbfilter(excinfo)
+        else:
+            filtered_tb = full_tb.filter(excinfo)
+
+        kept_by_raw: dict[int, TracebackEntry] = {
+            id(e._rawentry): e for e in filtered_tb
+        }
+        frames = tuple(
+            _record_frame(
+                entry,
+                hidden=id(entry._rawentry) not in kept_by_raw,
+                repr_style=(
+                    kept_by_raw[id(entry._rawentry)]._repr_style
+                    if id(entry._rawentry) in kept_by_raw
+                    else entry._repr_style
+                ),
+                showlocals=showlocals,
+                truncate_locals=truncate_locals,
+                funcargs=funcargs,
+                truncate_args=truncate_args,
+                astcache=astcache,
+            )
+            for entry in full_tb
+        )
+        if isinstance(exc, RecursionError):
+            target_tb = filtered_tb if tbfilter is not False else full_tb
+            try:
+                recursion_index = target_tb.recursionindex()
+            except Exception:
+                recursion_index = None
+
+    children: tuple[ExceptionRecord, ...] = ()
+    if isinstance(exc, BaseExceptionGroup):
+        child_records: list[ExceptionRecord] = []
+        for sub_exc in exc.exceptions:
+            if id(sub_exc) in seen:
+                continue
+            child_records.append(
+                _record_exception(
+                    sub_exc,
+                    excinfo=None,
+                    showlocals=showlocals,
+                    truncate_locals=truncate_locals,
+                    funcargs=funcargs,
+                    truncate_args=truncate_args,
+                    tbfilter=tbfilter,
+                    chain=chain,
+                    astcache=astcache,
+                    seen=seen,
+                )
+            )
+        children = tuple(child_records)
+
+    cause_record: ExceptionRecord | None = None
+    context_record: ExceptionRecord | None = None
+    suppress_context = bool(getattr(exc, "__suppress_context__", False))
+    if chain:
+        raw_cause = exc.__cause__
+        if raw_cause is not None and id(raw_cause) not in seen:
+            cause_record = _record_exception(
+                raw_cause,
+                excinfo=None,
+                showlocals=showlocals,
+                truncate_locals=truncate_locals,
+                funcargs=funcargs,
+                truncate_args=truncate_args,
+                tbfilter=tbfilter,
+                chain=chain,
+                astcache=astcache,
+                seen=seen,
+            )
+        raw_context = exc.__context__
+        if (
+            raw_context is not None
+            and not suppress_context
+            and raw_context is not raw_cause
+            and id(raw_context) not in seen
+        ):
+            context_record = _record_exception(
+                raw_context,
+                excinfo=None,
+                showlocals=showlocals,
+                truncate_locals=truncate_locals,
+                funcargs=funcargs,
+                truncate_args=truncate_args,
+                tbfilter=tbfilter,
+                chain=chain,
+                astcache=astcache,
+                seen=seen,
+            )
+
+    return ExceptionRecord(
+        type_name=type_name,
+        type_module=type_module,
+        message=message,
+        notes=notes,
+        syntax_error=syntax_error,
+        frames=frames,
+        cause=cause_record,
+        context=context_record,
+        suppress_context=suppress_context,
+        children=children,
+        sections=(),
+        recursion_index=recursion_index,
+        striptext=striptext,
+    )
 
 
 # Type alias for the `tbfilter` setting:
