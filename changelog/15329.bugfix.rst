@@ -1,0 +1,1 @@
+Remaining finalizers now run when a finalizer raises a :class:`BaseExceptionGroup`, preventing function-scoped fixtures from retaining cached values across tests.

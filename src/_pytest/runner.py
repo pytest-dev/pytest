@@ -587,7 +587,7 @@ class SetupState:
                 fin = finalizers.pop()
                 try:
                     fin()
-                except TEST_OUTCOME as e:
+                except (OutcomeException, Exception, BaseExceptionGroup) as e:
                     these_exceptions.append(e)
 
             if len(these_exceptions) == 1:
