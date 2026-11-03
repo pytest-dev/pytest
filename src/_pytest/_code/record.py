@@ -14,10 +14,15 @@ from _pytest._io import TerminalWriter
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from rich.console import Console
     from rich.console import ConsoleOptions
     from rich.console import RenderResult
     import rich.traceback
+
+    from _pytest._code.code import ReprFileLocation
+    from _pytest._code.code import ReprTraceback
 
 
 RECORD_SCHEMA_VERSION: Final[int] = 1
@@ -115,7 +120,7 @@ class SyntaxErrorDetails:
     text: str | None
     end_lineno: int | None = None
     end_offset: int | None = None
-    msg: str = ""
+    msg: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -130,6 +135,7 @@ class SyntaxErrorDetails:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> SyntaxErrorDetails:
+        raw_msg = data.get("msg")
         return cls(
             filename=data.get("filename"),
             lineno=data.get("lineno"),
@@ -137,12 +143,14 @@ class SyntaxErrorDetails:
             text=data.get("text"),
             end_lineno=data.get("end_lineno"),
             end_offset=data.get("end_offset"),
-            msg=str(data.get("msg", "")),
+            msg=str(raw_msg) if raw_msg is not None else None,
         )
 
     def format_only(self, qualified_type_name: str) -> str:
         """Format this syntax error using stdlib ``format_exception_only`` rules."""
-        err = SyntaxError(self.msg)
+        err = SyntaxError()
+        if self.msg is not None:
+            err.msg = self.msg
         err.filename = self.filename
         err.lineno = self.lineno
         err.offset = self.offset
@@ -182,6 +190,26 @@ class FrameRecord:
     def short_function_name(self) -> str:
         """Function ``co_name`` (last component of ``function`` qualname)."""
         return self.function.rsplit(".", 1)[-1]
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.path,
+                self.abspath,
+                self.lineno,
+                self.end_lineno,
+                self.colno,
+                self.end_colno,
+                self.function,
+                self.module,
+                self.statement,
+                self.statement_lineno,
+                tuple(self.locals.items()) if self.locals is not None else None,
+                self.args,
+                self.hidden,
+                self.repr_style,
+            )
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -321,6 +349,31 @@ class ExceptionRecord:
                 )
         return None
 
+    @property
+    def reprcrash(self) -> Location | None:
+        """Compatibility alias for :attr:`crash`."""
+        return self.crash
+
+    @property
+    def reprtraceback(self) -> ReprTraceback:
+        """Compatibility property returning a rendered :class:`ReprTraceback`."""
+        from _pytest._code.render import PytestTraceback
+
+        return PytestTraceback(self).to_repr().reprtraceback
+
+    @property
+    def chain(
+        self,
+    ) -> Sequence[tuple[ReprTraceback, ReprFileLocation | None, str | None]]:
+        """Compatibility property returning the rendered exception chain."""
+        from _pytest._code.code import ExceptionChainRepr
+        from _pytest._code.render import PytestTraceback
+
+        repr_obj = PytestTraceback(self).to_repr()
+        if isinstance(repr_obj, ExceptionChainRepr):
+            return repr_obj.chain
+        return [(repr_obj.reprtraceback, repr_obj.reprcrash, None)]
+
     def walk(self) -> Iterator[ExceptionRecord]:
         """Yield this record and all reachable cause, context, and child records in pre-order."""
         yield self
@@ -437,7 +490,7 @@ class ExceptionRecord:
                     filename=cur.syntax_error.filename or "?",
                     lineno=cur.syntax_error.lineno or 0,
                     line=cur.syntax_error.text or "",
-                    msg=cur.syntax_error.msg,
+                    msg=cur.syntax_error.msg or "",
                     notes=list(cur.notes),
                 )
 

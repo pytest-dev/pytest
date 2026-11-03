@@ -359,6 +359,14 @@ class TestRecordCapture:
         unpickled = pickle.loads(pickle.dumps(record))
         assert unpickled == record
 
+        # Record is hashable (even with locals captured) for xdist dict keys
+        assert isinstance(hash(record), int)
+
+        # Compatibility properties on ExceptionRecord
+        assert record.reprcrash == record.crash
+        assert record.reprtraceback is not None
+        assert len(record.chain) >= 1
+
         # Unsupported schema version raises ValueError
         bad_payload = dict(payload, schema_version=999)
         with pytest.raises(ValueError, match="schema_version"):
@@ -532,3 +540,49 @@ class TestPytestTraceback:
                 "*ValueError: bad 42*",
             ]
         )
+
+    @pytest.mark.parametrize("tbstyle", ("long", "short", "line", "no"))
+    def test_tb_style_preserves_frame_locations_and_record_14720(
+        self, pytester: Pytester, tbstyle: str
+    ) -> None:
+        """Regression test for #14720: --tb=line and --tb=no must not lose frame locations or record data."""
+        pytester.makepyfile(
+            """
+            def inner():
+                raise ValueError("boom")
+
+            def middle():
+                inner()
+
+            def test_a():
+                middle()
+            """
+        )
+        reprec = pytester.inline_run(f"--tb={tbstyle}")
+        reports = [
+            r for r in reprec.getreports("pytest_runtest_logreport") if r.when == "call"
+        ]
+        assert len(reports) == 1
+        rep = reports[0]
+        assert rep.failed
+        longrepr = rep.longrepr
+        assert longrepr is not None
+
+        # 1. Existing plugins inspecting reprtraceback.reprentries[*].reprfileloc see all 3 located frames
+        rt = getattr(longrepr, "reprtraceback", None)
+        assert rt is not None
+        entries = rt.reprentries
+        assert len(entries) == 3
+        located = [e for e in entries if getattr(e, "reprfileloc", None) is not None]
+        assert len(located) == 3
+
+        # 2. The full ExceptionRecord is attached to longrepr regardless of --tb
+        record = getattr(longrepr, "record", None)
+        assert isinstance(record, ExceptionRecord)
+        visible_funcs = [f.short_function_name for f in record.frames if not f.hidden]
+        assert visible_funcs == ["test_a", "middle", "inner"]
+        assert all(f.statement for f in record.frames if not f.hidden)
+
+        # 3. Under --tb=line and --tb=no, str(longrepr) stays compact
+        if tbstyle in ("line", "no"):
+            assert str(longrepr) == "E   ValueError: boom"

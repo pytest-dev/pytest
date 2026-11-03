@@ -74,7 +74,7 @@ def _highlight_arrows_for_line(
         return []
 
     highlights = "    "
-    highlights += " " * (start_char_offset - num_stripped_chars + 1)
+    highlights += " " * (start_char_offset - num_stripped_chars)
     highlights += "^" * num_carets
     return [highlights]
 
@@ -138,7 +138,7 @@ def _format_native_record_lines(
                     _format_native_record_lines(
                         chain_rec,
                         show_hidden=show_hidden,
-                        indent_prefix=indent_prefix + "  |",
+                        indent_prefix=indent_prefix + "    |",
                     )
                 )
                 if chain_desc is not None:
@@ -148,7 +148,7 @@ def _format_native_record_lines(
         lines.append(f"{indent_prefix}    +------------------------------------\n")
         return lines
 
-    body_prefix = f"{indent_prefix}  " if indent_prefix else ""
+    body_prefix = f"{indent_prefix} " if indent_prefix else ""
     if visible_frames:
         lines.append(f"{body_prefix}Traceback (most recent call last):\n")
         for f in visible_frames:
@@ -368,7 +368,13 @@ class PytestTraceback:
         else:
             if rec_if_last is not None:
                 lines.extend(self._get_exconly_lines(rec_if_last, indent=4))
-            return ReprEntry(lines, None, None, None, style)
+            reprfileloc = None
+            if frame is not None:
+                message = rec_if_last.short_type_name if rec_if_last is not None else ""
+                reprfileloc = ReprFileLocation(
+                    self._makepath(frame), frame.lineno, message
+                )
+            return ReprEntry(lines, None, None, reprfileloc, style)
 
     def _truncate_recursive_frames(
         self,
@@ -488,6 +494,9 @@ class PytestTraceback:
             )
             for name, content, sep in self._all_sections():
                 res_native.addsection(name, content, sep)
+            res_native.record = dataclasses.replace(
+                self.record, sections=tuple(res_native.sections)
+            )
             return res_native
 
         if self.style == "rich":
@@ -506,6 +515,9 @@ class PytestTraceback:
             )
             for name, content, sep in self._all_sections():
                 res_rich.addsection(name, content, sep)
+            res_rich.record = dataclasses.replace(
+                self.record, sections=tuple(res_rich.sections)
+            )
             return res_rich
 
         repr_chain: list[tuple[ReprTraceback, ReprFileLocation | None, str | None]] = []
@@ -539,6 +551,9 @@ class PytestTraceback:
         chain_repr = ExceptionChainRepr(repr_chain)
         for name, content, sep in self._all_sections():
             chain_repr.addsection(name, content, sep)
+        chain_repr.record = dataclasses.replace(
+            self.record, sections=tuple(chain_repr.sections)
+        )
         return chain_repr
 
     def toterminal(self, tw: TerminalWriter) -> None:
@@ -654,7 +669,11 @@ class PytestTraceback:
                     yield Text("        " + lline)
             return
 
-        if entry.reprfuncargs is not None and entry.reprfuncargs.args:
+        if (
+            entry.style == "long"
+            and entry.reprfuncargs is not None
+            and entry.reprfuncargs.args
+        ):
             linesofar = ""
             for name, value in entry.reprfuncargs.args:
                 ns = f"{name} = {value}"
@@ -670,15 +689,16 @@ class PytestTraceback:
 
         yield from render_entry_lines()
 
-        if entry.reprlocals is not None:
-            yield Text("")
-            for lline in entry.reprlocals.lines:
-                yield Text(lline)
-
-        if entry.reprfileloc is not None:
-            if entry.lines:
+        if entry.style == "long":
+            if entry.reprlocals is not None:
                 yield Text("")
-            yield render_fileloc(entry.reprfileloc)
+                for lline in entry.reprlocals.lines:
+                    yield Text(lline)
+
+            if entry.reprfileloc is not None:
+                if entry.lines:
+                    yield Text("")
+                yield render_fileloc(entry.reprfileloc)
 
     def __rich_console__(
         self, console: Console, options: ConsoleOptions

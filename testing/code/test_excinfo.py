@@ -2024,7 +2024,7 @@ def _exceptiongroup_common(
     result = pytester.runpytest()
     match_lines = []
     if inner_chain in ("another", "from"):
-        match_lines.append(r"SyntaxError: <no detail available>")
+        match_lines.append(r"E\s+SyntaxError: <no detail available>")
 
     match_lines += [
         r"  + Exception Group Traceback (most recent call last):",

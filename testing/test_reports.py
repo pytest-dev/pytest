@@ -5,6 +5,7 @@ from collections.abc import Sequence
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
+from _pytest._code.record import ExceptionRecord
 from _pytest.approx import approx
 from _pytest.config import Config
 from _pytest.pytester import Pytester
@@ -423,6 +424,43 @@ class TestReportSerialization:
         assert loaded_report.longrepr is not None
         assert isinstance(loaded_report.longrepr, ExceptionChainRepr)
         loaded_report.longrepr.toterminal(tw_mock)
+
+    def test_exception_record_serialization_roundtrip(
+        self, pytester: Pytester, tw_mock
+    ) -> None:
+        """Reports preserve ExceptionRecord across JSON serialization both on ExceptionRepr and directly."""
+        pytester.makepyfile(
+            """
+            def helper(x):
+                raise ValueError(f"bad {x}")
+
+            def test_fail():
+                helper(7)
+            """
+        )
+        reprec = pytester.inline_run("--showlocals")
+        reports = reprec.getreports("pytest_runtest_logreport")
+        rep = reports[1]
+        assert rep.failed
+        assert isinstance(rep.longrepr, ExceptionRepr)
+        assert isinstance(rep.longrepr.record, ExceptionRecord)
+
+        # 1. Round-trip with ExceptionRepr carrying .record
+        data = rep._to_json()
+        assert "record" in data["longrepr"]
+        loaded = TestReport._from_json(data)
+        assert isinstance(loaded.longrepr, ExceptionRepr)
+        assert loaded.longrepr.record == rep.longrepr.record
+
+        # 2. Round-trip when report.longrepr is an ExceptionRecord directly
+        record_only = rep.longrepr.record
+        rep.longrepr = record_only
+        direct_data = rep._to_json()
+        assert direct_data["longrepr"] == record_only.to_dict()
+        loaded_direct = TestReport._from_json(direct_data)
+        assert isinstance(loaded_direct.longrepr, ExceptionRecord)
+        assert loaded_direct.longrepr == record_only
+        loaded_direct.toterminal(tw_mock)
 
     def test_report_prevent_ConftestImportFailure_hiding_exception(
         self, pytester: Pytester

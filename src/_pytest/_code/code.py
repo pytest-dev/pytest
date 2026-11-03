@@ -766,52 +766,27 @@ class ExceptionInfo(Generic[E]):
 
             Added the ``chain`` parameter.
         """
-        if style == "native":
-            return ReprExceptionInfo(
-                reprtraceback=ReprTracebackNative(
-                    format_exception(
-                        self.type,
-                        self.value,
-                        self.traceback[0]._rawentry if self.traceback else None,
-                    )
-                ),
-                reprcrash=self._getreprcrash(),
-            )
+        from _pytest._code.render import PytestTraceback
 
-        if style == "rich":
-            from _pytest._code.render import PytestTraceback
-
-            record = self.record(
-                showlocals=showlocals,
-                truncate_locals=truncate_locals,
-                funcargs=funcargs,
-                truncate_args=truncate_args,
-                tbfilter=tbfilter,
-                chain=chain,
-            )
-            return PytestTraceback(
-                record=record,
-                style="rich",
-                showlocals=showlocals,
-                abspath=abspath,
-                chain=chain,
-                truncate_locals=truncate_locals,
-                truncate_args=truncate_args,
-                funcargs=funcargs,
-                show_hidden=tbfilter is False,
-            ).to_repr()
-
-        fmt = ExceptionInfoFormatter(
+        record = self.record(
             showlocals=showlocals,
-            style=style,
-            abspath=abspath,
-            tbfilter=tbfilter,
-            funcargs=funcargs,
             truncate_locals=truncate_locals,
+            funcargs=funcargs,
             truncate_args=truncate_args,
+            tbfilter=tbfilter,
             chain=chain,
         )
-        return fmt.repr_excinfo(self)
+        return PytestTraceback(
+            record=record,
+            style=style,
+            showlocals=showlocals,
+            abspath=abspath,
+            chain=chain,
+            truncate_locals=truncate_locals,
+            truncate_args=truncate_args,
+            funcargs=funcargs,
+            show_hidden=tbfilter is False,
+        ).to_repr()
 
     def match(self, regexp: str | re.Pattern[str]) -> Literal[True]:
         """Check whether the regular expression `regexp` matches the string
@@ -1103,9 +1078,9 @@ def _record_exception(
             text=exc.text,
             end_lineno=getattr(exc, "end_lineno", None),
             end_offset=getattr(exc, "end_offset", None),
-            msg=str(exc.msg) if exc.msg is not None else "",
+            msg=str(exc.msg) if exc.msg is not None else None,
         )
-        message = syntax_error.msg
+        message = syntax_error.msg or ""
     elif isinstance(exc, BaseExceptionGroup):
         n = len(exc.exceptions)
         suffix = "sub-exception" if n == 1 else "sub-exceptions"
@@ -1485,7 +1460,12 @@ class ExceptionInfoFormatter:
         else:
             if excinfo:
                 lines.extend(self.get_exconly(excinfo, indent=4))
-            return ReprEntry(lines, None, None, None, style)
+            reprfileloc = None
+            if entry is not None:
+                message = (excinfo and excinfo.typename) or ""
+                path = self._makepath(entry.path)
+                reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
+            return ReprEntry(lines, None, None, reprfileloc, style)
 
     def _makepath(self, path: Path | str) -> str:
         if not self.abspath and isinstance(path, Path):
@@ -1665,6 +1645,9 @@ class ExceptionRepr(TerminalRepr):
     sections: list[tuple[str, str, str]] = dataclasses.field(
         init=False, default_factory=list
     )
+    record: ExceptionRecord | None = dataclasses.field(
+        init=False, default=None, repr=False
+    )
 
     def addsection(self, name: str, content: str, sep: str = "-") -> None:
         self.sections.append((name, content, sep))
@@ -1843,18 +1826,19 @@ class ReprEntry(TerminalRepr):
                 self.reprlocals.toterminal(tw, indent=" " * 8)
             return
 
-        if self.reprfuncargs:
+        if self.style == "long" and self.reprfuncargs:
             self.reprfuncargs.toterminal(tw)
 
         self._write_entry_lines(tw)
 
-        if self.reprlocals:
-            tw.line("")
-            self.reprlocals.toterminal(tw)
-        if self.reprfileloc:
-            if self.lines:
+        if self.style == "long":
+            if self.reprlocals:
                 tw.line("")
-            self.reprfileloc.toterminal(tw)
+                self.reprlocals.toterminal(tw)
+            if self.reprfileloc:
+                if self.lines:
+                    tw.line("")
+                self.reprfileloc.toterminal(tw)
 
     def __str__(self) -> str:
         return "{}\n{}\n{}".format(

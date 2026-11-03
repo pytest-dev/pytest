@@ -28,6 +28,7 @@ from _pytest._code.code import ReprFuncArgs
 from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
+from _pytest._code.record import ExceptionRecord
 from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.nodeid import coerce_node_id
@@ -64,7 +65,12 @@ class BaseReport:
     when: str | None
     location: tuple[str, int | None, str] | None
     longrepr: (
-        ExceptionInfo[BaseException] | tuple[str, int, str] | str | TerminalRepr | None
+        ExceptionInfo[BaseException]
+        | ExceptionRecord
+        | tuple[str, int, str]
+        | str
+        | TerminalRepr
+        | None
     )
     sections: list[tuple[str, str]]
     outcome: Literal["passed", "failed", "skipped"]
@@ -625,6 +631,10 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
                 )
         else:
             result["chain"] = None
+        if longrepr.record is not None:
+            result["record"] = dataclasses.replace(
+                longrepr.record, sections=tuple(longrepr.sections)
+            ).to_dict()
         return result
 
     d = report.__dict__.copy()
@@ -634,7 +644,9 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
         # key that xdist and other consumers expect, and never expose the
         # internal structured id object on the wire.
         d["nodeid"] = str(d.pop("_id"))
-    if hasattr(report.longrepr, "toterminal"):
+    if isinstance(report.longrepr, ExceptionRecord):
+        d["longrepr"] = report.longrepr.to_dict()
+    elif hasattr(report.longrepr, "toterminal"):
         if hasattr(report.longrepr, "reprtraceback") and hasattr(
             report.longrepr, "reprcrash"
         ):
@@ -698,7 +710,13 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
             return None
 
     if (
-        reportdict["longrepr"]
+        isinstance(reportdict["longrepr"], Mapping)
+        and "schema_version" in reportdict["longrepr"]
+        and "reprtraceback" not in reportdict["longrepr"]
+    ):
+        reportdict["longrepr"] = ExceptionRecord.from_dict(reportdict["longrepr"])
+    elif (
+        isinstance(reportdict["longrepr"], Mapping)
         and "reprcrash" in reportdict["longrepr"]
         and "reprtraceback" in reportdict["longrepr"]
     ):
@@ -729,6 +747,9 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
 
         for section in reportdict["longrepr"]["sections"]:
             exception_info.addsection(*section)
+        raw_record = reportdict["longrepr"].get("record")
+        if isinstance(raw_record, Mapping):
+            exception_info.record = ExceptionRecord.from_dict(raw_record)
         reportdict["longrepr"] = exception_info
 
     return reportdict
