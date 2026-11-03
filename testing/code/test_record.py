@@ -11,12 +11,16 @@ from _pytest._code import Code
 from _pytest._code import ExceptionInfo
 from _pytest._code import ExceptionRecord
 from _pytest._code import Location
+from _pytest._code import PytestTraceback
 from _pytest._code import RECORD_SCHEMA_VERSION
 from _pytest._code import Traceback
+from _pytest._code import TracebackStyle
 from _pytest._code.record import CAUSE_MESSAGE
 from _pytest._code.record import CONTEXT_MESSAGE
 from _pytest._code.record import MAX_STATEMENT_LINE_CHARS
 from _pytest._code.record import MAX_STATEMENT_LINES
+from _pytest._io import TerminalWriter
+from _pytest.pytester import Pytester
 import pytest
 
 
@@ -403,3 +407,128 @@ class TestRecordCapture:
         assert "RuntimeError: top failure" in output
         assert "top-only note" in output
         assert "local_var" in output
+
+
+class TestPytestTraceback:
+    @pytest.mark.parametrize(
+        "style",
+        ("long", "short", "auto", "line", "no", "value", "native", "rich"),
+    )
+    def test_styles_render_and_parity(self, style: TracebackStyle) -> None:
+        def leaf(x: int) -> None:
+            y = x + 10
+            assert y == 0, "expected zero"
+
+        def caller() -> None:
+            leaf(5)
+
+        with pytest.raises(AssertionError) as excinfo:
+            caller()
+
+        record = excinfo.record(showlocals=True, funcargs=True)
+        tb = PytestTraceback(record, style=style, showlocals=True)
+        rendered = str(tb)
+
+        if style == "no":
+            assert "AssertionError: expected zero" in rendered
+            assert "leaf" not in rendered
+        elif style == "value":
+            assert "expected zero" in rendered
+        elif style == "line":
+            assert f"{__file__}:" in rendered
+            assert "AssertionError: expected zero" in rendered
+        elif style in ("long", "short", "auto", "native", "rich"):
+            assert "AssertionError" in rendered
+            assert "expected zero" in rendered
+            assert "leaf" in rendered
+
+    def test_toterminal_long_matches_excinfo_getrepr(self, tw_mock: Any) -> None:
+        __tracebackhide__ = True
+
+        def g(x: int) -> None:
+            raise ValueError(x)
+
+        def f() -> None:
+            g(3)
+
+        with pytest.raises(ValueError) as excinfo:
+            f()
+
+        record = excinfo.record()
+        tb = PytestTraceback(record, style="long")
+        tb.toterminal(tw_mock)
+        assert any("def f()" in str(line) for line in tw_mock.lines)
+        assert any(">       g(3)" in str(line) for line in tw_mock.lines)
+        assert any("E       ValueError: 3" in str(line) for line in tw_mock.lines)
+
+    def test_record_toterminal_and_rich_console_protocol(self) -> None:
+        from rich.console import Console
+
+        def boom() -> None:
+            raise RuntimeError("protocol test")
+
+        with pytest.raises(RuntimeError) as excinfo:
+            boom()
+
+        record = excinfo.record()
+        assert "RuntimeError: protocol test" in str(record)
+
+        buf = io.StringIO()
+        tw = TerminalWriter(file=buf)
+        record.toterminal(tw)
+        assert "RuntimeError: protocol test" in buf.getvalue()
+
+        console_buf = io.StringIO()
+        console = Console(
+            file=console_buf, width=88, force_terminal=True, color_system="truecolor"
+        )
+        console.print(record)
+        assert "RuntimeError: protocol test" in console_buf.getvalue()
+
+    def test_to_repr_compat_shim(self) -> None:
+        def inner() -> None:
+            raise KeyError("k")
+
+        def outer() -> None:
+            try:
+                inner()
+            except KeyError as e:
+                raise ValueError("v") from e
+
+        with pytest.raises(ValueError) as excinfo:
+            outer()
+
+        record = excinfo.record(showlocals=True, funcargs=True)
+        tb = PytestTraceback(record, style="long", showlocals=True)
+        tb.addsection("Captured stdout", "hello world")
+        repr_obj = tb.to_repr()
+        assert repr_obj.reprcrash is not None
+        assert repr_obj.reprcrash.message == "ValueError: v"
+        assert ("Captured stdout", "hello world", "-") in repr_obj.sections
+        text = str(repr_obj)
+        assert "KeyError: 'k'" in text
+        assert "ValueError: v" in text
+        assert "The above exception was the direct cause" in text
+
+    def test_tb_rich_cli(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def helper(val):
+                local_msg = f"bad {val}"
+                raise ValueError(local_msg)
+
+            def test_rich_failure():
+                helper(42)
+            """
+        )
+        result = pytester.runpytest("--tb=rich", "-l")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(
+            [
+                "*Traceback (most recent call last)*",
+                "*in test_rich_failure*",
+                "*in helper*",
+                "*local_msg = 'bad 42'*",
+                "*ValueError: bad 42*",
+            ]
+        )

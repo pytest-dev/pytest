@@ -443,7 +443,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
 
         tbfilter: bool | Callable[[ExceptionInfo[BaseException]], Traceback]
         if self.config.getoption("fulltrace", False):
-            style = "long"
+            if style != "rich":
+                style = "long"
             tbfilter = False
         else:
             tbfilter = self._traceback_filter
@@ -451,8 +452,11 @@ class Node(abc.ABC, metaclass=NodeMeta):
                 style = "long"
         # XXX should excinfo.getrepr record all data and toterminal() process it?
         if style is None:
-            if self.config.getoption("tbstyle", "auto") == "short":
+            tbstyle_opt = self.config.getoption("tbstyle", "auto")
+            if tbstyle_opt == "short":
                 style = "short"
+            elif tbstyle_opt == "rich":
+                style = "rich"
             else:
                 style = "long"
 

@@ -234,8 +234,8 @@ def pytest_addoption(parser: Parser) -> None:
         action="store",
         dest="tbstyle",
         default="auto",
-        choices=["auto", "long", "short", "no", "line", "native"],
-        help="Traceback print mode (auto/long/short/line/native/no)",
+        choices=["auto", "long", "short", "no", "line", "native", "rich"],
+        help="Traceback print mode (auto/long/short/line/native/rich/no)",
     )
     group.addoption(
         "--xfail-tb",

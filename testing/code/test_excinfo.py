@@ -1358,7 +1358,16 @@ raise ValueError()
                 },
                 id=f"style={style},showlocals={showlocals},funcargs={funcargs},tbfilter={tbfilter}",
             )
-            for style in ["long", "short", "line", "no", "native", "value", "auto"]
+            for style in [
+                "long",
+                "short",
+                "line",
+                "no",
+                "native",
+                "value",
+                "auto",
+                "rich",
+            ]
             for showlocals in (True, False)
             for tbfilter in (True, False)
             for funcargs in (True, False)
@@ -2130,7 +2139,7 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
     )
 
 
-@pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
+@pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native", "rich"))
 @pytest.mark.parametrize("group", (True, False), ids=("group", "bare"))
 def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> None:
     """Regression test for #10903."""
@@ -2147,7 +2156,7 @@ def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> No
     result = pytester.runpytest("--tb", tbstyle)
     assert result.ret == 1
     if tbstyle != "line":
-        result.stdout.fnmatch_lines(["*ValueError: bar"])
+        result.stdout.fnmatch_lines(["*ValueError: bar*"])
     if tbstyle not in ("line", "native"):
         result.stdout.fnmatch_lines(["All traceback entries are hidden.*"])
 

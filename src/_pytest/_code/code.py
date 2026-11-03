@@ -57,7 +57,9 @@ from _pytest.pathlib import bestrelpath
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
-TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
+TracebackStyle = Literal[
+    "long", "short", "line", "no", "native", "value", "auto", "rich"
+]
 
 EXCEPTION_OR_MORE = type[BaseException] | tuple[type[BaseException], ...]
 
@@ -776,6 +778,29 @@ class ExceptionInfo(Generic[E]):
                 reprcrash=self._getreprcrash(),
             )
 
+        if style == "rich":
+            from _pytest._code.render import PytestTraceback
+
+            record = self.record(
+                showlocals=showlocals,
+                truncate_locals=truncate_locals,
+                funcargs=funcargs,
+                truncate_args=truncate_args,
+                tbfilter=tbfilter,
+                chain=chain,
+            )
+            return PytestTraceback(
+                record=record,
+                style="rich",
+                showlocals=showlocals,
+                abspath=abspath,
+                chain=chain,
+                truncate_locals=truncate_locals,
+                truncate_args=truncate_args,
+                funcargs=funcargs,
+                show_hidden=tbfilter is False,
+            ).to_repr()
+
         fmt = ExceptionInfoFormatter(
             showlocals=showlocals,
             style=style,
@@ -1096,6 +1121,7 @@ def _record_exception(
 
     frames: tuple[FrameRecord, ...] = ()
     recursion_index: int | None = None
+    recursion_error: str | None = None
     if excinfo is not None:
         full_tb = excinfo.traceback
         if callable(tbfilter):
@@ -1127,8 +1153,9 @@ def _record_exception(
             target_tb = filtered_tb if tbfilter is not False else full_tb
             try:
                 recursion_index = target_tb.recursionindex()
-            except Exception:
+            except Exception as e:
                 recursion_index = None
+                recursion_error = f"{type(e).__name__}: {e!s}"
 
     children: tuple[ExceptionRecord, ...] = ()
     if isinstance(exc, BaseExceptionGroup):
@@ -1203,6 +1230,7 @@ def _record_exception(
         children=children,
         sections=(),
         recursion_index=recursion_index,
+        recursion_error=recursion_error,
         striptext=striptext,
     )
 

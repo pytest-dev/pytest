@@ -14,6 +14,9 @@ from _pytest._io import TerminalWriter
 
 
 if TYPE_CHECKING:
+    from rich.console import Console
+    from rich.console import ConsoleOptions
+    from rich.console import RenderResult
     import rich.traceback
 
 
@@ -249,6 +252,7 @@ class ExceptionRecord:
     children: tuple[ExceptionRecord, ...] = ()
     sections: tuple[tuple[str, str, str], ...] = ()
     recursion_index: int | None = None
+    recursion_error: str | None = None
     striptext: str = ""
 
     @property
@@ -334,8 +338,6 @@ class ExceptionRecord:
         description: str | None = None
         while cur is not None:
             chain_items.append((cur, description))
-            if cur.children:
-                break
             if cur.cause is not None:
                 description = CAUSE_MESSAGE
                 cur = cur.cause
@@ -364,6 +366,7 @@ class ExceptionRecord:
             "children": [child.to_dict() for child in self.children],
             "sections": [list(sec) for sec in self.sections],
             "recursion_index": self.recursion_index,
+            "recursion_error": self.recursion_error,
             "striptext": self.striptext,
         }
 
@@ -377,6 +380,7 @@ class ExceptionRecord:
         raw_cause = data.get("cause")
         raw_context = data.get("context")
         raw_recursion = data.get("recursion_index")
+        raw_recursion_error = data.get("recursion_error")
 
         return cls(
             type_name=str(data["type_name"]),
@@ -407,6 +411,9 @@ class ExceptionRecord:
                 if len(s) == 3
             ),
             recursion_index=int(raw_recursion) if raw_recursion is not None else None,
+            recursion_error=str(raw_recursion_error)
+            if raw_recursion_error is not None
+            else None,
             striptext=str(data.get("striptext", "")),
         )
 
@@ -488,8 +495,6 @@ class ExceptionRecord:
             )
             stacks.append(stack)
 
-            if cur.children:
-                break
             if cur.cause is not None:
                 is_cause = True
                 cur = cur.cause
@@ -500,3 +505,21 @@ class ExceptionRecord:
                 cur = None
 
         return RichTrace(stacks=stacks)
+
+    def toterminal(self, tw: TerminalWriter) -> None:
+        """Compatibility shim rendering this record to a :class:`TerminalWriter`."""
+        from _pytest._code.render import PytestTraceback
+
+        PytestTraceback(self).toterminal(tw)
+
+    def __str__(self) -> str:
+        from _pytest._code.render import PytestTraceback
+
+        return str(PytestTraceback(self))
+
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
+        from _pytest._code.render import PytestTraceback
+
+        yield from PytestTraceback(self).__rich_console__(console, options)
