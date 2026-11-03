@@ -1,0 +1,1 @@
+A command line flag that a plugin registers as a shorthand for setting a configuration option now takes effect when the plugin is a third-party plugin or a ``conftest.py``. Previously only flags registered by pytest's own plugins were applied, and the others were silently ignored by :func:`config.getini <pytest.Config.getini>`.
