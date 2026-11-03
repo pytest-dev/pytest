@@ -81,7 +81,7 @@ class Location:
 
     def __getitem__(
         self, index: int | slice
-    ) -> str | int | None | tuple[str | int | None, ...]:
+    ) -> str | int | tuple[str | int | None, ...] | None:
         return (self.path, self.lineno, self.message)[index]
 
     def to_dict(self) -> dict[str, Any]:
