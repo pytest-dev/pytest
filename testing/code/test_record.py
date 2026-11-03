@@ -586,3 +586,81 @@ class TestPytestTraceback:
         # 3. Under --tb=line and --tb=no, str(longrepr) stays compact
         if tbstyle in ("line", "no"):
             assert str(longrepr) == "E   ValueError: boom"
+
+    @pytest.mark.parametrize(
+        "style",
+        ("long", "short", "auto", "no", "value", "line", "native", "rich"),
+    )
+    def test_exception_group_pytest_styles(self, style: TracebackStyle) -> None:
+        from rich.console import Console
+
+        def child_a(a_arg: int) -> None:
+            a_local = a_arg + 1
+            assert a_local == 0
+
+        def child_b() -> None:
+            raise ValueError("from child_b")
+
+        def nested_group() -> None:
+            excs: list[Exception] = []
+            try:
+                child_a(10)
+            except AssertionError as e:
+                excs.append(e)
+            try:
+                child_b()
+            except ValueError as e:
+                excs.append(ExceptionGroup("inner_group", [e]))
+            raise ExceptionGroup("outer_group", excs)
+
+        with pytest.raises(ExceptionGroup) as excinfo:
+            nested_group()
+
+        record = excinfo.record(showlocals=True, funcargs=True)
+        tb = PytestTraceback(
+            record,
+            style=style,
+            showlocals=True,
+            funcargs=True,
+        )
+        rendered = str(tb)
+
+        if style in ("long", "short", "auto"):
+            assert "ExceptionGroup: outer_group (2 sub-exceptions)" in rendered
+            assert "ExceptionGroup: inner_group (1 sub-exception)" in rendered
+            assert "assert 11 == 0" in rendered
+            assert "ValueError: from child_b" in rendered
+            assert "+-+---------------- 1 ----------------" in rendered
+            assert "  +---------------- 2 ----------------" in rendered
+            assert "a_local" in rendered
+            if style in ("long", "auto"):
+                assert "a_arg = 10" in rendered
+                assert ">       assert a_local == 0" in rendered
+            elif style == "short":
+                assert "in child_a" in rendered
+                assert "in child_b" in rendered
+        elif style == "no":
+            assert "E   ExceptionGroup: outer_group (2 sub-exceptions)" in rendered
+            assert "E   assert 11 == 0" in rendered
+            assert "E   ValueError: from child_b" in rendered
+            assert "in child_a" not in rendered
+        elif style == "value":
+            assert "outer_group (2 sub-exceptions)" in rendered
+            assert "from child_b" in rendered
+        elif style == "line":
+            assert "ExceptionGroup: outer_group (2 sub-exceptions)" in rendered
+            assert "\n" not in rendered
+        elif style == "native":
+            assert "+ Exception Group Traceback (most recent call last):" in rendered
+            assert "ValueError: from child_b" in rendered
+        elif style == "rich":
+            assert "outer_group" in rendered
+            assert "from child_b" in rendered
+
+        # Also verify Rich Console rendering for all styles
+        console_buf = io.StringIO()
+        console = Console(
+            file=console_buf, width=100, force_terminal=False, color_system=None
+        )
+        console.print(tb)
+        assert "outer_group" in console_buf.getvalue()

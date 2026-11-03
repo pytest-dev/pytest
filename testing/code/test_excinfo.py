@@ -2027,12 +2027,16 @@ def _exceptiongroup_common(
         match_lines.append(r"E\s+SyntaxError: <no detail available>")
 
     match_lines += [
-        r"  + Exception Group Traceback (most recent call last):",
-        rf"  \| {pre_catch}BaseExceptionGroup: Oops \(2 sub-exceptions\)",
-        r"    \| ValueError: From f\(\)",
-        r"    \| BaseException: From g\(\)",
-        r"=* short test summary info =*",
+        rf"E\s+{pre_catch}BaseExceptionGroup: Oops \(2 sub-exceptions\)",
+        r"  \+\-\+\-+ 1 \-+.*",
+        r"E\s+ValueError: From f\(\)",
+        r"    \+\-+ 2 \-+.*",
+        r"E\s+BaseException: From g\(\)",
+        r"    \+\-+",
     ]
+    if outer_chain in ("another", "from"):
+        match_lines.append(r"E\s+IndexError")
+    match_lines.append(r"=* short test summary info =*")
     if outer_chain in ("another", "from"):
         match_lines.append(r"FAILED test_excgroup.py::test - IndexError")
     else:
@@ -2043,6 +2047,8 @@ def _exceptiongroup_common(
     # Check for traceback filtering of pytest internals.
     result.stdout.no_fnmatch_line("*, line *, in pytest_pyfunc_call")
     result.stdout.no_fnmatch_line("*, line *, in pytest_runtest_call")
+    result.stdout.no_fnmatch_line("*in pytest_pyfunc_call*")
+    result.stdout.no_fnmatch_line("*in pytest_runtest_call*")
 
 
 @pytest.mark.skipif(

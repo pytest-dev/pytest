@@ -839,6 +839,8 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
             exception_info: ExceptionChainRepr | ReprExceptionInfo = ExceptionChainRepr(
                 chain
             )
+            exception_info.reprtraceback = reprtraceback
+            exception_info.reprcrash = reprcrash
         else:
             exception_info = ReprExceptionInfo(
                 reprtraceback=reprtraceback,

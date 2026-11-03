@@ -1214,11 +1214,11 @@ class TestRequestBasic:
         result.assert_outcomes(passed=2, errors=1)
         result.stdout.fnmatch_lines(
             [
-                '  | *ExceptionGroup: errors while tearing down fixture "subrequest" of <Function test_first> (2 sub-exceptions)',  # noqa: E501
+                'E   *ExceptionGroup: errors while tearing down fixture "subrequest" of <Function test_first> (2 sub-exceptions)',  # noqa: E501
                 "  +-+---------------- 1 ----------------",
-                "    | Exception: Error in something fixture",
+                "E   *Exception: Error in something fixture",
                 "    +---------------- 2 ----------------",
-                "    | Exception: Error in excepts fixture",
+                "E   *Exception: Error in excepts fixture",
                 "    +------------------------------------",
             ],
         )

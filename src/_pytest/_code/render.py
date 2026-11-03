@@ -127,7 +127,7 @@ def _format_native_record_lines(
             lines.append(f"{indent_prefix}  | {exline}\n")
 
         for idx, child in enumerate(rec.children, 1):
-            header = f"{idx:^18}" if idx >= 10 else f" {idx} ".center(36, "-")
+            header = f" {idx} ".center(35, "-")
             if idx == 1:
                 lines.append(f"{indent_prefix}  +-+{header}\n")
             else:
@@ -239,7 +239,7 @@ class PytestTraceback:
     ) -> list[str]:
         lines: list[str] = []
         indentstr = " " * indent
-        exlines = rec.exconly(tryshort=True).split("\n")
+        exlines = rec.exconly(tryshort=not bool(rec.children)).split("\n")
         failindent = self.fail_marker + indentstr[1:]
         for line in exlines:
             lines.append(failindent + line)
@@ -405,7 +405,12 @@ class PytestTraceback:
             extraline = None
         return frames, extraline
 
-    def _repr_traceback_for_record(self, rec: ExceptionRecord) -> ReprTraceback:
+    def _repr_traceback_for_record(
+        self,
+        rec: ExceptionRecord,
+        *,
+        show_all_hidden_msg: bool = True,
+    ) -> ReprTraceback:
         visible_frames = (
             list(rec.frames)
             if self.show_hidden
@@ -424,7 +429,7 @@ class PytestTraceback:
         )
 
         if not visible_frames:
-            if extraline is None:
+            if extraline is None and show_all_hidden_msg:
                 extraline = _ALL_HIDDEN_MSG
             entries = [self._repr_frame_entry(None, rec, effective_tb_style)]
             return ReprTraceback(entries, extraline, style=effective_tb_style)
@@ -454,10 +459,79 @@ class PytestTraceback:
             )
         return ReprTraceback(entries, extraline, style=effective_tb_style)
 
-    def _iter_chain_records(self) -> list[tuple[ExceptionRecord, str | None]]:
+    def _iter_chain_records(
+        self, root: ExceptionRecord | None = None
+    ) -> list[tuple[ExceptionRecord, str | None]]:
+        target = self.record if root is None else root
         if not self.chain:
-            return [(self.record, None)]
-        return list(self.record.iter_chain())
+            return [(target, None)]
+        return list(target.iter_chain())
+
+    @staticmethod
+    def _append_chain_description(
+        repr_chain: list[tuple[ReprTraceback, ReprFileLocation | None, str | None]],
+        desc: str,
+    ) -> None:
+        tb, crash, existing = repr_chain[-1]
+        if existing is None:
+            repr_chain[-1] = (tb, crash, desc)
+        else:
+            repr_chain[-1] = (tb, crash, f"{existing}\n\n{desc}")
+
+    def _append_record_chain(
+        self,
+        root: ExceptionRecord,
+        repr_chain: list[tuple[ReprTraceback, ReprFileLocation | None, str | None]],
+        *,
+        depth: int = 0,
+    ) -> tuple[ReprTraceback, ReprFileLocation | None]:
+        top_tb: ReprTraceback | None = None
+        top_crash: ReprFileLocation | None = None
+        for rec, description in self._iter_chain_records(root):
+            if (
+                depth == 0
+                and not rec.frames
+                and rec is not self.record
+                and not rec.children
+            ):
+                no_tb_lines = [
+                    f"{line}\n" for line in rec.exconly(tryshort=False).splitlines()
+                ]
+                reprtraceback: ReprTraceback = ReprTracebackNative(no_tb_lines)
+                reprcrash = None
+            else:
+                reprtraceback = self._repr_traceback_for_record(
+                    rec,
+                    show_all_hidden_msg=(depth == 0),
+                )
+                reprcrash = self._make_reprcrash(rec)
+
+            if rec is root:
+                top_tb = reprtraceback
+                top_crash = reprcrash
+
+            repr_chain.append((reprtraceback, reprcrash, None))
+
+            if rec.children:
+                group_depth = depth + 1
+                indent = "  " * group_depth
+                for idx, child in enumerate(rec.children, 1):
+                    header = f" {idx} ".center(35, "-")
+                    header_line = (
+                        f"{indent}+-+{header}" if idx == 1 else f"{indent}  +{header}"
+                    )
+                    self._append_chain_description(repr_chain, header_line)
+                    self._append_record_chain(child, repr_chain, depth=group_depth)
+                self._append_chain_description(
+                    repr_chain,
+                    f"{indent}  +------------------------------------",
+                )
+
+            if description is not None:
+                self._append_chain_description(repr_chain, description)
+
+        assert top_tb is not None
+        return top_tb, top_crash
 
     def _render_rich_to_lines(self, width: int = 100) -> list[str]:
         from rich.console import Console
@@ -521,34 +595,11 @@ class PytestTraceback:
             return res_rich
 
         repr_chain: list[tuple[ReprTraceback, ReprFileLocation | None, str | None]] = []
-        for rec, description in self._iter_chain_records():
-            if rec.children:
-                visible = (
-                    list(rec.frames)
-                    if self.show_hidden
-                    else [f for f in rec.frames if not f.hidden]
-                )
-                extraline = _ALL_HIDDEN_MSG if (rec.frames and not visible) else None
-                group_lines = _format_native_record_lines(
-                    rec, show_hidden=self.show_hidden
-                )
-                reprtraceback: ReprTraceback = ReprTracebackNative(
-                    group_lines, extraline=extraline
-                )
-                reprcrash = self._make_reprcrash(rec)
-            elif rec.frames or rec is self.record:
-                reprtraceback = self._repr_traceback_for_record(rec)
-                reprcrash = self._make_reprcrash(rec)
-            else:
-                no_tb_lines = [
-                    f"{line}\n" for line in rec.exconly(tryshort=False).splitlines()
-                ]
-                reprtraceback = ReprTracebackNative(no_tb_lines)
-                reprcrash = None
-
-            repr_chain.append((reprtraceback, reprcrash, description))
+        top_tb, top_crash = self._append_record_chain(self.record, repr_chain, depth=0)
 
         chain_repr = ExceptionChainRepr(repr_chain)
+        chain_repr.reprtraceback = top_tb
+        chain_repr.reprcrash = top_crash
         for name, content, sep in self._all_sections():
             chain_repr.addsection(name, content, sep)
         chain_repr.record = dataclasses.replace(

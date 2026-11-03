@@ -158,7 +158,7 @@ def test_threadexception_warning_multiple_errors(pytester: Pytester) -> None:
     assert result.ret == pytest.ExitCode.TESTS_FAILED
     result.assert_outcomes(passed=1, failed=1)
     result.stdout.fnmatch_lines(
-        ["  | *ExceptionGroup: multiple thread exception warnings (2 sub-exceptions)"]
+        ["E   *ExceptionGroup: multiple thread exception warnings (2 sub-exceptions)"]
     )
 
 
