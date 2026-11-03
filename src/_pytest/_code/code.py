@@ -1102,7 +1102,9 @@ def _record_exception(
         try:
             message = str(exc)
         except Exception:
-            message = f"<unprintable {exc_type.__name__} object>"
+            # Match stdlib traceback formatting, including exceptions whose
+            # arguments have a broken __repr__.
+            message = "<exception str() failed>"
 
     notes = _extract_exception_notes(exc)
     striptext = excinfo._get_striptext() if excinfo is not None else ""

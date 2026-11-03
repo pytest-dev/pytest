@@ -1,0 +1,6 @@
+Deprecated :meth:`pytest.ExceptionInfo.getrepr`, the legacy ``Repr*`` terminal
+representation classes, and the ``reprcrash``, ``reprtraceback``, and ``chain``
+compatibility properties on :class:`pytest.ExceptionRecord`.
+
+Use :meth:`pytest.ExceptionInfo.record` to capture exception data and
+:class:`pytest.PytestTraceback` to render it.

@@ -264,6 +264,24 @@ class TestRecordCapture:
             == "ValueError('only one') [single exception in ExceptionGroup]"
         )
 
+    @pytest.mark.parametrize("exception_type", [ValueError, AssertionError])
+    def test_unprintable_exception_message(
+        self, exception_type: type[Exception]
+    ) -> None:
+        class BrokenRepr:
+            def __repr__(self) -> str:
+                raise RuntimeError("broken repr")
+
+        with pytest.raises(exception_type) as excinfo:
+            raise exception_type(BrokenRepr())
+
+        record = excinfo.record()
+        assert record.message == "<exception str() failed>"
+        assert record.exconly() == excinfo.exconly()
+        restored = ExceptionRecord.from_dict(json.loads(json.dumps(record.to_dict())))
+        assert restored.exconly() == excinfo.exconly()
+        assert record.exconly() in str(PytestTraceback(restored))
+
     def test_repeated_group_members(self) -> None:
         error = ValueError("shared child")
         group = ExceptionGroup(
@@ -690,7 +708,12 @@ class TestPytestTraceback:
                 assert "in child_a" in rendered
                 assert "in child_b" in rendered
         elif style == "no":
-            assert "E   ExceptionGroup: outer_group (2 sub-exceptions)" in rendered
+            group_type_name = (
+                "exceptiongroup.ExceptionGroup"
+                if sys.version_info < (3, 11)
+                else "ExceptionGroup"
+            )
+            assert f"E   {group_type_name}: outer_group (2 sub-exceptions)" in rendered
             assert "E   assert 11 == 0" in rendered
             assert "E   ValueError: from child_b" in rendered
             assert "in child_a" not in rendered
@@ -775,6 +798,9 @@ class TestRichSourceSnapshot:
         assert "ZeroDivisionError" in rendered
         assert "snapshot.py" in rendered
 
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11), reason="PEP 657 requires Python 3.11 or later"
+    )
     def test_non_ascii_instruction_highlight(self, tmp_path: Path) -> None:
         from rich.console import Console
 

@@ -914,7 +914,7 @@ class TestInvocationVariants:
         expected_lines = [
             "*= FAILURES =*",
             "*_ ?doctest? test_doctest_id.txt _*",
-            "FAILED test_doctest_id.txt::test_doctest_id.txt",
+            "FAILED test_doctest_id.txt::test_doctest_id.txt - DocTestFailure",
             "*= 1 failed in*",
         ]
         result = pytester.runpytest(testid, "-rf", "--tb=short")

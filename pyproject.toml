@@ -53,6 +53,7 @@ dependencies = [
     "packaging>=24",
     "pluggy>=1.6,<2",
     "pygments>=2.15",
+    "rich>=15",
     "tomli>=2; python_version<'3.11'",
 ]
 # Kept as a published extra because many external repos still install

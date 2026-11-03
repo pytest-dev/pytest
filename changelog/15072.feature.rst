@@ -1,0 +1,8 @@
+Added :meth:`pytest.ExceptionInfo.record` and structured exception records with
+versioned serialization, captured source, exception chains, and exception-group
+children. Traceback records retain frame locations independently of the selected
+terminal traceback style.
+
+Added :class:`pytest.PytestTraceback` and ``--tb=rich`` for rendering captured
+records, including source positions and exception groups. Rich 15 or later is now
+a runtime dependency.
