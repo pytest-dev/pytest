@@ -1049,7 +1049,9 @@ class TerminalReporter:
                 self.summary_warnings()
 
     def pytest_keyboard_interrupt(self, excinfo: ExceptionInfo[BaseException]) -> None:
-        self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
+        self._keyboardinterrupt_memo = excinfo.getrepr(
+            funcargs=True, _warn_deprecated=False
+        )
 
     def pytest_unconfigure(self) -> None:
         if self._keyboardinterrupt_memo is not None:

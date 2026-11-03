@@ -752,11 +752,11 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
             reprfileloc = None
             reprlocals = None
             if data["reprfuncargs"]:
-                reprfuncargs = ReprFuncArgs(**data["reprfuncargs"])
+                reprfuncargs = ReprFuncArgs(**data["reprfuncargs"], _ispytest=True)
             if data["reprfileloc"]:
-                reprfileloc = ReprFileLocation(**data["reprfileloc"])
+                reprfileloc = ReprFileLocation(**data["reprfileloc"], _ispytest=True)
             if data["reprlocals"]:
-                reprlocals = ReprLocals(data["reprlocals"]["lines"])
+                reprlocals = ReprLocals(data["reprlocals"]["lines"], _ispytest=True)
 
             reprentry: ReprEntry | ReprEntryNative = ReprEntry(
                 lines=data["lines"],
@@ -764,9 +764,10 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
                 reprlocals=reprlocals,
                 reprfileloc=reprfileloc,
                 style=data["style"],
+                _ispytest=True,
             )
         elif entry_type == "ReprEntryNative":
-            reprentry = ReprEntryNative(data["lines"])
+            reprentry = ReprEntryNative(data["lines"], _ispytest=True)
         else:
             _report_unserialization_failure(entry_type, TestReport, reportdict)
         return reprentry
@@ -775,11 +776,11 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
         repr_traceback_dict["reprentries"] = [
             deserialize_repr_entry(x) for x in repr_traceback_dict["reprentries"]
         ]
-        return ReprTraceback(**repr_traceback_dict)
+        return ReprTraceback(**repr_traceback_dict, _ispytest=True)
 
     def deserialize_repr_crash(repr_crash_dict: dict[str, Any] | None):
         if repr_crash_dict is not None:
-            return ReprFileLocation(**repr_crash_dict)
+            return ReprFileLocation(**repr_crash_dict, _ispytest=True)
         else:
             return None
 
@@ -837,7 +838,7 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
                     )
                 )
             exception_info: ExceptionChainRepr | ReprExceptionInfo = ExceptionChainRepr(
-                chain
+                chain, _ispytest=True
             )
             exception_info.reprtraceback = reprtraceback
             exception_info.reprcrash = reprcrash
@@ -845,6 +846,7 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
             exception_info = ReprExceptionInfo(
                 reprtraceback=reprtraceback,
                 reprcrash=reprcrash,
+                _ispytest=True,
             )
 
         for section in reportdict["longrepr"]["sections"]:

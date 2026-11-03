@@ -11,6 +11,7 @@ from typing import overload
 from typing import Protocol
 from typing import runtime_checkable
 from typing import TYPE_CHECKING
+from warnings import warn
 
 from _pytest._io import TerminalWriter
 
@@ -387,12 +388,29 @@ class ExceptionRecord:
 
     @property
     def reprcrash(self) -> Location | None:
-        """Compatibility alias for :attr:`crash`."""
+        """Compatibility alias for :attr:`crash` (deprecated)."""
+        from _pytest.deprecated import EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED
+
+        warn(
+            EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED.format(
+                attr="reprcrash", alternative="Use ExceptionRecord.crash instead."
+            ),
+            stacklevel=2,
+        )
         return self.crash
 
     @property
     def reprtraceback(self) -> ReprTraceback:
-        """Compatibility property returning a rendered :class:`ReprTraceback`."""
+        """Compatibility property returning a rendered :class:`ReprTraceback` (deprecated)."""
+        from _pytest.deprecated import EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED
+
+        warn(
+            EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED.format(
+                attr="reprtraceback",
+                alternative="Use PytestTraceback(record).to_repr().reprtraceback or render the record directly.",
+            ),
+            stacklevel=2,
+        )
         from _pytest._code.render import PytestTraceback
 
         return PytestTraceback(self).to_repr().reprtraceback
@@ -401,7 +419,16 @@ class ExceptionRecord:
     def chain(
         self,
     ) -> Sequence[tuple[ReprTraceback, ReprFileLocation | None, str | None]]:
-        """Compatibility property returning the rendered exception chain."""
+        """Compatibility property returning the rendered exception chain (deprecated)."""
+        from _pytest.deprecated import EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED
+
+        warn(
+            EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED.format(
+                attr="chain",
+                alternative="Use ExceptionRecord.iter_chain() or PytestTraceback instead.",
+            ),
+            stacklevel=2,
+        )
         from _pytest._code.code import ExceptionChainRepr
         from _pytest._code.render import PytestTraceback
 

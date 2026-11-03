@@ -172,7 +172,7 @@ def _print_import_error(header: str, cause: BaseException, file: TextIO) -> None
     tw.line(header, red=True)
     exc_info.traceback = exc_info.traceback.filter(filter_traceback_for_import_failure)
     exc_repr = (
-        exc_info.getrepr(style="short", chain=False)
+        exc_info.getrepr(style="short", chain=False, _warn_deprecated=False)
         if exc_info.traceback
         else exc_info.exconly()
     )
@@ -1427,7 +1427,10 @@ class Config:
         else:
             style = "native"
         excrepr = excinfo.getrepr(
-            funcargs=True, showlocals=getattr(option, "showlocals", False), style=style
+            funcargs=True,
+            showlocals=getattr(option, "showlocals", False),
+            style=style,
+            _warn_deprecated=False,
         )
         res = self.hook.pytest_internalerror(excrepr=excrepr, excinfo=excinfo)
         if not any(res):
@@ -2427,7 +2430,7 @@ def parse_warning_filter(
         raise
     except Exception:
         exc_info = ExceptionInfo.from_current()
-        exception_text = exc_info.getrepr(style="native")
+        exception_text = exc_info.getrepr(style="native", _warn_deprecated=False)
         raise UsageError(error_template.format(error=exception_text)) from None
     if message and escape:
         message = re.escape(message)

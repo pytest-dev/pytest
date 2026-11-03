@@ -996,6 +996,48 @@ ExceptionInfo
     :members:
 
 
+ExceptionRecord
+~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.ExceptionRecord()
+    :members:
+
+
+FailureRecord
+~~~~~~~~~~~~~
+
+.. autoclass:: pytest.FailureRecord()
+    :members:
+
+
+FrameRecord
+~~~~~~~~~~~
+
+.. autoclass:: pytest.FrameRecord()
+    :members:
+
+
+Location
+~~~~~~~~
+
+.. autoclass:: pytest.Location()
+    :members:
+
+
+PytestTraceback
+~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.PytestTraceback()
+    :members:
+
+
+SyntaxErrorDetails
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.SyntaxErrorDetails()
+    :members:
+
+
 ExitCode
 ~~~~~~~~
 

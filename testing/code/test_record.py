@@ -6,6 +6,7 @@ from pathlib import Path
 import pickle
 import sys
 from typing import Any
+import warnings
 
 from _pytest._code import Code
 from _pytest._code import ExceptionInfo
@@ -363,9 +364,12 @@ class TestRecordCapture:
         assert isinstance(hash(record), int)
 
         # Compatibility properties on ExceptionRecord
-        assert record.reprcrash == record.crash
-        assert record.reprtraceback is not None
-        assert len(record.chain) >= 1
+        with pytest.deprecated_call(match="reprcrash is deprecated"):
+            assert record.reprcrash == record.crash
+        with pytest.deprecated_call(match="reprtraceback is deprecated"):
+            assert record.reprtraceback is not None
+        with pytest.deprecated_call(match="chain is deprecated"):
+            assert len(record.chain) >= 1
 
         # Unsupported schema version raises ValueError
         bad_payload = dict(payload, schema_version=999)
@@ -664,3 +668,176 @@ class TestPytestTraceback:
         )
         console.print(tb)
         assert "outer_group" in console_buf.getvalue()
+
+
+class TestPublicApiAndDeprecations:
+    def test_public_api_exports(self) -> None:
+        """Verify public API classes are exported in pytest namespace and __all__."""
+        expected_exports = [
+            "ExceptionRecord",
+            "FailureRecord",
+            "FrameRecord",
+            "Location",
+            "PytestTraceback",
+            "SyntaxErrorDetails",
+        ]
+        for name in expected_exports:
+            assert hasattr(pytest, name), f"pytest is missing {name}"
+            assert name in pytest.__all__, f"{name} is not in pytest.__all__"
+
+    def test_getrepr_deprecated(self) -> None:
+        """ExceptionInfo.getrepr() emits GETREPR_DEPRECATED warning unless _warn_deprecated=False."""
+        try:
+            raise ValueError("test getrepr deprecation")
+        except ValueError:
+            excinfo = ExceptionInfo.from_current()
+
+        with pytest.deprecated_call(
+            match=r"ExceptionInfo\.getrepr\(\) and its formatting parameters are deprecated"
+        ):
+            repr_obj = excinfo.getrepr()
+        assert repr_obj is not None
+
+        # When _warn_deprecated=False, no warning is emitted
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", pytest.PytestDeprecationWarning)
+            repr_obj2 = excinfo.getrepr(_warn_deprecated=False)
+            assert repr_obj2 is not None
+
+    def test_exception_record_compat_properties_deprecated(self) -> None:
+        """Compatibility properties on ExceptionRecord emit EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED."""
+        try:
+            raise ValueError("test record compat")
+        except ValueError:
+            excinfo = ExceptionInfo.from_current()
+
+        record = excinfo.record()
+
+        with pytest.deprecated_call(
+            match=r"ExceptionRecord\.reprcrash is deprecated and will be removed"
+        ):
+            crash = record.reprcrash
+            assert crash is not None
+
+        with pytest.deprecated_call(
+            match=r"ExceptionRecord\.reprtraceback is deprecated and will be removed"
+        ):
+            tb = record.reprtraceback
+            assert tb is not None
+
+        with pytest.deprecated_call(
+            match=r"ExceptionRecord\.chain is deprecated and will be removed"
+        ):
+            chain = record.chain
+            assert len(chain) >= 1
+
+    def test_repr_classes_deprecated(self) -> None:
+        """Direct instantiation of legacy Repr* classes emits REPR_CLASSES_DEPRECATED warning."""
+        from _pytest._code.code import ExceptionChainRepr
+        from _pytest._code.code import ExceptionRepr
+        from _pytest._code.code import ReprEntry
+        from _pytest._code.code import ReprEntryNative
+        from _pytest._code.code import ReprExceptionInfo
+        from _pytest._code.code import ReprFileLocation
+        from _pytest._code.code import ReprFuncArgs
+        from _pytest._code.code import ReprLocals
+        from _pytest._code.code import ReprTraceback
+        from _pytest._code.code import ReprTracebackNative
+        from _pytest._code.code import TerminalRepr
+
+        with pytest.deprecated_call(
+            match=r"TerminalRepr is deprecated and will be removed"
+        ):
+            TerminalRepr()
+
+        with pytest.deprecated_call(
+            match=r"ReprFileLocation is deprecated and will be removed"
+        ):
+            floc = ReprFileLocation("foo.py", 10, "boom")
+
+        with pytest.deprecated_call(
+            match=r"ReprFuncArgs is deprecated and will be removed"
+        ):
+            rargs = ReprFuncArgs([("x", 1)])
+
+        with pytest.deprecated_call(
+            match=r"ReprLocals is deprecated and will be removed"
+        ):
+            rloc = ReprLocals(["x = 1"])
+
+        with pytest.deprecated_call(
+            match=r"ReprEntry is deprecated and will be removed"
+        ):
+            rentry = ReprEntry(["line"], rargs, rloc, floc, "long")
+
+        with pytest.deprecated_call(
+            match=r"ReprEntryNative is deprecated and will be removed"
+        ):
+            ReprEntryNative(["line\n"])
+
+        with pytest.deprecated_call(
+            match=r"ReprTraceback is deprecated and will be removed"
+        ):
+            rtb = ReprTraceback([rentry], None, "long")
+
+        with pytest.deprecated_call(
+            match=r"ReprTracebackNative is deprecated and will be removed"
+        ):
+            ReprTracebackNative(["line\n"])
+
+        with pytest.deprecated_call(
+            match=r"ReprExceptionInfo is deprecated and will be removed"
+        ):
+            ReprExceptionInfo(rtb, floc)
+
+        with pytest.deprecated_call(
+            match=r"ExceptionRepr is deprecated and will be removed"
+        ):
+            ExceptionRepr(rtb, floc)
+
+        with pytest.deprecated_call(
+            match=r"ExceptionChainRepr is deprecated and will be removed"
+        ):
+            ExceptionChainRepr([(rtb, floc, None)])
+
+    def test_repr_classes_internal_ispytest_suppresses_warning(self) -> None:
+        """Passing _ispytest=True suppresses deprecation warnings on Repr* classes."""
+        from _pytest._code.code import ExceptionChainRepr
+        from _pytest._code.code import ExceptionRepr
+        from _pytest._code.code import ReprEntry
+        from _pytest._code.code import ReprEntryNative
+        from _pytest._code.code import ReprExceptionInfo
+        from _pytest._code.code import ReprFileLocation
+        from _pytest._code.code import ReprFuncArgs
+        from _pytest._code.code import ReprLocals
+        from _pytest._code.code import ReprTraceback
+        from _pytest._code.code import ReprTracebackNative
+        from _pytest._code.code import TerminalRepr
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", pytest.PytestDeprecationWarning)
+            TerminalRepr(_ispytest=True)
+            floc = ReprFileLocation("foo.py", 10, "boom", _ispytest=True)
+            rargs = ReprFuncArgs([("x", 1)], _ispytest=True)
+            rloc = ReprLocals(["x = 1"], _ispytest=True)
+            rentry = ReprEntry(["line"], rargs, rloc, floc, "long", _ispytest=True)
+            ReprEntryNative(["line\n"], _ispytest=True)
+            rtb = ReprTraceback([rentry], None, "long", _ispytest=True)
+            ReprTracebackNative(["line\n"], _ispytest=True)
+            ReprExceptionInfo(rtb, floc, _ispytest=True)
+            ExceptionRepr(rtb, floc, _ispytest=True)
+            ExceptionChainRepr([(rtb, floc, None)], _ispytest=True)
+            assert floc.path == "foo.py"
+
+    def test_pytest_traceback_to_repr_does_not_warn(self) -> None:
+        """PytestTraceback.to_repr() does not emit deprecation warnings for Repr* classes."""
+        try:
+            raise RuntimeError("compat to_repr test")
+        except RuntimeError:
+            excinfo = ExceptionInfo.from_current()
+
+        record = excinfo.record()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", pytest.PytestDeprecationWarning)
+            legacy_repr = PytestTraceback(record).to_repr()
+            assert legacy_repr is not None

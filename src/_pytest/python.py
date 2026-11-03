@@ -533,7 +533,7 @@ def importtestmodule(
         )
     except SyntaxError as e:
         raise nodes.Collector.CollectError(
-            ExceptionInfo.from_current().getrepr(style="short")
+            ExceptionInfo.from_current().getrepr(style="short", _warn_deprecated=False)
         ) from e
     except ImportPathMismatchError as e:
         raise nodes.Collector.CollectError(
@@ -550,7 +550,7 @@ def importtestmodule(
         if config.get_verbosity() < 2:
             exc_info.traceback = exc_info.traceback.filter(filter_traceback)
         exc_repr = (
-            exc_info.getrepr(style="short")
+            exc_info.getrepr(style="short", _warn_deprecated=False)
             if exc_info.traceback
             else exc_info.exconly()
         )

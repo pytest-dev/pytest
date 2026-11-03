@@ -6,6 +6,12 @@ from __future__ import annotations
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
+from _pytest._code import ExceptionRecord
+from _pytest._code import FailureRecord
+from _pytest._code import FrameRecord
+from _pytest._code import Location
+from _pytest._code import PytestTraceback
+from _pytest._code import SyntaxErrorDetails
 from _pytest.approx import Approx
 from _pytest.approx import approx
 from _pytest.assertion import register_assert_rewrite
@@ -113,15 +119,19 @@ __all__ = [
     "Directory",
     "DoctestItem",
     "ExceptionInfo",
+    "ExceptionRecord",
     "ExitCode",
+    "FailureRecord",
     "File",
     "FixtureDef",
     "FixtureLookupError",
     "FixtureRequest",
+    "FrameRecord",
     "Function",
     "HookRecorder",
     "Item",
     "LineMatcher",
+    "Location",
     "LogCaptureFixture",
     "Mark",
     "MarkDecorator",
@@ -144,6 +154,7 @@ __all__ = [
     "PytestPluginManager",
     "PytestRemovedIn10Warning",
     "PytestReturnNotNoneWarning",
+    "PytestTraceback",
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
     "PytestUnraisableExceptionWarning",
@@ -159,6 +170,7 @@ __all__ = [
     "StashKey",
     "SubtestReport",
     "Subtests",
+    "SyntaxErrorDetails",
     "TempPathFactory",
     "TempdirFactory",
     "TerminalReporter",

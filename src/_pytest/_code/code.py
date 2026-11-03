@@ -20,7 +20,6 @@ from types import CodeType
 from types import FrameType
 from types import TracebackType
 from typing import Any
-from typing import cast
 from typing import ClassVar
 from typing import Final
 from typing import final
@@ -30,6 +29,7 @@ from typing import overload
 from typing import SupportsIndex
 from typing import TypeAlias
 from typing import TypeVar
+from warnings import warn
 
 import pluggy
 
@@ -683,7 +683,7 @@ class ExceptionInfo(Generic[E]):
             first = eg.exceptions[0]
             if isinstance(first, BaseExceptionGroup):
                 return _get_single_subexc(first)
-            return cast(BaseException, first)
+            return first
 
         if (
             tryshort
@@ -728,8 +728,15 @@ class ExceptionInfo(Generic[E]):
         truncate_locals: bool = True,
         truncate_args: bool = True,
         chain: bool = True,
+        *,
+        _warn_deprecated: bool = True,
     ) -> ReprExceptionInfo | ExceptionChainRepr:
         """Return str()able representation of this exception info.
+
+        .. deprecated:: 10.0
+            Use :meth:`ExceptionInfo.record` to obtain an :class:`pytest.ExceptionRecord`
+            and :class:`pytest.PytestTraceback` to render it.
+            See :ref:`exceptioninfo-getrepr-deprecated`.
 
         The formatting parameters are ineffective if ``style="native"``,
         since in this case the native formatting is used.
@@ -769,6 +776,11 @@ class ExceptionInfo(Generic[E]):
 
             Added the ``chain`` parameter.
         """
+        if _warn_deprecated:
+            from _pytest.deprecated import GETREPR_DEPRECATED
+
+            warn(GETREPR_DEPRECATED.format(), stacklevel=2)
+
         from _pytest._code.render import PytestTraceback
 
         record = self.record(
@@ -1580,7 +1592,23 @@ class ExceptionInfoFormatter:
 @dataclasses.dataclass(eq=False)
 class TerminalRepr:
     """Base class for terminal representations -- pieces of data that display
-    themselves to a terminal."""
+    themselves to a terminal.
+
+    .. deprecated:: 10.0
+        Use the :class:`pytest.FailureRecord` protocol instead.
+        See :ref:`repr-classes-deprecated`.
+    """
+
+    _ispytest: bool = dataclasses.field(default=False, repr=False, kw_only=True)
+
+    def __post_init__(self) -> None:
+        if not self._ispytest:
+            from _pytest.deprecated import REPR_CLASSES_DEPRECATED
+
+            warn(
+                REPR_CLASSES_DEPRECATED.format(cls=self.__class__.__name__),
+                stacklevel=3,
+            )
 
     def __str__(self) -> str:
         # FYI this is called from pytest-xdist's serialization of exception
@@ -1600,6 +1628,10 @@ class TerminalRepr:
 @dataclasses.dataclass(eq=False)
 class ExceptionRepr(TerminalRepr):
     """Base class for exception terminal representations.
+
+    .. deprecated:: 10.0
+        Use :class:`pytest.ExceptionRecord` and :class:`pytest.PytestTraceback` instead.
+        See :ref:`repr-classes-deprecated`.
 
     The representation generally contains:
     - The exception traceback (`reprtraceback`)
@@ -1629,19 +1661,34 @@ class ExceptionRepr(TerminalRepr):
 @dataclasses.dataclass(eq=False)
 class ExceptionChainRepr(ExceptionRepr):
     """A chain of exceptions, separated by descriptions (e.g. "The above
-    exception was the direct cause of the following exception")."""
+    exception was the direct cause of the following exception").
+
+    .. deprecated:: 10.0
+        Use :class:`pytest.ExceptionRecord` and :class:`pytest.PytestTraceback` instead.
+        See :ref:`repr-classes-deprecated`.
+    """
 
     chain: Sequence[tuple[ReprTraceback, ReprFileLocation | None, str | None]]
 
     def __init__(
         self,
         chain: Sequence[tuple[ReprTraceback, ReprFileLocation | None, str | None]],
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        if not _ispytest:
+            from _pytest.deprecated import REPR_CLASSES_DEPRECATED
+
+            warn(
+                REPR_CLASSES_DEPRECATED.format(cls=self.__class__.__name__),
+                stacklevel=2,
+            )
         # reprcrash and reprtraceback of the outermost (the newest) exception
         # in the chain.
         super().__init__(
             reprtraceback=chain[-1][0],
             reprcrash=chain[-1][1],
+            _ispytest=True,
         )
         self.chain = chain
 
@@ -1658,7 +1705,12 @@ class ExceptionChainRepr(ExceptionRepr):
 class ReprExceptionInfo(ExceptionRepr):
     """A single exception with optional extra details (function arguments,
     function locals, file location) and possible extra line and sections emitted
-    at the end."""
+    at the end.
+
+    .. deprecated:: 10.0
+        Use :class:`pytest.ExceptionRecord` and :class:`pytest.PytestTraceback` instead.
+        See :ref:`repr-classes-deprecated`.
+    """
 
     def toterminal(self, tw: TerminalWriter) -> None:
         self.reprtraceback.toterminal(tw)
@@ -1668,7 +1720,12 @@ class ReprExceptionInfo(ExceptionRepr):
 @dataclasses.dataclass(eq=False)
 class ReprTraceback(TerminalRepr):
     """A traceback with optional extra details (function arguments, function
-    locals, file location) and possible extra line emitted at the end."""
+    locals, file location) and possible extra line emitted at the end.
+
+    .. deprecated:: 10.0
+        Use :class:`pytest.FrameRecord` and :class:`pytest.PytestTraceback` instead.
+        See :ref:`repr-classes-deprecated`.
+    """
 
     reprentries: Sequence[ReprEntry | ReprEntryNative]
     extraline: str | None
@@ -1696,19 +1753,43 @@ class ReprTraceback(TerminalRepr):
 class ReprTracebackNative(ReprTraceback):
     """A traceback in native style.
 
+    .. deprecated:: 10.0
+        Use :class:`pytest.ExceptionRecord` with style="native" in :class:`pytest.PytestTraceback` instead.
+        See :ref:`repr-classes-deprecated`.
+
     The lines are emitted as is; uses a single entry for the entire native
     traceback.
     """
 
-    def __init__(self, tblines: Sequence[str], *, extraline: str | None = None) -> None:
-        self.reprentries = [ReprEntryNative(tblines)]
-        self.extraline = extraline
-        self.style = "native"
+    def __init__(
+        self,
+        tblines: Sequence[str],
+        *,
+        extraline: str | None = None,
+        _ispytest: bool = False,
+    ) -> None:
+        if not _ispytest:
+            from _pytest.deprecated import REPR_CLASSES_DEPRECATED
+
+            warn(
+                REPR_CLASSES_DEPRECATED.format(cls=self.__class__.__name__),
+                stacklevel=2,
+            )
+        super().__init__(
+            reprentries=[ReprEntryNative(tblines, _ispytest=True)],
+            extraline=extraline,
+            style="native",
+            _ispytest=True,
+        )
 
 
 @dataclasses.dataclass(eq=False)
 class ReprEntryNative(TerminalRepr):
     """An entry in a traceback in native style.
+
+    .. deprecated:: 10.0
+        Use :class:`pytest.FrameRecord` instead.
+        See :ref:`repr-classes-deprecated`.
 
     Emits the lines as is. The lines are assumed to include the line separators.
 
@@ -1728,7 +1809,12 @@ class ReprEntryNative(TerminalRepr):
 @dataclasses.dataclass(eq=False)
 class ReprEntry(TerminalRepr):
     """An entry in a traceback with possible extra details (function arguments,
-    function locals, source snippet, function's file and line)."""
+    function locals, source snippet, function's file and line).
+
+    .. deprecated:: 10.0
+        Use :class:`pytest.FrameRecord` instead.
+        See :ref:`repr-classes-deprecated`.
+    """
 
     lines: Sequence[str]
     reprfuncargs: ReprFuncArgs | None
@@ -1819,6 +1905,10 @@ class ReprFileLocation(TerminalRepr):
     """A message at a file location, using the `<path>:<lineno>: <message>`
     format that most editors understand.
 
+    .. deprecated:: 10.0
+        Use :class:`pytest.Location` instead.
+        See :ref:`repr-classes-deprecated`.
+
     Only the first line of the message is emitted.
     """
 
@@ -1828,6 +1918,13 @@ class ReprFileLocation(TerminalRepr):
 
     def __post_init__(self) -> None:
         self.path = str(self.path)
+        if not self._ispytest:
+            from _pytest.deprecated import REPR_CLASSES_DEPRECATED
+
+            warn(
+                REPR_CLASSES_DEPRECATED.format(cls=self.__class__.__name__),
+                stacklevel=3,
+            )
 
     def toterminal(self, tw: TerminalWriter) -> None:
         msg = self.message
@@ -1840,7 +1937,12 @@ class ReprFileLocation(TerminalRepr):
 
 @dataclasses.dataclass(eq=False)
 class ReprLocals(TerminalRepr):
-    """Function local variables (pre-formatted)."""
+    """Function local variables (pre-formatted).
+
+    .. deprecated:: 10.0
+        Use :class:`pytest.FrameRecord.locals` instead.
+        See :ref:`repr-classes-deprecated`.
+    """
 
     lines: Sequence[str]
 
@@ -1851,7 +1953,12 @@ class ReprLocals(TerminalRepr):
 
 @dataclasses.dataclass(eq=False)
 class ReprFuncArgs(TerminalRepr):
-    """Function arguments - name = value, comma separated."""
+    """Function arguments - name = value, comma separated.
+
+    .. deprecated:: 10.0
+        Use :class:`pytest.FrameRecord.args` instead.
+        See :ref:`repr-classes-deprecated`.
+    """
 
     args: Sequence[tuple[str, object]]
 

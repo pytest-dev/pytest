@@ -486,6 +486,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
             tbfilter=tbfilter,
             truncate_locals=truncate_locals,
             truncate_args=truncate_args,
+            _warn_deprecated=False,
         )
 
     def repr_failure(

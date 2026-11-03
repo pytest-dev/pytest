@@ -170,6 +170,27 @@ TERMINAL_WRITE_LINE_BYTES = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-write-line-bytes",
 )
 
+GETREPR_DEPRECATED = UnformattedWarning(
+    PytestDeprecationWarning,
+    "ExceptionInfo.getrepr() and its formatting parameters are deprecated and will be removed in a future release.\n"
+    "Use ExceptionInfo.record() to obtain an immutable ExceptionRecord and PytestTraceback to render it.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#exceptioninfo-getrepr-deprecated",
+)
+
+REPR_CLASSES_DEPRECATED = UnformattedWarning(
+    PytestDeprecationWarning,
+    "{cls} is deprecated and will be removed in a future release.\n"
+    "Use pytest.ExceptionRecord and pytest.PytestTraceback instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#repr-classes-deprecated",
+)
+
+EXCEPTION_RECORD_REPR_COMPAT_DEPRECATED = UnformattedWarning(
+    PytestDeprecationWarning,
+    "ExceptionRecord.{attr} is deprecated and will be removed in a future release.\n"
+    "{alternative}\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#exceptionrecord-compat-properties",
+)
+
 
 def check_ispytest(ispytest: bool) -> None:
     if not ispytest:

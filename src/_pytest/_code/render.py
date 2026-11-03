@@ -230,7 +230,7 @@ class PytestTraceback:
         loc = rec.crash
         if loc is None or loc.lineno is None:
             return None
-        return ReprFileLocation(loc.path, loc.lineno, loc.message)
+        return ReprFileLocation(loc.path, loc.lineno, loc.message, _ispytest=True)
 
     def _get_exconly_lines(
         self,
@@ -341,7 +341,7 @@ class PytestTraceback:
             short = style == "short"
             reprargs: ReprFuncArgs | None = None
             if not short and self.funcargs and frame.args is not None:
-                reprargs = ReprFuncArgs(list(frame.args))
+                reprargs = ReprFuncArgs(list(frame.args), _ispytest=True)
 
             lines.extend(
                 self._format_frame_source(
@@ -355,18 +355,20 @@ class PytestTraceback:
             else:
                 message = rec_if_last.short_type_name if rec_if_last is not None else ""
             path = self._makepath(frame)
-            reprfileloc = ReprFileLocation(path, frame.lineno, message)
+            reprfileloc = ReprFileLocation(path, frame.lineno, message, _ispytest=True)
             localsrepr: ReprLocals | None = None
             if self.showlocals and frame.locals is not None:
                 local_lines = [
                     f"{name:<10} = {val}" for name, val in frame.locals.items()
                 ]
-                localsrepr = ReprLocals(local_lines)
-            return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
+                localsrepr = ReprLocals(local_lines, _ispytest=True)
+            return ReprEntry(
+                lines, reprargs, localsrepr, reprfileloc, style, _ispytest=True
+            )
         elif style == "value":
             if rec_if_last is not None:
                 lines.extend(rec_if_last.message.split("\n"))
-            return ReprEntry(lines, None, None, None, style)
+            return ReprEntry(lines, None, None, None, style, _ispytest=True)
         else:
             if rec_if_last is not None:
                 lines.extend(self._get_exconly_lines(rec_if_last, indent=4))
@@ -374,9 +376,9 @@ class PytestTraceback:
             if frame is not None:
                 message = rec_if_last.short_type_name if rec_if_last is not None else ""
                 reprfileloc = ReprFileLocation(
-                    self._makepath(frame), frame.lineno, message
+                    self._makepath(frame), frame.lineno, message, _ispytest=True
                 )
-            return ReprEntry(lines, None, None, reprfileloc, style)
+            return ReprEntry(lines, None, None, reprfileloc, style, _ispytest=True)
 
     def _truncate_recursive_frames(
         self,
@@ -434,11 +436,13 @@ class PytestTraceback:
             if extraline is None and show_all_hidden_msg:
                 extraline = _ALL_HIDDEN_MSG
             entries = [self._repr_frame_entry(None, rec, effective_tb_style)]
-            return ReprTraceback(entries, extraline, style=effective_tb_style)
+            return ReprTraceback(
+                entries, extraline, style=effective_tb_style, _ispytest=True
+            )
 
         if self.style == "value":
             entries = [self._repr_frame_entry(visible_frames[-1], rec, "value")]
-            return ReprTraceback(entries, None, style="value")
+            return ReprTraceback(entries, None, style="value", _ispytest=True)
 
         entries = []
         n_frames = len(visible_frames)
@@ -459,7 +463,9 @@ class PytestTraceback:
                     entry_default_style,
                 )
             )
-        return ReprTraceback(entries, extraline, style=effective_tb_style)
+        return ReprTraceback(
+            entries, extraline, style=effective_tb_style, _ispytest=True
+        )
 
     def _iter_chain_records(
         self, root: ExceptionRecord | None = None
@@ -499,7 +505,9 @@ class PytestTraceback:
                 no_tb_lines = [
                     f"{line}\n" for line in rec.exconly(tryshort=False).splitlines()
                 ]
-                reprtraceback: ReprTraceback = ReprTracebackNative(no_tb_lines)
+                reprtraceback: ReprTraceback = ReprTracebackNative(
+                    no_tb_lines, _ispytest=True
+                )
                 reprcrash = None
             else:
                 reprtraceback = self._repr_traceback_for_record(
@@ -565,8 +573,9 @@ class PytestTraceback:
                 if desc is not None:
                     native_lines.append(f"\n{desc}\n\n")
             res_native = ReprExceptionInfo(
-                reprtraceback=ReprTracebackNative(native_lines),
+                reprtraceback=ReprTracebackNative(native_lines, _ispytest=True),
                 reprcrash=self._make_reprcrash(self.record),
+                _ispytest=True,
             )
             for name, content, sep in self._all_sections():
                 res_native.addsection(name, content, sep)
@@ -586,8 +595,11 @@ class PytestTraceback:
             )
             rich_lines = self._render_rich_to_lines()
             res_rich = ReprExceptionInfo(
-                reprtraceback=ReprTracebackNative(rich_lines, extraline=extraline),
+                reprtraceback=ReprTracebackNative(
+                    rich_lines, extraline=extraline, _ispytest=True
+                ),
                 reprcrash=self._make_reprcrash(self.record),
+                _ispytest=True,
             )
             for name, content, sep in self._all_sections():
                 res_rich.addsection(name, content, sep)
@@ -599,7 +611,7 @@ class PytestTraceback:
         repr_chain: list[tuple[ReprTraceback, ReprFileLocation | None, str | None]] = []
         top_tb, top_crash = self._append_record_chain(self.record, repr_chain, depth=0)
 
-        chain_repr = ExceptionChainRepr(repr_chain)
+        chain_repr = ExceptionChainRepr(repr_chain, _ispytest=True)
         chain_repr.reprtraceback = top_tb
         chain_repr.reprcrash = top_crash
         for name, content, sep in self._all_sections():

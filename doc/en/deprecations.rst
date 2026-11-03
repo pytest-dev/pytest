@@ -14,6 +14,84 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+.. _exceptioninfo-getrepr-deprecated:
+
+``ExceptionInfo.getrepr()`` and formatting parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 10.0
+
+``ExceptionInfo.getrepr()`` and its traceback formatting parameters (``showlocals``,
+``style``, ``abspath``, ``tbfilter``, ``funcargs``, ``truncate_locals``,
+``truncate_args``, ``chain``) are deprecated.
+
+Previously, ``ExceptionInfo.getrepr()`` combined exception traceback extraction,
+filtering, formatting, and string rendering into legacy ``Repr*`` objects.
+
+Instead, separate capture from rendering:
+
+1. Obtain a clean, immutable data model via :meth:`ExceptionInfo.record() <pytest.ExceptionInfo.record>`:
+
+   .. code-block:: python
+
+       record = excinfo.record()
+
+2. Render it using :class:`pytest.PytestTraceback`:
+
+   .. code-block:: python
+
+       renderer = pytest.PytestTraceback(record, style="auto")
+       renderer.toterminal(terminalwriter)
+
+For legacy plugin compatibility, :meth:`pytest.PytestTraceback.to_repr` can still
+convert an :class:`pytest.ExceptionRecord` into a legacy representation.
+
+
+.. _repr-classes-deprecated:
+
+Legacy ``Repr*`` classes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 10.0
+
+The legacy terminal representation classes:
+
+* ``TerminalRepr``
+* ``ExceptionRepr``
+* ``ExceptionChainRepr``
+* ``ReprExceptionInfo``
+* ``ReprTraceback``
+* ``ReprTracebackNative``
+* ``ReprEntryNative``
+* ``ReprEntry``
+* ``ReprFileLocation``
+* ``ReprLocals``
+* ``ReprFuncArgs``
+
+are deprecated.
+
+Migrate to the new data model and renderer architecture:
+
+* Use :class:`pytest.ExceptionRecord` and :class:`pytest.FrameRecord` for inspecting exception information.
+* Use :class:`pytest.Location` instead of ``ReprFileLocation``.
+* Use the :class:`pytest.FailureRecord` protocol when implementing custom failure representations.
+* Use :class:`pytest.PytestTraceback` for terminal and text rendering.
+
+
+.. _exceptionrecord-compat-properties:
+
+Compatibility properties on ``ExceptionRecord`` (``reprcrash``, ``reprtraceback``, ``chain``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 10.0
+
+The properties ``ExceptionRecord.reprcrash``, ``ExceptionRecord.reprtraceback``, and
+``ExceptionRecord.chain`` are deprecated:
+
+* Use :attr:`ExceptionRecord.crash <pytest.ExceptionRecord.crash>` instead of ``reprcrash``.
+* Use :meth:`ExceptionRecord.iter_chain() <pytest.ExceptionRecord.iter_chain>` or :class:`pytest.PytestTraceback` instead of ``chain``.
+* Use :class:`pytest.PytestTraceback` to render tracebacks rather than accessing ``reprtraceback``.
+
 .. _terminalreporter-write-line-bytes:
 
 Passing ``bytes`` to ``TerminalReporter.write_line()``
