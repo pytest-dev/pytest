@@ -36,6 +36,7 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
+from _pytest._code.record import Location
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 import _pytest._version
@@ -1389,7 +1390,7 @@ class TerminalReporter:
 
             for rep in skipped:
                 assert rep.longrepr is not None
-                assert isinstance(rep.longrepr, tuple), (rep, rep.longrepr)
+                assert isinstance(rep.longrepr, Location | tuple), (rep, rep.longrepr)
                 assert len(rep.longrepr) == 3, (rep, rep.longrepr)
 
                 verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
@@ -1616,7 +1617,7 @@ def _folded_skips(
     d: dict[tuple[str, int | None, str], list[CollectReport]] = {}
     for event in skipped:
         assert event.longrepr is not None
-        assert isinstance(event.longrepr, tuple), (event, event.longrepr)
+        assert isinstance(event.longrepr, Location | tuple), (event, event.longrepr)
         assert len(event.longrepr) == 3, (event, event.longrepr)
         fspath, lineno, reason = event.longrepr
         # For consistency, report all fspaths in relative form.
@@ -1721,7 +1722,7 @@ def _get_raw_skip_reason(report: TestReport) -> str:
         return reason
     else:
         assert report.skipped
-        assert isinstance(report.longrepr, tuple)
+        assert isinstance(report.longrepr, Location | tuple)
         _, _, reason = report.longrepr
         if reason.startswith("Skipped: "):
             reason = reason[len("Skipped: ") :]

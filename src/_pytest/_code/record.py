@@ -8,6 +8,8 @@ from typing import Any
 from typing import Final
 from typing import Literal
 from typing import overload
+from typing import Protocol
+from typing import runtime_checkable
 from typing import TYPE_CHECKING
 
 from _pytest._io import TerminalWriter
@@ -50,13 +52,13 @@ class Location:
     """
 
     path: str
-    lineno: int
+    lineno: int | None
     message: str
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "path", str(self.path))
 
-    def __iter__(self) -> Iterator[str | int]:
+    def __iter__(self) -> Iterator[Any]:
         yield self.path
         yield self.lineno
         yield self.message
@@ -68,15 +70,17 @@ class Location:
     def __getitem__(self, index: Literal[0, 2]) -> str: ...
 
     @overload
-    def __getitem__(self, index: Literal[1]) -> int: ...
+    def __getitem__(self, index: Literal[1]) -> int | None: ...
 
     @overload
-    def __getitem__(self, index: int) -> str | int: ...
+    def __getitem__(self, index: int) -> str | int | None: ...
 
     @overload
-    def __getitem__(self, index: slice) -> tuple[str | int, ...]: ...
+    def __getitem__(self, index: slice) -> tuple[str | int | None, ...]: ...
 
-    def __getitem__(self, index: int | slice) -> str | int | tuple[str | int, ...]:
+    def __getitem__(
+        self, index: int | slice
+    ) -> str | int | None | tuple[str | int | None, ...]:
         return (self.path, self.lineno, self.message)[index]
 
     def to_dict(self) -> dict[str, Any]:
@@ -88,9 +92,10 @@ class Location:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> Location:
+        raw_lineno = data.get("lineno")
         return cls(
             path=str(data["path"]),
-            lineno=int(data["lineno"]),
+            lineno=int(raw_lineno) if raw_lineno is not None else None,
             message=str(data["message"]),
         )
 
@@ -108,6 +113,37 @@ class Location:
         if i != -1:
             msg = msg[:i]
         return f"{self.path}:{self.lineno}: {msg}"
+
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
+        from rich.text import Text
+
+        msg = self.message
+        i = msg.find("\n")
+        if i != -1:
+            msg = msg[:i]
+        t = Text()
+        t.append(self.path, style="bold red")
+        t.append(f":{self.lineno}: {msg}")
+        yield t
+
+
+@runtime_checkable
+class FailureRecord(Protocol):
+    """Protocol for structured non-exception failure representations."""
+
+    @property
+    def sections(self) -> Sequence[tuple[str, str, str]]: ...
+
+    @property
+    def crash(self) -> Location | None: ...
+
+    def to_dict(self) -> dict[str, Any]: ...
+
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult: ...
 
 
 @dataclasses.dataclass(frozen=True)

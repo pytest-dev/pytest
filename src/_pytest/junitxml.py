@@ -22,6 +22,7 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
+from _pytest._code.record import Location
 from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.config import filename_arg
@@ -283,7 +284,7 @@ class _NodeReporter:
             skipped = ET.Element("skipped", type="pytest.xfail", message=xfailreason)
             self.append(skipped)
         else:
-            assert isinstance(report.longrepr, tuple)
+            assert isinstance(report.longrepr, Location | tuple)
             filename, lineno, skipreason = report.longrepr
             skipreason = skipreason.removeprefix("Skipped: ")
             details = f"{filename}:{lineno}: {skipreason}"

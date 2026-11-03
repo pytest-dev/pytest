@@ -7,6 +7,7 @@ import bdb
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
 from contextlib import contextmanager
 import functools
@@ -26,6 +27,8 @@ from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
+from _pytest._code.record import Location
+from _pytest._code.record import RECORD_SCHEMA_VERSION
 from _pytest._io import TerminalWriter
 from _pytest.approx import approx
 from _pytest.compat import safe_getattr
@@ -46,6 +49,9 @@ from _pytest.warning_types import PytestWarning
 if TYPE_CHECKING:
     import doctest
 
+    from rich.console import Console
+    from rich.console import ConsoleOptions
+    from rich.console import RenderResult
     from typing_extensions import Self
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
@@ -159,15 +165,113 @@ def _is_main_py(path: Path) -> bool:
 
 class ReprFailDoctest(TerminalRepr):
     def __init__(
-        self, reprlocation_lines: Sequence[tuple[ReprFileLocation, Sequence[str]]]
+        self,
+        reprlocation_lines: Sequence[tuple[Location | ReprFileLocation, Sequence[str]]],
     ) -> None:
         self.reprlocation_lines = reprlocation_lines
+        self.sections: list[tuple[str, str, str]] = []
+
+    def addsection(self, name: str, content: str, sep: str = "-") -> None:
+        self.sections.append((name, content, sep))
+
+    @property
+    def crash(self) -> Location | None:
+        if not self.reprlocation_lines:
+            return None
+        loc, _ = self.reprlocation_lines[-1]
+        if isinstance(loc, Location):
+            return loc
+        return Location(loc.path, loc.lineno, loc.message)
+
+    @property
+    def reprcrash(self) -> Location | None:
+        return self.crash
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ReprFailDoctest):
+            return NotImplemented
+        return (
+            list(self.reprlocation_lines) == list(other.reprlocation_lines)
+            and self.sections == other.sections
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                tuple(
+                    (
+                        loc
+                        if isinstance(loc, Location)
+                        else Location(loc.path, loc.lineno, loc.message),
+                        tuple(lines),
+                    )
+                    for loc, lines in self.reprlocation_lines
+                ),
+                tuple(self.sections),
+            )
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": RECORD_SCHEMA_VERSION,
+            "type": "ReprFailDoctest",
+            "reprlocation_lines": [
+                {
+                    "location": (
+                        loc
+                        if isinstance(loc, Location)
+                        else Location(loc.path, loc.lineno, loc.message)
+                    ).to_dict(),
+                    "lines": list(lines),
+                }
+                for loc, lines in self.reprlocation_lines
+            ],
+            "sections": [list(s) for s in self.sections],
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> ReprFailDoctest:
+        reprlocation_lines: list[tuple[Location, list[str]]] = []
+        for item in data.get("reprlocation_lines", ()):
+            if isinstance(item, Mapping):
+                loc = Location.from_dict(item["location"])
+                lines = [str(line) for line in item.get("lines", ())]
+                reprlocation_lines.append((loc, lines))
+        inst = cls(reprlocation_lines)
+        for s in data.get("sections", ()):
+            if len(s) == 3:
+                inst.addsection(str(s[0]), str(s[1]), str(s[2]))
+        return inst
+
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
+        from rich.rule import Rule
+        from rich.text import Text
+
+        for reprlocation, lines in self.reprlocation_lines:
+            for line in lines:
+                yield Text(line)
+            loc = (
+                reprlocation
+                if isinstance(reprlocation, Location)
+                else Location(
+                    reprlocation.path, reprlocation.lineno, reprlocation.message
+                )
+            )
+            yield from loc.__rich_console__(console, options)
+        for name, content, sep in self.sections:
+            yield Rule(title=name, characters=sep[:1] or "-")
+            yield Text(content)
 
     def toterminal(self, tw: TerminalWriter) -> None:
         for reprlocation, lines in self.reprlocation_lines:
             for line in lines:
                 tw.line(line)
             reprlocation.toterminal(tw)
+        for name, content, sep in self.sections:
+            tw.sep(sep, name)
+            tw.line(content)
 
 
 class MultipleDoctestFailures(Exception):
@@ -349,8 +453,7 @@ class DoctestItem(Item):
             else:
                 lineno = test.lineno + example.lineno + 1
             message = type(failure).__name__
-            # TODO: ReprFileLocation doesn't expect a None lineno.
-            reprlocation = ReprFileLocation(filename, lineno, message)  # type: ignore[arg-type]
+            reprlocation = Location(str(filename), lineno, message)
             checker = _get_checker()
             report_choice = _get_report_choice(self.config.getoption("doctestreport"))
             if lineno is not None:

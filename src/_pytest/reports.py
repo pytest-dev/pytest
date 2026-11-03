@@ -29,6 +29,9 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._code.record import ExceptionRecord
+from _pytest._code.record import FailureRecord
+from _pytest._code.record import Location
+from _pytest._code.record import RECORD_SCHEMA_VERSION
 from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.nodeid import coerce_node_id
@@ -44,6 +47,9 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
+    from rich.console import Console
+    from rich.console import ConsoleOptions
+    from rich.console import RenderResult
     from typing_extensions import Self
 
     from _pytest.runner import CallInfo
@@ -67,6 +73,8 @@ class BaseReport:
     longrepr: (
         ExceptionInfo[BaseException]
         | ExceptionRecord
+        | FailureRecord
+        | Location
         | tuple[str, int, str]
         | str
         | TerminalRepr
@@ -297,7 +305,7 @@ def _format_failed_longrepr(
 def _format_exception_group_all_skipped_longrepr(
     item: Item,
     excinfo: ExceptionInfo[BaseExceptionGroup[BaseException | BaseExceptionGroup]],
-) -> tuple[str, int, str]:
+) -> Location:
     r = excinfo._getreprcrash()
     assert r is not None, (
         "There should always be a traceback entry for skipping a test."
@@ -307,10 +315,12 @@ def _format_exception_group_all_skipped_longrepr(
     ):
         path, line = item.reportinfo()[:2]
         assert line is not None
-        loc = (os.fspath(path), line + 1)
+        loc_path = os.fspath(path)
+        loc_lineno = line + 1
         default_msg = "skipped"
     else:
-        loc = (str(r.path), r.lineno)
+        loc_path = str(r.path)
+        loc_lineno = r.lineno
         default_msg = r.message
 
     # Get all unique skip messages.
@@ -323,8 +333,7 @@ def _format_exception_group_all_skipped_longrepr(
             msgs.append(m)
 
     reason = "; ".join(msgs) if msgs else default_msg
-    longrepr = (*loc, reason)
-    return longrepr
+    return Location(loc_path, loc_lineno, reason)
 
 
 class TestReport(BaseReport):
@@ -354,6 +363,9 @@ class TestReport(BaseReport):
         keywords: Mapping[str, Literal[1]],
         outcome: Literal["passed", "failed", "skipped"],
         longrepr: ExceptionInfo[BaseException]
+        | ExceptionRecord
+        | FailureRecord
+        | Location
         | tuple[str, int, str]
         | str
         | TerminalRepr
@@ -433,6 +445,9 @@ class TestReport(BaseReport):
             outcome: Literal["passed", "failed", "skipped"] = "passed"
             longrepr: (
                 ExceptionInfo[BaseException]
+                | ExceptionRecord
+                | FailureRecord
+                | Location
                 | tuple[str, int, str]
                 | str
                 | TerminalRepr
@@ -451,9 +466,9 @@ class TestReport(BaseReport):
                 if excinfo.value._use_item_location:
                     path, line = item.reportinfo()[:2]
                     assert line is not None
-                    longrepr = (os.fspath(path), line + 1, r.message)
+                    longrepr = Location(os.fspath(path), line + 1, r.message)
                 else:
-                    longrepr = (str(r.path), r.lineno, r.message)
+                    longrepr = Location(str(r.path), r.lineno, r.message)
             elif isinstance(excinfo.value, BaseExceptionGroup) and (
                 excinfo.value.split(skip.Exception)[1] is None
             ):
@@ -507,6 +522,9 @@ class CollectReport(BaseReport):
         nodeid: str | NodeId,
         outcome: Literal["passed", "failed", "skipped"],
         longrepr: ExceptionInfo[BaseException]
+        | ExceptionRecord
+        | FailureRecord
+        | Location
         | tuple[str, int, str]
         | str
         | TerminalRepr
@@ -548,9 +566,59 @@ class CollectReport(BaseReport):
 class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg: str) -> None:
         self.longrepr = msg
+        self.sections: list[tuple[str, str, str]] = []
+
+    def addsection(self, name: str, content: str, sep: str = "-") -> None:
+        self.sections.append((name, content, sep))
+
+    @property
+    def crash(self) -> Location | None:
+        return None
+
+    @property
+    def reprcrash(self) -> Location | None:
+        return None
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CollectErrorRepr):
+            return NotImplemented
+        return self.longrepr == other.longrepr and self.sections == other.sections
+
+    def __hash__(self) -> int:
+        return hash((self.longrepr, tuple(self.sections)))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": RECORD_SCHEMA_VERSION,
+            "type": "CollectErrorRepr",
+            "longrepr": self.longrepr,
+            "sections": [list(s) for s in self.sections],
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> CollectErrorRepr:
+        inst = cls(str(data["longrepr"]))
+        for s in data.get("sections", ()):
+            if len(s) == 3:
+                inst.addsection(str(s[0]), str(s[1]), str(s[2]))
+        return inst
+
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
+        from rich.rule import Rule
+        from rich.text import Text
+
+        yield Text(self.longrepr, style="red")
+        for name, content, sep in self.sections:
+            yield Rule(title=name, characters=sep[:1] or "-")
+            yield Text(content)
 
     def toterminal(self, out: TerminalWriter) -> None:
         out.line(self.longrepr, red=True)
+        for name, content, sep in self.sections:
+            out.sep(sep, name)
+            out.line(content)
 
 
 def pytest_report_to_serializable(
@@ -644,7 +712,13 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
         # key that xdist and other consumers expect, and never expose the
         # internal structured id object on the wire.
         d["nodeid"] = str(d.pop("_id"))
-    if isinstance(report.longrepr, ExceptionRecord):
+    if isinstance(report.longrepr, Location):
+        d["longrepr"] = (
+            report.longrepr.path,
+            report.longrepr.lineno,
+            report.longrepr.message,
+        )
+    elif isinstance(report.longrepr, ExceptionRecord | FailureRecord):
         d["longrepr"] = report.longrepr.to_dict()
     elif hasattr(report.longrepr, "toterminal"):
         if hasattr(report.longrepr, "reprtraceback") and hasattr(
@@ -710,11 +784,37 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
             return None
 
     if (
+        isinstance(reportdict["longrepr"], list | tuple)
+        and len(reportdict["longrepr"]) == 3
+        and isinstance(reportdict["longrepr"][0], str)
+        and isinstance(reportdict["longrepr"][1], int | type(None))
+        and isinstance(reportdict["longrepr"][2], str)
+    ):
+        reportdict["longrepr"] = Location(
+            reportdict["longrepr"][0],
+            reportdict["longrepr"][1],
+            reportdict["longrepr"][2],
+        )
+    elif (
         isinstance(reportdict["longrepr"], Mapping)
         and "schema_version" in reportdict["longrepr"]
         and "reprtraceback" not in reportdict["longrepr"]
     ):
-        reportdict["longrepr"] = ExceptionRecord.from_dict(reportdict["longrepr"])
+        record_type = reportdict["longrepr"].get("type")
+        if record_type == "ReprFailDoctest":
+            from _pytest.doctest import ReprFailDoctest
+
+            reportdict["longrepr"] = ReprFailDoctest.from_dict(reportdict["longrepr"])
+        elif record_type == "FixtureLookupErrorRepr":
+            from _pytest.fixtures import FixtureLookupErrorRepr
+
+            reportdict["longrepr"] = FixtureLookupErrorRepr.from_dict(
+                reportdict["longrepr"]
+            )
+        elif record_type == "CollectErrorRepr":
+            reportdict["longrepr"] = CollectErrorRepr.from_dict(reportdict["longrepr"])
+        else:
+            reportdict["longrepr"] = ExceptionRecord.from_dict(reportdict["longrepr"])
     elif (
         isinstance(reportdict["longrepr"], Mapping)
         and "reprcrash" in reportdict["longrepr"]

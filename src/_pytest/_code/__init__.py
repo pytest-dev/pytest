@@ -11,6 +11,7 @@ from .code import Traceback
 from .code import TracebackEntry
 from .code import TracebackStyle
 from .record import ExceptionRecord
+from .record import FailureRecord
 from .record import FrameRecord
 from .record import Location
 from .record import RECORD_SCHEMA_VERSION
@@ -25,6 +26,7 @@ __all__ = [
     "Code",
     "ExceptionInfo",
     "ExceptionRecord",
+    "FailureRecord",
     "Frame",
     "FrameRecord",
     "Location",

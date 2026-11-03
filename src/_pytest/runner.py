@@ -25,6 +25,7 @@ from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
+from _pytest._code.record import Location
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.nodes import Collector
@@ -429,7 +430,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     call = CallInfo.from_call(
         collect, "collect", reraise=(KeyboardInterrupt, SystemExit)
     )
-    longrepr: tuple[str, int, str] | str | TerminalRepr | None = None
+    longrepr: Location | tuple[str, int, str] | str | TerminalRepr | None = None
     if not call.excinfo:
         outcome: Literal["passed", "skipped", "failed"] = "passed"
     else:
@@ -443,7 +444,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
             assert isinstance(r_, ExceptionChainRepr), repr(r_)
             r = r_.reprcrash
             assert r
-            longrepr = (str(r.path), r.lineno, r.message)
+            longrepr = Location(str(r.path), r.lineno, r.message)
         else:
             outcome = "failed"
             errorinfo = collector.repr_failure(call.excinfo)

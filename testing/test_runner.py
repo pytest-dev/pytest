@@ -15,6 +15,7 @@ from _pytest import runner
 from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionChainRepr
+from _pytest._code.record import Location
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.outcomes import OutcomeException
@@ -1137,7 +1138,7 @@ class TestReportContents:
             """
         )
         _, call_rep, _ = reports
-        assert isinstance(call_rep.longrepr, tuple)
+        assert isinstance(call_rep.longrepr, Location)
         assert "Skipped" in call_rep.longreprtext
 
     def test_longreprtext_collect_skip(self, pytester: Pytester) -> None:
@@ -1151,7 +1152,7 @@ class TestReportContents:
         rec = pytester.inline_run()
         calls = rec.getcalls("pytest_collectreport")
         _, call, _ = calls
-        assert isinstance(call.report.longrepr, tuple)
+        assert isinstance(call.report.longrepr, Location)
         assert "Skipped" in call.report.longreprtext
 
     def test_longreprtext_failure(self, pytester: Pytester) -> None:

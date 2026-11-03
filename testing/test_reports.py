@@ -6,6 +6,8 @@ from collections.abc import Sequence
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.record import ExceptionRecord
+from _pytest._code.record import FailureRecord
+from _pytest._code.record import Location
 from _pytest.approx import approx
 from _pytest.config import Config
 from _pytest.pytester import Pytester
@@ -197,7 +199,7 @@ class TestReportSerialization:
             assert newrep.failed == rep.failed
             assert newrep.skipped == rep.skipped
             if newrep.skipped and not hasattr(newrep, "wasxfail"):
-                assert isinstance(newrep.longrepr, tuple)
+                assert isinstance(newrep.longrepr, Location)
                 assert len(newrep.longrepr) == 3
             assert newrep.outcome == rep.outcome
             assert newrep.when == rep.when
@@ -228,7 +230,8 @@ class TestReportSerialization:
             assert newrep.failed == rep.failed
             assert newrep.skipped == rep.skipped
             if rep.failed:
-                assert newrep.longrepr == str(rep.longrepr)
+                assert newrep.longrepr == rep.longrepr
+                assert str(newrep.longrepr) == str(rep.longrepr)
 
     def test_extended_report_deserialization(self, pytester: Pytester) -> None:
         """This test came originally from test_remote.py in xdist (ca03269)."""
@@ -244,7 +247,8 @@ class TestReportSerialization:
             assert newrep.failed == rep.failed
             assert newrep.skipped == rep.skipped
             if rep.failed:
-                assert newrep.longrepr == str(rep.longrepr)
+                assert newrep.longrepr == rep.longrepr
+                assert str(newrep.longrepr) == str(rep.longrepr)
 
     def test_paths_support(self, pytester: Pytester) -> None:
         """Report attributes which are path-like should become strings."""
@@ -461,6 +465,90 @@ class TestReportSerialization:
         assert isinstance(loaded_direct.longrepr, ExceptionRecord)
         assert loaded_direct.longrepr == record_only
         loaded_direct.toterminal(tw_mock)
+
+    def test_failure_records_serialization_roundtrip(
+        self, pytester: Pytester, tw_mock
+    ) -> None:
+        """ReprFailDoctest, FixtureLookupErrorRepr, and CollectErrorRepr round-trip structurally."""
+        from io import StringIO
+
+        from rich.console import Console
+
+        from _pytest.doctest import ReprFailDoctest
+        from _pytest.fixtures import FixtureLookupErrorRepr
+        from _pytest.reports import CollectErrorRepr
+
+        # 1. Doctest failure
+        pytester.maketxtfile(
+            test_doc="""
+            >>> 1 + 1
+            3
+            """
+        )
+        reprec = pytester.inline_run()
+        doc_rep = reprec.getreports("pytest_runtest_logreport")[1]
+        assert isinstance(doc_rep.longrepr, ReprFailDoctest)
+        assert isinstance(doc_rep.longrepr, FailureRecord)
+        assert isinstance(doc_rep.longrepr.crash, Location)
+        assert doc_rep.longrepr.crash.message == "DocTestFailure"
+        doc_rep.longrepr.addsection("doc-sec", "doc-body", "=")
+        doc_data = doc_rep._to_json()
+        assert doc_data["longrepr"]["type"] == "ReprFailDoctest"
+        doc_loaded = TestReport._from_json(doc_data)
+        assert isinstance(doc_loaded.longrepr, ReprFailDoctest)
+        assert doc_loaded.longrepr == doc_rep.longrepr
+        assert hash(doc_loaded.longrepr) == hash(doc_rep.longrepr)
+        assert doc_loaded.longreprtext == doc_rep.longreprtext
+        buf = StringIO()
+        console = Console(file=buf, force_terminal=False, width=80)
+        console.print(doc_loaded.longrepr)
+        assert "DocTestFailure" in buf.getvalue()
+
+        # 2. FixtureLookupErrorRepr
+        pytester.makepyfile(
+            test_missing_fix="""
+            def test_needs_unknown(nonexistent_fixture):
+                pass
+            """
+        )
+        reprec_fix = pytester.inline_run("test_missing_fix.py")
+        fix_rep = reprec_fix.getreports("pytest_runtest_logreport")[0]
+        assert isinstance(fix_rep.longrepr, FixtureLookupErrorRepr)
+        assert isinstance(fix_rep.longrepr, FailureRecord)
+        assert isinstance(fix_rep.longrepr.crash, Location)
+        assert (
+            "fixture 'nonexistent_fixture' not found" in fix_rep.longrepr.crash.message
+        )
+        fix_rep.longrepr.addsection("fix-sec", "fix-body", "-")
+        fix_data = fix_rep._to_json()
+        assert fix_data["longrepr"]["type"] == "FixtureLookupErrorRepr"
+        fix_loaded = TestReport._from_json(fix_data)
+        assert isinstance(fix_loaded.longrepr, FixtureLookupErrorRepr)
+        assert fix_loaded.longrepr == fix_rep.longrepr
+        assert hash(fix_loaded.longrepr) == hash(fix_rep.longrepr)
+        assert fix_loaded.longreprtext == fix_rep.longreprtext
+        buf_fix = StringIO()
+        console_fix = Console(file=buf_fix, force_terminal=False, width=80)
+        console_fix.print(fix_loaded.longrepr)
+        assert "nonexistent_fixture" in buf_fix.getvalue()
+
+        # 3. CollectErrorRepr
+        collect_err = CollectErrorRepr("custom collection failure")
+        collect_err.addsection("col-sec", "col-body", "*")
+        assert isinstance(collect_err, FailureRecord)
+        assert collect_err.crash is None
+        col_rep = CollectReport("test_col.py", "failed", collect_err, None)
+        col_data = col_rep._to_json()
+        assert col_data["longrepr"]["type"] == "CollectErrorRepr"
+        col_loaded = CollectReport._from_json(col_data)
+        assert isinstance(col_loaded.longrepr, CollectErrorRepr)
+        assert col_loaded.longrepr == collect_err
+        assert hash(col_loaded.longrepr) == hash(collect_err)
+        assert col_loaded.longreprtext == col_rep.longreprtext
+        buf_col = StringIO()
+        console_col = Console(file=buf_col, force_terminal=False, width=80)
+        console_col.print(col_loaded.longrepr)
+        assert "custom collection failure" in buf_col.getvalue()
 
     def test_report_prevent_ConftestImportFailure_hiding_exception(
         self, pytester: Pytester

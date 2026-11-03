@@ -226,7 +226,7 @@ class PytestTraceback:
 
     def _make_reprcrash(self, rec: ExceptionRecord) -> ReprFileLocation | None:
         loc = rec.crash
-        if loc is None:
+        if loc is None or loc.lineno is None:
             return None
         return ReprFileLocation(loc.path, loc.lineno, loc.message)
 

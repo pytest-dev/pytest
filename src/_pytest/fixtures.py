@@ -38,6 +38,8 @@ from _pytest._code import getfslineno
 from _pytest._code import Source
 from _pytest._code.code import ExceptionInfoFormatter
 from _pytest._code.code import TerminalRepr
+from _pytest._code.record import Location
+from _pytest._code.record import RECORD_SCHEMA_VERSION
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.compat import deprecated
@@ -84,6 +86,10 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
+    from rich.console import Console
+    from rich.console import ConsoleOptions
+    from rich.console import RenderResult
+
     from _pytest.python import CallSpec
     from _pytest.python import Function
     from _pytest.python import Metafunc
@@ -1037,6 +1043,99 @@ class FixtureLookupErrorRepr(TerminalRepr):
         self.filename = filename
         self.firstlineno = firstlineno
         self.argname = argname
+        self.sections: list[tuple[str, str, str]] = []
+
+    def addsection(self, name: str, content: str, sep: str = "-") -> None:
+        self.sections.append((name, content, sep))
+
+    @property
+    def crash(self) -> Location | None:
+        lines = self.errorstring.split("\n")
+        first_msg = lines[0].strip() if lines else ""
+        return Location(
+            path=os.fspath(self.filename),
+            lineno=self.firstlineno + 1,
+            message=first_msg,
+        )
+
+    @property
+    def reprcrash(self) -> Location | None:
+        return self.crash
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, FixtureLookupErrorRepr):
+            return NotImplemented
+        return (
+            os.fspath(self.filename) == os.fspath(other.filename)
+            and self.firstlineno == other.firstlineno
+            and list(self.tblines) == list(other.tblines)
+            and self.errorstring == other.errorstring
+            and self.argname == other.argname
+            and self.sections == other.sections
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                os.fspath(self.filename),
+                self.firstlineno,
+                tuple(self.tblines),
+                self.errorstring,
+                self.argname,
+                tuple(self.sections),
+            )
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": RECORD_SCHEMA_VERSION,
+            "type": "FixtureLookupErrorRepr",
+            "filename": os.fspath(self.filename),
+            "firstlineno": self.firstlineno,
+            "tblines": list(self.tblines),
+            "errorstring": self.errorstring,
+            "argname": self.argname,
+            "sections": [list(s) for s in self.sections],
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> FixtureLookupErrorRepr:
+        inst = cls(
+            filename=str(data["filename"]),
+            firstlineno=int(data["firstlineno"]),
+            tblines=[str(line) for line in data.get("tblines", ())],
+            errorstring=str(data["errorstring"]),
+            argname=str(data["argname"]) if data.get("argname") is not None else None,
+        )
+        for s in data.get("sections", ()):
+            if len(s) == 3:
+                inst.addsection(str(s[0]), str(s[1]), str(s[2]))
+        return inst
+
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
+        from rich.rule import Rule
+        from rich.text import Text
+
+        for tbline in self.tblines:
+            yield Text(tbline.rstrip())
+        lines = self.errorstring.split("\n")
+        if lines:
+            yield Text(
+                f"{ExceptionInfoFormatter.fail_marker}       {lines[0].strip()}",
+                style="red",
+            )
+            for line in lines[1:]:
+                yield Text(
+                    f"{ExceptionInfoFormatter.flow_marker}       {line.strip()}",
+                    style="red",
+                )
+        yield Text("")
+        yield Text(f"{os.fspath(self.filename)}:{self.firstlineno + 1}")
+        for name, content, sep in self.sections:
+            yield Rule(title=name, characters=sep[:1] or "-")
+            yield Text(content)
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # tw.line("FixtureLookupError: %s" %(self.argname), red=True)
@@ -1055,6 +1154,9 @@ class FixtureLookupErrorRepr(TerminalRepr):
                 )
         tw.line()
         tw.line(f"{os.fspath(self.filename)}:{self.firstlineno + 1}")
+        for name, content, sep in self.sections:
+            tw.sep(sep, name)
+            tw.line(content)
 
 
 def call_fixture_func(
