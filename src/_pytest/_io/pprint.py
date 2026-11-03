@@ -29,6 +29,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 import dataclasses as _dataclasses
 import re
+import sys
 import types as _types
 from typing import Any
 
@@ -211,7 +212,7 @@ class PrettyPrinter:
 
     _dispatch[dict.__repr__] = _pprint_dict
 
-    def _pprint_ordered_dict(
+    def _pprint_dict_with_cls(
         self,
         object: Any,
         indent: int,
@@ -227,7 +228,9 @@ class PrettyPrinter:
         yield from self._pprint_dict(object, indent, allowance, context, level)
         yield ")"
 
-    _dispatch[_collections.OrderedDict.__repr__] = _pprint_ordered_dict
+    _dispatch[_collections.OrderedDict.__repr__] = _pprint_dict_with_cls
+    if sys.version_info >= (3, 15):
+        _dispatch[frozendict.__repr__] = _pprint_dict_with_cls  # noqa: F821
 
     def _pprint_list(
         self,
@@ -621,12 +624,26 @@ class PrettyPrinter:
 
         r = getattr(typ, "__repr__", None)
 
-        if issubclass(typ, dict) and r is dict.__repr__:
+        if sys.version_info >= (3, 15):
+            is_frozendict = (
+                issubclass(typ, frozendict)  # noqa: F821
+                and r is frozendict.__repr__  # noqa: F821
+            )
+        else:
+            is_frozendict = False
+
+        if (issubclass(typ, dict) and r is dict.__repr__) or is_frozendict:
             if not object:
-                return "{}"
+                if is_frozendict:
+                    return f"{typ.__name__}()"
+                else:
+                    return "{}"
             objid = id(object)
             if maxlevels and level >= maxlevels:
-                return "{...}"
+                if is_frozendict:
+                    return f"{typ.__name__}({{...}})"
+                else:
+                    return "{...}"
             if objid in context:
                 return _recursion(object)
             context.add(objid)
@@ -638,7 +655,11 @@ class PrettyPrinter:
                 vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
             context.remove(objid)
-            return "{{{}}}".format(", ".join(components))
+            rep = "{{{}}}".format(", ".join(components))
+            if is_frozendict:
+                return f"{typ.__name__}({rep})"
+            else:
+                return rep
 
         if (issubclass(typ, list) and r is list.__repr__) or (
             issubclass(typ, tuple) and r is tuple.__repr__
