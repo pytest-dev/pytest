@@ -6,6 +6,8 @@ from collections.abc import Sequence
 
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
+from _pytest.assertion._diff import ndiff_too_slow_for_lines
+from _pytest.assertion._diff import truncated_ndiff
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
@@ -34,6 +36,10 @@ def _compare_eq_iterable(
 
     yield ""
     yield "Full diff: (-: missing in left side, +: extra in left side)"
+    if ndiff_too_slow_for_lines(left_formatting, right_formatting):
+        yield from truncated_ndiff(left_formatting, right_formatting, highlighter)
+        return
+
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     # Highlight each ndiff line individually so the streaming truncator can
