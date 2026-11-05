@@ -634,6 +634,16 @@ class TestApprox:
         assert expected != approx(Decimal("Infinity"))
         assert Decimal("Infinity") != approx(expected)
 
+    def test_decimal_actual_nan(self):
+        """Comparing a Decimal('NaN') actual value against approx() compares unequal (#15335)."""
+        assert Decimal("NaN") != approx(Decimal("1.1"))
+        assert Decimal("NaN") != approx(Decimal("1.1"), nan_ok=True)
+        assert Decimal("NaN") != approx(1.1)
+        assert [Decimal("NaN")] != approx([Decimal("1.1")])
+        assert {"val": Decimal("NaN")} != approx({"val": Decimal("1.1")})
+        assert Decimal("NaN") == approx(Decimal("NaN"), nan_ok=True)
+        assert Decimal("NaN") != approx(Decimal("NaN"), nan_ok=False)
+
     def test_fraction(self):
         within_1e6 = [
             (1 + Fraction(1, 1000000), Fraction(1)),

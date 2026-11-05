@@ -1,0 +1,1 @@
+Fixed :func:`pytest.approx` raising :class:`decimal.InvalidOperation` when the actual value is a :class:`decimal.Decimal` NaN and the expected value is finite.
