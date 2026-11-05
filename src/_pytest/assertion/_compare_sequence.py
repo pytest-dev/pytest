@@ -43,6 +43,15 @@ def _compare_eq_iterable(
         yield highlighter(line.rstrip(), lexer="diff")
 
 
+def _suffix_matches(
+    longer: Sequence[object], shorter: Sequence[object], index: int
+) -> bool:
+    return all(
+        longer[index + 1 + offset] == shorter[index + offset]
+        for offset in range(len(shorter) - index)
+    )
+
+
 def _compare_eq_sequence(
     left: Sequence[object],
     right: Sequence[object],
@@ -87,14 +96,14 @@ def _compare_eq_sequence(
     if len_diff:
         if len_diff > 0:
             dir_with_more = "Left"
-            if found_diff and len_diff == 1 and left[i + 1 :] == right[i:]:
+            if found_diff and len_diff == 1 and _suffix_matches(left, right, i):
                 extra = saferepr(left[i])
             else:
                 extra = saferepr(left[len_right])
         else:
             len_diff = 0 - len_diff
             dir_with_more = "Right"
-            if found_diff and len_diff == 1 and right[i + 1 :] == left[i:]:
+            if found_diff and len_diff == 1 and _suffix_matches(right, left, i):
                 extra = saferepr(right[i])
             else:
                 extra = saferepr(right[len_left])

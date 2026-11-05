@@ -1,1 +1,1 @@
-Single-item insertions in sequence comparisons now identify the inserted item when the remaining elements align.
+Single-item insertions in sequence comparisons now identify the inserted item when the remaining elements align, including when the two sequences have different types such as ``list`` and ``tuple``.

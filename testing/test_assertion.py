@@ -6,6 +6,7 @@ from collections import UserDict
 from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import MutableSequence
+from collections.abc import Sequence
 import dataclasses
 import sys
 import textwrap
@@ -1178,6 +1179,10 @@ class TestAssert_reprcompare:
             ([1, 2, 3], [1, 2, 3, 4], "Right contains one more item: 4"),
             ([1, 2, 3], [1, 2, 0, 3], "Right contains one more item: 0"),
             ([1, 2, 0, 3], [1, 2, 3], "Left contains one more item: 0"),
+            ([1, 2, 3], (0, 1, 2, 3), "Right contains one more item: 0"),
+            ((1, 2, 3), [0, 1, 2, 3], "Right contains one more item: 0"),
+            ([1, 2, 3], (1, 2, 0, 3), "Right contains one more item: 0"),
+            ([1, 2, 0, 3], (1, 2, 3), "Left contains one more item: 0"),
             ([1, 2, 9], [1, 3], "Left contains one more item: 9"),
             ([1, 3], [1, 2, 9], "Right contains one more item: 9"),
             (
@@ -1188,7 +1193,7 @@ class TestAssert_reprcompare:
         ],
     )
     def test_sequence_extra_item_message(
-        self, left: list[object], right: list[object], expected: str
+        self, left: Sequence[object], right: Sequence[object], expected: str
     ) -> None:
         lines = callequal(left, right, verbose=1)
         assert lines is not None
