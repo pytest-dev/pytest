@@ -57,8 +57,13 @@ class NodeId:
         return self
 
     def __str__(self) -> str:
-        if self._str_cache is not None:
-            return self._str_cache
+        # Read ``_str_cache`` defensively: on Python 3.10.0, slotted dataclass
+        # fields with ``init=False`` and a default value are never set
+        # (https://github.com/python/cpython/issues/88815), so the attribute
+        # may be missing entirely.
+        cache = getattr(self, "_str_cache", None)
+        if cache is not None:
+            return cache
         s = "::".join((self.path, *self.names))
         if self.params is not None:
             s += f"[{self.params}]"
