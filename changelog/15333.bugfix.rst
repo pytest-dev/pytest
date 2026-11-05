@@ -1,0 +1,1 @@
+Fixed excessive memory usage during doctest collection on modules importing ``unittest.mock.call`` when the recursion limit is raised.

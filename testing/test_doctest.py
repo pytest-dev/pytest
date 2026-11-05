@@ -1812,6 +1812,26 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, pytester: Py
     result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
+def test_doctest_mock_objects_high_recursion_limit(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import sys
+        sys.setrecursionlimit(5000)
+        """
+    )
+    pytester.makepyfile(
+        """
+        '''
+        >>> 1
+        1
+        '''
+        from unittest.mock import call
+        """
+    )
+    result = pytester.runpytest("--doctest-modules")
+    result.stdout.fnmatch_lines(["* 1 passed *"])
+
+
 class Broken:
     def __getattr__(self, _):
         raise KeyError("This should be an AttributeError")

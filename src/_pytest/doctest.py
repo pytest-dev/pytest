@@ -547,6 +547,22 @@ class DoctestModule(Module):
                         source_lines,
                     )
 
+            def _find(
+                self, tests, obj, name, module, source_lines, globs, seen
+            ) -> None:
+                """Override _find to work around issue in stdlib.
+
+                https://github.com/pytest-dev/pytest/issues/3456
+                https://github.com/python/cpython/issues/69718
+                """
+                if _is_mocked(obj):
+                    return  # pragma: no cover
+                with _patch_unwrap_mock_aware():
+                    # Type ignored because this is a private function.
+                    super()._find(  # type:ignore[misc]
+                        tests, obj, name, module, source_lines, globs, seen
+                    )
+
             if sys.version_info < (3, 13):
 
                 def _from_module(self, module, object):
