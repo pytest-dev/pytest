@@ -201,6 +201,7 @@ def importorskip(
     reason: str | None = None,
     *,
     exc_type: type[ImportError] | None = None,
+    defer: bool = False,
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
     current test if the module cannot be imported.
@@ -224,6 +225,13 @@ def importorskip(
 
         See :ref:`import-or-skip-import-error` for details.
 
+    :param defer:
+        If true during import of a test module or conftest, collect tests even
+        when the dependency is unavailable and skip each at setup instead.
+        The remaining module body runs. Eager use of the unavailable module,
+        or another import failure, falls back to skipping the whole module.
+        Inside a test or fixture this has the usual immediate-skip behavior.
+
 
     :returns:
         The imported module. This should be assigned to its canonical name.
@@ -242,6 +250,10 @@ def importorskip(
     .. versionchanged:: 9.1
 
         The default for ``exc_type`` is now :class:`ModuleNotFoundError`.
+
+    .. versionadded:: 9.2
+
+        The ``defer`` parameter.
     """
     import warnings
 
@@ -268,6 +280,10 @@ def importorskip(
                 reason = f"could not import {modname!r}: {exc}"
             skipped = Skipped(reason, allow_module_level=True)
     if skipped:
+        if defer:
+            from _pytest.deferred_imports import defer_skip
+
+            return defer_skip(skipped)
         raise skipped
 
     mod = sys.modules[modname]
@@ -279,8 +295,13 @@ def importorskip(
         from packaging.version import Version
 
         if verattr is None or Version(verattr) < Version(minversion):
-            raise Skipped(
+            skipped = Skipped(
                 f"module {modname!r} has __version__ {verattr!r}, required is: {minversion!r}",
                 allow_module_level=True,
             )
+            if defer:
+                from _pytest.deferred_imports import defer_skip
+
+                return defer_skip(skipped)
+            raise skipped
     return mod

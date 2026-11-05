@@ -14,6 +14,8 @@ import traceback
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.deferred_imports import active_gate_key
+from _pytest.deferred_imports import skip_if_gated
 from _pytest.mark.structures import Mark
 from _pytest.nodes import Item
 from _pytest.outcomes import fail
@@ -246,6 +248,7 @@ xfailed_key = StashKey[Xfail | None]()
 
 @hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: Item) -> None:
+    skip_if_gated(item)
     skipped = evaluate_skip_marks(item)
     if skipped:
         raise skip.Exception(skipped.reason, _use_item_location=True)
@@ -278,6 +281,9 @@ def pytest_runtest_makereport(
     item: Item, call: CallInfo[None]
 ) -> Generator[None, TestReport, TestReport]:
     rep = yield
+    gate = item.stash.get(active_gate_key, None)
+    if rep.skipped and call.when == "setup" and gate is not None:
+        rep.longrepr = (gate.filename, gate.lineno, "Skipped: " + str(gate.skipped))
     xfailed = item.stash.get(xfailed_key, None)
     if item.config.option.runxfail:
         pass  # don't interfere
