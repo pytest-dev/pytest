@@ -23,6 +23,17 @@ class TestNodeId:
         node_id = NodeId(path="a/test_b.py", names=("test_c",), params="1-x")
         assert str(node_id) == "a/test_b.py::test_c[1-x]"
 
+    def test_str_missing_str_cache(self) -> None:
+        # Simulate Python 3.10.0 (https://github.com/python/cpython/issues/88815):
+        # slotted dataclass fields with init=False and a default are never set,
+        # so _str_cache may be missing entirely (gh-15337).
+        node_id = NodeId(path="a/test_b.py", names=("test_c",))
+        if hasattr(node_id, "_str_cache"):
+            object.__delattr__(node_id, "_str_cache")
+        assert str(node_id) == "a/test_b.py::test_c"
+        # The cache must be repopulated by the first __str__ call.
+        assert node_id._str_cache == "a/test_b.py::test_c"
+
     # -- child() and leaf() --
 
     def test_child(self) -> None:
