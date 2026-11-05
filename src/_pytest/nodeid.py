@@ -61,7 +61,7 @@ class NodeId:
         # fields with ``init=False`` and a default value are never set
         # (https://github.com/python/cpython/issues/88815), so the attribute
         # may be missing entirely.
-        cache = getattr(self, "_str_cache", None)
+        cache: str | None = getattr(self, "_str_cache", None)
         if cache is not None:
             return cache
         s = "::".join((self.path, *self.names))
