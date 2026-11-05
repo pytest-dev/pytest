@@ -232,6 +232,20 @@ class TestConfigTmpPath:
             # Check the base dir itself is gone without depending on test results
             assert base_dir == []
 
+    def test_retention_count_toml_string_deprecated(self, pytester: Pytester) -> None:
+        pytester.maketoml('[pytest]\ntmp_path_retention_count = "2"\n')
+        pytester.makepyfile(
+            """
+            def test_1(tmp_path_factory):
+                assert tmp_path_factory._retention_count == 2
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            ["*PytestRemovedIn10Warning: tmp_path_retention_count = '2' in TOML*"]
+        )
+
     @pytest.mark.parametrize("policy", ['"failed"', '"all"'])
     @pytest.mark.parametrize("count", [0, 1, 3])
     def test_retention_count(self, pytester: Pytester, policy, count) -> None:
