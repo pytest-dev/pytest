@@ -2423,13 +2423,16 @@ def parse_warning_filter(
 
     parts = arg.split(":")
     if len(parts) > 5:
+        doc_url = (
+            "https://docs.python.org/3/library/warnings.html#describing-warning-filters"
+        )
         error = dedent(
             f"""\
             Too many fields ({len(parts)}), expected at most 5 separated by colons:
 
               action:message:category:module:line
 
-            For more information please consult: https://docs.python.org/3/library/warnings.html#describing-warning-filters
+            For more information please consult: {doc_url}
             """
         )
         raise UsageError(error_template.format(error=error))
