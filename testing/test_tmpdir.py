@@ -877,6 +877,38 @@ class TestRmRf:
         on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
         assert not fn.exists()
 
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_rm_rf_empty_dir_under_read_only_parent(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        parent = root / "parent"
+        empty = parent / "empty"
+        empty.mkdir(parents=True)
+        parent.chmod(0o500)
+
+        try:
+            rm_rf(root)
+            assert not root.exists()
+        finally:
+            if parent.exists():
+                parent.chmod(0o700)
+
+    def test_on_rm_rf_error_chmods_empty_dir_parents(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        parent = tmp_path / "parent"
+        empty = parent / "empty"
+        empty.mkdir(parents=True)
+        chmod_paths: list[str] = []
+
+        def record_chmod(path: str) -> bool:
+            chmod_paths.append(path)
+            return _chmod_rwx(path)
+
+        monkeypatch.setattr(pathlib, "_chmod_rwx", record_chmod)
+        assert on_rm_rf_error(os.rmdir, str(empty), PermissionError(), start_path=tmp_path)
+        assert str(parent) in chmod_paths
+        assert not empty.exists()
+
 
 def attempt_symlink_to(path, to_path):
     """Try to make a symlink from "path" to "to_path", skipping in case this platform
