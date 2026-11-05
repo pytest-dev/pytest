@@ -905,7 +905,9 @@ class TestRmRf:
             return _chmod_rwx(path)
 
         monkeypatch.setattr(pathlib, "_chmod_rwx", record_chmod)
-        assert on_rm_rf_error(os.rmdir, str(empty), PermissionError(), start_path=tmp_path)
+        assert on_rm_rf_error(
+            os.rmdir, str(empty), PermissionError(), start_path=tmp_path
+        )
         assert str(parent) in chmod_paths
         assert not empty.exists()
 
