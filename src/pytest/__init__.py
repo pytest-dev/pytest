@@ -42,6 +42,7 @@ from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import MarkDecorator
 from _pytest.mark import MarkGenerator
 from _pytest.mark import param
+from _pytest.mark import ParameterSet
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import Directory
@@ -130,6 +131,7 @@ __all__ = [
     "MonkeyPatch",
     "OptionGroup",
     "Package",
+    "ParameterSet",
     "Parser",
     "PytestApproxDecimalToleranceWarning",
     "PytestAssertRewriteWarning",

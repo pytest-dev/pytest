@@ -554,7 +554,7 @@ requires-dist = [
     { name = "numpy", marker = "extra == 'dev'", specifier = ">=1.26" },
     { name = "packaging", specifier = ">=24" },
     { name = "pexpect", marker = "extra == 'dev'", specifier = ">=4.9" },
-    { name = "pluggy", specifier = ">=1.5,<2" },
+    { name = "pluggy", specifier = ">=1.6,<2" },
     { name = "pygments", specifier = ">=2.15" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.5" },
     { name = "pyyaml", marker = "extra == 'dev'" },

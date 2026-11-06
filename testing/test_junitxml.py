@@ -18,6 +18,7 @@ from _pytest.junitxml import _JunitFamily
 from _pytest.junitxml import _JunitLogging
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
+from _pytest.junitxml import shorten_message
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.pytester import RunResult
@@ -654,6 +655,49 @@ class TestPython:
         tnode = node.get_first_by_tag("testcase")
         fnode = tnode.get_first_by_tag("failure")
         fnode.assert_attr(message="AssertionError: An error\nassert 0")
+
+    def test_failure_message_is_shortened(
+        self, pytester: Pytester, run_and_parse: RunAndParse
+    ) -> None:
+        """Long failure messages are shortened in the attribute, but kept in
+        full in the element text (#12223)."""
+        pytester.makepyfile(
+            """
+            def test_fail():
+                assert list(range(200)) == list(range(199)) + [999]
+        """
+        )
+        _result, dom = run_and_parse("-vv")
+        fnode = dom.get_first_by_tag("failure")
+        message = fnode["message"]
+        assert message.startswith("assert [0, 1, 2, ")
+        assert message.endswith("; full report in element text]")
+        assert len(message) < 1000
+        assert "Full diff:" in fnode.text
+        assert "999" in fnode.text
+
+    def test_error_message_is_shortened(
+        self, pytester: Pytester, run_and_parse: RunAndParse
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                raise ValueError("a" * 2000)
+
+            def test_function(arg):
+                pass
+        """
+        )
+        _result, dom = run_and_parse()
+        fnode = dom.get_first_by_tag("error")
+        assert fnode["message"].startswith('failed on setup with "ValueError: aaa')
+        assert fnode["message"].endswith(
+            "...\n[truncated; full report in element text]"
+        )
+        assert "a" * 2000 in fnode.text
 
     @parametrize_families
     def test_failure_escape(
@@ -1881,3 +1925,44 @@ def test_invalid_junit_option_value(pytester: Pytester, name: str, value: str) -
     result.stderr.fnmatch_lines(
         [f"*ERROR: *config option '{name}' expects one of *, got '{value}'"]
     )
+
+
+@pytest.mark.parametrize(
+    "msg",
+    [
+        "",
+        "assert 0",
+        "AssertionError: Regex pattern did not match.\n"
+        "  Expected regex: 'foo'\n"
+        "  Actual message: 'bar'",
+        "x" * 500,
+        "trailing newline\n",
+    ],
+)
+def test_shorten_message_keeps_short_messages(msg: str) -> None:
+    assert shorten_message(msg) == msg
+
+
+def test_shorten_message_cuts_on_line_boundary() -> None:
+    msg = "\n".join(f"line {i:3}" for i in range(100))
+    assert shorten_message(msg, budget=20) == (
+        "line   0\nline   1\n[+98 more lines; full report in element text]"
+    )
+
+
+def test_shorten_message_cuts_single_long_line() -> None:
+    assert shorten_message("x" * 30, budget=10) == (
+        "xxxxxxxxxx...\n[truncated; full report in element text]"
+    )
+
+
+def test_shorten_message_cuts_long_first_line_with_more_lines() -> None:
+    assert shorten_message("x" * 30 + "\nsecond", budget=10) == (
+        "xxxxxxxxxx...\n[+1 more line; full report in element text]"
+    )
+
+
+def test_shorten_message_before_escaping() -> None:
+    """Shortening happens on the raw text, so escapes are never split."""
+    escaped = bin_xml_escape(shorten_message("\x1b" * 20, budget=5))
+    assert escaped == "#x1B" * 5 + "...\n[truncated; full report in element text]"
