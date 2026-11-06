@@ -1173,9 +1173,7 @@ def test_rewritten():
         The rewritten pyc is reused: filenames are corrected in memory, not by
         rewriting the cache.
         """
-        from _pytest.assertion.rewrite import (  # type: ignore[attr-defined]
-            _imp_fix_co_filename,
-        )
+        from _pytest.assertion.rewrite import _imp_fix_co_filename  # type: ignore[attr-defined]
 
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)

@@ -564,9 +564,18 @@ class FixtureRequest(abc.ABC):
         result.extend(set(self._fixture_defs).difference(result))
         return result
 
+    # The return type is intentionally ``Any``.
+    # The concrete node type depends on the request scope, so the only correct
+    # annotation would be a broad one (``Item | Collector``). That would force
+    # users to ``assert isinstance(...)`` or ``cast`` whenever they know the
+    # actual type (e.g. ``request.node.function`` in a function-scoped
+    # fixture), so we trade type safety for convenience here.
+    # It is spelled out explicitly because pyright in strict mode reports an
+    # unannotated return as ``Unknown`` rather than ``Any``.
+    # See https://github.com/pytest-dev/pytest/issues/13888#issuecomment-3511168937.
     @property
     @abc.abstractmethod
-    def node(self):
+    def node(self) -> Any:
         """Underlying collection node (depends on current request scope)."""
         raise NotImplementedError()
 
@@ -618,7 +627,7 @@ class FixtureRequest(abc.ABC):
 
     @property
     def keywords(self) -> MutableMapping[str, Any]:
-        """Keywords/markers dictionary for the underlying node."""
+        """The :attr:`~_pytest.nodes.Node.keywords` of the underlying node."""
         node: nodes.Node = self.node
         return node.keywords
 
@@ -634,10 +643,11 @@ class FixtureRequest(abc.ABC):
         raise NotImplementedError()
 
     def applymarker(self, marker: str | MarkDecorator) -> None:
-        """Apply a marker to a single test function invocation.
+        """Apply a marker to the test(s) this fixture is running for.
 
-        This method is useful if you don't want to have a keyword/marker
-        on all function invocations.
+        Unlike decorating a test function, which marks every invocation of it,
+        this adds the marker to the request's ``node``: for a function-scoped
+        fixture, the single test invocation currently being set up.
 
         :param marker:
             An object created by a call to ``pytest.mark.NAME(...)``.
@@ -1131,7 +1141,7 @@ class FixtureDef(Generic[FixtureValue]):
         check_ispytest(_ispytest)
         # Emit deprecation warning if deprecated baseid string is used.
         if node is NOTSET:
-            warnings.warn(FIXTURE_BASEID_DEPRECATED, stacklevel=2)
+            warnings.warn(FIXTURE_BASEID_DEPRECATED.format(), stacklevel=2)
         if baseid is NOTSET:
             baseid = None
         # The node where this fixture was defined, if available.
@@ -1196,7 +1206,7 @@ class FixtureDef(Generic[FixtureValue]):
 
     @property
     def has_location(self) -> bool:
-        warnings.warn(FIXTUREDEF_HAS_LOCATION_DEPRECATED, stacklevel=2)
+        warnings.warn(FIXTUREDEF_HAS_LOCATION_DEPRECATED.format(), stacklevel=2)
         return self._has_location
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
@@ -1619,7 +1629,7 @@ def yield_fixture(
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    warnings.warn(YIELD_FIXTURE, stacklevel=2)
+    warnings.warn(YIELD_FIXTURE.format(), stacklevel=2)
     return fixture(
         fixture_function,
         *args,
@@ -2090,7 +2100,7 @@ class FixtureManager:
         """
         # Emit deprecation warning if nodeid string.
         if nodeid is not NOTSET or node is NOTSET:
-            warnings.warn(FIXTURE_NODEID_DEPRECATED, stacklevel=2)
+            warnings.warn(FIXTURE_NODEID_DEPRECATED.format(), stacklevel=2)
         fixture_def = FixtureDef(
             config=self.config,
             baseid=nodeid,
@@ -2279,7 +2289,7 @@ class FixtureManager:
             raise TypeError("parsefactories() requires holder or node_or_obj")
         elif nodeid is not NOTSET:
             # Legacy: parsefactories(obj, nodeid) - string-based scoping only.
-            warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED, stacklevel=2)
+            warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED.format(), stacklevel=2)
             holderobj = node_or_obj
             effective_nodeid = nodeid
         else:
@@ -2512,12 +2522,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
 
     fm = session._fixturemanager
     available = []
-    seen: set[tuple[str, str]] = set()
     for fixturedef in fm._get_all_fixture_defs():
-        loc = getlocation(fixturedef.func, invocation_dir)
-        if (fixturedef.argname, loc) in seen:
-            continue
-        seen.add((fixturedef.argname, loc))
         available.append(
             (
                 len(fixturedef.baseid),

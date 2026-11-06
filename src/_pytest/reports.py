@@ -345,7 +345,7 @@ class TestReport(BaseReport):
         self,
         nodeid: str | NodeId,
         location: tuple[str, int | None, str],
-        keywords: Mapping[str, Any],
+        keywords: Mapping[str, Literal[1]],
         outcome: Literal["passed", "failed", "skipped"],
         longrepr: ExceptionInfo[BaseException]
         | tuple[str, int, str]
@@ -370,9 +370,10 @@ class TestReport(BaseReport):
         #: The line number is 0-based.
         self.location: tuple[str, int | None, str] = location
 
-        #: A name -> value dictionary containing all keywords and
-        #: markers associated with a test invocation.
-        self.keywords: Mapping[str, Any] = keywords
+        #: The names in :attr:`Node.keywords <_pytest.nodes.Node.keywords>`
+        #: of the item, each mapping to ``1``: only the names survive into the
+        #: report, the values of the node keywords are not carried over.
+        self.keywords: Mapping[str, Literal[1]] = keywords
 
         #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
@@ -419,7 +420,7 @@ class TestReport(BaseReport):
         duration = call.duration
         start = call.start
         stop = call.stop
-        keywords = {x: 1 for x in item.keywords}
+        keywords: Mapping[str, Literal[1]] = dict.fromkeys(item.keywords, 1)
         excinfo = call.excinfo
         sections = []
         if not call.excinfo:
