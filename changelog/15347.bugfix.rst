@@ -1,0 +1,1 @@
+Fixed a crash with a raw ``ValueError`` traceback when ``tmp_path_retention_count`` is set to a non-numeric string in TOML config; it now fails with a usage error naming the option.
