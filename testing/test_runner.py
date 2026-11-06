@@ -142,7 +142,7 @@ class TestSetupState:
         assert isinstance(func.exceptions[1], ValueError)
 
     def test_teardown_exact_records_session_errors(self, pytester) -> None:
-        """Session teardown errors are recorded out-of-band, others are not (#8375)."""
+        """Session teardown errors are recorded out-of-band, others are not."""
 
         def raiser(exc):
             raise exc
@@ -158,7 +158,7 @@ class TestSetupState:
         assert item.session.stash.get(key, False) is True
 
     def test_teardown_exact_no_flag_for_item_errors(self, pytester) -> None:
-        """Item-only teardown errors leave no session attribution (#8375)."""
+        """Item-only teardown errors leave no session attribution."""
 
         def raiser(exc):
             raise exc
@@ -172,7 +172,7 @@ class TestSetupState:
         assert runner.session_teardown_error_key not in item.session.stash
 
     def test_consume_session_teardown_error_one_shot(self, pytester) -> None:
-        """Consuming the session flag deletes it; second consume is False (#8375)."""
+        """Consuming the session flag deletes it; second consume is False."""
         item = pytester.getitem("def test_func(): pass")
         call = runner.CallInfo.from_call(lambda: None, when="teardown")
         key = runner.session_teardown_error_key
