@@ -1,0 +1,1 @@
+Fixed a regression in :func:`pytest.approx` with JAX arrays when an inexact float tolerance is supplied.

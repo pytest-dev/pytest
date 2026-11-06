@@ -185,13 +185,21 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.path: pathlib.Path = path
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
-        #: Keywords/markers collected from all scopes.
+        #: Mapping of the names collected for this node and its parents: the
+        #: node names themselves, the names of the markers applied to them
+        #: (mapping to the :class:`~pytest.Mark`), and, for a test function,
+        #: its attributes and parametrization id.
+        #:
+        #: Mostly useful for ``"markname" in item.keywords`` checks. Note that
+        #: this mapping is not what ``-k`` matches against, so writing to it
+        #: does not affect test selection, and that it is unrelated to
+        #: :attr:`extra_keyword_matches`.
         self.keywords: MutableMapping[str, Any] = NodeKeywords(self)
 
         #: The marker objects belonging to this node.
         self.own_markers: list[Mark] = []
 
-        #: Allow adding of extra keywords to use for matching.
+        #: Extra names for ``-k`` to match this node and its children on.
         self.extra_keyword_matches: set[str] = set()
 
         if nodeid is not None:
@@ -335,7 +343,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
             marker_ = getattr(MARK_GEN, marker)
         else:
             raise ValueError("is not a string or pytest.mark.* Marker")
-        self.keywords[marker_.name] = marker_
+        self.keywords[marker_.name] = marker_.mark
         if append:
             self.own_markers.append(marker_.mark)
         else:

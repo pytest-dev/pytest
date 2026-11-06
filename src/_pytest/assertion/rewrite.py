@@ -57,9 +57,7 @@ if TYPE_CHECKING:
 
 
 try:
-    from _imp import (  # type: ignore[attr-defined]
-        _fix_co_filename as _imp_fix_co_filename,
-    )
+    from _imp import _fix_co_filename as _imp_fix_co_filename  # type: ignore[attr-defined]
 except ImportError:  # pragma: no cover
     _imp_fix_co_filename = None
 

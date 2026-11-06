@@ -464,6 +464,29 @@ class TestUnittestSubTest:
             ]
         )
 
+    def test_assert_crash_line(self, pytester: pytest.Pytester) -> None:
+        """Rewritten asserts in subtests report without 'AssertionError: ',
+        like regular tests do (#12175)."""
+        pytester.makepyfile(
+            """
+            from unittest import TestCase
+
+            class T(TestCase):
+                def test_foo(self):
+                    x = 1
+                    with self.subTest("foo subtest"):
+                        assert x == 2
+            """
+        )
+        result = pytester.runpytest("-rf")
+        result.stdout.fnmatch_lines(
+            [
+                "E * assert 1 == 2",
+                "SUBFAILED*test_foo - assert 1 == 2",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*AssertionError: assert*")
+
     def test_passes(
         self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -1015,6 +1038,57 @@ def test_nested(pytester: pytest.Pytester) -> None:
             "* 3 failed in *",
         ]
     )
+
+
+def test_timing_unaffected_by_mocked_time(pytester: pytest.Pytester) -> None:
+    """Tests mocking ``time`` do not corrupt the reported start/stop/duration
+    (#15201, #185)."""
+    reprec = pytester.inline_runsource(
+        """
+        import time
+
+        def test(subtests, monkeypatch):
+            with subtests.test("mocked"):
+                monkeypatch.setattr(time, "time", lambda: 0.0)
+                monkeypatch.setattr(time, "perf_counter", lambda: -1e9)
+        """
+    )
+    reports = [
+        r
+        for r in reprec.getreports("pytest_runtest_logreport")
+        if isinstance(r, SubtestReport)
+    ]
+    assert len(reports) == 1
+    [report] = reports
+    assert report.passed
+    assert report.start > 0
+    assert report.duration >= 0
+    assert report.stop - report.start == pytest.approx(report.duration, abs=1)
+
+
+def test_unittest_subtest_timing(pytester: pytest.Pytester) -> None:
+    """Unittest reports subtests without timing."""
+    reprec = pytester.inline_runsource(
+        """
+        from unittest import TestCase
+
+        class T(TestCase):
+            def test(self):
+                with self.subTest("a"):
+                    assert False
+        """
+    )
+    reports = [
+        r
+        for r in reprec.getreports("pytest_runtest_logreport")
+        if isinstance(r, SubtestReport)
+    ]
+    assert len(reports) == 1
+    [report] = reports
+    assert report.failed
+    assert report.start == 0
+    assert report.stop == 0
+    assert report.duration == 0
 
 
 class MyEnum(Enum):
