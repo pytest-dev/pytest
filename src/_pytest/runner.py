@@ -437,14 +437,14 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     return rep
 
 
-# Set when session teardown raises; consumed once by the teardown report (#8375).
+# Set when session teardown raises; consumed once by the teardown report.
 session_teardown_error_key = StashKey[bool]()
 
 
 def consume_session_teardown_error(item: Item, call: CallInfo[None]) -> bool:
     """Consume a recorded session teardown error for a teardown report.
 
-    Returns True once if session teardown raised, else False (#8375).
+    Returns True once if session teardown raised, else False.
     """
     if call.when != "teardown":
         return False
