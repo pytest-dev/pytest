@@ -844,7 +844,7 @@ class TestXFailwithSetupTeardown:
         )
 
     def test_xfail_session_teardown_error_is_error(self, pytester: Pytester) -> None:
-        """Session teardown errors are errors even for xfail tests (#8375)."""
+        """Session teardown errors are errors even for xfail tests."""
         pytester.makepyfile(
             test_case="""
             import pytest
@@ -872,7 +872,7 @@ class TestXFailwithSetupTeardown:
         )
 
     def test_xfail_non_session_teardown_stays_xfail(self, pytester: Pytester) -> None:
-        """Non-session teardown failures on xfail tests stay XFAIL (#8375)."""
+        """Non-session teardown failures on xfail tests stay XFAIL."""
         pytester.makepyfile(
             test_case="""
             import pytest
@@ -913,7 +913,7 @@ class TestXFailwithSetupTeardown:
     def test_xfail_mixed_session_and_item_teardown_stays_error(
         self, pytester: Pytester
     ) -> None:
-        """A session error grouped with an item error is still an error (#8375)."""
+        """A session error grouped with an item error is still an error."""
         pytester.makepyfile(
             test_case="""
             import pytest
