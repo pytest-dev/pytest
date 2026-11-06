@@ -171,6 +171,13 @@ def test_capture_replacement_reports_original_encoding_tee_sys(
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+def test_capture_wrappers_default_encoding() -> None:
+    with capture.CaptureIO() as stream:
+        assert stream.encoding == "UTF-8"
+    with capture.EncodedFile(io.BytesIO(), encoding="latin-1") as stream:
+        assert stream.encoding == "latin-1"
+
+
 def test_collect_capturing(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """
