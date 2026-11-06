@@ -28,6 +28,7 @@ from _pytest.compat import get_user_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import TOML_NUMERIC_STRING
@@ -103,7 +104,13 @@ class TempPathFactory:
             # A str only gets here from TOML: in ini mode the int member of
             # the option type already converted it.
             value = count
-            count = int(value)
+            try:
+                count = int(value)
+            except ValueError:
+                raise UsageError(
+                    f"{config.inipath}: config option 'tmp_path_retention_count' "
+                    f"expects an int, got {value!r}"
+                ) from None
             config.issue_config_time_warning(
                 TOML_NUMERIC_STRING.format(
                     name="tmp_path_retention_count", value=value
