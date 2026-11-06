@@ -1231,8 +1231,7 @@ def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
     try:
         return request.param
     except AttributeError:
-        # Empty parameter set under --runxfail has no value to run with:
-        # fail cleanly instead of crashing (#4497).
+        # An empty parameter set has no value to run with.
         fail("no direct parameter (empty parameter set)")
 
 
