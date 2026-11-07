@@ -2166,8 +2166,11 @@ class FixtureManager:
         and objects that raise on attribute access are treated as not found.
         """
         # Skip mock objects to avoid false positives when traversing
-        # their wrapper chains (they have a _mock_name attribute).
-        if safe_getattr(obj, "_mock_name", None) is not None:
+        # their wrapper chains. Any object with a `_mock_name` attribute is
+        # a mock — including `unittest.mock.call`, whose `_mock_name` is None
+        # and whose `__wrapped__` returns a new object on every access, so
+        # unwrapping it only stops at the recursion limit (see pytest#15281).
+        if safe_getattr(obj, "_mock_name", NOTSET) is not NOTSET:
             return None
 
         try:
