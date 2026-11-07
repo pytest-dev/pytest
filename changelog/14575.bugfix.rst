@@ -1,0 +1,1 @@
+Tests with failed ``unittest.TestCase.subTest`` checks are retained in the last-failed cache and rerun by ``--last-failed``, even when later subtests or the parent test pass.

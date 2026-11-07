@@ -366,6 +366,82 @@ def test_cache_show_escaping_glob(pytester: Pytester) -> None:
 
 
 class TestLastFailed:
+    @pytest.mark.parametrize(
+        "outcomes",
+        [
+            ("failed", "passed"),
+            ("failed", "skipped"),
+            ("passed", "failed"),
+            ("failed", "parent-skipped"),
+            ("error", "passed"),
+        ],
+    )
+    @pytest.mark.parametrize("terminal", [True, False])
+    def test_unittest_subtest_failures(
+        self, pytester: Pytester, outcomes: tuple[str, str], terminal: bool
+    ) -> None:
+        source = f"""
+            import unittest
+
+            class TestSubtests(unittest.TestCase):
+                def test_subtests(self):
+                    for outcome in {outcomes!r}:
+                        if outcome == "parent-skipped":
+                            self.skipTest("parent skipped")
+                        with self.subTest(outcome=outcome):
+                            if outcome == "failed":
+                                self.fail("subtest failed")
+                            if outcome == "error":
+                                raise RuntimeError("subtest error")
+                            if outcome == "skipped":
+                                self.skipTest("subtest skipped")
+        """
+        pytester.makepyfile(test_unittest_subtest_lastfailed=source)
+        args = [] if terminal else ["-p", "no:terminal"]
+        failed_nodeid = (
+            "test_unittest_subtest_lastfailed.py::TestSubtests::test_subtests"
+        )
+
+        result = pytester.runpytest(*args)
+        assert result.ret == ExitCode.TESTS_FAILED
+        assert self.get_cached_last_failed(pytester) == [failed_nodeid]
+
+        result = pytester.runpytest(*args, "--last-failed", "--lfnf=none")
+        assert result.ret == ExitCode.TESTS_FAILED
+        assert self.get_cached_last_failed(pytester) == [failed_nodeid]
+
+        # Once all subtests pass or skip, the parent must leave the cache.
+        fixed_outcomes = tuple(
+            "passed" if x in ("failed", "error") else x for x in outcomes
+        )
+        pytester.makepyfile(
+            test_unittest_subtest_lastfailed=source.replace(
+                repr(outcomes), repr(fixed_outcomes)
+            )
+        )
+        result = pytester.runpytest(*args, "--last-failed", "--lfnf=none")
+        assert result.ret == ExitCode.OK
+        assert self.get_cached_last_failed(pytester) == []
+
+    def test_repeated_unittest_subtest_item(self, pytester: Pytester) -> None:
+        path = pytester.makepyfile(
+            """
+            import unittest
+
+            class TestSubtests(unittest.TestCase):
+                runs = 0
+
+                def test_subtests(self):
+                    type(self).runs += 1
+                    with self.subTest():
+                        self.assertEqual(type(self).runs, 2)
+            """
+        )
+        result = pytester.runpytest(path, path, "--keepduplicates")
+        assert result.ret == ExitCode.TESTS_FAILED
+        # The first run failed, but the same node ID subsequently passed.
+        assert self.get_cached_last_failed(pytester) == []
+
     def test_lastfailed_usecase(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
