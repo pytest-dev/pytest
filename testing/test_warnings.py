@@ -150,7 +150,6 @@ def test_unicode(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.skip("issue #13485")
 def test_works_with_filterwarnings(pytester: Pytester) -> None:
     """Ensure our warnings capture does not mess with pre-installed filters (#2430)."""
     pytester.makepyfile(
@@ -171,8 +170,62 @@ def test_works_with_filterwarnings(pytester: Pytester) -> None:
                     assert True
     """
     )
-    result = pytester.runpytest()
+    # Run in a subprocess: in-process runs cannot detect the bug, since
+    # pytest's own ``filterwarnings = ["error"]`` ini setting would leak in
+    # and make the warning raise regardless (#13485).
+    result = pytester.runpytest_subprocess()
     result.stdout.fnmatch_lines(["*== 1 passed in *"])
+
+
+def test_filterwarnings_set_by_conftest_persists(pytester: Pytester) -> None:
+    """Warning filters installed by a conftest apply during the test run (#13485)."""
+    pytester.makeconftest(
+        """
+        import warnings
+
+        class ConftestWarning(Warning):
+            pass
+
+        warnings.filterwarnings("error", category=ConftestWarning)
+    """
+    )
+    pytester.makepyfile(
+        """
+        import warnings
+
+        from conftest import ConftestWarning
+
+
+        def test_conftest_filter():
+            try:
+                warnings.warn(ConftestWarning("warn!"))
+                assert False
+            except ConftestWarning:
+                assert True
+    """
+    )
+    result = pytester.runpytest_subprocess()
+    result.stdout.fnmatch_lines(["*== 1 passed in *"])
+
+
+def test_filterwarnings_set_during_test_does_not_leak(pytester: Pytester) -> None:
+    """Filters installed while a test runs stay confined to that item (#13485)."""
+    pytester.makepyfile(
+        """
+        import warnings
+
+        class MyWarning(Warning):
+            pass
+
+        def test_sets_filter():
+            warnings.filterwarnings("error", category=MyWarning)
+
+        def test_warning_is_still_a_warning():
+            warnings.warn(MyWarning("warn!"))
+    """
+    )
+    result = pytester.runpytest_subprocess()
+    result.stdout.fnmatch_lines(["*== 2 passed, 1 warning in *"])
 
 
 @pytest.mark.parametrize("default_config", ["ini", "cmdline"])
