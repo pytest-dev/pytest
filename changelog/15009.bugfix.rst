@@ -1,0 +1,12 @@
+:func:`pytest.approx` now reports mismatch details for mappings whose values are
+not numbers.
+
+Previously an unequal pair of non-numeric values under the same key -- for
+example ``{"item": "a"} == approx({"item": "b"})`` -- made the diff calculation
+raise ``TypeError``, so the assertion detail table was replaced by a
+"representation of details failed" message. The equivalent sequence comparison
+already handled this.
+
+``decimal.FloatOperation`` is re-raised ahead of that handler, matching the
+sequence path, so a mapping that mixes Decimals with floats still surfaces the
+trap instead of reporting the smaller of two differences as the maximum.
