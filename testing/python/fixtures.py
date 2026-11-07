@@ -6324,3 +6324,34 @@ def test_classmethod_above_fixture_warning_inherited(pytester: Pytester) -> None
     )
     result.stdout.fnmatch_lines(["*fixture 'fixt' not found*"])
     result.assert_outcomes(errors=1)
+
+
+def test_mock_call_with_raised_recursionlimit(pytester: Pytester) -> None:
+    """Collecting a module importing ``mock.call`` must not walk its endless
+    ``__wrapped__`` chain up to the recursion limit (#15281)."""
+    pytester.makeconftest(
+        """
+        import sys
+
+        sys.setrecursionlimit(100_000)
+        """
+    )
+    pytester.makepyfile(
+        """
+        from unittest.mock import call
+
+        def test_trivial():
+            pass
+        """
+    )
+    result = pytester.runpytest_subprocess(timeout=60)
+    result.assert_outcomes(passed=1)
+
+
+def test_find_wrapped_fixture_def_skips_mock_call(pytester: Pytester) -> None:
+    """``mock.call`` has ``_mock_name = None``; it must still be skipped."""
+    from unittest import mock
+
+    fm = pytester.getitem("def test_func(): pass").session._fixturemanager
+    assert fm._find_wrapped_fixture_def(mock.call) is None
+    assert fm._find_wrapped_fixture_def(mock.Mock()) is None

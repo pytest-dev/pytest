@@ -234,6 +234,15 @@ def getimfunc(func):
         return func
 
 
+def _is_mocked(obj: object) -> bool:
+    """Return if an object is possibly a mock object by checking the
+    existence of a highly improbable attribute."""
+    return (
+        safe_getattr(obj, "pytest_mock_example_attribute_that_shouldnt_exist", None)
+        is not None
+    )
+
+
 def safe_getattr(object: Any, name: str, default: Any) -> Any:
     """Like getattr but return default upon any Exception or any OutcomeException.
 
