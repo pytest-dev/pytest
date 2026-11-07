@@ -621,6 +621,23 @@ class TestApprox:
             assert approx(x, rel=0, abs=Decimal("5e-3")) == a
             assert approx(x, rel=0, abs=Decimal("5e-7")) != a
 
+    def test_decimal_expecting_nan_actual(self):
+        """A Decimal NaN *actual* value compares unequal instead of raising (#15335)."""
+        examples = [
+            (ne, Decimal("NaN"), Decimal("1.1")),
+            (ne, Decimal("-NaN"), Decimal("1.1")),
+            (ne, Decimal("NaN"), 1.1),
+        ]
+        for op, a, x in examples:
+            # Nothing is equal to NaN by default, whichever side it is on.
+            assert op(a, approx(x))
+            assert op(a, approx(x, nan_ok=True))
+
+        # The same holds inside containers, on both sides.
+        assert [Decimal("1.1")] != approx([Decimal("NaN")])
+        assert [Decimal("NaN")] != approx([Decimal("1.1")])
+        assert {"k": Decimal("NaN")} != approx({"k": Decimal("1.1")})
+
     def test_decimal_outside_float_range(self):
         """Decimals beyond the float range must not be treated as infinite (#15005)."""
         expected = Decimal("1e400")
