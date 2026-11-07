@@ -1142,6 +1142,23 @@ def test_continue_on_collection_errors_maxfail(pytester: Pytester) -> None:
     res.stdout.fnmatch_lines(["collected 2 items / 2 errors", "*1 failed, 2 errors*"])
 
 
+def test_collection_error_aborts_before_custom_runtestloop(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_runtestloop(session):
+            raise AssertionError("runtestloop must not run after a collection error")
+        """
+    )
+    pytester.makepyfile(
+        """
+        import nosuchmodule
+        """
+    )
+    res = pytester.runpytest()
+    assert res.ret == ExitCode.INTERRUPTED
+    res.stdout.fnmatch_lines(["*! Interrupted: 1 error during collection !*"])
+
+
 def test_fixture_scope_sibling_conftests(pytester: Pytester) -> None:
     """Regression test case for https://github.com/pytest-dev/pytest/issues/2836"""
     foo_path = pytester.mkdir("foo")

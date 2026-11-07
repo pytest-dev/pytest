@@ -1,0 +1,1 @@
+Collection errors now abort from the default :hook:`pytest_collection` hook rather than :hook:`pytest_runtestloop`. A plugin that replaces ``pytest_runtestloop`` still sees the abort. A plugin that replaces ``pytest_collection`` entirely has to perform the ``testsfailed`` check itself if it wants the same guard.
