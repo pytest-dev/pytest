@@ -1,0 +1,2 @@
+Clarified how ``--pyargs`` changes resolution of ``testpaths``, including import
+search order, glob expansion, and explicit collection arguments.
