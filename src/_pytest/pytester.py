@@ -121,11 +121,7 @@ def pytest_configure(config: Config) -> None:
 
 class LsofFdLeakChecker:
     def get_open_files(self) -> list[tuple[str, str]]:
-        if sys.version_info >= (3, 11):
-            # New in Python 3.11, ignores utf-8 mode
-            encoding = locale.getencoding()
-        else:
-            encoding = locale.getpreferredencoding(False)
+        encoding = locale.getencoding()
         out = subprocess.run(
             ("lsof", "-Ffn0", "-p", str(os.getpid())),
             stdout=subprocess.PIPE,

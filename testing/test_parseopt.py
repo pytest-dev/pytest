@@ -342,11 +342,7 @@ class TestParser:
 
 
 def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
-    if sys.version_info >= (3, 11):
-        # New in Python 3.11, ignores utf-8 mode
-        encoding = locale.getencoding()
-    else:
-        encoding = locale.getpreferredencoding(False)
+    encoding = locale.getencoding()
     try:
         bash_version = subprocess.run(
             ["bash", "--version"],

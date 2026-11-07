@@ -102,7 +102,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) test suites out of the box
 
-- Python 3.10+ or PyPy 3
+- Python 3.11+ or PyPy 3
 
 - Rich plugin architecture, with over 1300+ :ref:`external plugins <plugin-list>` and thriving community
 

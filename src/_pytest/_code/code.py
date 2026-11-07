@@ -49,9 +49,6 @@ from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-
 TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 EXCEPTION_OR_MORE = type[BaseException] | tuple[type[BaseException], ...]
@@ -221,38 +218,22 @@ class TracebackEntry:
         stack_summary = extract_tb(self._rawentry, limit=1)
         return stack_summary[0]
 
-    # Column and end line numbers introduced in python 3.11
-    if sys.version_info < (3, 11):
-
-        @property
-        def end_lineno_relative(self) -> int | None:
+    @property
+    def end_lineno_relative(self) -> int | None:
+        frame_summary = self.get_python_framesummary()
+        if frame_summary.end_lineno is None:  # pragma: no cover
             return None
+        return frame_summary.end_lineno - 1 - self.frame.code.firstlineno
 
-        @property
-        def colno(self) -> int | None:
-            return None
+    @property
+    def colno(self) -> int | None:
+        """Starting byte offset of the expression in the traceback entry."""
+        return self.get_python_framesummary().colno
 
-        @property
-        def end_colno(self) -> int | None:
-            return None
-    else:
-
-        @property
-        def end_lineno_relative(self) -> int | None:
-            frame_summary = self.get_python_framesummary()
-            if frame_summary.end_lineno is None:  # pragma: no cover
-                return None
-            return frame_summary.end_lineno - 1 - self.frame.code.firstlineno
-
-        @property
-        def colno(self) -> int | None:
-            """Starting byte offset of the expression in the traceback entry."""
-            return self.get_python_framesummary().colno
-
-        @property
-        def end_colno(self) -> int | None:
-            """Ending byte offset of the expression in the traceback entry."""
-            return self.get_python_framesummary().end_colno
+    @property
+    def end_colno(self) -> int | None:
+        """Ending byte offset of the expression in the traceback entry."""
+        return self.get_python_framesummary().end_colno
 
     @property
     def frame(self) -> Frame:
@@ -473,7 +454,7 @@ def stringify_exception(
         notes = getattr(exc, "__notes__", [])
     except KeyError:
         # Workaround for https://github.com/python/cpython/issues/98778 on
-        # some 3.10 and 3.11 patch versions.
+        # some 3.11 patch versions.
         HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
         if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
             notes = []
