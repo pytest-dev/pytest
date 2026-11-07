@@ -121,6 +121,10 @@ Here is an example test function that performs some output related checks:
 
 .. code-block:: python
 
+    # content of test_output.py
+    import sys
+
+
     def test_myoutput(capsys):  # or use "capfd" for fd-level
         print("hello")
         sys.stderr.write("world\n")
@@ -130,6 +134,12 @@ Here is an example test function that performs some output related checks:
         print("next")
         captured = capsys.readouterr()
         assert captured.out == "next\n"
+
+.. code-block:: pytest
+
+    $ pytest -q test_output.py
+    .                                                                    [100%]
+    1 passed in 0.12s
 
 The ``readouterr()`` call snapshots the output so far -
 and capturing will be continued.  After the test
