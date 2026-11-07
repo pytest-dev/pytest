@@ -52,6 +52,24 @@ def test_setattr() -> None:
         monkeypatch.setattr(A, "y")  # type: ignore[call-overload]
 
 
+def test_setattr_mock_child_restored_on_undo() -> None:
+    """Undoing setattr on a mock child must restore it, not delete it.
+
+    Child mocks live in ``_mock_children``, not the instance ``__dict__``,
+    so the old value must come from getattr, not the dict (see #15287).
+    """
+    from unittest.mock import MagicMock
+
+    shared = MagicMock()
+    assert shared.connect  # the child mock exists
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(shared, "connect", MagicMock(return_value=1))
+    assert shared.connect() == 1
+    monkeypatch.undo()
+    assert shared.connect.return_value is not None
+
+
 class TestSetattrWithImportPath:
     def test_string_expression(self, monkeypatch: MonkeyPatch) -> None:
         with monkeypatch.context() as mp:
