@@ -220,7 +220,10 @@ class ApproxNumpy(Approx[ndarray]):
         different_ids = []
         for index in itertools.product(*(range(i) for i in np_array_shape)):
             approx_value = get_value_from_nested_list(approx_side_as_seq, index)
-            other_value = get_value_from_nested_list(other_side_as_array, index)
+            # As in _yield_comparisons, avoid overflow in numpy integer arithmetic.
+            other_value = _unbox_numpy_scalar(
+                get_value_from_nested_list(other_side_as_array, index)
+            )
             if approx_value != other_value:
                 abs_diff = abs(approx_value.expected - other_value)
                 max_abs_diff = _max_diff(max_abs_diff, abs_diff)
