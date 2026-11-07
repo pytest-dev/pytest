@@ -23,6 +23,7 @@ import pytest
 
 
 if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
 
 
@@ -102,6 +103,82 @@ class TestSetupState:
         err1, err2 = err.value.exceptions
         assert err1.args == ("oops1",)
         assert err2.args == ("oops2",)
+
+    @pytest.mark.parametrize("exception_type", [GeneratorExit, KeyboardInterrupt])
+    def test_teardown_base_exception_group_runs_remaining_finalizers(
+        self, pytester: Pytester, exception_type: type[BaseException]
+    ) -> None:
+        item = pytester.getitem("def test_func(): pass")
+        mod = item.listchain()[-2]
+        ss = item.session._setupstate
+        ss.setup(item)
+        finalized = []
+        error = BaseExceptionGroup(
+            "cleanup", [exception_type("base marker"), RuntimeError("ordinary marker")]
+        )
+
+        def fail():
+            raise error
+
+        ss.addfinalizer(lambda: finalized.append("module"), mod)
+        ss.addfinalizer(lambda: finalized.append("function"), item)
+        ss.addfinalizer(fail, item)
+        with pytest.raises(BaseExceptionGroup) as exc_info:
+            ss.teardown_exact(None)
+        assert exc_info.value is error
+        assert finalized == ["function", "module"]
+        assert not ss.stack
+
+    @pytest.mark.parametrize("exception_type", ["CancelledError", "GeneratorExit"])
+    def test_teardown_base_exception_group_does_not_reuse_fixture(
+        self, pytester: Pytester, exception_type: str
+    ) -> None:
+        pytester.makepyfile(
+            f"""
+            from asyncio import CancelledError
+            import sys
+            import pytest
+
+            if sys.version_info < (3, 11):
+                from exceptiongroup import BaseExceptionGroup
+
+            events = []
+            allocations = 0
+
+            @pytest.fixture
+            def owner():
+                global allocations
+                allocations += 1
+                token = allocations
+                events.append(("allocate", token))
+                yield token
+                events.append(("release", token))
+
+            @pytest.fixture
+            def resource(owner, request):
+                yield owner
+                if request.node.name == "test_first":
+                    raise BaseExceptionGroup(
+                        "cleanup",
+                        [{exception_type}("base marker"), RuntimeError("ordinary marker")],
+                    )
+
+            def test_first(resource):
+                assert resource == 1
+
+            def test_next(resource):
+                assert resource == 2
+
+            def test_releases():
+                assert events == [
+                    ("allocate", 1), ("release", 1),
+                    ("allocate", 2), ("release", 2),
+                ]
+            """
+        )
+        result = pytester.runpytest_subprocess("-q")
+        result.assert_outcomes(passed=3, errors=1)
+        result.stdout.fnmatch_lines(["*base marker*", "*ordinary marker*"])
 
     def test_teardown_multiple_scopes_one_fails(self, pytester: Pytester) -> None:
         module_teardown = []
