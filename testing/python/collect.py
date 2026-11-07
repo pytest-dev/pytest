@@ -1749,3 +1749,27 @@ def test_collection_hierarchy(pytester: Pytester) -> None:
         ],
         consecutive=True,
     )
+
+
+def test_class_from_parent_uses_given_obj(pytester: Pytester) -> None:
+    """Class.from_parent uses the given obj instead of looking it up by name (#7063)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.mark.slow
+        class Real:
+            def test_method(self):
+                pass
+
+        def pytest_pycollect_makeitem(collector, name, obj):
+            if name == "TestPlaceholder":
+                return pytest.Class.from_parent(
+                    collector, name="NotAnAttribute", obj=Real
+                )
+        """
+    )
+    pytester.makepyfile("TestPlaceholder = object()")
+    result = pytester.runpytest("-m", "slow", "-v")
+    result.stdout.fnmatch_lines(["*::NotAnAttribute::test_method PASSED*"])
+    result.assert_outcomes(passed=1)
