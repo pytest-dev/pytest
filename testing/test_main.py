@@ -85,6 +85,40 @@ def test_wrap_session_exit_sessionfinish(
     assert result.stderr.lines == ["Exit: exit_pytest_sessionfinish"]
 
 
+def test_wrap_session_unconfigure_error(pytester: Pytester) -> None:
+    """An exception in pytest_unconfigure is an internal error (#9808)."""
+    pytester.makeconftest(
+        """
+        def pytest_unconfigure():
+            raise ValueError("boom")
+        """
+    )
+    pytester.makepyfile("def test_ok(): pass")
+    result = pytester.runpytest_subprocess()
+    assert result.ret == ExitCode.INTERNAL_ERROR
+    result.stdout.fnmatch_lines(["INTERNALERROR> ValueError: boom"])
+
+
+@pytest.mark.parametrize("returncode", (None, 42))
+def test_wrap_session_exit_unconfigure(
+    returncode: int | None, pytester: Pytester
+) -> None:
+    pytester.makeconftest(
+        f"""
+        import pytest
+        def pytest_unconfigure():
+            pytest.exit(reason="exit_pytest_unconfigure", returncode={returncode})
+        """
+    )
+    pytester.makepyfile("def test_ok(): pass")
+    result = pytester.runpytest()
+    if returncode:
+        assert result.ret == returncode
+    else:
+        assert result.ret == ExitCode.OK
+    assert result.stderr.lines == ["Exit: exit_pytest_unconfigure"]
+
+
 @pytest.mark.parametrize("basetemp", ["foo", "foo/bar"])
 def test_validate_basetemp_ok(tmp_path, basetemp, monkeypatch):
     monkeypatch.chdir(str(tmp_path))
