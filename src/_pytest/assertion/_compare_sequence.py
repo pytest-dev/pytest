@@ -43,6 +43,24 @@ def _compare_eq_iterable(
         yield highlighter(line.rstrip(), lexer="diff")
 
 
+def _items_equal(a: object, b: object) -> bool:
+    if a is b:
+        return True
+    try:
+        return bool(a == b)
+    except Exception:
+        return False
+
+
+def _suffix_matches(
+    longer: Sequence[object], shorter: Sequence[object], index: int
+) -> bool:
+    return all(
+        _items_equal(longer[index + 1 + offset], shorter[index + offset])
+        for offset in range(len(shorter) - index)
+    )
+
+
 def _compare_eq_sequence(
     left: Sequence[object],
     right: Sequence[object],
@@ -52,8 +70,10 @@ def _compare_eq_sequence(
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
     len_left = len(left)
     len_right = len(right)
+    found_diff = False
+    i = -1
     for i in range(min(len_left, len_right)):
-        if left[i] != right[i]:
+        if not _items_equal(left[i], right[i]):
             if comparing_bytes:
                 # when comparing bytes, we want to see their ascii representation
                 # instead of their numeric values (#5260)
@@ -73,6 +93,7 @@ def _compare_eq_sequence(
                 f"At index {i} diff:"
                 f" {highlighter(repr(left_value))} != {highlighter(repr(right_value))}"
             )
+            found_diff = True
             break
 
     if comparing_bytes:
@@ -84,11 +105,17 @@ def _compare_eq_sequence(
     if len_diff:
         if len_diff > 0:
             dir_with_more = "Left"
-            extra = saferepr(left[len_right])
+            if found_diff and len_diff == 1 and _suffix_matches(left, right, i):
+                extra = saferepr(left[i])
+            else:
+                extra = saferepr(left[len_right])
         else:
             len_diff = 0 - len_diff
             dir_with_more = "Right"
-            extra = saferepr(right[len_left])
+            if found_diff and len_diff == 1 and _suffix_matches(right, left, i):
+                extra = saferepr(right[i])
+            else:
+                extra = saferepr(right[len_left])
 
         if len_diff == 1:
             yield f"{dir_with_more} contains one more item: {highlighter(extra)}"
