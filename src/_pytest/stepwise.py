@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from _pytest import nodes
 from _pytest.cacheprovider import Cache
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 from _pytest.nodeid import NodeId
@@ -107,6 +108,8 @@ class StepwisePlugin:
         self.skip: bool = config.getoption("stepwise_skip")
         self.reset: bool = config.getoption("stepwise_reset")
         self.cached_info = self._load_cached_info()
+        # The test currently running, if any.
+        self.running_test: NodeId | None = None
 
     def _load_cached_info(self) -> StepwiseCacheInfo:
         cached_dict: dict[str, Any] | None = self.cache.get(STEPWISE_CACHE_DIR, None)
@@ -197,16 +200,27 @@ class StepwisePlugin:
                 if report.id == self.cached_info.last_failed:
                     self.cached_info.last_failed = None
 
+    def pytest_runtest_logstart(self, nodeid: str) -> None:
+        self.running_test = NodeId.parse(nodeid)
+
+    def pytest_runtest_logfinish(self) -> None:
+        self.running_test = None
+
     def pytest_report_collectionfinish(self) -> list[str] | None:
         if self.config.get_verbosity() >= 0 and self.report_status:
             return [f"stepwise: {x}" for x in self.report_status]
         return None
 
-    def pytest_sessionfinish(self) -> None:
+    def pytest_sessionfinish(self, exitstatus: int | ExitCode) -> None:
         if hasattr(self.config, "workerinput"):
             # Do not update cache if this process is a xdist worker to prevent
             # race conditions (#10641).
             return
+        if exitstatus == ExitCode.INTERRUPTED and self.running_test is not None:
+            # The session was interrupted while a test was running, for example
+            # by quitting the debugger, so that test has no failed report:
+            # continue from it next time (#10562).
+            self.cached_info.last_failed = self.running_test
         self.cached_info.update_date_to_now()
         last_failed = self.cached_info.last_failed
         self.cache.set(
