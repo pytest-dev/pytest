@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -43,11 +43,20 @@ def _compare_eq_iterable(
         yield highlighter(line.rstrip(), lexer="diff")
 
 
+def _items_equal(a: object, b: object) -> bool:
+    if a is b:
+        return True
+    try:
+        return bool(a == b)
+    except Exception:
+        return False
+
+
 def _suffix_matches(
     longer: Sequence[object], shorter: Sequence[object], index: int
 ) -> bool:
     return all(
-        longer[index + 1 + offset] == shorter[index + offset]
+        _items_equal(longer[index + 1 + offset], shorter[index + offset])
         for offset in range(len(shorter) - index)
     )
 
@@ -64,7 +73,7 @@ def _compare_eq_sequence(
     found_diff = False
     i = -1
     for i in range(min(len_left, len_right)):
-        if left[i] != right[i]:
+        if not _items_equal(left[i], right[i]):
             if comparing_bytes:
                 # when comparing bytes, we want to see their ascii representation
                 # instead of their numeric values (#5260)
