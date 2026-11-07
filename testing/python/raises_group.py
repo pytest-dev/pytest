@@ -429,11 +429,23 @@ def test_check() -> None:
     # helpful suggestion if the user thinks the check is for the sub-exception
     with (
         fails_raises_group(
-            f"check {is_value_error} did not return True on the ExceptionGroup, but did return True for the expected ValueError. You might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
+            f"check {is_value_error} did not return True on the ExceptionGroup"
         ),
         RaisesGroup(ValueError, check=is_value_error),
     ):
         raise ExceptionGroup("", (ValueError(),))
+
+
+def test_check_is_only_called_with_exception_group() -> None:
+    exc = ExceptionGroup("", (ValueError(),))
+    calls: list[ExceptionGroup[ValueError]] = []
+
+    def check(group: ExceptionGroup[ValueError]) -> bool:
+        calls.append(group)
+        return False
+
+    assert not RaisesGroup(ValueError, check=check).matches(exc)
+    assert calls == [exc]
 
 
 def test_unwrapped_match_check() -> None:
