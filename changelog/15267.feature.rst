@@ -1,0 +1,5 @@
+Add an opt-in ``defer=True`` parameter to :func:`pytest.importorskip`.
+During test module or conftest import, unavailable dependencies can now gate
+individual tests at setup while allowing collection, parametrization, and
+``--collect-only`` to include those tests. Eager dependency use or a subsequent
+import error falls back to the existing module-level skip.

@@ -55,6 +55,7 @@ from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.deferred_imports import collect_deferred_imports
 from _pytest.deprecated import CALLSPEC2_RENAMED
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import _resolve_args_directness
@@ -525,12 +526,15 @@ def importtestmodule(
     # We assume we are only called once per module.
     importmode = config.getoption("--import-mode")
     try:
-        mod = import_path(
-            path,
-            mode=importmode,
-            root=config.rootpath,
-            consider_namespace_packages=config.getini("consider_namespace_packages"),
-        )
+        with collect_deferred_imports(config, path):
+            mod = import_path(
+                path,
+                mode=importmode,
+                root=config.rootpath,
+                consider_namespace_packages=config.getini(
+                    "consider_namespace_packages"
+                ),
+            )
     except SyntaxError as e:
         raise nodes.Collector.CollectError(
             ExceptionInfo.from_current().getrepr(style="short")

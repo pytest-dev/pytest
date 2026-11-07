@@ -784,13 +784,18 @@ class PytestPluginManager(PluginManager):
             except KeyError:
                 pass
 
+        from _pytest.deferred_imports import collect_deferred_imports
+
         try:
-            mod = import_path(
-                conftestpath,
-                mode=importmode,
-                root=rootpath,
-                consider_namespace_packages=consider_namespace_packages,
-            )
+            with collect_deferred_imports(
+                cast(Config, self.get_plugin("pytestconfig")), conftestpath
+            ):
+                mod = import_path(
+                    conftestpath,
+                    mode=importmode,
+                    root=rootpath,
+                    consider_namespace_packages=consider_namespace_packages,
+                )
         except Exception as e:
             assert e.__traceback__ is not None
             raise ConftestImportFailure(conftestpath, cause=e) from e
