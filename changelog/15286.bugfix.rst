@@ -1,0 +1,1 @@
+Fixed a regression in pytest 9.2.0 where :meth:`MonkeyPatch.setattr <pytest.MonkeyPatch.setattr>` ``undo()`` on a class's ``__annotations__`` lost the original annotations on Python 3.14 (PEP 649 lazy annotations).

@@ -607,6 +607,147 @@ def test_undo_slot_attribute_on_instance() -> None:
     assert obj.x == 1
 
 
+@pytest.mark.skipif(sys.version_info < (3, 14), reason="PEP 649 lazy class annotations")
+def test_undo_setattr_class_annotations_restores_lazy_state() -> None:
+    """Undoing a patch on a class's ``__annotations__`` must restore the
+    original lazy annotations (PEP 649), not drop them (#15286)."""
+    # compile(..., dont_inherit=True): this module's `from __future__ import
+    # annotations` must not leak into the class definition.
+    ns = {}
+    exec(
+        compile(
+            "class Config:\n    name: str\n    size: int\n",
+            "<string>",
+            "exec",
+            dont_inherit=True,
+        ),
+        ns,
+    )
+    Config = ns["Config"]
+
+    assert Config.__annotate__ is not None
+    monkeypatch = MonkeyPatch()
+    # Deliberately not reading Config.__annotations__ here: the patch must
+    # work when the annotations were never materialized.
+    monkeypatch.setattr(Config, "__annotations__", {"name": str, "extra": bool})
+    assert set(Config.__annotations__) == {"name", "extra"}
+
+    monkeypatch.undo()
+    assert set(Config.__annotations__) == {"name", "size"}
+    assert Config.__annotate__ is not None
+
+
+@pytest.mark.skipif(sys.version_info < (3, 14), reason="PEP 649 lazy class annotations")
+def test_undo_setattr_class_annotations_after_read() -> None:
+    """Same as above, but the annotations were read (cached) before patching."""
+    ns = {}
+    exec(
+        compile(
+            "class Config:\n    name: str\n", "<string>", "exec", dont_inherit=True
+        ),
+        ns,
+    )
+    Config = ns["Config"]
+
+    original = Config.__annotations__  # materializes the lazy annotations
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(Config, "__annotations__", {"other": int})
+
+    monkeypatch.undo()
+    assert Config.__annotations__ == original
+    assert Config.__annotate__ is not None
+
+
+@pytest.mark.skipif(sys.version_info < (3, 14), reason="PEP 649 lazy class annotations")
+def test_undo_setattr_class_annotations_eager_original() -> None:
+    """A class with eagerly-set annotations gets the eager value back on undo."""
+    ns = {}
+    exec(
+        compile("class Config:\n    pass\n", "<string>", "exec", dont_inherit=True),
+        ns,
+    )
+    Config = ns["Config"]
+
+    Config.__annotations__ = {"a": int}  # eager: no lazy function remains
+    assert Config.__annotate__ is None
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(Config, "__annotations__", {"b": str})
+
+    monkeypatch.undo()
+    assert Config.__annotations__ == {"a": int}
+
+
+@pytest.mark.skipif(sys.version_info < (3, 14), reason="PEP 649 lazy class annotations")
+def test_undo_setattr_class_annotations_nested_patches() -> None:
+    """Two patches on the same class annotations unwind in order (#15286)."""
+    ns = {}
+    exec(
+        compile("class Config:\n    a: int\n", "<string>", "exec", dont_inherit=True),
+        ns,
+    )
+    Config = ns["Config"]
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(Config, "__annotations__", {"b": str})
+    monkeypatch.setattr(Config, "__annotations__", {"c": float})
+
+    monkeypatch.undo()
+    assert Config.__annotations__ == {"a": int}
+    assert Config.__annotate__ is not None
+
+
+@pytest.mark.skipif(sys.version_info < (3, 14), reason="PEP 649 lazy class annotations")
+def test_undo_setattr_class_annotations_preserves_prior_mutations() -> None:
+    """In-place mutations made to the materialized annotations before patching
+    must survive the undo (#15286)."""
+    ns = {}
+    exec(
+        compile("class Config:\n    a: int\n", "<string>", "exec", dont_inherit=True),
+        ns,
+    )
+    Config = ns["Config"]
+
+    Config.__annotations__["user_key"] = str  # mutates the materialized dict
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(Config, "__annotations__", {"patched": bool})
+
+    monkeypatch.undo()
+    assert Config.__annotations__ == {"a": int, "user_key": str}
+    assert Config.__annotate__ is not None
+
+
+@pytest.mark.skipif(sys.version_info < (3, 14), reason="PEP 649 lazy class annotations")
+def test_undo_setattr_class_annotations_metaclass_shadowed_annotate() -> None:
+    """A metaclass shadowing ``__annotate__`` must not break undo (#15286)."""
+    ns = {}
+    exec(
+        compile(
+            "class M(type):\n"
+            "    @property\n"
+            "    def __annotate__(cls):\n"
+            "        return None\n"
+            "class Config(metaclass=M):\n"
+            "    q: int\n",
+            "<string>",
+            "exec",
+            dont_inherit=True,
+        ),
+        ns,
+    )
+    Config = ns["Config"]
+
+    # The shadowing metaclass makes the class's own annotations invisible to
+    # the reader, so the state to restore is the pre-patch visible value.
+    before = Config.__annotations__
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(Config, "__annotations__", {"patched": bool})
+
+    # Must not raise through the metaclass property, and must restore the
+    # pre-patch visible state.
+    monkeypatch.undo()
+    assert Config.__annotations__ == before
+
+
 def test_issue1338_name_resolving() -> None:
     pytest.importorskip("requests")
     monkeypatch = MonkeyPatch()
