@@ -529,6 +529,9 @@ class PytestPluginManager(PluginManager):
         # just stored here to be used later.
         self.skipped_plugins: list[tuple[str, str]] = []
 
+        # Parser receiving the options of plugins as they are registered; set by Config.
+        self._option_parser: Parser | None = None
+
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
         if os.environ.get("PYTEST_DEBUG"):
@@ -601,7 +604,17 @@ class PytestPluginManager(PluginManager):
                 )
             )
             return None
-        plugin_name = super().register(plugin, name)
+        # Nameless plugins without ``__name__`` stay unattributed instead of using
+        # pluggy's id()-based fallback name.
+        option_owner = name or getattr(plugin, "__name__", None)
+        parser = self._option_parser
+        scope = (
+            parser._plugin_scope(option_owner)
+            if parser is not None
+            else contextlib.nullcontext()
+        )
+        with scope:
+            plugin_name = super().register(plugin, name)
         if plugin_name is not None:
             self.hook.pytest_plugin_registered.call_historic(
                 kwargs=dict(
@@ -1248,6 +1261,7 @@ class Config:
 
         :type: PytestPluginManager
         """
+        pluginmanager._option_parser = self._parser
 
         self.stash = Stash()
         """A place where plugins can store information on the config for their
