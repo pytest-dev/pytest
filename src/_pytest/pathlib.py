@@ -6,9 +6,11 @@ from collections.abc import Iterator
 import contextlib
 from enum import Enum
 from errno import EBADF
+from errno import EEXIST
 from errno import ELOOP
 from errno import ENOENT
 from errno import ENOTDIR
+from errno import ENOTEMPTY
 import fnmatch
 from functools import partial
 from importlib.machinery import ModuleSpec
@@ -119,13 +121,34 @@ def on_rm_rf_error(
     if isinstance(exc, FileNotFoundError):
         return False
 
+    p = Path(path)
+
+    # If os.unlink/os.remove failed on a directory (e.g. because directory traversal failed
+    # or d_type could not determine it is a directory), treat it as a directory.
+    if isinstance(exc, IsADirectoryError) or (
+        func in (os.unlink, os.remove) and p.is_dir()
+    ):
+        _chmod_rwx(str(p))
+        rm_rf(p)
+        return True
+
+    # If removing a directory fails because it is not empty, restrictive permissions
+    # on some of its children may have prevented their prior removal.
+    if func is os.rmdir and getattr(exc, "errno", None) in (ENOTEMPTY, EEXIST):
+        _chmod_rwx(str(p))
+        for root, dirs, files in os.walk(str(p)):
+            for d in dirs:
+                _chmod_rwx(os.path.join(root, d))
+            for f in files:
+                _chmod_rwx(os.path.join(root, f))
+        rm_rf(p)
+        return True
+
     if not isinstance(exc, PermissionError):
         warnings.warn(
             PytestWarning(f"(rm_rf) error removing {path}\n{type(exc)}: {exc}")
         )
         return False
-
-    p = Path(path)
 
     if func in (os.open, os.scandir):
         # Directory traversal failed (e.g. missing S_IXUSR). Fix permissions
@@ -206,6 +229,7 @@ def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
     are read-only."""
     path = ensure_extended_length_path(path)
+    _chmod_rwx(str(path))
     onerror = partial(on_rm_rf_error, start_path=path)
     if sys.version_info >= (3, 12):
         shutil.rmtree(str(path), onexc=onerror)
@@ -216,9 +240,8 @@ def rm_rf(path: Path) -> None:
 def find_prefixed(root: Path, prefix: str) -> Iterator[os.DirEntry[str]]:
     """Find all elements in root that begin with the prefix, case-insensitive."""
     l_prefix = prefix.lower()
-    for x in os.scandir(root):
-        if x.name.lower().startswith(l_prefix):
-            yield x
+    with os.scandir(root) as it:
+        yield from [x for x in it if x.name.lower().startswith(l_prefix)]
 
 
 def extract_suffixes(iter: Iterable[os.DirEntry[str]], prefix: str) -> Iterator[str]:
