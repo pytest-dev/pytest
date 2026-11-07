@@ -108,12 +108,3 @@ def pytest_enter_pdb() -> None:
     import faulthandler
 
     faulthandler.cancel_dump_traceback_later()
-
-
-@pytest.hookimpl(tryfirst=True)
-def pytest_exception_interact() -> None:
-    """Cancel any traceback dumping due to an interactive exception being
-    raised."""
-    import faulthandler
-
-    faulthandler.cancel_dump_traceback_later()
