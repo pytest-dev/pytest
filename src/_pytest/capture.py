@@ -186,19 +186,6 @@ def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
 class EncodedFile(io.TextIOWrapper):
     __slots__ = ()
 
-    def __init__(
-        self, *args: Any, reported_encoding: str | None = None, **kwargs: Any
-    ) -> None:
-        super().__init__(*args, **kwargs)
-        self._reported_encoding = reported_encoding
-
-    @property
-    def encoding(self) -> str:  # type: ignore[override]
-        # Report original encoding, keep construction codec for readouterr() (#4389).
-        if self._reported_encoding is not None:
-            return self._reported_encoding
-        return super().encoding
-
     @property
     def name(self) -> str:
         # Ensure that file.name is a string. Workaround for a Python bug
@@ -214,26 +201,26 @@ class EncodedFile(io.TextIOWrapper):
 
 
 class CaptureIO(io.TextIOWrapper):
-    def __init__(self, reported_encoding: str | None = None) -> None:
-        super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
-        self._reported_encoding = reported_encoding
-
-    @property
-    def encoding(self) -> str:  # type: ignore[override]
-        # Report original encoding, keep UTF-8 buffer for readouterr() (#4389).
-        if self._reported_encoding is not None:
-            return self._reported_encoding
-        return super().encoding
+    def __init__(self, encoding: str = "UTF-8", errors: str = "strict") -> None:
+        super().__init__(
+            io.BytesIO(),
+            encoding=encoding,
+            errors=errors,
+            newline="",
+            write_through=True,
+        )
 
     def getvalue(self) -> str:
         assert isinstance(self.buffer, io.BytesIO)
-        return self.buffer.getvalue().decode("UTF-8")
+        return self.buffer.getvalue().decode(self.encoding, "replace")
 
 
 class TeeCaptureIO(CaptureIO):
-    def __init__(self, other: TextIO, reported_encoding: str | None = None) -> None:
+    def __init__(
+        self, other: TextIO, encoding: str = "UTF-8", errors: str = "strict"
+    ) -> None:
         self._other = other
-        super().__init__(reported_encoding=reported_encoding)
+        super().__init__(encoding=encoding, errors=errors)
 
     def write(self, s: str) -> int:
         super().write(s)
@@ -380,14 +367,14 @@ class NoCapture(CaptureBase[str]):
         pass
 
 
-def _original_encoding(stream: object) -> str | None:
-    """Best-effort original encoding of the stream capture replaces.
-
-    Nested layers chain through reported encodings, so the
-    process-original propagates inward (#4389).
-    """
+def _original_codec(stream: object) -> tuple[str, str]:
+    """Best-effort encoding and error handler of the stream that capture replaces."""
     encoding = getattr(stream, "encoding", None)
-    return encoding if isinstance(encoding, str) else None
+    errors = getattr(stream, "errors", None)
+    return (
+        encoding if isinstance(encoding, str) else "UTF-8",
+        errors if isinstance(errors, str) else "strict",
+    )
 
 
 class SysCaptureBase(CaptureBase[AnyStr]):
@@ -401,13 +388,11 @@ class SysCaptureBase(CaptureBase[AnyStr]):
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                reported_encoding = _original_encoding(self._old)
+                encoding, errors = _original_codec(self._old)
                 if tee:
-                    tmpfile = TeeCaptureIO(
-                        self._old, reported_encoding=reported_encoding
-                    )
+                    tmpfile = TeeCaptureIO(self._old, encoding=encoding, errors=errors)
                 else:
-                    tmpfile = CaptureIO(reported_encoding=reported_encoding)
+                    tmpfile = CaptureIO(encoding=encoding, errors=errors)
         self.tmpfile = tmpfile
         self._state = "initialized"
 
@@ -526,15 +511,14 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             self.tmpfile = open(os.devnull, encoding="utf-8")
             self.syscapture: CaptureBase[str] = SysCapture(targetfd)
         else:
-            # Only fds 0/1/2 map to sys streams; others keep the real codec (#4389).
             orig_stream = getattr(sys, patchsysdict.get(targetfd, ""), None)
+            encoding, errors = _original_codec(orig_stream)
             self.tmpfile = EncodedFile(
                 TemporaryFile(buffering=0),
-                encoding="utf-8",
-                errors="replace",
+                encoding=encoding,
+                errors=errors,
                 newline="",
                 write_through=True,
-                reported_encoding=_original_encoding(orig_stream),
             )
             if targetfd in patchsysdict:
                 self.syscapture = SysCapture(targetfd, self.tmpfile)
@@ -635,7 +619,8 @@ class FDCapture(FDCaptureBase[str]):
         if os.fstat(self.tmpfile.fileno()).st_size == 0:
             return self.EMPTY_BUFFER
         self.tmpfile.seek(0)
-        res = self.tmpfile.read()
+        encoding = self.tmpfile.encoding or "UTF-8"
+        res = cast(bytes, self.tmpfile.buffer.read()).decode(encoding, "replace")
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
@@ -643,8 +628,9 @@ class FDCapture(FDCaptureBase[str]):
     def writeorg(self, data: str) -> None:
         """Write to original file descriptor."""
         self._assert_state("writeorg", ("started", "suspended"))
-        # XXX use encoding of original stream
-        os.write(self.targetfd_save, data.encode("utf-8"))
+        encoding = self.tmpfile.encoding or "UTF-8"
+        errors = self.tmpfile.errors or "strict"
+        os.write(self.targetfd_save, data.encode(encoding, errors))
 
 
 # MultiCapture
