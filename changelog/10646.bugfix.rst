@@ -1,0 +1,1 @@
+With ``raising=False``, :meth:`MonkeyPatch.setattr <pytest.MonkeyPatch.setattr>` and :meth:`MonkeyPatch.delattr <pytest.MonkeyPatch.delattr>` no longer call the ``__get__`` of class-level descriptors just to look up the old value.

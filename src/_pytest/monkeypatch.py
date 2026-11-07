@@ -124,6 +124,32 @@ def _is_data_descriptor(cls: type, name: str) -> bool:
     return False
 
 
+def _lookup_for_undo(target: object, name: str, raising: bool) -> object:
+    """Return the value ``undo()`` needs to restore ``name`` on ``target``.
+
+    With ``raising=False`` there is no existence check to satisfy, so the
+    attribute is looked up statically where that is enough, without running
+    descriptor ``__get__`` methods and their side effects (#10646). Data
+    descriptors on the type (properties, slots, ``type.__bases__``) are still
+    read normally, since ``undo()`` writes their value back through them.
+    Attributes provided by ``__getattr__`` are not visible statically and fall
+    back to a normal lookup as well.
+    """
+    if raising or _is_data_descriptor(type(target), name):
+        return getattr(target, name, NOTSET)
+    import inspect
+
+    value = inspect.getattr_static(target, name, NOTSET)
+    if value is NOTSET:
+        value = getattr(target, name, NOTSET)
+    return value
+
+
+def _instance_dict(target: object) -> Mapping[str, object] | None:
+    target_dict = getattr(target, "__dict__", None)
+    return target_dict if isinstance(target_dict, Mapping) else None
+
+
 @final
 class MonkeyPatch:
     """Helper to conveniently monkeypatch attributes/items/environment
@@ -232,7 +258,6 @@ class MonkeyPatch:
         applies to ``monkeypatch.setattr`` as well.
         """
         __tracebackhide__ = True
-        import inspect
 
         if value is NOTSET:
             if not isinstance(target, str):
@@ -251,24 +276,30 @@ class MonkeyPatch:
                     "import string"
                 )
 
-        oldval = getattr(target, name, NOTSET)
+        oldval = _lookup_for_undo(target, name, raising)
         if raising and oldval is NOTSET:
             raise AttributeError(f"{target!r} has no attribute {name!r}")
 
-        # avoid class descriptors like staticmethod/classmethod
-        if inspect.isclass(target):
-            oldval = target.__dict__.get(name, NOTSET)
-        elif not _is_data_descriptor(type(target), name):
-            # With no data descriptor in the way, the `setattr()` below writes
-            # into the instance `__dict__`, so `undo()` has to restore that
-            # `__dict__` entry. Assigning an inherited `oldval` back onto the
-            # instance would instead leave behind a new entry shadowing the
-            # class attribute, which permanently freezes descriptors that
-            # resolve dynamically (#10644).
-            target_dict = getattr(target, "__dict__", None)
-            if isinstance(target_dict, Mapping):
-                oldval = target_dict.get(name, NOTSET)
+        # Decide what undo() restores from where the write actually lands,
+        # instead of guessing from the target's type: a custom __setattr__,
+        # a metaclass or a type-level data descriptor such as __bases__ can
+        # all store the value somewhere other than __dict__ (#1938, #15099).
+        target_dict = None
+        if not _is_data_descriptor(type(target), name):
+            target_dict = _instance_dict(target)
+        had_entry = False
+        if target_dict is not None and name in target_dict:
+            # Restore the raw entry, not the looked-up value, so class
+            # descriptors like staticmethod/classmethod survive (#156).
+            had_entry = True
+            oldval = target_dict[name]
         setattr(target, name, value)
+        if not had_entry and target_dict is not None and name in target_dict:
+            # The write created a new __dict__ entry shadowing an inherited
+            # or dynamic attribute: undo() has to remove it again. Assigning
+            # the inherited value back would leave a shadowing entry behind,
+            # freezing descriptors that resolve dynamically (#10644).
+            oldval = NOTSET
         self._setattr.append((target, name, oldval))
 
     def delattr(
@@ -298,11 +329,11 @@ class MonkeyPatch:
                 )
             name, target = derive_importpath(target, raising)
 
-        if not hasattr(target, name):
+        oldval = _lookup_for_undo(target, name, raising)
+        if oldval is NOTSET:
             if raising:
                 raise AttributeError(name)
         else:
-            oldval = getattr(target, name, NOTSET)
             # Avoid class descriptors like staticmethod/classmethod.
             if inspect.isclass(target):
                 oldval = target.__dict__.get(name, NOTSET)
