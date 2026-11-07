@@ -87,6 +87,12 @@ parametrized test. These IDs can be used with :option:`-k` to select specific ca
 to run, and they will also identify the specific case when one is failing.
 Running pytest with :option:`--collect-only` will show the generated IDs.
 
+When providing custom test IDs, prefer IDs that can be used as part of a
+:option:`-k` identifier. Characters with special meaning in ``-k`` expressions,
+such as parentheses, commas, whitespace, and ``=``, can prevent the generated
+test ID from being selected directly with ``-k``. pytest emits a warning for
+custom IDs that contain such characters.
+
 Numbers, strings, booleans and None will have their usual string representation
 used in the test ID. For other objects, pytest will make a string based on
 the argument name:
