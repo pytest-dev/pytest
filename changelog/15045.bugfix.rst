@@ -1,0 +1,1 @@
+Fixed ``--lf`` silently omitting failing custom items whose names contain brackets or ``::``, and ``--sw`` failing to resume at those items.
