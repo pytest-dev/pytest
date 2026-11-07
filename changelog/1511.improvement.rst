@@ -1,0 +1,13 @@
+pytest now warns with :class:`~pytest.PytestImportedFixtureWarning` when two
+modules register the same fixture function, which is what importing a fixture in
+order to reuse it does.
+
+The second registration is a separate :class:`~pytest.FixtureDef` for the same
+function, so a session-scoped fixture reached that way runs once per registering
+module, and the duplicate is invisible in the source of either file. The warning
+names both modules and points at the line that brought the fixture in.
+
+Importing a fixture from a module that is not itself a plugin or a collected
+module registers it only once, and is not warned about. Neither is inheriting a
+fixture from a base class in another module, nor building one with a factory
+defined elsewhere.
