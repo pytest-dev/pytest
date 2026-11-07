@@ -862,3 +862,49 @@ def test_pytester_subprocess_with_non_string_plugins(pytester: Pytester) -> None
 
     with pytest.raises(ValueError, match="plugins as objects is not supported"):
         pytester.runpytest_subprocess()
+
+
+def test_syspathinsert_runpytest_subprocess(pytester: Pytester) -> None:
+    """Paths added with syspathinsert() are importable in a pytest
+    subprocess (#10651)."""
+    pytester.mkdir("lib")
+    pytester.path.joinpath("lib", "mylib.py").write_text("x = 1", encoding="utf-8")
+    pytester.syspathinsert(pytester.path / "lib")
+    pytester.makepyfile(
+        """
+        import mylib
+
+        def test_mylib():
+            assert mylib.x == 1
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize("method", ["inprocess", "subprocess"])
+def test_syspathinsert_multiple_calls(pytester: Pytester, method: str) -> None:
+    """All paths from several syspathinsert() calls are importable, and the
+    most recently inserted one takes precedence, like sys.path.insert(0, ...)."""
+    for name in ("first", "second"):
+        d = pytester.mkdir(name)
+        d.joinpath(f"mod_{name}.py").write_text(f"x = {name!r}", encoding="utf-8")
+        d.joinpath("shadowed.py").write_text(f"x = {name!r}", encoding="utf-8")
+        pytester.syspathinsert(d)
+    pytester.makepyfile(
+        """
+        import mod_first
+        import mod_second
+        import shadowed
+
+        def test_imports():
+            assert mod_first.x == "first"
+            assert mod_second.x == "second"
+            assert shadowed.x == "second"
+        """
+    )
+    if method == "inprocess":
+        result = pytester.runpytest_inprocess()
+    else:
+        result = pytester.runpytest_subprocess()
+    result.assert_outcomes(passed=1)

@@ -709,6 +709,9 @@ class Pytester:
         self._request.addfinalizer(self._finalize)
         self._method = self._request.config.getoption("--runpytest")
         self._test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
+        # Paths inserted via syspathinsert(), in insertion order, so they can
+        # also be passed to subprocesses through PYTHONPATH.
+        self._syspathinserts: list[Path] = []
 
         self._monkeypatch = mp = monkeypatch
         self.chdir()
@@ -924,6 +927,10 @@ class Pytester:
         This is undone automatically when this object dies at the end of each
         test.
 
+        The path is also prepended to ``PYTHONPATH`` for subprocesses started
+        through :py:meth:`popen` (and so :py:meth:`run` and
+        :py:meth:`runpytest_subprocess`).
+
         :param path:
             The path.
         """
@@ -931,6 +938,7 @@ class Pytester:
             path = self.path
 
         self._monkeypatch.syspath_prepend(str(path))
+        self._syspathinserts.append(Path(path))
 
     def mkdir(self, name: str | os.PathLike[str]) -> Path:
         """Create a new (sub)directory.
@@ -1369,13 +1377,16 @@ class Pytester:
         """Invoke :py:class:`subprocess.Popen`.
 
         Calls :py:class:`subprocess.Popen` making sure the current working
-        directory is in ``PYTHONPATH``.
+        directory and any paths added with :py:meth:`syspathinsert` are in
+        ``PYTHONPATH``.
 
         You probably want to use :py:meth:`run` instead.
         """
         env = os.environ.copy()
+        # Most recently inserted first, mirroring sys.path.insert(0, ...).
+        syspathinserts = [str(p) for p in reversed(self._syspathinserts)]
         env["PYTHONPATH"] = os.pathsep.join(
-            filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
+            filter(None, [*syspathinserts, os.getcwd(), env.get("PYTHONPATH", "")])
         )
         kw["env"] = env
 

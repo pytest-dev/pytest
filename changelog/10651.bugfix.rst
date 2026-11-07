@@ -1,0 +1,1 @@
+Fixed :func:`pytester.syspathinsert() <pytest.Pytester.syspathinsert>` having no effect on subprocesses, such as those started by :func:`pytester.runpytest_subprocess() <pytest.Pytester.runpytest_subprocess>` -- the inserted paths are now also prepended to ``PYTHONPATH``.
