@@ -796,6 +796,49 @@ class TestAssert_reprcompare:
         assert expl is not None
         assert len(expl) > 1
 
+    def test_range_different_lengths(self) -> None:
+        assert callequal(range(5), range(7)) == [
+            "range(0, 5) == range(0, 7)",
+            "",
+            "Right contains 2 more items, first extra item: 5",
+        ]
+        assert callequal(range(7), range(5)) == [
+            "range(0, 7) == range(0, 5)",
+            "",
+            "Left contains 2 more items, first extra item: 5",
+        ]
+        # Verbose adds no full diff for ranges.
+        assert callequal(range(5), range(7), verbose=1) == callequal(range(5), range(7))
+
+    def test_range_different_items(self) -> None:
+        assert callequal(range(5), range(1, 6)) == [
+            "range(0, 5) == range(1, 6)",
+            "",
+            "At index 0 diff: 0 != 1",
+        ]
+        assert callequal(range(0, 10, 2), range(0, 13, 3)) == [
+            "range(0, 10, 2) == range(0, 13, 3)",
+            "",
+            "At index 1 diff: 2 != 3",
+        ]
+        assert callequal(range(5), range(1, 6), verbose=1) == callequal(
+            range(5), range(1, 6)
+        )
+
+    def test_range_huge_comparison_is_fast(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_huge_range():
+                assert range(10**12) == range(10**12 + 2)
+            """
+        )
+        result = pytester.runpytest_subprocess("-v", timeout=10)
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(
+            ["E*Right contains 2 more items, first extra item: 1000000000000*"]
+        )
+        result.stdout.no_fnmatch_line("E*Full diff*")
+
     def test_list_wrap_for_multiple_lines(self) -> None:
         long_d = "d" * 80
         l1 = ["a", "b", "c"]
