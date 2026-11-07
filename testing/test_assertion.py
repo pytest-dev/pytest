@@ -1235,7 +1235,7 @@ class TestAssert_reprcompare:
 
     def test_sequence_extra_item_ambiguous_eq_falls_back(self) -> None:
         class AmbiguousEq:
-            def __eq__(self, other: object) -> object:
+            def __eq__(self, other: object) -> Any:
                 return self
 
             def __bool__(self) -> bool:
