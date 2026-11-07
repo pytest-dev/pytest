@@ -1223,6 +1223,16 @@ class TestLastFailed:
 
 
 class TestNewFirst:
+    @pytest.mark.parametrize("cached", [False, True])
+    def test_newfirst_duplicate_paths(self, pytester: Pytester, cached: bool) -> None:
+        pytester.makepyfile(test_example="def test_example(): pass")
+        if cached:
+            pytester.runpytest("test_example.py").assert_outcomes(passed=1)
+        result = pytester.runpytest(
+            "--nf", "--keep-duplicates", "test_example.py", "test_example.py"
+        )
+        result.assert_outcomes(passed=2)
+
     def test_newfirst_usecase(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             **{
