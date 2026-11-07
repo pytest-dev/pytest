@@ -1,0 +1,2 @@
+When using ``--setup-show`` or ``--setup-only``, show a ``SETUP START``
+line before each fixture starts executing, so a stalled fixture setup can be identified.
