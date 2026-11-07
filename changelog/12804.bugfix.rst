@@ -1,0 +1,1 @@
+Fixture lookup errors on custom items without an ``obj`` attribute now report the missing fixture instead of raising an internal error.
