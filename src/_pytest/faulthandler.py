@@ -15,6 +15,11 @@ fault_handler_original_stderr_fd_key = StashKey[int]()
 fault_handler_stderr_fd_key = StashKey[int]()
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def pytest_addoption(parser: Parser) -> None:
     help_timeout = (
         "Dump the traceback of all threads if a test takes "
