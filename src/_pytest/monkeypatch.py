@@ -256,8 +256,10 @@ class MonkeyPatch:
             raise AttributeError(f"{target!r} has no attribute {name!r}")
 
         # avoid class descriptors like staticmethod/classmethod
-        if inspect.isclass(target):
-            oldval = target.__dict__.get(name, NOTSET)
+        is_class = inspect.isclass(target)
+        if is_class:
+            in_class_dict = name in target.__dict__
+            oldval = target.__dict__.get(name, oldval)
         elif not _is_data_descriptor(type(target), name):
             # With no data descriptor in the way, the `setattr()` below writes
             # into the instance `__dict__`, so `undo()` has to restore that
@@ -269,6 +271,8 @@ class MonkeyPatch:
             if isinstance(target_dict, Mapping):
                 oldval = target_dict.get(name, NOTSET)
         setattr(target, name, value)
+        if is_class and not in_class_dict and name in target.__dict__:
+            oldval = NOTSET
         self._setattr.append((target, name, oldval))
 
     def delattr(
