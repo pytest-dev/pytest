@@ -424,7 +424,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         return None
 
     def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
-        return excinfo.traceback
+        return excinfo.traceback.filter(excinfo)
 
     def _repr_failure_py(
         self,
