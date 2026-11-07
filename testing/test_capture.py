@@ -1208,6 +1208,25 @@ def saved_fd(fd):
         os.close(new_fd)
 
 
+def _skip_if_unencodable(text: str, stream: TextIO) -> None:
+    encoding = getattr(stream, "encoding", None) or "utf-8"
+    errors = getattr(stream, "errors", None) or "strict"
+    try:
+        text.encode(encoding, errors)
+    except UnicodeEncodeError:
+        pytest.skip(f"{encoding!r} cannot represent {text!r}")
+
+
+def test_skip_if_unencodable() -> None:
+    _skip_if_unencodable(
+        "hx\u0105\u0107", io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+    )
+    with pytest.raises(pytest.skip.Exception, match="cannot represent"):
+        _skip_if_unencodable(
+            "hx\u0105\u0107", io.TextIOWrapper(io.BytesIO(), encoding="latin-1")
+        )
+
+
 class TestStdCapture:
     captureclass = staticmethod(StdCapture)
 
@@ -1257,12 +1276,7 @@ class TestStdCapture:
 
     def test_capturing_readouterr_unicode(self) -> None:
         text = "hx\u0105\u0107"
-        encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
-        errors = getattr(sys.stdout, "errors", None) or "strict"
-        try:
-            text.encode(encoding, errors)
-        except UnicodeEncodeError:
-            pytest.skip(f"{encoding!r} cannot represent {text!r}")
+        _skip_if_unencodable(text, sys.stdout)
         with self.getcapture() as cap:
             print(text)
             out, _err = cap.readouterr()
@@ -1573,12 +1587,14 @@ def test_capturing_and_logging_fundamentals(pytester: Pytester, method: str) -> 
 
 
 def test_error_attribute_issue555(pytester: Pytester) -> None:
+    stdout_errors = sys.stdout.errors
+    stderr_errors = sys.stderr.errors
     pytester.makepyfile(
-        """
+        f"""
         import sys
         def test_capattr():
-            assert sys.stdout.errors == sys.__stdout__.errors
-            assert sys.stderr.errors == sys.__stderr__.errors
+            assert sys.stdout.errors == {stdout_errors!r}
+            assert sys.stderr.errors == {stderr_errors!r}
     """
     )
     reprec = pytester.inline_run()
