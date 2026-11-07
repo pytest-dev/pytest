@@ -1,0 +1,7 @@
+The :fixture:`pytester` fixture no longer destroys modules that own process global state when it restores its ``sys.modules`` snapshot.
+
+Such a module was re-imported as a second, independent copy, while the state the first copy installed -- ``atexit`` handlers, :func:`os.register_at_fork` handlers, and in the case of :mod:`multiprocessing` a resource tracker server process -- stayed behind with nothing referring to it. The most visible symptom were ``multiprocessing.resource_tracker`` tracebacks written to stderr at interpreter shutdown.
+
+``asyncio``, ``concurrent``, ``execnet``, ``multiprocessing``, ``random`` and ``rlcompleter`` are now preserved next to the ``readline`` and ``zope`` entries pytest already had. The list is audited by the new ``scripts/check-preserved-modules.py``, which probes the standard library for modules that cannot be dropped safely.
+
+Preserving now follows package boundaries instead of matching a plain name prefix, so an unrelated top level module such as ``zopelicious`` is no longer preserved by the ``zope`` entry.
