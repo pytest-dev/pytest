@@ -49,6 +49,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
+from _pytest.compat import override
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.config import Config
@@ -66,6 +67,7 @@ from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import _HiddenParam
+from _pytest.mark.structures import get_mro_mark_groups
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import HIDDEN_PARAM
 from _pytest.mark.structures import Mark
@@ -140,7 +142,12 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_generate_tests(metafunc: Metafunc) -> None:
-    for marker in metafunc.definition.iter_markers(name="parametrize"):
+    # Storage order, not closest-first: parametrize markers compose rather than
+    # shadow each other, and an inherited class-level one has to keep composing
+    # base-first so that the generated IDs stay stable (#14329).
+    for _node, marker in metafunc.definition._iter_markers_with_node(
+        name="parametrize", closest_first=False
+    ):
         metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
 
 
@@ -311,7 +318,7 @@ class PyobjMixin(nodes.Node):
             # XXX evil hack
             # used to avoid Function marker duplication
             if self._ALLOW_MARKERS:
-                self.own_markers.extend(get_unpacked_marks(self.obj))
+                self._extend_own_markers(get_unpacked_marks(self.obj))
                 # This assumes that `obj` is called before there is a chance
                 # to add custom keys to `self.keywords`, so no fear of overriding.
                 self.keywords.update((mark.name, mark) for mark in self.own_markers)
@@ -766,10 +773,63 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | N
 class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
 
+    #: Where the MRO-inherited markers sit in ``own_markers`` -- the index the
+    #: run starts at, plus that same run in closest-first order. ``None`` until
+    #: ``obj`` is resolved and the markers are unpacked.
+    _mro_marks: tuple[int, tuple[Mark, ...]] | None = None
+
     @classmethod
     def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
+
+    @override
+    def _extend_own_markers(self, marks: Sequence[Mark]) -> None:
+        """Record where the MRO run lands, so it can be reordered in O(1)."""
+        groups = get_mro_mark_groups(self._obj)
+        self._mro_marks = (
+            len(self.own_markers),
+            tuple(mark for group in groups for mark in group),
+        )
+        super()._extend_own_markers(marks)
+
+    @override
+    def add_marker(self, marker: str | MarkDecorator, append: bool = True) -> None:
+        super().add_marker(marker, append=append)
+        if not append and self._mro_marks is not None:
+            start, closest_first = self._mro_marks
+            self._mro_marks = (start + 1, closest_first)
+
+    @override
+    def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
+        """Yield own markers closest-first.
+
+        ``own_markers`` holds the MRO-inherited markers as one contiguous run
+        in base-first order (the order :func:`get_unpacked_marks` produced them
+        in), possibly surrounded by markers added dynamically via
+        :meth:`~_pytest.nodes.Node.add_marker`. Yield ``own_markers`` as stored
+        -- so dynamic markers keep their ``append`` position, just like on a
+        plain node -- but with that run replaced by its closest-first
+        (child before parent) counterpart.
+        """
+        own_markers = self.own_markers
+        if self._mro_marks is None:
+            # ``obj`` was not resolved yet, so own_markers cannot contain MRO
+            # markers - and resolving it here would be a nasty side effect.
+            yield from own_markers
+            return
+
+        start, closest_first = self._mro_marks
+        stop = start + len(closest_first)
+        if stop > len(own_markers):
+            # own_markers was rewritten behind our back and the recorded run no
+            # longer fits - leave the order alone rather than splice garbage.
+            yield from own_markers
+            return
+
+        yield from own_markers[:start]
+        yield from closest_first
+        yield from own_markers[stop:]
 
     def newinstance(self):
         return self.obj()
