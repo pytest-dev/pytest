@@ -1,0 +1,1 @@
+Fixed :meth:`MonkeyPatch.setattr <pytest.MonkeyPatch.setattr>` restoring attributes on objects with a custom ``__setattr__`` implementation.
