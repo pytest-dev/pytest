@@ -186,6 +186,31 @@ def test_capture_uses_replaced_stream_errors(
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsysbinary"),
+        ("fd", "capfdbinary"),
+    ],
+)
+def test_capture_binary_uses_replaced_stream_codec(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str, capture_fixture: str
+) -> None:
+    """Text writes use the replaced stream's encoding and error handler during binary capture."""
+    pytester.makepyfile(
+        f"""\
+        def test_encoding({capture_fixture}):
+            print("caf\\u00e9")
+            out, err = {capture_fixture}.readouterr()
+            assert out == "caf\\u00e9\\n".encode("latin-1")
+            assert err == b""
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
 def test_capture_wrappers_use_configured_codec() -> None:
     with capture.CaptureIO() as stream:
         assert (stream.encoding, stream.errors) == ("UTF-8", "strict")
@@ -1208,22 +1233,29 @@ def saved_fd(fd):
         os.close(new_fd)
 
 
-def _skip_if_unencodable(text: str, stream: TextIO) -> None:
+def _skip_if_not_lossless(text: str, stream: TextIO) -> None:
     encoding = getattr(stream, "encoding", None) or "utf-8"
     errors = getattr(stream, "errors", None) or "strict"
     try:
-        text.encode(encoding, errors)
+        encoded = text.encode(encoding, errors)
     except UnicodeEncodeError:
         pytest.skip(f"{encoding!r} cannot represent {text!r}")
+    if encoded.decode(encoding, "replace") != text:
+        pytest.skip(f"{encoding!r} with {errors!r} cannot round-trip {text!r}")
 
 
-def test_skip_if_unencodable() -> None:
-    _skip_if_unencodable(
+def test_skip_if_not_lossless() -> None:
+    _skip_if_not_lossless(
         "hx\u0105\u0107", io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
     )
     with pytest.raises(pytest.skip.Exception, match="cannot represent"):
-        _skip_if_unencodable(
+        _skip_if_not_lossless(
             "hx\u0105\u0107", io.TextIOWrapper(io.BytesIO(), encoding="latin-1")
+        )
+    with pytest.raises(pytest.skip.Exception, match="cannot round-trip"):
+        _skip_if_not_lossless(
+            "hx\u0105\u0107",
+            io.TextIOWrapper(io.BytesIO(), encoding="latin-1", errors="replace"),
         )
 
 
@@ -1276,7 +1308,7 @@ class TestStdCapture:
 
     def test_capturing_readouterr_unicode(self) -> None:
         text = "hx\u0105\u0107"
-        _skip_if_unencodable(text, sys.stdout)
+        _skip_if_not_lossless(text, sys.stdout)
         with self.getcapture() as cap:
             print(text)
             out, _err = cap.readouterr()
