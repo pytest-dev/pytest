@@ -63,6 +63,7 @@ from _pytest.deprecated import FIXTURE_NODEID_DEPRECATED
 from _pytest.deprecated import FIXTUREDEF_HAS_LOCATION_DEPRECATED
 from _pytest.deprecated import PARSEFACTORIES_NODEID_DEPRECATED
 from _pytest.deprecated import YIELD_FIXTURE
+from _pytest.main import _raise_on_collection_errors
 from _pytest.main import Session
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
@@ -1684,11 +1685,9 @@ def pytest_addoption(parser: Parser) -> None:
 
 def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.showfixtures:
-        showfixtures(config)
-        return 0
+        return showfixtures(config)
     if config.option.show_fixtures_per_test:
-        show_fixtures_per_test(config)
-        return 0
+        return show_fixtures_per_test(config)
     return None
 
 
@@ -2457,7 +2456,7 @@ def _get_fixtures_per_test(test: nodes.Item) -> Iterator[FixtureDef[object]]:
         yield fixturedef
 
 
-def _show_fixtures_per_test(config: Config, session: Session) -> None:
+def _show_fixtures_per_test(config: Config, session: Session) -> int | ExitCode:
     import _pytest.config
 
     session.perform_collect()
@@ -2505,6 +2504,9 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     for session_item in session.items:
         write_item(session_item)
 
+    _raise_on_collection_errors(session)
+    return ExitCode.TESTS_FAILED if session.testsfailed else ExitCode.OK
+
 
 def showfixtures(config: Config) -> int | ExitCode:
     from _pytest.main import wrap_session
@@ -2512,7 +2514,7 @@ def showfixtures(config: Config) -> int | ExitCode:
     return wrap_session(config, _showfixtures_main)
 
 
-def _showfixtures_main(config: Config, session: Session) -> None:
+def _showfixtures_main(config: Config, session: Session) -> int | ExitCode:
     import _pytest.config
 
     session.perform_collect()
@@ -2556,6 +2558,9 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         else:
             tw.line("    no docstring available", red=True)
         tw.line()
+
+    _raise_on_collection_errors(session)
+    return ExitCode.TESTS_FAILED if session.testsfailed else ExitCode.OK
 
 
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
