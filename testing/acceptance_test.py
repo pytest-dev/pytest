@@ -692,6 +692,20 @@ class TestInvocationVariants:
         result = pytester.runpytest("--pyargs", "t.py")
         assert result.ret == ExitCode.OK
 
+    def test_pyargs_filename_looks_like_module_is_rewritten(
+        self, pytester: Pytester
+    ) -> None:
+        """The argument must not be imported while resolving it (#1930).
+
+        Asking importlib about `t.py` imports `t` as its parent package, and a
+        module already in sys.modules cannot be assertion-rewritten any more.
+        """
+        pytester.path.joinpath("t.py").write_text(
+            "def test():\n    x = 1\n    assert x == 2\n", encoding="utf-8"
+        )
+        result = pytester.runpytest("--pyargs", "t.py")
+        result.stdout.fnmatch_lines(["E*assert 1 == 2"])
+
     def test_cmdline_python_package(self, pytester: Pytester, monkeypatch) -> None:
         import warnings
 

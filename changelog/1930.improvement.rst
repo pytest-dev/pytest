@@ -1,0 +1,5 @@
+pytest now warns with :class:`~pytest.PytestAssertRewriteWarning` when it collects a test module that was already imported, and whose assertions therefore could not be rewritten.
+
+This most commonly happens when a ``conftest.py`` imports a module at the top
+level which is only recognised as a test module because it was named on the
+command line. Until now the loss of assertion introspection was silent.

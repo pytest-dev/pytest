@@ -1,0 +1,6 @@
+``--pyargs`` arguments that name a file rather than a module no longer import that file while resolving it.
+
+Resolving ``--pyargs t.py`` asked importlib for ``t.py``, which imports ``t``
+as its parent package. The test module ended up in ``sys.modules`` before
+collection, and a module which is already imported can no longer have its
+assertions rewritten.

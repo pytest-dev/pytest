@@ -734,7 +734,11 @@ def _import_module_using_spec(
 
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
-    find_spec_path = [str(module_path.parent)]
+    if module_path.name == "__init__.py":
+        # A package is found in the directory *containing* the package directory.
+        find_spec_path = [str(module_path.parent.parent)]
+    else:
+        find_spec_path = [str(module_path.parent)]
     for meta_importer in sys.meta_path:
         spec = meta_importer.find_spec(module_name, find_spec_path)
 
