@@ -699,6 +699,47 @@ class TestPython:
         )
         assert "a" * 2000 in fnode.text
 
+    @pytest.mark.parametrize("when", ["call", "setup", "teardown"])
+    @pytest.mark.parametrize("length", [400, 600])
+    def test_ansi_is_stripped_before_message_is_shortened(
+        self,
+        pytester: Pytester,
+        run_and_parse: RunAndParse,
+        when: str,
+        length: int,
+    ) -> None:
+        message = "a" * length
+        colored_message = "\x1b[31m" * 100 + message + "\x1b[0m"
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                if {when!r} == "setup":
+                    raise ValueError({colored_message!r})
+                yield
+                if {when!r} == "teardown":
+                    raise ValueError({colored_message!r})
+
+            def test_function(arg):
+                if {when!r} == "call":
+                    raise ValueError({colored_message!r})
+            """
+        )
+        result, dom = run_and_parse()
+        if when == "call":
+            result.assert_outcomes(failed=1)
+            node = dom.get_first_by_tag("failure")
+            expected = f"ValueError: {message}"
+        else:
+            result.assert_outcomes(errors=1, passed=int(when == "teardown"))
+            node = dom.get_first_by_tag("error")
+            expected = f'failed on {when} with "ValueError: {message}"'
+        assert node["message"] == shorten_message(expected)
+        assert message in node.text
+        assert "#x1B" not in node.text
+
     @parametrize_families
     def test_failure_escape(
         self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily
@@ -1816,8 +1857,28 @@ def test_escaped_setup_teardown_error(
     _, dom = run_and_parse()
     node = dom.get_first_by_tag("testcase")
     snode = node.get_first_by_tag("error")
-    assert "#x1B[31mred#x1B[m" in snode["message"]
-    assert "#x1B[31mred#x1B[m" in snode.text
+    assert "error: red" in snode["message"]
+    assert "#x1B" not in snode["message"]
+    assert "error: red" in snode.text
+    assert "#x1B" not in snode.text
+
+
+def test_ansi_escapes_stripped_from_captured_output(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import sys
+
+        def test_color():
+            sys.stdout.write("out: \033[31mred\033[0m")
+            sys.stderr.write("err: \033[32mgreen\033[0m")
+    """
+    )
+    xmlf = pytester.path.joinpath("junit.xml")
+    pytester.runpytest(f"--junitxml={xmlf}", "-o", "junit_logging=all")
+    text = xmlf.read_text(encoding="utf-8")
+    assert "#x1B" not in text
+    assert "out: red" in text
+    assert "err: green" in text
 
 
 @parametrize_families
@@ -1902,6 +1963,27 @@ def test_no_message_quiet(pytester: Pytester) -> None:
 
     result = pytester.runpytest("--junitxml=pytest.xml", "--quiet")
     result.stdout.no_fnmatch_line("* generated xml file: *")
+
+
+def test_junitxml_strips_ansi_from_failure_details(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """ANSI escapes from Pygments-highlighted diffs must not appear in junitxml (#12365)."""
+    pytest.importorskip("pygments")
+    monkeypatch.setenv("PY_COLORS", "1")
+    pytester.makepyfile(
+        """
+        def test_foo():
+            assert [1, 2, 3] == [3, 2, 1]
+        """
+    )
+    xml_path = pytester.path.joinpath("junit.xml")
+    result = pytester.runpytest(f"--junitxml={xml_path}", "-vv")
+    assert result.ret == 1
+    xml_text = xml_path.read_text(encoding="utf-8")
+    assert "\x1b[" not in xml_text
+    assert "#x1B" not in xml_text
+    assert "assert [1, 2, 3] == [3, 2, 1]" in xml_text
 
 
 @pytest.mark.parametrize(
