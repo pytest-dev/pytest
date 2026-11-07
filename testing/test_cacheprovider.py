@@ -19,9 +19,6 @@ from _pytest.tmpdir import TempPathFactory
 import pytest
 
 
-pytest_plugins = ("pytester",)
-
-
 class TestNewAPI:
     def test_config_cache_mkdir(self, pytester: Pytester) -> None:
         pytester.makeini("[pytest]")

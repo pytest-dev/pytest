@@ -53,6 +53,17 @@ PRIVATE = UnformattedWarning(
 )
 
 
+# Not tied to a removal version yet (#13030).
+PYTEST_PLUGINS_IN_TEST_MODULE = UnformattedWarning(
+    PytestDeprecationWarning,
+    "Defining 'pytest_plugins' in test module {nodeid} affects the entire test suite "
+    "instead of just this module.\n"
+    "Please move it to a top level conftest file at the rootdir.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html"
+    "#pytest-plugins-in-test-modules",
+)
+
+
 HOOK_LEGACY_MARKING = UnformattedWarning(
     PytestRemovedIn10Warning,
     "The hook{type} {fullname} uses old-style configuration options (marks or attributes).\n"
