@@ -1,0 +1,1 @@
+The ``sha256`` :confval:`parametrize_long_str_id_strategy` no longer fails collection with ``UnicodeEncodeError`` for ``str`` parameter values that contain lone surrogates.
