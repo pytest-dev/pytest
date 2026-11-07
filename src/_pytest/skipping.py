@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ast
 from collections.abc import Generator
 from collections.abc import Mapping
 import dataclasses
@@ -24,6 +25,7 @@ from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.stash import StashKey
+from _pytest.warning_types import PytestWarning
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -166,6 +168,32 @@ class Skip:
     reason: str = "unconditional skip"
 
 
+warned_skip_reasons_key = StashKey[set[str]]()
+
+
+def _looks_like_condition(reason: object) -> bool:
+    """Return whether a skip reason looks like a skipif condition, e.g.
+    ``"sys.platform == 'win32'"`` (#12582)."""
+    if not isinstance(reason, str):
+        return False
+    try:
+        tree = ast.parse(reason.strip(), mode="eval")
+    except (SyntaxError, ValueError):
+        return False
+    for node in ast.walk(tree):
+        # Attribute access or calls, for example ``sys.platform.startswith('win')``.
+        if isinstance(node, ast.Attribute | ast.Call):
+            return True
+        # Comparisons against values, for example ``os.name == 'nt'``; comparisons
+        # of plain names are ignored as they are also valid English, for example
+        # ``"nothing in particular"``.
+        if isinstance(node, ast.Compare) and not all(
+            isinstance(operand, ast.Name) for operand in [node.left, *node.comparators]
+        ):
+            return True
+    return False
+
+
 def evaluate_skip_marks(item: Item) -> Skip | None:
     """Evaluate skip and skipif marks on item, returning Skip if triggered."""
     for mark in item.iter_markers(name="skipif"):
@@ -186,6 +214,22 @@ def evaluate_skip_marks(item: Item) -> Skip | None:
                 return Skip(reason)
 
     for mark in item.iter_markers(name="skip"):
+        reason = mark.args[0] if mark.args else mark.kwargs.get("reason")
+        # Marks applied to a module or class are seen by each of their items,
+        # so only warn once per reason.
+        warned_reasons = item.config.stash.setdefault(warned_skip_reasons_key, set())
+        if (
+            isinstance(reason, str)
+            and _looks_like_condition(reason)
+            and reason not in warned_reasons
+        ):
+            warned_reasons.add(reason)
+            item.warn(
+                PytestWarning(
+                    f"The reason {reason!r} of pytest.mark.skip looks like a condition. "
+                    "Did you mean pytest.mark.skipif?"
+                )
+            )
         try:
             return Skip(*mark.args, **mark.kwargs)
         except TypeError as e:
