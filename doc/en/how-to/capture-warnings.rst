@@ -244,6 +244,62 @@ The threshold can also be set in the configuration file using :confval:`max_warn
     regardless of the warning count. ``MAX_WARNINGS_ERROR`` is only reported when all tests pass
     but the warning threshold is exceeded.
 
+Controlling warning location collapsing
+----------------------------------------
+
+.. versionadded:: 9.2
+
+When many tests trigger the same warning, pytest collapses the warnings summary
+to show only filenames rather than individual test node IDs. By default this
+happens once a warning appears in 10 or more locations.
+
+You can change this threshold with the :option:`--warnings-collapse-threshold`
+command-line option:
+
+.. code-block:: bash
+
+    pytest --warnings-collapse-threshold=20
+
+Set it to ``none`` to always show full test node IDs regardless of how many
+locations a warning appears in:
+
+.. code-block:: bash
+
+    pytest --warnings-collapse-threshold=none
+
+The threshold can also be set in the configuration file using
+:confval:`warnings_collapse_threshold`:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        warnings_collapse_threshold = 20
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        warnings_collapse_threshold = 20
+
+To never collapse, set the value to ``none`` in the configuration file:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        warnings_collapse_threshold = "none"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        warnings_collapse_threshold = none
+
 Disabling warnings summary
 --------------------------
 
