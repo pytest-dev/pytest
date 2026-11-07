@@ -733,7 +733,13 @@ class PytestPluginManager(PluginManager):
         for parent in reversed((directory, *directory.parents)):
             if self._is_in_confcutdir(parent):
                 conftestpath = parent / "conftest.py"
-                if conftestpath.is_file():
+                try:
+                    has_conftest = conftestpath.is_file()
+                except PermissionError:
+                    # The directory cannot be searched (e.g. insufficient
+                    # permissions), so no conftest can be loaded from it.
+                    has_conftest = False
+                if has_conftest:
                     mod = self._importconftest(
                         conftestpath,
                         importmode,
