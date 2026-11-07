@@ -377,6 +377,14 @@ def _original_codec(stream: object) -> tuple[str, str]:
     )
 
 
+def _encode_for_replay(data: str, encoding: str, errors: str) -> bytes:
+    """Encode captured text for replay without failing on replacement characters."""
+    try:
+        return data.encode(encoding, errors)
+    except UnicodeEncodeError:
+        return data.encode(encoding, "backslashreplace")
+
+
 class SysCaptureBase(CaptureBase[AnyStr]):
     def __init__(
         self, fd: int, tmpfile: TextIO | None = None, *, tee: bool = False
@@ -479,7 +487,12 @@ class SysCapture(SysCaptureBase[str]):
 
     def writeorg(self, data: str) -> None:
         self._assert_state("writeorg", ("started", "suspended"))
-        self._old.write(data)
+        try:
+            self._old.write(data)
+        except UnicodeEncodeError:
+            encoding, _ = _original_codec(self._old)
+            text = data.encode(encoding, "backslashreplace").decode(encoding, "replace")
+            self._old.write(text)
         self._old.flush()
 
 
@@ -630,7 +643,7 @@ class FDCapture(FDCaptureBase[str]):
         self._assert_state("writeorg", ("started", "suspended"))
         encoding = self.tmpfile.encoding or "UTF-8"
         errors = self.tmpfile.errors or "strict"
-        os.write(self.targetfd_save, data.encode(encoding, errors))
+        os.write(self.targetfd_save, _encode_for_replay(data, encoding, errors))
 
 
 # MultiCapture
