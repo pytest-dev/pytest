@@ -1,0 +1,1 @@
+Fixed assertion rewriting evaluating a walrus operator (``:=``) or a starred argument out of order when a later argument assigned to the same name, so ``assert collect(*items, identity(items := [9]))`` now passes the pre-assignment ``items``.
