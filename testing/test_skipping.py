@@ -1567,3 +1567,43 @@ def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines("*_pytest.outcomes.Exit: foo*")
+
+
+def test_module_level_skip_with_node_id(pytester: Pytester) -> None:
+    """A node id into a module that skips at import reports the skip, and
+    is not a usage error (#15142)."""
+    pytester.makepyfile(
+        test_mod="""
+        import pytest
+        pytest.skip("skip_module_level", allow_module_level=True)
+
+        def test_func():
+            pass
+        """
+    )
+    result = pytester.runpytest("-rs", "test_mod.py::test_func")
+    result.assert_outcomes(skipped=1)
+    result.stdout.fnmatch_lines(["*SKIP*skip_module_level"])
+    assert "found no collectors" not in result.stderr.str()
+
+
+def test_module_level_skips_raise_skipped_module() -> None:
+    from _pytest.outcomes import SkippedImport
+    from _pytest.outcomes import SkippedModule
+
+    with pytest.raises(SkippedModule) as excinfo:
+        pytest.skip("reason", allow_module_level=True)
+    assert excinfo.value.allow_module_level
+    assert not isinstance(excinfo.value, SkippedImport)
+    # Reported like any other skip.
+    assert excinfo.exconly() == "Skipped: reason"
+
+    with pytest.raises(SkippedImport) as imported:
+        pytest.importorskip("no_such_module_xyz")
+    assert imported.value.allow_module_level
+    assert imported.exconly().startswith("Skipped: could not import")
+
+    with pytest.raises(pytest.skip.Exception) as plain:
+        pytest.skip("reason")
+    assert not isinstance(plain.value, SkippedModule)
+    assert not plain.value.allow_module_level

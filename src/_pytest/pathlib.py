@@ -756,7 +756,13 @@ def _import_module_using_spec(
         # Find spec and import this module.
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        try:
+            spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        except BaseException:
+            # Like importlib itself, do not leave a half-executed module
+            # behind, a later import would silently return it (#15142).
+            sys.modules.pop(module_name, None)
+            raise
 
         # Set this module as an attribute of the parent module (#12194).
         if parent_module is not None:

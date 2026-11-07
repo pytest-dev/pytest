@@ -662,6 +662,24 @@ class TestImportLibMode:
         )
         assert module is module2
 
+    def test_importmode_importlib_failed_import_not_cached(
+        self, tmp_path: Path, ns_param: bool
+    ) -> None:
+        """A module that raises while executing is not left in sys.modules,
+        like importlib itself does (#15142)."""
+        fn = tmp_path.joinpath("_src/tests/test_raises.py")
+        fn.parent.mkdir(parents=True)
+        fn.write_text("raise ValueError('boom')", encoding="utf-8")
+
+        with pytest.raises(ValueError, match="boom"):
+            import_path(
+                fn,
+                mode="importlib",
+                root=tmp_path,
+                consider_namespace_packages=ns_param,
+            )
+        assert "_src.tests.test_raises" not in sys.modules
+
     def test_importmode_importlib_with_pickle(
         self, tmp_path: Path, ns_param: bool
     ) -> None:
