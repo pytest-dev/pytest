@@ -2405,6 +2405,8 @@ def parse_warning_filter(
     * Does not apply the filter.
     * Escaping is optional.
     * Raises UsageError so we get nice error messages on failure.
+    * Invalid actions name the valid choices, and hint at the `-W`/`-Wait`
+      short-option pitfall when relevant.
     """
     __tracebackhide__ = True
     error_template = dedent(
@@ -2441,7 +2443,16 @@ def parse_warning_filter(
     try:
         action: warnings._ActionKind = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
-        raise UsageError(error_template.format(error=str(e))) from None
+        hint = (
+            " (choose from: default, error, ignore, always, all, module, once)."
+            " See https://docs.python.org/3/library/warnings.html#describing-warning-filters"
+        )
+        if action_.lower() == "ait":
+            hint = (
+                " Note that '-W' takes a value, so '-Wait' is parsed as '-W ait'."
+                + hint
+            )
+        raise UsageError(error_template.format(error=f"{e}{hint}")) from None
     try:
         category: type[Warning] = _resolve_warning_category(category_)
     except ImportError:
