@@ -148,7 +148,7 @@ def test_capture_uses_replaced_stream_codec(
         import sys
 
         def test_encoding({capture_fixture}):
-            text = "caf\\u00e9\\n"
+            text = "calf\\u00e9\\n"
             assert sys.stdout.encoding == sys.__stdout__.encoding
             assert sys.stdout.errors == sys.__stdout__.errors
             assert sys.stderr.encoding == sys.__stderr__.encoding
@@ -191,9 +191,9 @@ def test_capture_wrappers_use_configured_codec() -> None:
         assert (stream.encoding, stream.errors) == ("UTF-8", "strict")
     with capture.CaptureIO(encoding="latin-1", errors="strict") as stream:
         assert (stream.encoding, stream.errors) == ("latin-1", "strict")
-        stream.write("caf\u00e9")
+        stream.write("calf\u00e9")
         stream.buffer.write(b" na\xefve")
-        assert stream.getvalue() == "caf\u00e9 na\xefve"
+        assert stream.getvalue() == "calf\u00e9 na\xefve"
     with capture.EncodedFile(
         io.BytesIO(), encoding="latin-1", errors="strict"
     ) as stream:
