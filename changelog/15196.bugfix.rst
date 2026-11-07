@@ -1,0 +1,1 @@
+Fixed missing captured output in JUnit XML reports for setup errors when ``junit_log_passing_tests`` is disabled.
