@@ -1,0 +1,1 @@
+The location (file and line) of the ``assertion is always true`` warning is now included in the error raised when the warning is turned into an error, for example with ``-W error``.

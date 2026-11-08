@@ -868,14 +868,20 @@ class AssertionRewriter(ast.NodeVisitor):
 
             # TODO: This assert should not be needed.
             assert self.module_path is not None
-            warnings.warn_explicit(
-                PytestAssertRewriteWarning(
-                    "assertion is always true, perhaps remove parentheses?"
-                ),
-                category=None,
-                filename=self.module_path,
-                lineno=assert_.lineno,
-            )
+            message = "assertion is always true, perhaps remove parentheses?"
+            try:
+                warnings.warn_explicit(
+                    PytestAssertRewriteWarning(message),
+                    category=None,
+                    filename=self.module_path,
+                    lineno=assert_.lineno,
+                )
+            except PytestAssertRewriteWarning:
+                # The warning was turned into an error (e.g. ``-W error``). The
+                # traceback only shows pytest internals, so include the location.
+                raise PytestAssertRewriteWarning(
+                    f"{self.module_path}:{assert_.lineno}: {message}"
+                ) from None
 
         self.statements: list[ast.stmt] = []
         self.variables: list[str] = []

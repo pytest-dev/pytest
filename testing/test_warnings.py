@@ -613,8 +613,9 @@ class TestAssertionWarnings:
             """
         )
         result = pytester.runpytest()
+        # The location may be prefixed when the warning is turned into an error.
         self.assert_result_warns(
-            result, "assertion is always true, perhaps remove parentheses?"
+            result, "*assertion is always true, perhaps remove parentheses?"
         )
 
 

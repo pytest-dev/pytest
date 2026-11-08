@@ -2666,6 +2666,23 @@ def test_assert_tuple_warning(pytester: Pytester) -> None:
     assert msg not in result.stdout.str()
 
 
+def test_assert_tuple_warning_as_error_shows_location(pytester: Pytester) -> None:
+    """The location must be shown when the warning is turned into an error (#4687)."""
+    pytester.makepyfile(
+        test_always_true="""
+        def test_tuple():
+            assert(False, 'you shall not pass')
+    """
+    )
+    result = pytester.runpytest("-W", "error::pytest.PytestAssertRewriteWarning")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestAssertRewriteWarning: *test_always_true.py:2: assertion is always true*"
+        ]
+    )
+
+
 def test_assert_indirect_tuple_no_warning(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
