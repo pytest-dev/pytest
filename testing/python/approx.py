@@ -622,10 +622,13 @@ class TestApprox:
             assert approx(x, rel=0, abs=Decimal("5e-7")) != a
 
     def test_decimal_expecting_nan_actual(self):
-        """A Decimal NaN *actual* value compares unequal instead of raising (#15335)."""
+        """A quiet Decimal NaN *actual* value compares unequal instead of raising (#15335)."""
         examples = [
             (ne, Decimal("NaN"), Decimal("1.1")),
             (ne, Decimal("-NaN"), Decimal("1.1")),
+            # Only passes because the NaN guard short-circuits before the
+            # mixed float/Decimal arithmetic; non-NaN mixed pairs still
+            # raise TypeError, which is out of scope here.
             (ne, Decimal("NaN"), 1.1),
         ]
         for op, a, x in examples:
@@ -637,6 +640,13 @@ class TestApprox:
         assert [Decimal("1.1")] != approx([Decimal("NaN")])
         assert [Decimal("NaN")] != approx([Decimal("1.1")])
         assert {"k": Decimal("NaN")} != approx({"k": Decimal("1.1")})
+
+        # A *signalling* NaN is not covered: it raises InvalidOperation on
+        # the exact-equality check itself, per decimal semantics.
+        with pytest.raises(decimal.InvalidOperation):
+            Decimal("sNaN") == approx(Decimal("1.1"))
+        with pytest.raises(decimal.InvalidOperation):
+            Decimal("sNaN") == approx(1.1)
 
     def test_decimal_outside_float_range(self):
         """Decimals beyond the float range must not be treated as infinite (#15005)."""
