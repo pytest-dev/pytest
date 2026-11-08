@@ -1528,6 +1528,62 @@ def test_windowsconsoleio_workaround_non_standard_streams() -> None:
     _windowsconsoleio_workaround(stream)
 
 
+@pytest.mark.skipif(
+    not sys.platform.startswith("win"),
+    reason="only on windows",
+)
+class TestCRuntimeBuffering:
+    """Output written through the C runtime must not be stranded in its buffer
+    when capfd reads back what was captured (#10843).
+
+    Extension modules built with MSVC share CPython's UCRT and write through
+    its ``stdout`` stream. Once fd capturing points fd 1 at a regular file the
+    UCRT no longer sees a character device and switches ``stdout`` to full
+    buffering, so ``printf``/``fprintf`` output stays in the CRT's 4 KiB buffer
+    instead of reaching the temporary file pytest reads.
+    """
+
+    @staticmethod
+    def _write_through_c_runtime(text: str) -> None:
+        """Write to stdout the way a C extension does, with no explicit flush."""
+        import ctypes
+
+        ucrt = ctypes.CDLL("ucrtbase.dll")
+        iob = getattr(ucrt, "__acrt_iob_func")
+        iob.restype = ctypes.c_void_p
+        iob.argtypes = [ctypes.c_uint]
+        ucrt.fputs.argtypes = [ctypes.c_char_p, ctypes.c_void_p]
+        ucrt.fputs.restype = ctypes.c_int
+        ucrt.fputs(text.encode(), ctypes.c_void_p(iob(1)))
+
+    def test_short_output_is_not_swallowed(self, capfd: CaptureFixture[str]) -> None:
+        # Less than one buffer's worth: without a flush this reads back empty.
+        self._write_through_c_runtime("hello from the c runtime\n")
+        out, _ = capfd.readouterr()
+        assert "hello from the c runtime" in out
+
+    def test_long_output_is_not_truncated(self, capfd: CaptureFixture[str]) -> None:
+        # More than one buffer's worth: without a flush this reads back as a
+        # prefix quantised to 4 KiB, losing the tail.
+        lines = 400
+        for i in range(lines):
+            self._write_through_c_runtime(f"line{i:05d}" + "x" * 40 + "\n")
+        out, _ = capfd.readouterr()
+        assert f"line{lines - 1:05d}" in out
+        assert out.count("\n") == lines
+
+    def test_nothing_leaks_when_capture_is_suspended(
+        self, capfd: CaptureFixture[str]
+    ) -> None:
+        # Buffered bytes must land in the capture, not escape to the real
+        # stream once the fd is restored.
+        self._write_through_c_runtime("written while capturing\n")
+        with capfd.disabled():
+            pass
+        out, _ = capfd.readouterr()
+        assert "written while capturing" in out
+
+
 def test_dontreadfrominput_has_encoding(pytester: Pytester) -> None:
     pytester.makepyfile(
         """

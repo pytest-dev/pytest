@@ -1,0 +1,10 @@
+Fixed ``capfd`` losing output that extension modules write through the C runtime on Windows.
+
+Extension modules built with MSVC share CPython's UCRT and write through its ``stdout``
+stream. Once fd capturing points fd 1 at a regular file, the UCRT switches ``stdout`` to
+full buffering, so ``printf``/``fprintf`` output stayed in the CRT's 4 KiB buffer instead
+of reaching the file pytest reads back -- truncating captured output at a 4 KiB boundary,
+or returning an empty string when a test wrote less than that.
+
+pytest now flushes the C runtime's stdio buffers before reading captured output and before
+restoring a file descriptor, so this output is captured instead of leaking past the test.

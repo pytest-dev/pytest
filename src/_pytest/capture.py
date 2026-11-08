@@ -461,6 +461,51 @@ class SysCapture(SysCaptureBase[str]):
         self._old.flush()
 
 
+# Sentinel meaning "we have not tried to resolve the C runtime's fflush yet".
+_C_FFLUSH_UNSET: Final = object()
+_c_fflush: Any = _C_FFLUSH_UNSET
+
+
+def _flush_c_runtime_streams() -> None:
+    """Flush the C runtime's stdio buffers (Windows only).
+
+    Extension modules built with MSVC share CPython's UCRT, and write through
+    its ``stdout``/``stderr`` ``FILE`` streams. When fd capturing redirects fd 1
+    to a regular file, the UCRT stops seeing a character device and switches
+    ``stdout`` to full buffering, so ``fprintf``/``printf`` output sits in the
+    CRT's 4 KiB buffer instead of reaching the temporary file we read back.
+
+    The result is not "output goes missing" but "output is truncated at a 4 KiB
+    boundary" -- and when a test writes less than one buffer's worth, capfd
+    hands back an empty string.
+
+    ``fflush(NULL)`` flushes every open output stream in that CRT; it costs
+    well under a microsecond and is a no-op when nothing is buffered.
+    """
+    if sys.platform != "win32":
+        return
+
+    global _c_fflush
+    if _c_fflush is _C_FFLUSH_UNSET:
+        _c_fflush = None
+        try:
+            import ctypes
+
+            fflush = ctypes.CDLL("ucrtbase.dll").fflush
+        except (OSError, AttributeError, ImportError):  # pragma: no cover
+            pass
+        else:
+            fflush.argtypes = [ctypes.c_void_p]
+            fflush.restype = ctypes.c_int
+            _c_fflush = fflush
+
+    if _c_fflush is not None:
+        try:
+            _c_fflush(None)  # fflush(NULL): flush all output streams
+        except OSError:  # pragma: no cover
+            pass
+
+
 class FDCaptureBase(CaptureBase[AnyStr]):
     def __init__(self, targetfd: int) -> None:
         self.targetfd = targetfd
@@ -529,6 +574,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         self._assert_state("done", ("initialized", "started", "suspended", "done"))
         if self._state == "done":
             return
+        _flush_c_runtime_streams()
         os.dup2(self.targetfd_save, self.targetfd)
         os.close(self.targetfd_save)
         if self.targetfd_invalid is not None:
@@ -543,6 +589,9 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         self._assert_state("suspend", ("started", "suspended"))
         if self._state == "suspended":
             return
+        # Flush before the fd goes back to the real stream, otherwise anything
+        # still buffered in the C runtime leaks past capture. See #10843.
+        _flush_c_runtime_streams()
         self.syscapture.suspend()
         os.dup2(self.targetfd_save, self.targetfd)
         self._state = "suspended"
@@ -566,6 +615,9 @@ class FDCaptureBinary(FDCaptureBase[bytes]):
 
     def snap(self) -> bytes:
         self._assert_state("snap", ("started", "suspended"))
+        # Bytes an extension module wrote with fprintf() may still be sitting
+        # in the C runtime's buffer rather than in tmpfile. See #10843.
+        _flush_c_runtime_streams()
         # Avoid seek/read/truncate in the common case of no output.
         if os.fstat(self.tmpfile.fileno()).st_size == 0:
             return self.EMPTY_BUFFER
@@ -591,6 +643,9 @@ class FDCapture(FDCaptureBase[str]):
 
     def snap(self) -> str:
         self._assert_state("snap", ("started", "suspended"))
+        # Bytes an extension module wrote with fprintf() may still be sitting
+        # in the C runtime's buffer rather than in tmpfile. See #10843.
+        _flush_c_runtime_streams()
         # Avoid seek/read/truncate in the common case of no output.
         if os.fstat(self.tmpfile.fileno()).st_size == 0:
             return self.EMPTY_BUFFER
