@@ -4522,6 +4522,43 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(pytester: Pytester) -> Non
     )
 
 
+@pytest.mark.parametrize("scope", ["session", "package", "module", "function"])
+def test_fixture_hooks_in_subdirectory_conftest_for_all_scopes(
+    pytester: Pytester, scope: str
+) -> None:
+    """The fixture hooks of a conftest.py in the test's directory are called for
+    fixtures of every scope, not only for module/function scoped ones (#8000)."""
+    pytester.makepyfile(
+        **{
+            "tests/conftest.py": f"""
+            import pytest
+
+            @pytest.fixture(scope={scope!r})
+            def my_fixture():
+                return 'some'
+
+            def pytest_fixture_setup(fixturedef, request):
+                print('setup hook called for', fixturedef.argname)
+
+            def pytest_fixture_post_finalizer(fixturedef, request):
+                print('finalizer hook called for', fixturedef.argname)
+            """,
+            "tests/test_hooks.py": """
+            def test_func(my_fixture):
+                assert my_fixture == 'some'
+            """,
+        }
+    )
+    result = pytester.runpytest("-s")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(
+        [
+            "*setup hook called for my_fixture*",
+            "*finalizer hook called for my_fixture*",
+        ]
+    )
+
+
 def test_fixture_post_finalizer_called_once(pytester: Pytester) -> None:
     """Test that pytest_fixture_post_finalizer is called only once per fixture teardown.
 

@@ -1,0 +1,2 @@
+Fixed the :hook:`pytest_fixture_setup` and :hook:`pytest_fixture_post_finalizer` hooks not being called for
+session and package scoped fixtures when they are implemented in a ``conftest.py`` file in a subdirectory.

@@ -1288,13 +1288,17 @@ class FixtureDef(Generic[FixtureValue]):
         # Register the pytest_fixture_post_finalizer as the first finalizer,
         # which is executed last.
         assert not self._finalizers
+        # The hooks are called through the item that requested the fixture,
+        # not through ``request.node`` (which is the Session or Package for
+        # session/package scoped fixtures), so that hook implementations in
+        # the item's conftest.py files are called too.
+        ihook = request._pyfuncitem.ihook
         self.addfinalizer(
-            lambda: request.node.ihook.pytest_fixture_post_finalizer(
+            lambda: ihook.pytest_fixture_post_finalizer(
                 fixturedef=self, request=request
             )
         )
 
-        ihook = request.node.ihook
         try:
             # Setup the fixture, run the code in it, and cache the value
             # in self.cached_result.
