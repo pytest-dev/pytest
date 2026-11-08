@@ -33,6 +33,7 @@ from _pytest.raises import AbstractRaises
 from _pytest.scope import ScopeName
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
+from _pytest.warning_types import PytestWarning
 
 
 if TYPE_CHECKING:
@@ -213,6 +214,18 @@ class ParameterSet(NamedTuple):
                 PARAMETRIZE_NON_COLLECTION_ITERABLE.format(
                     nodeid=nodeid,
                     type_name=type(argvalues).__name__,
+                ),
+                stacklevel=3,
+            )
+
+        if isinstance(argvalues, Mapping):
+            warnings.warn(
+                PytestWarning(
+                    "Passing a dict as argvalues to parametrize only uses its keys.\n"
+                    f"Test: {nodeid}\n"
+                    "To parametrize over the keys, pass them explicitly, for example "
+                    "list(mapping). To use the dict itself as a single value, wrap it "
+                    "in a list: [mapping]."
                 ),
                 stacklevel=3,
             )

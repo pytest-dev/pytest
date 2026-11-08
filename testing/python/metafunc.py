@@ -11,6 +11,7 @@ import textwrap
 from typing import Any
 from typing import cast
 from typing import ClassVar
+import warnings
 
 import hypothesis
 from hypothesis import strategies
@@ -1273,6 +1274,34 @@ class TestMetafunc:
         ):
             metafunc.parametrize("x", data_generator())
 
+    def test_parametrize_dict_argvalues_warns(self) -> None:
+        """A dict as argvalues is accepted but only its keys are used (#11632)."""
+
+        def func(x: str) -> None:
+            raise NotImplementedError()
+
+        metafunc = self.Metafunc(func)
+
+        with pytest.warns(
+            pytest.PytestWarning,
+            match=r"Passing a dict as argvalues to parametrize only uses its keys",
+        ):
+            metafunc.parametrize("x", {"foo": 1, "bar": 2})
+
+        assert [c.id for c in metafunc._calls] == ["foo", "bar"]
+
+    def test_parametrize_dict_keys_and_wrapped_dict_do_not_warn(self) -> None:
+        def func(x: object) -> None:
+            raise NotImplementedError()
+
+        mapping = {"foo": 1, "bar": 2}
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            self.Metafunc(func).parametrize("x", list(mapping))
+            self.Metafunc(func).parametrize("x", [mapping])
+            self.Metafunc(func).parametrize("x", mapping.keys())
+
 
 class TestMetafuncFunctional:
     def test_attributes(self, pytester: Pytester) -> None:
@@ -1866,6 +1895,32 @@ class TestMetafuncFunctional:
                 "*test_1*",
                 "*test_2*",
                 "*test_3*",
+            ]
+        )
+
+    def test_parametrize_dict_argvalues_warning(self, pytester: Pytester) -> None:
+        """Only the keys of a dict are used as argvalues; this emits a warning (#11632)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixture_with_param(request):
+                return request.param
+
+            @pytest.mark.parametrize(
+                "fixture_with_param", {"foo": "bar", "hello": "world"}, indirect=True
+            )
+            def test_dict(fixture_with_param):
+                assert fixture_with_param in ("foo", "hello")
+            """
+        )
+        result = pytester.runpytest("-Wdefault")
+        result.assert_outcomes(passed=2, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestWarning: Passing a dict as argvalues to parametrize only uses its keys.*",
+                "*Test: test_parametrize_dict_argvalues_warning.py::test_dict*",
             ]
         )
 

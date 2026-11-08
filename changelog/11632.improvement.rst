@@ -1,0 +1,1 @@
+Passing a ``dict`` as the ``argvalues`` of :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` or :meth:`Metafunc.parametrize() <pytest.Metafunc.parametrize>` now emits a :class:`pytest.PytestWarning`, because only the keys of the dict are used. Pass ``list(mapping)`` to use the keys, or ``[mapping]`` to use the dict as a single value.
