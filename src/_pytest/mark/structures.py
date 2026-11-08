@@ -128,7 +128,7 @@ class ParameterSet(NamedTuple):
             marks = (marks,)
         else:
             assert isinstance(marks, collections.abc.Collection)
-        if any(i.name == "usefixtures" for i in marks):
+        if any(i.name == "usefixtures" for i in normalize_mark_list(marks)):
             raise ValueError(
                 "pytest.param cannot add pytest.mark.usefixtures; see "
                 "https://docs.pytest.org/en/stable/reference/reference.html#pytest-param"

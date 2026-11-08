@@ -424,6 +424,10 @@ class TestParameterize:
             ["*test_param_rejects_usefixtures.py:4*", "*pytest.param(*"]
         )
 
+    def test_param_rejects_non_marks(self) -> None:
+        with pytest.raises(TypeError, match="got 'x' instead of Mark"):
+            pytest.param(1, marks=["x"])  # type: ignore[list-item]
+
 
 def test_function_instance(pytester: Pytester) -> None:
     items = pytester.getitems(
