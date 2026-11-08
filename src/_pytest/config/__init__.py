@@ -73,7 +73,9 @@ import _pytest.deprecated
 import _pytest.hookspec
 from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
+from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
+from _pytest.outcomes import SkippedImport
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
@@ -136,13 +138,29 @@ class ConftestImportFailure(Exception):
         self,
         path: pathlib.Path,
         *,
-        cause: Exception,
+        cause: Exception | OutcomeException,
     ) -> None:
         self.path = path
         self.cause = cause
 
     def __str__(self) -> str:
         return f"{type(self.cause).__name__}: {self.cause} (from {self.path})"
+
+
+def _warn_conftest_import_skip(conftestpath: pathlib.Path, e: Skipped) -> None:
+    lineno = 1
+    tb = e.__traceback__
+    while tb is not None:
+        if pathlib.Path(tb.tb_frame.f_code.co_filename) == conftestpath:
+            lineno = tb.tb_lineno
+        tb = tb.tb_next
+    warning = _pytest.deprecated.CONFTEST_IMPORT_SKIP.format(path=conftestpath)
+    warnings.warn_explicit(
+        warning,
+        category=type(warning),
+        filename=str(conftestpath),
+        lineno=lineno,
+    )
 
 
 class PluginImportFailure(Exception):
@@ -512,6 +530,9 @@ class PytestPluginManager(PluginManager):
         # This includes the directory's own conftest modules as well
         # as those of its parent directories.
         self._dirpath2confmods: dict[pathlib.Path, list[types.ModuleType]] = {}
+        # Conftest modules which skipped while being imported, so the skip is
+        # re-raised instead of executing the conftest again.
+        self._skipped_conftests: dict[pathlib.Path, Skipped] = {}
         # Cutoff directory above which conftests are no longer discovered.
         self._confcutdir: pathlib.Path | None = None
         # If set, conftest loading is skipped.
@@ -689,12 +710,19 @@ class PytestPluginManager(PluginManager):
             anchors.extend(x for x in invocation_dir.glob("test*") if x.is_dir())
 
         for anchor in anchors:
-            self._loadconftestmodules(
-                anchor,
-                importmode,
-                rootpath,
-                consider_namespace_packages=consider_namespace_packages,
-            )
+            try:
+                self._loadconftestmodules(
+                    anchor,
+                    importmode,
+                    rootpath,
+                    consider_namespace_packages=consider_namespace_packages,
+                )
+            except Skipped:
+                # A conftest on the way to the anchor skipped while being
+                # imported. There is no collector yet to report the skip, so
+                # leave the directory alone: collection hits the same skip
+                # again and reports it for the directory (#15142).
+                continue
 
     def _is_in_confcutdir(self, path: pathlib.Path) -> bool:
         """Whether to consider the given path to load conftests from."""
@@ -772,6 +800,9 @@ class PytestPluginManager(PluginManager):
         existing = self.get_plugin(conftestpath_plugin_name)
         if existing is not None:
             return cast(types.ModuleType, existing)
+        skipped = self._skipped_conftests.get(conftestpath)
+        if skipped is not None:
+            raise skipped
 
         # conftest.py files there are not in a Python package all have module
         # name "conftest", and thus conflict with each other. Clear the existing
@@ -791,7 +822,18 @@ class PytestPluginManager(PluginManager):
                 root=rootpath,
                 consider_namespace_packages=consider_namespace_packages,
             )
-        except Exception as e:
+        except Skipped as e:
+            # A conftest may skip its directory at import time, but only with
+            # pytest.importorskip(); any pytest.skip() is deprecated (#15142).
+            if not isinstance(e, SkippedImport):
+                try:
+                    _warn_conftest_import_skip(conftestpath, e)
+                except Exception as warning:
+                    raise ConftestImportFailure(conftestpath, cause=warning) from e
+            self._skipped_conftests[conftestpath] = e
+            raise
+        except (Exception, OutcomeException) as e:
+            # pytest.fail() and pytest.xfail() have no meaning for a conftest.
             assert e.__traceback__ is not None
             raise ConftestImportFailure(conftestpath, cause=e) from e
 
