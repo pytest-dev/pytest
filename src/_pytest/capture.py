@@ -466,6 +466,11 @@ _C_FFLUSH_UNSET: Final = object()
 _c_fflush: Any = _C_FFLUSH_UNSET
 
 
+def _no_flush(_stream: object) -> int:  # pragma: no cover
+    """Stand-in used when the C runtime's fflush cannot be resolved."""
+    return 0
+
+
 def _flush_c_runtime_streams() -> None:
     """Flush the C runtime's stdio buffers (Windows only).
 
@@ -487,23 +492,22 @@ def _flush_c_runtime_streams() -> None:
 
     global _c_fflush
     if _c_fflush is _C_FFLUSH_UNSET:
-        _c_fflush = None
+        fflush: Any
         try:
             import ctypes
 
             fflush = ctypes.CDLL("ucrtbase.dll").fflush
         except (OSError, AttributeError, ImportError):  # pragma: no cover
-            pass
+            fflush = _no_flush
         else:
             fflush.argtypes = [ctypes.c_void_p]
             fflush.restype = ctypes.c_int
-            _c_fflush = fflush
+        _c_fflush = fflush
 
-    if _c_fflush is not None:
-        try:
-            _c_fflush(None)  # fflush(NULL): flush all output streams
-        except OSError:  # pragma: no cover
-            pass
+    try:
+        _c_fflush(None)  # fflush(NULL): flush all output streams
+    except OSError:  # pragma: no cover
+        pass
 
 
 class FDCaptureBase(CaptureBase[AnyStr]):
