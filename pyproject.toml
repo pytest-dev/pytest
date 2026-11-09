@@ -383,7 +383,7 @@ disable = [
     "unidiomatic-typecheck",
     "unnecessary-comprehension",
     "unnecessary-dunder-call",
-    "unnecessary-lambda",
+    "unnecessary-lambda",                     # PLW0108 from ruff
     "unnecessary-lambda-assignment",
     "unpacking-non-sequence",
     "unspecified-encoding",
