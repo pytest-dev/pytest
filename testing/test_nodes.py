@@ -162,3 +162,35 @@ def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
+
+
+def test_collector_repr_failure_empty_collect_error(pytester: Pytester) -> None:
+    """
+    Verify a CollectError raised without a message does not cause INTERNALERROR.
+
+    Collector.repr_failure used ``str(exc.args[0])`` which raised IndexError for
+    an empty CollectError. It should produce a normal collection error instead.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        class BadCollector(pytest.Collector):
+            def collect(self):
+                raise self.CollectError()
+
+        class MyFile(pytest.File):
+            def collect(self):
+                yield BadCollector.from_parent(self, name="bad")
+
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == ".custom":
+                return MyFile.from_parent(parent, path=file_path)
+        """
+    )
+    pytester.makefile(".custom", thing="x")
+    result = pytester.runpytest("-q")
+    # A clean collection error, not an INTERNALERROR crash.
+    assert result.ret != pytest.ExitCode.INTERNAL_ERROR
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
+    result.stdout.fnmatch_lines(["*1 error*"])

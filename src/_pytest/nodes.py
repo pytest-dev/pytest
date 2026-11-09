@@ -544,7 +544,8 @@ class Collector(Node, abc.ABC):
             "fulltrace", False
         ):
             exc = excinfo.value
-            return str(exc.args[0])
+            # CollectError may be raised without a message; avoid IndexError.
+            return str(exc.args[0]) if exc.args else str(exc)
 
         # Respect explicit tbstyle option, but default to "short"
         # (_repr_failure_py uses "long" with "fulltrace" option always).
