@@ -1,0 +1,2 @@
+Fixed ``INTERNALERROR`` when a custom collector raises ``CollectError()``
+without a message -- by :user:`Lushiyao5`.
