@@ -1,0 +1,1 @@
+Restored propagation of package-level marks from ``__init__.py`` to tests in nested packages.
