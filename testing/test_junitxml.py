@@ -404,6 +404,52 @@ class TestPython:
         fnode.assert_attr(message='failed on teardown with "ValueError: Error reason"')
         assert "ValueError" in fnode.toxml()
 
+    @pytest.mark.parametrize("scope", ["function", "session"])
+    @pytest.mark.parametrize("phase", ["setup", "call"])
+    @pytest.mark.parametrize(
+        "interrupt, returncode",
+        [
+            ("pytest.exit('stop')", pytest.ExitCode.INTERRUPTED),
+            ("pytest.exit('stop', returncode=99)", 99),
+            ("raise KeyboardInterrupt", pytest.ExitCode.INTERRUPTED),
+        ],
+    )
+    def test_interrupted_teardown_error(
+        self,
+        pytester: Pytester,
+        scope: str,
+        phase: str,
+        interrupt: str,
+        returncode: int,
+    ) -> None:
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            @pytest.fixture(scope={scope!r})
+            def resource():
+                yield
+                raise ValueError('teardown failed')
+
+            @pytest.fixture
+            def trigger(resource):
+                {interrupt if phase == "setup" else "pass"}
+
+            def test_interrupted(trigger):
+                {interrupt if phase == "call" else "pass"}
+            """
+        )
+        xml_path = pytester.path / "junit.xml"
+        result = pytester.runpytest_subprocess(f"--junitxml={xml_path}")
+        assert result.ret == returncode
+        dom = DomDocument(minidom.parse(str(xml_path)))
+        suite = dom.get_first_by_tag("testsuite")
+        suite.assert_attr(errors=1, failures=0, tests=1)
+        error = suite.get_first_by_tag("error")
+        error.assert_attr(
+            message='failed on teardown with "ValueError: teardown failed"'
+        )
+
     @parametrize_families
     def test_call_failure_teardown_error(
         self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily

@@ -133,6 +133,7 @@ class _NodeReporter:
         self.add_stats = self.xml.add_stats
         self.family = self.xml.family
         self.duration = 0.0
+        self.has_result = False
         self.properties: list[tuple[str, str]] = []
         self.nodes: list[ET.Element] = []
         self.attrs: dict[str, str] = {}
@@ -582,6 +583,7 @@ class LogXML:
     def _opentestcase(self, report: TestReport | CollectReport) -> _NodeReporter:
         reporter = self.node_reporter(report)
         reporter.record_testreport(report)
+        reporter.has_result = True
         return reporter
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
@@ -638,12 +640,13 @@ class LogXML:
                     # A passing call with a teardown error creates separate
                     # terminal reports, but JUnit XML keeps one testcase
                     # element for that item (#3850).
+                    previous = self.node_reporters.get(
+                        (report.id, getattr(report, "node", None))
+                    )
+                    # A reporter may exist only to accumulate setup duration,
+                    # without any outcome if the call was interrupted.
                     self.cnt_double_fail_tests += int(
-                        (
-                            report.id,
-                            getattr(report, "node", None),
-                        )
-                        in self.node_reporters
+                        previous is not None and previous.has_result
                     )
             reporter = self._opentestcase(report)
             if report.when == "call":
