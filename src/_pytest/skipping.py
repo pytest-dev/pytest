@@ -9,6 +9,7 @@ from collections.abc import Mapping
 import dataclasses
 import os
 import platform
+import re
 import sys
 import traceback
 
@@ -177,21 +178,10 @@ def _looks_like_condition(reason: object) -> bool:
     if not isinstance(reason, str):
         return False
     try:
-        tree = ast.parse(reason.strip(), mode="eval")
+        ast.parse(reason.strip(), mode="eval")
     except (SyntaxError, ValueError):
         return False
-    for node in ast.walk(tree):
-        # Attribute access or calls, for example ``sys.platform.startswith('win')``.
-        if isinstance(node, ast.Attribute | ast.Call):
-            return True
-        # Comparisons against values, for example ``os.name == 'nt'``; comparisons
-        # of plain names are ignored as they are also valid English, for example
-        # ``"nothing in particular"``.
-        if isinstance(node, ast.Compare) and not all(
-            isinstance(operand, ast.Name) for operand in [node.left, *node.comparators]
-        ):
-            return True
-    return False
+    return re.fullmatch(r"[A-Za-z_ .]+", reason) is None
 
 
 def evaluate_skip_marks(item: Item) -> Skip | None:
