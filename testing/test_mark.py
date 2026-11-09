@@ -1184,6 +1184,47 @@ class TestKeywordSelection:
             result = pytester.runpytest("-k", keyword)
             result.assert_outcomes(passed=selected, deselected=3 - selected)
 
+    def test_keyword_matches_marks_from_package(self, pytester: Pytester) -> None:
+        """Package-level pytestmarks should be inherited by tests in nested packages."""
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": """
+                    import pytest
+                    pytestmark = pytest.mark.pkgmark
+                """,
+                "pkg/test_example.py": """
+                    def test_example():
+                        pass
+                """,
+                "pkg/subpkg/__init__.py": "",
+                "pkg/subpkg/test_nested.py": """
+                    def test_nested():
+                        pass
+                """,
+            }
+        )
+
+        reprec = pytester.inline_run("-m", "pkgmark")
+        reprec.assertoutcome(passed=2)
+
+    def test_skip_mark_from_package(self, pytester: Pytester) -> None:
+        """Package-level skip marks should skip tests in the package."""
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": """
+                    import pytest
+                    pytestmark = pytest.mark.skip(reason="package is disabled")
+                """,
+                "pkg/test_example.py": """
+                    def test_example():
+                        assert False
+                """,
+            }
+        )
+
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(skipped=1)
+
     def test_keyword_does_not_match_mark_arguments(self, pytester: Pytester) -> None:
         """`-k` matches marker names, not what the marker was called with."""
         pytester.makepyfile(

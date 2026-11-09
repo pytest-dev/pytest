@@ -581,6 +581,9 @@ class Module(nodes.File, PyCollector):
         return importtestmodule(self.path, self.config)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        for parent in self.iter_parents():
+            if isinstance(parent, Package):
+                parent._load_package_marks()
         self._register_setup_module_fixture()
         self._register_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
@@ -711,6 +714,15 @@ class Package(nodes.Directory):
         if teardown_module is not None:
             func = partial(_call_with_optional_argument, teardown_module, init_mod)
             self.addfinalizer(func)
+
+    def _load_package_marks(self) -> None:
+        if getattr(self, "_package_marks_loaded", False):
+            return
+
+        init_mod = importtestmodule(self.path / "__init__.py", self.config)
+        self.own_markers.extend(get_unpacked_marks(init_mod))
+        self.keywords.update((mark.name, mark) for mark in self.own_markers)
+        self._package_marks_loaded = True
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
         # Always collect __init__.py first.
