@@ -276,12 +276,13 @@ class Node(abc.ABC, metaclass=NodeMeta):
                 f"warning must be an instance of Warning or subclass, got {warning!r}"
             )
         path, lineno = get_fslocation_from_item(self)
-        assert lineno is not None
         warnings.warn_explicit(
             warning,
             category=None,
             filename=str(path),
-            lineno=lineno + 1,
+            # Non-Python items may legitimately report no line number; fall back
+            # to 0 (matching the -1 sentinel from get_fslocation_from_item).
+            lineno=lineno + 1 if lineno is not None else 0,
         )
 
     # Methods for ordering nodes.
