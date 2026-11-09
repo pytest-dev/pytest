@@ -68,6 +68,7 @@ nitpick_ignore = [
     ("py:class", "HookspecMarker"),
     ("py:class", "pluggy._compat.DistFacade"),
     ("py:exc", "PluginValidationError"),
+    ("py:class", "pluggy._compat.DistFacade"),
     # Might want to expose/TODO (https://github.com/pytest-dev/pytest/issues/7469)
     ("py:class", "ExceptionRepr"),
     ("py:class", "Exit"),
@@ -79,7 +80,6 @@ nitpick_ignore = [
     ("py:class", "_pytest.fixtures.FixtureFunctionMarker"),
     ("py:class", "_pytest.fixtures.FixtureFunctionDefinition"),
     ("py:class", "_pytest.logging.LogCaptureHandler"),
-    ("py:class", "_pytest.mark.structures.ParameterSet"),
     # Intentionally undocumented/private
     ("py:class", "_pytest._code.code.Traceback"),
     ("py:class", "_pytest._py.path.LocalPath"),

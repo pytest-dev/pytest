@@ -167,7 +167,7 @@ Now we can increase pytest's verbosity:
     E
     E         At index 2 diff: 'grapes' != 'orange'
     E
-    E         Full diff:
+    E         Full diff: (-: missing in left side, +: extra in left side)
     E           [
     E               'banana',
     E               'apple',...
@@ -239,7 +239,7 @@ Now if we increase verbosity even more:
     E
     E         At index 2 diff: 'grapes' != 'orange'
     E
-    E         Full diff:
+    E         Full diff: (-: missing in left side, +: extra in left side)
     E           [
     E               'banana',
     E               'apple',
@@ -267,7 +267,7 @@ Now if we increase verbosity even more:
     E         Right contains 4 more items:
     E         {'10': 10, '20': 20, '30': 30, '40': 40}
     E
-    E         Full diff:
+    E         Full diff: (-: missing in left side, +: extra in left side)
     E           {
     E               '0': 0,
     E         -     '10': 10,
@@ -298,7 +298,7 @@ Now if we increase verbosity even more:
 
       At index 2 diff: 'grapes' != 'orange'
 
-      Full diff:
+      Full diff: (-: missing in left side, +: extra in left side)
         [
             'banana',
             'apple',
@@ -318,7 +318,7 @@ Now if we increase verbosity even more:
       Right contains 4 more items:
       {'10': 10, '20': 20, '30': 30, '40': 40}
 
-      Full diff:
+      Full diff: (-: missing in left side, +: extra in left side)
         {
             '0': 0,
       -     '10': 10,

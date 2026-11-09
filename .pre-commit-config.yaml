@@ -1,7 +1,7 @@
 minimum_pre_commit_version: "4.4.0"
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.17.1"
+  rev: "v0.17.3"
   hooks:
     - id: ruff-check
       args: ["--fix"]
@@ -29,12 +29,14 @@ repos:
         args: ["--toml=pyproject.toml"]
         additional_dependencies:
           - tomli
+        # Don't spell check contributor names.
+        exclude: ^doc/en/announce/release-.*\.rst$
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.4.0
+    rev: v2.4.1
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)

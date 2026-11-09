@@ -1,11 +1,13 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import io
 from types import TracebackType
 
 from _pytest import deprecated
 from _pytest.pytester import Pytester
 from _pytest.scope import Scope
+from _pytest.terminal import TerminalReporter
 import pytest
 from pytest import PytestDeprecationWarning
 from pytest import PytestRemovedIn10Warning
@@ -401,3 +403,14 @@ def test_deprecation_warning_instance_not_shared_across_raises() -> None:
 
     # The traceback of a shared instance would grow with every raise.
     assert second <= first
+
+
+def test_terminal_write_line_bytes_deprecated(pytester: Pytester) -> None:
+    config = pytester.parseconfig()
+    output = io.StringIO()
+    reporter = TerminalReporter(config, output)
+
+    with pytest.warns(PytestRemovedIn10Warning, match=r"write_line\(\)"):
+        reporter.write_line(b"hello")
+
+    assert "hello" in output.getvalue()

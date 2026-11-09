@@ -114,6 +114,13 @@ INI_STRING_TYPE_NON_STR_VALUE = PytestRemovedIn10Warning(
     '(e.g. type="args") instead of relying on the implicit string default.'
 )
 
+TOML_NUMERIC_STRING = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "{name} = {value!r} in TOML configuration is deprecated, "
+    "use an integer instead: {name} = {value}\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#toml-numeric-strings",
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):
@@ -162,6 +169,12 @@ CALLSPEC2_RENAMED = UnformattedWarning(
     "The CallSpec2 alias will be removed in pytest 10.\n"
     "Update imports to use CallSpec instead.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed",
+)
+
+TERMINAL_WRITE_LINE_BYTES = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "Passing bytes to TerminalReporter.write_line() is deprecated, pass a str instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-write-line-bytes",
 )
 
 
