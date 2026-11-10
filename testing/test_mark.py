@@ -1746,3 +1746,20 @@ class TestPackageMarks:
             }
         )
         pytester.runpytest().assert_outcomes(passed=2)
+
+    def test_init_module_does_not_duplicate(self, pytester: Pytester) -> None:
+        """A collected __init__.py leaves its marks to the Package node."""
+        pytester.makeini("[pytest]\npython_files = *.py")
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": (
+                    "import pytest\n"
+                    "pytestmark = pytest.mark.pkgmark\n"
+                    "def test_in_init(): pass"
+                ),
+            }
+        )
+        (item,) = pytester.getitems(pytester.path / "pkg")
+        found = list(item.iter_markers_with_node("pkgmark"))
+        assert len(found) == 1
+        assert isinstance(found[0][0], pytest.Package)

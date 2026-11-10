@@ -311,7 +311,7 @@ class PyobjMixin(nodes.Node):
             # XXX evil hack
             # used to avoid Function marker duplication
             if self._ALLOW_MARKERS:
-                self.own_markers.extend(get_unpacked_marks(self.obj))
+                self.own_markers.extend(self._obj_markers(obj))
                 # This assumes that `obj` is called before there is a chance
                 # to add custom keys to `self.keywords`, so no fear of overriding.
                 self.keywords.update((mark.name, mark) for mark in self.own_markers)
@@ -320,6 +320,10 @@ class PyobjMixin(nodes.Node):
     @obj.setter
     def obj(self, value):
         self._obj = value
+
+    def _obj_markers(self, obj: object) -> list[Mark]:
+        """The marks applied to the node's underlying Python object."""
+        return get_unpacked_marks(obj)
 
     def _getobj(self):
         """Get the underlying Python object. May be overwritten by subclasses."""
@@ -579,6 +583,12 @@ class Module(nodes.File, PyCollector):
 
     def _getobj(self):
         return importtestmodule(self.path, self.config)
+
+    def _obj_markers(self, obj: object) -> list[Mark]:
+        # The marks of a package's __init__.py belong to the Package node.
+        if self.path.name == "__init__.py" and isinstance(self.parent, Package):
+            return []
+        return super()._obj_markers(obj)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
         self._register_setup_module_fixture()
