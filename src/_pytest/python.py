@@ -713,6 +713,17 @@ class Package(nodes.Directory):
             self.addfinalizer(func)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        children = list(self._collect_children())
+        # Only import __init__.py for packages that have something to collect,
+        # packages without tests must not be imported.
+        if children:
+            init_mod = importtestmodule(self.path / "__init__.py", self.config)
+            marks = get_unpacked_marks(init_mod)
+            self.own_markers.extend(marks)
+            self.keywords.update((mark.name, mark) for mark in marks)
+        return children
+
+    def _collect_children(self) -> Iterator[nodes.Item | nodes.Collector]:
         # Always collect __init__.py first.
         def sort_key(entry: os.DirEntry[str]) -> object:
             return (entry.name != "__init__.py", entry.name)
