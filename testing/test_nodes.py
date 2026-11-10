@@ -162,3 +162,42 @@ def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
+
+
+class TestNodeWarnWithNoLineInfo:
+    """Regression tests for Node.warn with None lineno (non-Python items)."""
+
+    def test_warn_on_custom_item_with_default_reportinfo(
+        self, pytester: Pytester
+    ) -> None:
+        """
+        Verify Node.warn doesn't crash when the item has no line number (None).
+
+        Custom non-Python items may not override reportinfo(), leaving lineno as None.
+        This used to raise AssertionError (fixed).
+        """
+        # Create a custom file extension with a custom collector
+        conftest_py = pytester.path / "conftest.py"
+        conftest_py.write_text(
+            """
+import pytest
+
+class CustomItem(pytest.Item):
+    def runtest(self):
+        # Call warn() on an item whose reportinfo has lineno=None (default)
+        self.warn(pytest.PytestWarning("no-line-warning"))
+
+class CustomFile(pytest.File):
+    def collect(self):
+        yield CustomItem.from_parent(self, name="test_no_lineno")
+
+def pytest_collect_file(file_path, parent):
+    if file_path.suffix == ".custom":
+        return CustomFile.from_parent(parent, path=file_path)
+""",
+            encoding="utf-8",
+        )
+        pytester.makefile(".custom", x="dummy content")
+        # Should NOT crash; warning should be emitted (test passes)
+        result = pytester.runpytest("-q", "-W", "default::pytest.PytestWarning")
+        result.assert_outcomes(passed=1)

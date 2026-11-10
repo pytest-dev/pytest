@@ -1,0 +1,3 @@
+Fixed ``Node.warn()`` crashing with ``AssertionError`` when called on a
+non-Python test item whose ``reportinfo()`` returns no line number --
+by :user:`Lushiyao5`.
