@@ -35,7 +35,6 @@ from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalProgressPlugin
 from _pytest.terminal import TerminalReporter
 import pytest
-import textwrap
 
 
 class DistInfo(NamedTuple):
@@ -3730,5 +3729,3 @@ class TestTerminalProgressPlugin:
         # Session finish - should remove progress.
         plugin.pytest_sessionfinish()
         assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
-
-
