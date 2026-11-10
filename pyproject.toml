@@ -267,8 +267,11 @@ lint.pyupgrade.keep-runtime-typing = false
 [tool.pylint.main]
 # Maximum number of characters on a single line.
 max-line-length = 120
-# Report pylint disable comments that suppress nothing.
+# Report pylint comments that are useless, unclear or outdated.
 enable = [
+    "bad-inline-option",
+    "deprecated-pragma",
+    "use-symbolic-message-instead",
     "useless-suppression",
 ]
 disable = [
