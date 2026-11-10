@@ -174,9 +174,10 @@ jobs:
 
           # Oldest supported patch release (Debian 12 ships 3.11.2): exercises the doctest
           # `_find_lineno` workaround, which the latest patch releases never hit.
+          # setup-python only has 3.11.2 builds up to Ubuntu 24.04.
           - name: "ubuntu-py311-floor"
             python: "3.11.2"
-            os: ubuntu-latest
+            os: ubuntu-24.04
             tox_env: "py311-floor"
             use_coverage: true
 
