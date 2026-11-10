@@ -543,8 +543,7 @@ class Collector(Node, abc.ABC):
         if isinstance(excinfo.value, self.CollectError) and not self.config.getoption(
             "fulltrace", False
         ):
-            exc = excinfo.value
-            return str(exc.args[0])
+            return str(excinfo.value)
 
         # Respect explicit tbstyle option, but default to "short"
         # (_repr_failure_py uses "long" with "fulltrace" option always).

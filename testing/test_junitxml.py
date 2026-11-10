@@ -462,7 +462,7 @@ class TestPython:
         pytester.makepyfile(
             """
             import pytest
-            @pytest.mark.skip(reason="hello24")
+            @pytest.mark.skip(reason="hello world")
             def test_skip():
                 assert True
         """
@@ -476,7 +476,7 @@ class TestPython:
             classname="test_mark_skip_contains_name_reason", name="test_skip"
         )
         snode = tnode.get_first_by_tag("skipped")
-        snode.assert_attr(type="pytest.skip", message="hello24")
+        snode.assert_attr(type="pytest.skip", message="hello world")
 
     @parametrize_families
     def test_mark_skipif_contains_name_reason(
