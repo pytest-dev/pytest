@@ -1998,7 +1998,6 @@ class TestMetafuncFunctionalAuto:
         )
         result.stdout.no_fnmatch_line(r"*p\\nq*")
 
-
     def test_parametrize_auto_scope_override_fixture(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
