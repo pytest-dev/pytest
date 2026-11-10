@@ -1,0 +1,1 @@
+Fixed an ``IndexError`` in ``Collector.repr_failure`` when ``CollectError`` is raised without arguments.
