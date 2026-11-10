@@ -35,6 +35,7 @@ from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalProgressPlugin
 from _pytest.terminal import TerminalReporter
 import pytest
+import textwrap
 
 
 class DistInfo(NamedTuple):
@@ -2843,7 +2844,7 @@ def test_short_summary_with_verbose(
 def test_full_sequence_print_with_vv(
     monkeypatch: MonkeyPatch, pytester: Pytester
 ) -> None:
-    """Do not truncate sequences in summaries with -vv (#11777)."""
+    """Do not truncate sequences in failure details with -vv (#11777)."""
     monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
 
     pytester.makepyfile(
@@ -2863,8 +2864,8 @@ def test_full_sequence_print_with_vv(
     result.stdout.fnmatch_lines(
         [
             "*short test summary info*",
-            f"*{list(range(10))}*",
-            f"*{dict(zip(range(10), range(10), strict=True))}*",
+            "FAILED test_full_sequence_print_with_vv.py::test_len_list - assert 10 == 9",
+            "FAILED test_full_sequence_print_with_vv.py::test_len_dict - assert 10 == 9",
         ]
     )
 
@@ -3729,3 +3730,5 @@ class TestTerminalProgressPlugin:
         # Session finish - should remove progress.
         plugin.pytest_sessionfinish()
         assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
+
+

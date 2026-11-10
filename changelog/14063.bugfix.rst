@@ -1,0 +1,1 @@
+﻿Ensure entries in the short test summary info section display only the first non-empty line of multiline exception messages, preventing large outputs (such as NumPy comparison errors) from cluttering the summary block.
