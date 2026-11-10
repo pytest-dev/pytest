@@ -1978,6 +1978,28 @@ class TestMetafuncFunctionalAuto:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 3 passed *"])
 
+    def test_shared_parametrize_mark_ids_escaped_once(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            r"""
+            import pytest
+
+            @pytest.mark.parametrize("v", [1], ids=["p\nq"])
+            class TestShared:
+                def test_one(self, v): pass
+                def test_two(self, v): pass
+            """
+        )
+        result = pytester.runpytest("--collect-only", "-q")
+        result.stdout.fnmatch_lines(
+            [
+                r"*::TestShared::test_one[[]p\nq]",
+                r"*::TestShared::test_two[[]p\nq]",
+            ]
+        )
+        result.stdout.no_fnmatch_line(r"*p\\nq*")
+        
     def test_parametrize_auto_scope_override_fixture(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """

@@ -1417,21 +1417,23 @@ class Metafunc:
 
         self._validate_if_using_arg_names(argnames, indirect)
 
-        # Use any already (possibly) generated ids with parametrize Marks.
+        # Use any already generated ids from a shared parametrize Mark.
+        # These have already been resolved (and escaped), so reuse them as-is.
+        generated_ids = None
         if _param_mark and _param_mark._param_ids_from:
             generated_ids = _param_mark._param_ids_from._param_ids_generated
-            if generated_ids is not None:
-                ids = generated_ids
 
-        ids = self._resolve_parameter_set_ids(
-            argnames, ids, parametersets, nodeid=self.definition.nodeid
-        )
+        if generated_ids is not None:
+            ids = generated_ids
+        else:
+            ids = self._resolve_parameter_set_ids(
+                argnames, ids, parametersets, nodeid=self.definition.nodeid
+            )
 
         # Store used (possibly generated) ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
-
-        # Calculate directness.
+        # Calculate directness.   Fixed ids from :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` being escaped twice when the same mark is shared by several tests (for example, when applied to a class).
         arg_directness = _resolve_args_directness(
             argnames, indirect, self.definition.nodeid
         )
