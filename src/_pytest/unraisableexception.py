@@ -24,6 +24,11 @@ if sys.version_info < (3, 11):
 gc_collect_iterations_key = StashKey[int]()
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def gc_collect_harder(iterations: int) -> None:
     for _ in range(iterations):
         gc.collect()
