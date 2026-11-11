@@ -1418,14 +1418,21 @@ class Metafunc:
         self._validate_if_using_arg_names(argnames, indirect)
 
         # Use any already (possibly) generated ids with parametrize Marks.
+        # The cached ids have already been resolved (escaped and made unique)
+        # by the first test consuming the mark; resolving them again would
+        # escape them a second time, changing the node id of every later test
+        # sharing the mark (also across repeated pytest.main() calls in one
+        # process, where the mark survives module import).
+        generated_ids = None
         if _param_mark and _param_mark._param_ids_from:
             generated_ids = _param_mark._param_ids_from._param_ids_generated
             if generated_ids is not None:
                 ids = generated_ids
 
-        ids = self._resolve_parameter_set_ids(
-            argnames, ids, parametersets, nodeid=self.definition.nodeid
-        )
+        if generated_ids is None:
+            ids = self._resolve_parameter_set_ids(
+                argnames, ids, parametersets, nodeid=self.definition.nodeid
+            )
 
         # Store used (possibly generated) ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:

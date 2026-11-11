@@ -19,6 +19,7 @@ from _pytest import fixtures
 from _pytest import python
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
+from _pytest.mark.structures import Mark
 from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.outcomes import Failed
@@ -332,6 +333,56 @@ class TestMetafunc:
         metafunc.parametrize("y", [3, 4], ids=it)
         ids = [x.id for x in metafunc._calls]
         assert ids == ["4-6", "4-7", "5-6", "5-7"]
+
+    def test_parametrize_mark_ids_not_escaped_twice_on_reuse(self) -> None:
+        # A parametrize mark with explicit ids can be shared by several tests
+        # (e.g. when put on a class). The first test resolves and caches the
+        # ids on the mark; later tests sharing the mark must reuse the cached
+        # ids instead of resolving (escaping) them a second time. #15370
+        mark = pytest.mark.parametrize("v", [1], ids=["p\nq"]).mark
+        shared_mark = mark.combined_with(Mark("parametrize", (), {}, _ispytest=True))
+        assert shared_mark._param_ids_from is mark
+
+        def function(self, v):
+            pass
+
+        all_ids = []
+        for _ in range(2):
+            metafunc = self.Metafunc(function)
+            metafunc.parametrize(
+                *shared_mark.args, **shared_mark.kwargs, _param_mark=shared_mark
+            )
+            all_ids.append([x.id for x in metafunc._calls])
+
+        # The id contains a newline, which is escaped once as "p\\nq".
+        assert all_ids[0] == ["p\\nq"]
+        assert all_ids[1] == all_ids[0]
+
+    def test_parametrize_mark_ids_shared_between_tests_escaped_once(
+        self, pytester: Pytester
+    ) -> None:
+        # A parametrize mark with explicit ids put on a class is shared by its
+        # test methods; every test must get the ids escaped exactly once.
+        # https://github.com/pytest-dev/pytest/issues/15370
+        pytester.makepyfile(
+            '''
+            import pytest
+
+
+            @pytest.mark.parametrize("v", [1], ids=["p\\nq"])
+            class TestShared:
+                def test_one(self, v):
+                    pass
+
+                def test_two(self, v):
+                    pass
+        '''
+        )
+        result = pytester.runpytest("--collect-only", "-q")
+        out = result.stdout.str()
+        assert "test_one[p\\nq]" in out
+        assert "test_two[p\\nq]" in out
+        assert "test_two[p\\\\nq]" not in out
 
     def test_parametrize_empty_list(self) -> None:
         """#510"""
