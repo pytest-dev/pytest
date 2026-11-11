@@ -52,6 +52,32 @@ def test_setattr() -> None:
         monkeypatch.setattr(A, "y")  # type: ignore[call-overload]
 
 
+def test_setattr_class_annotations_restored() -> None:
+    """Patching __annotations__ on a class must restore them on undo.
+
+    Since Python 3.14 (PEP 649/749) __annotations__ is computed, not stored
+    in the class __dict__, so the old value must be read via getattr and
+    restored with setattr -- not deleted (see #15286).
+    """
+
+    class Config:
+        name: str
+        size: int
+
+    original = dict(Config.__annotations__)
+    # Python 3.14+ keeps annotations lazy (PEP 649/749): values may be
+    # strings until evaluated.
+    assert set(original) == {"name", "size"}
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(
+        Config, "__annotations__", {**Config.__annotations__, "extra": bool}
+    )
+    assert set(Config.__annotations__) == {"name", "size", "extra"}
+    monkeypatch.undo()
+    assert Config.__annotations__ == original
+
+
 class TestSetattrWithImportPath:
     def test_string_expression(self, monkeypatch: MonkeyPatch) -> None:
         with monkeypatch.context() as mp:
