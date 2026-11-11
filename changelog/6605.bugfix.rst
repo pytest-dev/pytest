@@ -1,0 +1,2 @@
+Fixed missing filenames in node IDs when explicitly selecting test files outside
+the root directory.
