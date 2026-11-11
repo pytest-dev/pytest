@@ -204,12 +204,13 @@ def evaluate_skip_marks(item: Item) -> Skip | None:
                 return Skip(reason)
 
     for mark in item.iter_markers(name="skip"):
-        reason = mark.args[0] if mark.args else mark.kwargs.get("reason")
         # Marks applied to a module or class are seen by each of their items,
         # so only warn once per reason.
         warned_reasons = item.config.stash.setdefault(warned_skip_reasons_key, set())
         if (
-            isinstance(reason, str)
+            "reason" not in mark.kwargs
+            and mark.args
+            and isinstance(reason := mark.args[0], str)
             and _looks_like_condition(reason)
             and reason not in warned_reasons
         ):
@@ -217,7 +218,9 @@ def evaluate_skip_marks(item: Item) -> Skip | None:
             item.warn(
                 PytestWarning(
                     f"The reason {reason!r} of pytest.mark.skip looks like a condition. "
-                    "Did you mean pytest.mark.skipif?"
+                    "Did you mean pytest.mark.skipif ?\n"
+                    "If intentional, pass reason as a keyword argument to disable "
+                    "this warning."
                 )
             )
         try:
