@@ -39,6 +39,7 @@ from _pytest._code import Source
 from _pytest._code.code import ExceptionInfoFormatter
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest.compat import _is_mocked
 from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
@@ -2165,11 +2166,6 @@ class FixtureManager:
         Returns the definition if found, else ``None``. Loops, excessive depth,
         and objects that raise on attribute access are treated as not found.
         """
-        # Skip mock objects to avoid false positives when traversing
-        # their wrapper chains (they have a _mock_name attribute).
-        if safe_getattr(obj, "_mock_name", None) is not None:
-            return None
-
         try:
             # unwrap is typed for callables, but we also pass descriptors
             # (classmethod/staticmethod) that expose __wrapped__/__func__.
@@ -2177,7 +2173,9 @@ class FixtureManager:
             # isinstance via a broken __class__ (see pytest#4266).
             unwrapped = inspect.unwrap(
                 cast(Callable[..., Any], obj),
-                stop=lambda o: type(o) is FixtureFunctionDefinition,
+                # Stop at mock-like objects (e.g. unittest.mock.call) whose
+                # __wrapped__ chain never ends (#15281).
+                stop=lambda o: type(o) is FixtureFunctionDefinition or _is_mocked(o),
             )
         except Exception:
             # ValueError for wrapper loops / depth; also "evil objects"
