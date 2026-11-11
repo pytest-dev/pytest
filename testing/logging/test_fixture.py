@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 import logging
+import threading
 
 from _pytest.logging import caplog_records_key
+from _pytest.logging import catching_logs
 from _pytest.pytester import Pytester
 import pytest
 
@@ -470,6 +472,47 @@ def test_can_capture_non_propagating_logger(pytester: Pytester) -> None:
 
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_concurrent_logger_registration_during_capture() -> None:
+    mutation_completed = threading.Event()
+    worker: threading.Thread | None = None
+
+    # catching_logs() reads Logger.propagate after obtaining each logger from
+    # loggerDict.values(). Register a logger from that property so the next
+    # step of the live dict iterator fails. Once the values are snapshotted,
+    # the concurrent registration is harmless.
+    class TriggerLogger(logging.Logger):
+        @property
+        def propagate(self) -> bool:
+            nonlocal worker
+
+            def register_logger() -> None:
+                logging.getLogger(f"{__name__}.concurrent")
+                mutation_completed.set()
+
+            worker = threading.Thread(target=register_logger)
+            worker.start()
+            assert mutation_completed.wait(timeout=1)
+            return True
+
+        @propagate.setter
+        def propagate(self, value: bool) -> None:
+            pass
+
+    manager = logging.root.manager
+    trigger_name = f"{__name__}.trigger"
+    manager.loggerDict[trigger_name] = TriggerLogger(trigger_name)
+    try:
+        with catching_logs(logging.NullHandler()):
+            pass
+    finally:
+        if worker is not None:
+            worker.join(timeout=1)
+        manager.loggerDict.pop(trigger_name, None)
+        manager.loggerDict.pop(f"{__name__}.concurrent", None)
+
+    assert mutation_completed.is_set()
 
 
 def test_captures_despite_exception(pytester: Pytester) -> None:

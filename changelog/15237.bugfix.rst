@@ -1,0 +1,1 @@
+Prevented logging capture from failing when another thread registers a logger during capture setup.
