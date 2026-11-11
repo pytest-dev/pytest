@@ -1740,8 +1740,13 @@ def _get_direct_parametrize_args(node: nodes.Node) -> set[str]:
     These things are done later as well when dealing with parametrization
     so this could be improved.
     """
+    from _pytest.python import _check_parametrize_mark_args
+
     parametrize_argnames: set[str] = set()
     for marker in node.iter_markers(name="parametrize"):
+        # This is the first place where the mark's arguments are used, so
+        # report a mistake in them here, with a clear message.
+        _check_parametrize_mark_args(marker, node.nodeid)
         indirect = marker.kwargs.get("indirect", False)
         p_argnames, _ = ParameterSet._parse_parametrize_args(
             *marker.args, **marker.kwargs
