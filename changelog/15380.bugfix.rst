@@ -1,0 +1,1 @@
+Fixed ``INTERNALERROR`` when running ``--fixtures`` and two fixture defs shared every display sort key (e.g. the same fixture function registered under different baseids, as pytest-django does) -- by :user:`Lushiyao5`.

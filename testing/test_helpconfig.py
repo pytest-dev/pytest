@@ -195,3 +195,63 @@ def test_PYTEST_DEBUG(pytester: Pytester, monkeypatch) -> None:
     result.stderr.fnmatch_lines(
         ["*pytest_plugin_registered*", "*manager*PluginManager*"]
     )
+
+
+def test_show_fixtures_does_not_compare_fixturedefs(pytester: Pytester) -> None:
+    """`--fixtures` must not fall back to comparing FixtureDef objects.
+
+    Two fixture defs whose (baseid length, module, pretty path, argname) sort
+    keys are fully equal made `available.sort()` reach the FixtureDef element,
+    which has no `__lt__`, crashing the run with INTERNALERROR (#15378).
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_collection_finish(session):
+            from _pytest.fixtures import FixtureDef
+
+            def dup_a():
+                return 1
+
+            fd_a = FixtureDef(
+                config=session.config,
+                baseid="aaaaa",
+                argname="dup",
+                func=dup_a,
+                scope="function",
+                params=None,
+                _ispytest=True,
+            )
+            # Same func object as fd_a: pytest-django registers decorated
+            # fixtures this way (one func, several baseids), making every
+            # sort key element except the FixtureDef itself equal.
+            fd_b = FixtureDef(
+                config=session.config,
+                baseid="bbbbb",
+                argname="dup",
+                func=dup_a,
+                scope="function",
+                params=None,
+                _ispytest=True,
+            )
+            session._fixturemanager._get_all_fixture_defs = lambda: [fd_a, fd_b]
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+
+        @pytest.fixture
+        def dup():
+            return 0
+
+
+        def test_dup(dup):
+            assert dup is not None
+        """
+    )
+    result = pytester.runpytest("--fixtures")
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
+    result.stdout.fnmatch_lines(["*dup*", "*dup*"])
