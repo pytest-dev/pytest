@@ -688,3 +688,143 @@ def test_syspath_prepend_with_namespace_packages(
 
     modules_tmpdir.joinpath("main_app.py").write_text("app = True", encoding="utf-8")
     from main_app import app  # noqa: F401
+
+
+@pytest.mark.parametrize("operation", ["setattr", "delattr"])
+@pytest.mark.parametrize("raises", [False, True])
+def test_non_raising_class_descriptor(operation: str, raises: bool) -> None:
+    calls = []
+
+    class Descriptor:
+        def __get__(self, instance, owner):
+            calls.append(True)
+            if raises:
+                raise RuntimeError("descriptor should not execute")
+            return 42
+
+    descriptor = Descriptor()
+
+    class Target:
+        value = descriptor
+
+    if raises:
+        with pytest.raises(RuntimeError, match="descriptor should not execute"):
+            _ = Target.value
+    else:
+        assert Target.value == 42
+    assert calls == [True]
+    calls.clear()
+
+    with MonkeyPatch.context() as mp:
+        if operation == "setattr":
+            mp.setattr(Target, "value", 99, raising=False)
+            assert vars(Target)["value"] == 99
+        else:
+            mp.delattr(Target, "value", raising=False)
+            assert "value" not in vars(Target)
+        assert calls == []
+    assert vars(Target)["value"] is descriptor
+    assert calls == []
+
+
+def test_non_raising_instance_non_data_descriptor() -> None:
+    class Descriptor:
+        def __get__(self, instance, owner):
+            raise RuntimeError("descriptor should not execute")
+
+    class Target:
+        value = Descriptor()
+
+    obj = Target()
+    with pytest.raises(RuntimeError, match="descriptor should not execute"):
+        _ = obj.value
+    with MonkeyPatch.context() as mp:
+        mp.setattr(obj, "value", 99, raising=False)
+        assert obj.value == 99
+    assert "value" not in vars(obj)
+
+
+@pytest.mark.parametrize("operation", ["setattr", "delattr"])
+def test_non_raising_data_descriptor_undo(operation: str) -> None:
+    class Target:
+        def __init__(self):
+            self._value = 42
+
+        @property
+        def value(self):
+            return self._value
+
+        @value.setter
+        def value(self, value):
+            self._value = value
+
+        @value.deleter
+        def value(self):
+            del self._value
+
+    obj = Target()
+    with MonkeyPatch.context() as mp:
+        if operation == "setattr":
+            mp.setattr(obj, "value", 99, raising=False)
+            assert obj.value == 99
+        else:
+            mp.delattr(obj, "value", raising=False)
+            assert not hasattr(obj, "_value")
+    assert obj.value == 42
+
+
+@pytest.mark.parametrize("raising", [False, True])
+def test_descriptor_raising_contract(raising: bool) -> None:
+    class Descriptor:
+        def __get__(self, instance, owner):
+            raise RuntimeError("lookup")
+
+    class Parent:
+        value = Descriptor()
+
+    class Child(Parent):
+        pass
+
+    with MonkeyPatch.context() as mp:
+        if raising:
+            with pytest.raises(RuntimeError, match="lookup"):
+                mp.setattr(Child, "value", 99)
+        else:
+            mp.setattr(Child, "value", 99, raising=False)
+            assert Child.value == 99
+    assert "value" not in vars(Child)
+
+
+def test_non_raising_dynamic_attribute() -> None:
+    class Target:
+        def __getattr__(self, name):
+            if name == "value":
+                return 42
+            raise AttributeError(name)
+
+    obj = Target()
+    with MonkeyPatch.context() as mp:
+        mp.setattr(obj, "value", 99, raising=False)
+        assert obj.value == 99
+    assert "value" not in vars(obj)
+    assert obj.value == 42
+    with pytest.raises(AttributeError, match="missing"):
+        _ = obj.missing
+
+
+@pytest.mark.parametrize("operation", ["setattr", "delattr"])
+def test_non_raising_slot_undo(operation: str) -> None:
+    class Target:
+        __slots__ = ("value",)
+        value: int
+
+    obj = Target()
+    obj.value = 42
+    with MonkeyPatch.context() as mp:
+        if operation == "setattr":
+            mp.setattr(obj, "value", 99, raising=False)
+            assert obj.value == 99
+        else:
+            mp.delattr(obj, "value", raising=False)
+            assert not hasattr(obj, "value")
+    assert obj.value == 42
