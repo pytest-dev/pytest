@@ -1,0 +1,1 @@
+:mod:`pytest.approx` no longer raises :class:`decimal.InvalidOperation` when the actual value is a quiet :class:`decimal.Decimal` NaN -- it now compares unequal, matching the behavior of ``float("nan")``. Signalling NaN keeps raising.

@@ -589,6 +589,13 @@ class ApproxScalar(Approx[ExpectedT]):
         if _is_nan(abs(self.expected)):
             return self.nan_ok and _is_nan(abs(actual))
 
+        # A NaN actual compares unequal to everything.  For floats the
+        # tolerance check below would already return False, but with a
+        # Decimal NaN the ordering comparison raises InvalidOperation
+        # (#15335), so bail out early.
+        if _is_nan(abs(actual)):
+            return False
+
         # Infinity shouldn't be approximately equal to anything but itself, but
         # if there's a relative tolerance, it will be infinite and infinity
         # will seem approximately equal to everything.  The equal-to-itself
