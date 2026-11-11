@@ -360,7 +360,7 @@ class MonkeyPatch:
         environ: MutableMapping[str, str] = os.environ
         self.delitem(environ, name, raising=raising)
 
-    def syspath_prepend(self, path) -> None:
+    def syspath_prepend(self, path: str | os.PathLike[str]) -> None:
         """Prepend ``path`` to ``sys.path`` list of import locations."""
         if self._savesyspath is None:
             self._savesyspath = sys.path[:]
