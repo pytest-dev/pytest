@@ -1573,6 +1573,18 @@ def _format_trimmed(format: str, msg: str, available_width: int) -> str | None:
     return format.format(msg)
 
 
+def _sanitize_summary_reason(reason: str) -> str:
+    if not reason:
+        return ""
+
+    for line in reason.splitlines():
+        line_clean = line.strip()
+        if line_clean:
+            return line_clean
+
+    return ""
+
+
 def _get_line_with_reprcrash_message(
     config: Config, rep: BaseReport, tw: TerminalWriter, word_markup: dict[str, bool]
 ) -> str:
@@ -1596,15 +1608,19 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        if (
-            running_on_ci() or config.option.verbose >= 2
-        ) and not config.option.force_short_summary:
-            msg = f" - {msg}"
-        else:
-            available_width = tw.fullwidth - line_width
-            msg = _format_trimmed(" - {}", msg, available_width)
-        if msg is not None:
-            line += msg
+        if msg:
+            msg = _sanitize_summary_reason(msg)
+
+            if (
+                running_on_ci() or config.option.verbose >= 2
+            ) and not config.option.force_short_summary:
+                msg = f" - {msg}"
+            else:
+                available_width = tw.fullwidth - line_width
+                msg = _format_trimmed(" - {}", msg, available_width)
+
+            if msg is not None:
+                line += msg
 
     return line
 
