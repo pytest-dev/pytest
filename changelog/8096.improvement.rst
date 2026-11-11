@@ -1,0 +1,1 @@
+Invalid warning-filter actions now list the valid actions. The error also explains that ``-Wait`` may be parsed as ``-W ait``.
