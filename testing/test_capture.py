@@ -131,6 +131,125 @@ def test_capturing_bytes_in_utf8_encoding(pytester: Pytester, method: str) -> No
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsys"),
+        ("fd", "capfd"),
+        ("tee-sys", "capteesys"),
+    ],
+)
+def test_capture_uses_replaced_stream_codec(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str, capture_fixture: str
+) -> None:
+    """Bytes written using .encoding round-trip through readouterr()."""
+    pytester.makepyfile(
+        f"""\
+        import sys
+
+        def test_encoding({capture_fixture}):
+            text = "caf\\u00e9\\n"
+            assert sys.stdout.encoding == sys.__stdout__.encoding
+            assert sys.stdout.errors == sys.__stdout__.errors
+            assert sys.stderr.encoding == sys.__stderr__.encoding
+            assert sys.stderr.errors == sys.__stderr__.errors
+            for stream in (sys.stdout, sys.stderr):
+                stream.buffer.write(text.encode(stream.encoding))
+                stream.flush()
+            out, err = {capture_fixture}.readouterr()
+            assert out == text
+            assert err == text
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize("method", ["sys", "fd", "tee-sys"])
+def test_capture_uses_replaced_stream_errors(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str
+) -> None:
+    """Text the replaced stream cannot encode fails the same way."""
+    pytester.makepyfile(
+        """\
+        import pytest
+        import sys
+
+        def test_encoding():
+            with pytest.raises(UnicodeEncodeError):
+                sys.stdout.write("\\u65e5\\u672c\\u8a9e")
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsysbinary"),
+        ("fd", "capfdbinary"),
+    ],
+)
+def test_capture_binary_uses_replaced_stream_codec(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str, capture_fixture: str
+) -> None:
+    """Text writes use the replaced stream's encoding and error handler during binary capture."""
+    pytester.makepyfile(
+        f"""\
+        def test_encoding({capture_fixture}):
+            print("caf\\u00e9")
+            out, err = {capture_fixture}.readouterr()
+            assert out == "caf\\u00e9\\n".encode("latin-1")
+            assert err == b""
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsys"),
+        ("fd", "capfd"),
+    ],
+)
+def test_capture_flushes_undecodable_bytes(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str, capture_fixture: str
+) -> None:
+    """Raw bytes that decode with replacement do not break capture teardown."""
+    pytester.makepyfile(
+        f"""\
+        import sys
+
+        def test_encoding({capture_fixture}):
+            sys.stdout.buffer.write(b"\\xff")
+            sys.stdout.flush()
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "ascii")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.assert_outcomes(passed=1)
+
+
+def test_capture_wrappers_use_configured_codec() -> None:
+    with capture.CaptureIO() as stream:
+        assert (stream.encoding, stream.errors) == ("UTF-8", "strict")
+    with capture.CaptureIO(encoding="latin-1", errors="strict") as stream:
+        assert (stream.encoding, stream.errors) == ("latin-1", "strict")
+        stream.write("caf\u00e9")
+        stream.buffer.write(b" na\xefve")
+        assert stream.getvalue() == "caf\u00e9 na\xefve"
+    with capture.EncodedFile(
+        io.BytesIO(), encoding="latin-1", errors="strict"
+    ) as stream:
+        assert (stream.encoding, stream.errors) == ("latin-1", "strict")
+
+
 def test_collect_capturing(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """
@@ -1139,6 +1258,32 @@ def saved_fd(fd):
         os.close(new_fd)
 
 
+def _skip_if_not_lossless(text: str, stream: TextIO) -> None:
+    encoding = getattr(stream, "encoding", None) or "utf-8"
+    errors = getattr(stream, "errors", None) or "strict"
+    try:
+        encoded = text.encode(encoding, errors)
+    except UnicodeEncodeError:
+        pytest.skip(f"{encoding!r} cannot represent {text!r}")
+    if encoded.decode(encoding, "replace") != text:
+        pytest.skip(f"{encoding!r} with {errors!r} cannot round-trip {text!r}")
+
+
+def test_skip_if_not_lossless() -> None:
+    _skip_if_not_lossless(
+        "hx\u0105\u0107", io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+    )
+    with pytest.raises(pytest.skip.Exception, match="cannot represent"):
+        _skip_if_not_lossless(
+            "hx\u0105\u0107", io.TextIOWrapper(io.BytesIO(), encoding="latin-1")
+        )
+    with pytest.raises(pytest.skip.Exception, match="cannot round-trip"):
+        _skip_if_not_lossless(
+            "hx\u0105\u0107",
+            io.TextIOWrapper(io.BytesIO(), encoding="latin-1", errors="replace"),
+        )
+
+
 class TestStdCapture:
     captureclass = staticmethod(StdCapture)
 
@@ -1187,10 +1332,12 @@ class TestStdCapture:
         assert capture_result.err == "world"
 
     def test_capturing_readouterr_unicode(self) -> None:
+        text = "hx\u0105\u0107"
+        _skip_if_not_lossless(text, sys.stdout)
         with self.getcapture() as cap:
-            print("hxąć")
+            print(text)
             out, _err = cap.readouterr()
-        assert out == "hxąć\n"
+        assert out == text + "\n"
 
     def test_reset_twice_error(self) -> None:
         with self.getcapture() as cap:
@@ -1497,12 +1644,14 @@ def test_capturing_and_logging_fundamentals(pytester: Pytester, method: str) -> 
 
 
 def test_error_attribute_issue555(pytester: Pytester) -> None:
+    stdout_errors = sys.stdout.errors
+    stderr_errors = sys.stderr.errors
     pytester.makepyfile(
-        """
+        f"""
         import sys
         def test_capattr():
-            assert sys.stdout.errors == "replace"
-            assert sys.stderr.errors == "replace"
+            assert sys.stdout.errors == {stdout_errors!r}
+            assert sys.stderr.errors == {stderr_errors!r}
     """
     )
     reprec = pytester.inline_run()
