@@ -1,0 +1,3 @@
+Fixed ``monkeypatch.setattr`` deleting instead of restoring attributes that are
+neither in the instance ``__dict__`` nor inherited from the class (for
+example ``unittest.mock`` child mocks or ``__getattr__``-backed attributes).
