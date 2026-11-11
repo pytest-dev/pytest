@@ -1,0 +1,1 @@
+Function-scoped fixtures no longer register their finalizer with the higher-scoped fixtures they request, so finalizers no longer accumulate in fixtures such as ``tmp_path_factory`` for every test that uses ``tmp_path``.
