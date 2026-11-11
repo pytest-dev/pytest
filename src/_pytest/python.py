@@ -1417,19 +1417,19 @@ class Metafunc:
 
         self._validate_if_using_arg_names(argnames, indirect)
 
-        # Use any already (possibly) generated ids with parametrize Marks.
-        if _param_mark and _param_mark._param_ids_from:
-            generated_ids = _param_mark._param_ids_from._param_ids_generated
-            if generated_ids is not None:
-                ids = generated_ids
+        # Store the raw ids on the source parametrize Mark, so that an iterator
+        # (#759) is consumed only once by all tests sharing the mark. They are
+        # resolved (escaped, made unique) on every call.
+        if _param_mark and (source := _param_mark._param_ids_from):
+            if source._param_ids_generated is not None:
+                ids = source._param_ids_generated
+            elif ids is not None and not callable(ids):
+                ids = self._validate_ids(ids, parametersets)
+                object.__setattr__(source, "_param_ids_generated", ids)
 
         ids = self._resolve_parameter_set_ids(
             argnames, ids, parametersets, nodeid=self.definition.nodeid
         )
-
-        # Store used (possibly generated) ids with parametrize Marks.
-        if _param_mark and _param_mark._param_ids_from and generated_ids is None:
-            object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
         # Calculate directness.
         arg_directness = _resolve_args_directness(
