@@ -1293,6 +1293,12 @@ class Metafunc:
 
         #: Set of fixture names required by the test function.
         self.fixturenames = fixtureinfo.names_closure
+        # Keep the pre-generation closure by value. Generation hooks may
+        # mutate ``fixturenames`` and direct parametrization can
+        # prune names from it; the graph uses this snapshot to identify only
+        # genuinely appended closure roots.
+        self._fixture_graph_initial_closure = tuple(fixtureinfo.names_closure)
+        self._fixture_graph_info = fixtureinfo
 
         #: Class object where the test function is defined in or ``None``.
         self.cls = cls
@@ -1303,6 +1309,49 @@ class Metafunc:
         self._calls: list[CallSpec] = []
 
         self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
+
+    def fixture_graph(self) -> fixtures.FixtureGraph:
+        """Return a snapshot of the fixture relationships at this hook point.
+
+        The graph preserves the pre-generation declared roots and reports
+        names appended to ``fixturenames`` as closure roots. It does not
+        execute fixtures or infer arbitrary ``getfixturevalue`` calls.
+
+        .. versionadded:: 9.2
+        """
+        direct_parametrize_args = set(self._fixture_graph_info.direct_parametrize_args)
+        direct_parametrize_args.update(
+            argname
+            for argname, directness in self._params_directness.items()
+            if directness == "direct"
+        )
+        current_names = set(self.fixturenames)
+        initial_closure = frozenset(self._fixture_graph_initial_closure)
+        roots = tuple(self._fixture_graph_info.initialnames) + tuple(
+            name for name in self.fixturenames if name not in initial_closure
+        )
+        root_origins: dict[str, Literal["declared", "closure"]] = dict.fromkeys(
+            self._fixture_graph_info.initialnames, "declared"
+        )
+        root_origins.update(
+            {name: "closure" for name in current_names - initial_closure}
+        )
+
+        def getfixturedefs(
+            name: str,
+        ) -> Sequence[fixtures.FixtureDef[Any]] | None:
+            if name in self._arg2fixturedefs:
+                return self._arg2fixturedefs[name]
+            return self.definition.session._fixturemanager.getfixturedefs(
+                name, self.definition
+            )
+
+        return fixtures._fixture_graph(
+            roots,
+            getfixturedefs=getfixturedefs,
+            direct_parametrize_args=direct_parametrize_args,
+            root_origins=root_origins,
+        )
 
     def parametrize(
         self,
