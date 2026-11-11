@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import dataclasses
+import errno
 import os
 from pathlib import Path
 import shutil
@@ -876,6 +877,122 @@ class TestRmRf:
         exc_info = PermissionError()
         on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
         assert not fn.exists()
+
+    def test_on_rm_rf_error_is_a_directory_error(self, tmp_path: Path) -> None:
+        """When os.unlink is called on a directory (e.g. traversal could not detect it),
+        on_rm_rf_error removes it via rm_rf and returns True (#15169)."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        (subdir / "child.txt").touch()
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = IsADirectoryError()
+            result = on_rm_rf_error(
+                os.unlink, str(subdir), exc_info, start_path=tmp_path
+            )
+            assert result is True
+            assert not subdir.exists()
+            assert not [x.message for x in w]
+
+    def test_on_rm_rf_error_directory_not_empty(self, tmp_path: Path) -> None:
+        """When os.rmdir fails with ENOTEMPTY / EEXIST, on_rm_rf_error chmods the tree
+        and recursively removes it (#15169)."""
+        parent_dir = tmp_path / "parent_dir"
+        parent_dir.mkdir()
+        child_dir = parent_dir / "child_dir"
+        child_dir.mkdir()
+        (child_dir / "item.txt").touch()
+
+        with warnings.catch_warnings(record=True) as w:
+            exc = OSError(errno.ENOTEMPTY, "Directory not empty")
+            result = on_rm_rf_error(os.rmdir, str(parent_dir), exc, start_path=tmp_path)
+            assert result is True
+            assert not parent_dir.exists()
+            assert not [x.message for x in w]
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Linux-only review regression")
+    def test_numbered_cleanup_stops_after_persistent_enotempty(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A persistent ENOTEMPTY during numbered-dir cleanup warns once and
+        returns instead of recursing until RecursionError (#15171)."""
+        numbered = tmp_path / "pytest-0"
+        numbered.mkdir(mode=0o700)
+        original_rmdir = os.rmdir
+
+        def persistent_error(path, *args, **kwargs):
+            candidate = Path(path)
+            if candidate.parent == tmp_path and candidate.name.startswith("garbage-"):
+                raise OSError(
+                    errno.ENOTEMPTY, "controlled persistent ENOTEMPTY", str(candidate)
+                )
+            return original_rmdir(path, *args, **kwargs)
+
+        with monkeypatch.context() as scoped:
+            scoped.setattr(os, "rmdir", persistent_error)
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always", pytest.PytestWarning)
+                maybe_delete_a_numbered_dir(numbered)
+            assert any(
+                "controlled persistent ENOTEMPTY" in str(w.message) for w in caught
+            )
+        assert list(tmp_path.glob("garbage-*"))
+
+    def test_on_rm_rf_error_is_a_directory_error_retries_when_chmod_changes(
+        self, tmp_path: Path
+    ) -> None:
+        """When os.unlink is called on a directory with restrictive
+        permissions, on_rm_rf_error fixes them and removes it (#15169)."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        (subdir / "child.txt").touch()
+        os.chmod(str(subdir), 0)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = IsADirectoryError()
+            result = on_rm_rf_error(
+                os.unlink, str(subdir), exc_info, start_path=tmp_path
+            )
+            assert result is True
+            assert not subdir.exists()
+            assert not [x.message for x in w]
+
+    def test_on_rm_rf_error_directory_not_empty_retries_when_chmod_changes(
+        self, tmp_path: Path
+    ) -> None:
+        """When os.rmdir fails with ENOTEMPTY and fixing permissions changes
+        something, on_rm_rf_error retries the removal (#15171)."""
+        parent_dir = tmp_path / "parent_dir"
+        parent_dir.mkdir()
+        child_dir = parent_dir / "child_dir"
+        child_dir.mkdir()
+        (child_dir / "item.txt").touch()
+        os.chmod(str(child_dir / "item.txt"), 0)
+        os.chmod(str(child_dir), 0)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc = OSError(errno.ENOTEMPTY, "Directory not empty")
+            result = on_rm_rf_error(os.rmdir, str(parent_dir), exc, start_path=tmp_path)
+            assert result is True
+            assert not parent_dir.exists()
+            assert not [x.message for x in w]
+
+    def test_find_prefixed_closes_scandir_iterator(self, tmp_path: Path) -> None:
+        """find_prefixed exhausts and closes the scandir iterator cleanly (#15169)."""
+        from _pytest.pathlib import find_prefixed
+
+        (tmp_path / "pytest-1").mkdir()
+        (tmp_path / "pytest-2").mkdir()
+        (tmp_path / "other-3").mkdir()
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", ResourceWarning)
+            items = list(find_prefixed(tmp_path, "pytest-"))
+            assert len(items) == 2
+            resource_warnings = [
+                x for x in w if issubclass(x.category, ResourceWarning)
+            ]
+            assert len(resource_warnings) == 0
 
 
 def attempt_symlink_to(path, to_path):

@@ -6,9 +6,11 @@ from collections.abc import Iterator
 import contextlib
 from enum import Enum
 from errno import EBADF
+from errno import EEXIST
 from errno import ELOOP
 from errno import ENOENT
 from errno import ENOTDIR
+from errno import ENOTEMPTY
 import fnmatch
 from functools import partial
 from importlib.machinery import ModuleSpec
@@ -97,6 +99,34 @@ def _chmod_rwx(p: str) -> bool:
     return True
 
 
+def _remove_tree_once(path: Path) -> bool:
+    """Remove a tree with a single attempt, warning instead of retrying.
+
+    Used when no permission fix can be applied, so retrying through rm_rf
+    would only repeat the same failure and recurse until RecursionError.
+    Returns True if the path is gone afterwards.
+    """
+
+    def _warn_only(
+        func: Callable[..., Any] | None,
+        p: str,
+        excinfo: BaseException
+        | tuple[type[BaseException], BaseException, types.TracebackType | None],
+    ) -> None:
+        if isinstance(excinfo, BaseException):
+            exc = excinfo
+        else:
+            exc = excinfo[1]
+        warnings.warn(PytestWarning(f"(rm_rf) error removing {p}\n{type(exc)}: {exc}"))
+
+    path = ensure_extended_length_path(path)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(str(path), onexc=_warn_only)
+    else:
+        shutil.rmtree(str(path), onerror=_warn_only)
+    return not os.path.lexists(path)
+
+
 def on_rm_rf_error(
     func: Callable[..., Any] | None,
     path: str,
@@ -119,13 +149,43 @@ def on_rm_rf_error(
     if isinstance(exc, FileNotFoundError):
         return False
 
+    p = Path(path)
+
+    # If os.unlink/os.remove failed on a directory (e.g. because directory traversal failed
+    # or d_type could not determine it is a directory), treat it as a directory.
+    # Only retry through rm_rf when fixing permissions actually changed
+    # something; otherwise a persistent failure would recurse until
+    # RecursionError. With nothing to fix, make a single attempt instead.
+    if isinstance(exc, IsADirectoryError) or (
+        func in (os.unlink, os.remove) and p.is_dir()
+    ):
+        if _chmod_rwx(str(p)):
+            rm_rf(p)
+            return True
+        return _remove_tree_once(p)
+
+    # If removing a directory fails because it is not empty, restrictive permissions
+    # on some of its children may have prevented their prior removal.
+    # As above, only retry when a permission fix changed something; a
+    # persistent ENOTEMPTY/EEXIST with nothing to fix must warn once and
+    # stop instead of recursing until RecursionError.
+    if func is os.rmdir and getattr(exc, "errno", None) in (ENOTEMPTY, EEXIST):
+        changed = _chmod_rwx(str(p))
+        for root, dirs, files in os.walk(str(p)):
+            for d in dirs:
+                changed = _chmod_rwx(os.path.join(root, d)) or changed
+            for f in files:
+                changed = _chmod_rwx(os.path.join(root, f)) or changed
+        if changed:
+            rm_rf(p)
+            return True
+        return _remove_tree_once(p)
+
     if not isinstance(exc, PermissionError):
         warnings.warn(
             PytestWarning(f"(rm_rf) error removing {path}\n{type(exc)}: {exc}")
         )
         return False
-
-    p = Path(path)
 
     if func in (os.open, os.scandir):
         # Directory traversal failed (e.g. missing S_IXUSR). Fix permissions
@@ -206,6 +266,7 @@ def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
     are read-only."""
     path = ensure_extended_length_path(path)
+    _chmod_rwx(str(path))
     onerror = partial(on_rm_rf_error, start_path=path)
     if sys.version_info >= (3, 12):
         shutil.rmtree(str(path), onexc=onerror)
@@ -216,9 +277,8 @@ def rm_rf(path: Path) -> None:
 def find_prefixed(root: Path, prefix: str) -> Iterator[os.DirEntry[str]]:
     """Find all elements in root that begin with the prefix, case-insensitive."""
     l_prefix = prefix.lower()
-    for x in os.scandir(root):
-        if x.name.lower().startswith(l_prefix):
-            yield x
+    with os.scandir(root) as it:
+        yield from [x for x in it if x.name.lower().startswith(l_prefix)]
 
 
 def extract_suffixes(iter: Iterable[os.DirEntry[str]], prefix: str) -> Iterator[str]:
