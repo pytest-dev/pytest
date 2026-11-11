@@ -178,6 +178,12 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Force condensed summary output regardless of verbosity level.",
     )
+    group.addoption(
+        "--no-truncate-summary",
+        action="store_true",
+        default=False,
+        help="Do not truncate messages in the short test summary.",
+    )
     group._addoption(  # private to use reserved lower-case short option
         "-q",
         "--quiet",
@@ -1596,9 +1602,12 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        if (
-            running_on_ci() or config.option.verbose >= 2
-        ) and not config.option.force_short_summary:
+        if config.option.force_short_summary:
+            available_width = tw.fullwidth - line_width
+            msg = _format_trimmed(" - {}", msg, available_width)
+        elif config.option.no_truncate_summary:
+            msg = " - " + msg.partition("\n")[0]
+        elif running_on_ci() or config.option.verbose >= 2:
             msg = f" - {msg}"
         else:
             available_width = tw.fullwidth - line_width

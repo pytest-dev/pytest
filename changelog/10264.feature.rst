@@ -1,0 +1,1 @@
+Added the :option:`--no-truncate-summary` option to show complete first lines of messages in the short test summary.

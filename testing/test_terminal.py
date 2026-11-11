@@ -2738,7 +2738,11 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
 
     class config:
         def __init__(self):
-            self.option = Namespace(verbose=0)
+            self.option = Namespace(
+                verbose=0,
+                force_short_summary=False,
+                no_truncate_summary=False,
+            )
 
     class rep:
         def _get_verbose_word_with_markup(self, *args):
@@ -2884,6 +2888,54 @@ def test_force_short_summary(monkeypatch: MonkeyPatch, pytester: Pytester) -> No
     result.stdout.fnmatch_lines(
         ["*short test summary info*", "*AssertionError: assert 'a\\na\\na\\na..."]
     )
+
+
+@pytest.mark.parametrize(
+    ("args", "running_on_ci", "truncated"),
+    [
+        ([], False, True),
+        (["--no-truncate-summary"], False, False),
+        (["--no-truncate-summary"], True, False),
+        (["-vv", "--force-short-summary"], False, True),
+        (["--no-truncate-summary", "-vv", "--force-short-summary"], False, True),
+    ],
+)
+def test_no_truncate_summary(
+    monkeypatch: MonkeyPatch,
+    pytester: Pytester,
+    args: list[str],
+    running_on_ci: bool,
+    truncated: bool,
+) -> None:
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: running_on_ci)
+    monkeypatch.setenv("COLUMNS", "80")
+    pytester.makepyfile(
+        test_summary="""
+        import pytest
+
+        def test_fail():
+            pytest.fail("A" * 100 + "\\nSECOND_LINE")
+        """
+    )
+
+    result = pytester.runpytest(*args)
+    assert result.ret == 1
+
+    summary_index = next(
+        i
+        for i, line in enumerate(result.stdout.lines)
+        if "short test summary info" in line
+    )
+    summary_line = next(
+        line
+        for line in result.stdout.lines[summary_index + 1 :]
+        if line.startswith("FAILED test_summary.py::test_fail ")
+    )
+    assert "SECOND_LINE" not in summary_line
+    if truncated:
+        assert summary_line.endswith("...")
+    else:
+        assert "A" * 100 in summary_line
 
 
 @pytest.mark.parametrize(
