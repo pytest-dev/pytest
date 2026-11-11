@@ -199,6 +199,36 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
     which is the reverse of the decorator approach mentioned above.
 
 
+Applying warning filters conditionally
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To apply a warning filter only on a particular platform or Python version,
+add a :ref:`filterwarnings <pytest.mark.filterwarnings ref>` mark from
+:hook:`pytest_collection_modifyitems` in your ``conftest.py``. For example,
+to ignore a known warning only on Windows:
+
+.. code-block:: python
+
+    # content of conftest.py
+    import sys
+
+    import pytest
+
+
+    def pytest_collection_modifyitems(items):
+        if sys.platform == "win32":
+            marker = pytest.mark.filterwarnings("ignore:known platform warning:UserWarning")
+            for item in items:
+                item.add_marker(marker)
+
+Replace the example message and category with the warning you want to ignore.
+On other platforms the filter is not added, so the warning is handled according
+to your existing filters. You can also use :data:`sys.version_info` in the
+condition to restrict a filter to specific Python versions.
+
+This applies to warnings emitted while running tests and fixtures, not warnings
+emitted while importing test modules during collection.
+
 *Credits go to Florian Schulze for the reference implementation in the* `pytest-warnings`_
 *plugin.*
 

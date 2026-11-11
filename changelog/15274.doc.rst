@@ -1,0 +1,1 @@
+Documented how to apply warning filters conditionally based on the platform or Python version using the existing collection hook and warning markers.
