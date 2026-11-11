@@ -283,11 +283,11 @@ def test_refcycle_unraisable_warning_filter(pytester: Pytester) -> None:
     )
 
     # TODO: Should be a test failure or error. Currently the exception
-    # propagates all the way to the top resulting in exit code 1.
-    assert result.ret == 1
+    # propagates all the way to the top and is reported as an internal error.
+    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
 
     result.assert_outcomes(passed=1)
-    result.stderr.fnmatch_lines("ValueError: del is broken")
+    result.stdout.fnmatch_lines("INTERNALERROR>*ValueError: del is broken*")
 
 
 def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> None:
@@ -316,13 +316,15 @@ def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> Non
     result = pytester.runpytest_subprocess("-Werror")
 
     # TODO: Should be a test failure or error. Currently the exception
-    # propagates all the way to the top resulting in exit code 1.
+    # propagates all the way to the top and is reported as an internal error.
     # -Werror matches the wrapping PytestUnraisableExceptionWarning, so the
     # wrapper propagates; its message embeds the original RuntimeWarning.
-    assert result.ret == 1
+    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
 
     result.assert_outcomes(passed=1)
-    result.stderr.fnmatch_lines("RuntimeWarning: coroutine 'my_task' was never awaited")
+    result.stdout.fnmatch_lines(
+        "INTERNALERROR>*RuntimeWarning: coroutine 'my_task' was never awaited*"
+    )
 
 
 def test_refcycle_unraisable_warning_filter_default(pytester: Pytester) -> None:
@@ -454,12 +456,12 @@ def test_unraisable_decouples_from_cleanup_stack_order(pytester: Pytester) -> No
 
     result = pytester.runpytest_subprocess()
 
-    assert result.ret == 1, (
+    assert result.ret == pytest.ExitCode.INTERNAL_ERROR, (
         "wrapper filter is still installed at GC time, so the unraisable "
         "exits non-zero regardless of cleanup-stack pop order"
     )
     result.assert_outcomes(passed=1)
-    result.stderr.fnmatch_lines("*ValueError: del is broken*")
+    result.stdout.fnmatch_lines("INTERNALERROR>*ValueError: del is broken*")
 
 
 def test_pytest_unconfigure_survives_failed_pytest_configure(
