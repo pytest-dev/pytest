@@ -1195,6 +1195,7 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
+        self._cached_dependencies: list[FixtureDef[object]] = []
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1231,6 +1232,7 @@ class FixtureDef(Generic[FixtureValue]):
         # which will keep instances alive.
         self.cached_result = None
         self._finalizers.clear()
+        self._cached_dependencies.clear()
         if len(exceptions) == 1:
             raise exceptions[0]
         elif len(exceptions) > 1:
@@ -1253,7 +1255,10 @@ class FixtureDef(Generic[FixtureValue]):
             # down first. This is generally handled by SetupState, but still currently
             # needed when this fixture is not parametrized but depends on a parametrized
             # fixture.
-            requested_fixtures_that_should_finalize_us.append(fixturedef)
+            # The synthetic request fixture is new for every request and has no
+            # teardown or value shared between fixture executions.
+            if not isinstance(fixturedef, RequestFixtureDef):
+                requested_fixtures_that_should_finalize_us.append(fixturedef)
 
         # Check for (and return) cached value/exception.
         if self.cached_result is not None:
@@ -1267,13 +1272,18 @@ class FixtureDef(Generic[FixtureValue]):
                 # If the comparison raises, use 'is' as fallback.
                 cache_hit = request_cache_key is cache_key
 
+            # An override may select a different dependency definition without
+            # changing this fixture's own parameter (#2844).
+            cache_hit = cache_hit and (
+                self._cached_dependencies == requested_fixtures_that_should_finalize_us
+            )
             if cache_hit:
                 if self.cached_result[2] is not None:
                     exc, exc_tb = self.cached_result[2]
                     raise exc.with_traceback(exc_tb)
                 else:
                     return self.cached_result[0]
-            # We have a previous but differently parametrized fixture instance
+            # We have a differently parametrized fixture or different dependencies
             # so we need to tear it down before creating a new one.
             self.finish(request)
             assert self.cached_result is None
@@ -1281,7 +1291,14 @@ class FixtureDef(Generic[FixtureValue]):
         # Add finalizer to requested fixtures we saved previously.
         # We make sure to do this after checking for cached value to avoid
         # adding our finalizer multiple times. (#12135)
-        finalizer = functools.partial(self.finish, request=request)
+        self._cached_dependencies = requested_fixtures_that_should_finalize_us
+
+        def finalizer() -> None:
+            # An old dependency may finish after an override has replaced our
+            # cached value. Its finalizer belongs only to the earlier execution.
+            if self._cached_dependencies is requested_fixtures_that_should_finalize_us:
+                self.finish(request)
+
         for parent_fixture in requested_fixtures_that_should_finalize_us:
             parent_fixture.addfinalizer(finalizer)
 
