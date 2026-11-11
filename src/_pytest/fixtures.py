@@ -1301,6 +1301,17 @@ class FixtureDef(Generic[FixtureValue]):
             result: FixtureValue = ihook.pytest_fixture_setup(
                 fixturedef=self, request=request
             )
+        except TEST_OUTCOME as e:
+            if self.cached_result is None:
+                # Another hook can fail before the default setup hook caches
+                # its result. Cache that failure too, so finalization and
+                # parameter changes follow the normal fixture lifecycle.
+                self.cached_result = (
+                    None,
+                    self.cache_key(request),
+                    (e, e.__traceback__),
+                )
+            raise
         finally:
             # Schedule our finalizer, even if the setup failed.
             request.node.addfinalizer(finalizer)
