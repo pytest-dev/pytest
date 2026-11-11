@@ -407,6 +407,31 @@ class TestTerminal:
             ]
         )
 
+    @pytest.mark.parametrize("verbosity", ["-v", ""])
+    def test_file_outside_config_root_has_correct_display_path(
+        self, pytester: Pytester, verbosity: str
+    ) -> None:
+        """The terminal path must identify the actual file when -c sets a sibling root."""
+        settings = pytester.mkdir("settings")
+        (settings / "pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+        tests = pytester.mkdir("test")
+        (tests / "test_hello.py").write_text(
+            "def test_hello(): pass\n", encoding="utf-8"
+        )
+
+        args = ["-c", "settings/pytest.ini", "-rA"]
+        if verbosity:
+            args.append(verbosity)
+        result = pytester.runpytest_subprocess(*args)
+
+        assert result.ret == ExitCode.OK
+        if verbosity == "-v":
+            result.stdout.fnmatch_lines(["test/test_hello.py::test_hello PASSED*"])
+        else:
+            result.stdout.fnmatch_lines(["test/test_hello.py .*", "*1 passed in*"])
+        result.stdout.fnmatch_lines(["PASSED test/test_hello.py::test_hello"])
+        result.stdout.no_fnmatch_line("settings/test/test_hello.py*")
+
     def test_itemreport_directclasses_not_shown_as_subclasses(
         self, pytester: Pytester
     ) -> None:
