@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 import warnings
 
 from _pytest.config import ExitCode
+from _pytest.config import parse_warning_filter
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestConfigWarning
 import pytest
 
 
@@ -560,6 +563,72 @@ class TestDeprecationWarningsByDefault:
                 "",
                 "Invalid regex '[*]': nothing to repeat at position 0",
             ]
+        )
+
+
+class TestEmptyGroupInFilterMessage:
+    """Warn about likely-unintended empty regex groups in filterwarnings (#10478)."""
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "The foo.bar() function is deprecated",
+            "foo() bar",
+            r"\\\\()",
+            r"[a]()",
+            r"[]]()",
+            r"[\]]()",
+            r"[^]]()",
+        ],
+    )
+    def test_warns(self, message: str) -> None:
+        with pytest.warns(PytestConfigWarning, match="empty group") as record:
+            parse_warning_filter(f"ignore:{message}", escape=False)
+        text = str(record[0].message)
+        assert "regular expression" in text
+        assert re.escape(message) in text
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            r"The foo.bar\(\) function is deprecated",
+            r"foo(bar)",
+            r"foo(a|)",
+            r"\\\(\)",
+            r"foo[()]",
+            r"[^()]",
+            r"[]()]",
+            r"[^]()]",
+            r"[\]()]",
+            "plain message",
+            "",
+        ],
+    )
+    def test_no_warning(self, message: str) -> None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            parse_warning_filter(f"ignore:{message}", escape=False)
+
+    def test_no_warning_when_escaped(self) -> None:
+        # Command-line filters are escaped, so "()" is matched literally.
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            parse_warning_filter("ignore:foo()", escape=True)
+
+    def test_mark_end_to_end(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import warnings
+            import pytest
+
+            @pytest.mark.filterwarnings("ignore:The foo.bar() function is deprecated")
+            def test_it():
+                warnings.warn("The foo.bar() function is deprecated")
+            """
+        )
+        result = pytester.runpytest_subprocess("-W", "default")
+        result.stdout.fnmatch_lines(
+            ["*PytestConfigWarning: The message in warning filter*empty group*"]
         )
 
 

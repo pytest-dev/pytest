@@ -1,0 +1,1 @@
+A :class:`pytest.PytestConfigWarning` is now emitted when the message of a ``filterwarnings`` entry contains an empty regex group ``()``, which is likely a mistaken attempt to match literal parentheses (the message is a regular expression).

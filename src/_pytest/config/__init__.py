@@ -2472,7 +2472,49 @@ def parse_warning_filter(
         raise UsageError(
             error_template.format(error=f"Invalid regex {e.pattern!r}: {e}")
         ) from None
+    if message and not escape:
+        _warn_on_empty_regex_group(message, arg)
     return action, message, category, module, lineno
+
+
+def _has_empty_regex_group(pattern: str) -> bool:
+    """Whether the regex contains an unescaped "()" outside a character class."""
+    i = 0
+    in_class = False
+    while i < len(pattern):
+        c = pattern[i]
+        if c == "\\":
+            i += 2
+        elif in_class:
+            in_class = c != "]"
+            i += 1
+        elif c == "[":
+            in_class = True
+            i += 1
+            if pattern.startswith("^", i):
+                i += 1
+            if pattern.startswith("]", i):  # A leading "]" is a literal.
+                i += 1
+        elif pattern.startswith("()", i):
+            return True
+        else:
+            i += 1
+    return False
+
+
+def _warn_on_empty_regex_group(message: str, arg: str) -> None:
+    """Warn if a filter message regex has an empty group, likely meant as literal parentheses (#10478)."""
+    if not _has_empty_regex_group(message):
+        return
+    warnings.warn(
+        PytestConfigWarning(
+            f"The message in warning filter {arg!r} is a regular expression and "
+            "contains an empty group '()', which matches the empty string and "
+            "not literal parentheses. Escape the parentheses ('\\(\\)') or "
+            f"use re.escape(), e.g. '{re.escape(message)}'."
+        ),
+        stacklevel=2,
+    )
 
 
 def _resolve_warning_category(category: str) -> type[Warning]:
