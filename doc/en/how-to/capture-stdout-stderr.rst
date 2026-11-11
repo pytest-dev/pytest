@@ -32,7 +32,7 @@ a test.
 Setting capturing methods or disabling capturing
 -------------------------------------------------
 
-There are three ways in which ``pytest`` can perform capturing:
+There are four ways in which ``pytest`` can perform capturing:
 
 * ``fd`` (file descriptor) level capturing (default): All writes going to the
   operating system file descriptors 1 and 2 will be captured.
@@ -46,6 +46,11 @@ There are three ways in which ``pytest`` can perform capturing:
   the actual ``sys.stdout`` and ``sys.stderr``. This allows output to be
   'live printed' and captured for plugin use, such as junitxml (new in pytest 5.4).
 
+* ``tee-fd`` capturing: All writes going to file descriptors 1 and 2 will be
+  captured, including subprocess output. The writes will also be passed-through
+  to the original file descriptors in real-time. This combines the subprocess
+  capture ability of ``fd`` with the live output visibility of ``tee-sys``.
+
 .. _`disable capturing`:
 
 You can influence output capturing mechanisms from the command line:
@@ -57,6 +62,7 @@ You can influence output capturing mechanisms from the command line:
     pytest --capture=fd        # also point filedescriptors 1 and 2 to temp file
     pytest --capture=tee-sys   # combines 'sys' and '-s', capturing sys.stdout/stderr
                                # and passing it along to the actual sys.stdout/stderr
+    pytest --capture=tee-fd    # like 'fd' but also passes output through in real-time
 
 .. _printdebugging:
 
