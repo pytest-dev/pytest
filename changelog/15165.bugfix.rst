@@ -1,0 +1,3 @@
+Fixed ``pytest.approx`` failure details for sequences and mappings with zero
+``timedelta`` values. The mismatch table is preserved and a relative difference
+with a zero duration denominator is reported as infinite.

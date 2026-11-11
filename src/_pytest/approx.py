@@ -341,7 +341,10 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
                             # TODO: The type error here seems correct.
                             abs(approx_value.expected - other_value),  # type: ignore[operator]
                         )
-                        if approx_value.expected == 0:
+                        if (
+                            approx_value.expected == 0
+                            or approx_value.expected == timedelta(0)
+                        ):
                             rel_diff_is_infinite = True
                         else:
                             max_rel_diff = _max_diff(
@@ -443,7 +446,7 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
                 except TypeError:
                     pass
                 else:
-                    if other_value == 0:
+                    if other_value == 0 or other_value == timedelta(0):
                         rel_diff_is_infinite = True
                     else:
                         max_rel_diff = _max_diff(
