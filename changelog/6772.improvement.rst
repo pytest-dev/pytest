@@ -1,0 +1,1 @@
+Improved assertion failure output for unequal ``range`` objects by avoiding unhelpful full diffs while retaining sequence difference details.
