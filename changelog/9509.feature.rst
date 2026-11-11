@@ -1,0 +1,1 @@
+Added :option:`--tb-hide-internal` option to hide pytest/pluggy internal frames even when :option:`--full-trace` is used.
