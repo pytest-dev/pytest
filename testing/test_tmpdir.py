@@ -818,6 +818,45 @@ class TestRmRf:
             )
         assert list(tmp_path.glob("garbage-*"))
 
+    def test_on_rm_rf_error_is_a_directory_error_retries_when_chmod_changes(
+        self, tmp_path: Path
+    ) -> None:
+        """When os.unlink is called on a directory with restrictive
+        permissions, on_rm_rf_error fixes them and removes it (#15169)."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        (subdir / "child.txt").touch()
+        os.chmod(str(subdir), 0)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = IsADirectoryError()
+            result = on_rm_rf_error(
+                os.unlink, str(subdir), exc_info, start_path=tmp_path
+            )
+            assert result is True
+            assert not subdir.exists()
+            assert not [x.message for x in w]
+
+    def test_on_rm_rf_error_directory_not_empty_retries_when_chmod_changes(
+        self, tmp_path: Path
+    ) -> None:
+        """When os.rmdir fails with ENOTEMPTY and fixing permissions changes
+        something, on_rm_rf_error retries the removal (#15171)."""
+        parent_dir = tmp_path / "parent_dir"
+        parent_dir.mkdir()
+        child_dir = parent_dir / "child_dir"
+        child_dir.mkdir()
+        (child_dir / "item.txt").touch()
+        os.chmod(str(child_dir / "item.txt"), 0)
+        os.chmod(str(child_dir), 0)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc = OSError(errno.ENOTEMPTY, "Directory not empty")
+            result = on_rm_rf_error(os.rmdir, str(parent_dir), exc, start_path=tmp_path)
+            assert result is True
+            assert not parent_dir.exists()
+            assert not [x.message for x in w]
+
     def test_find_prefixed_closes_scandir_iterator(self, tmp_path: Path) -> None:
         """find_prefixed exhausts and closes the scandir iterator cleanly (#15169)."""
         from _pytest.pathlib import find_prefixed
