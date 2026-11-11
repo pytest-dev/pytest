@@ -1,0 +1,1 @@
+Fixed :func:`pytest.approx` reporting wrong differences (and wrong equality results) when comparing a list expected value against a NumPy integer array: NumPy scalars are now unboxed before subtraction, avoiding wraparound such as ``0 - np.uint8(1)`` evaluating to ``255``.

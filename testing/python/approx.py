@@ -259,6 +259,16 @@ class TestApprox:
             ],
         )
 
+    def test_numpy_integer_actual_against_list_expected(self):
+        # Numpy integer scalars must be unboxed before comparison, otherwise
+        # e.g. `0 - np.uint8(1)` wraps around to 255 (see #15314).
+        np = pytest.importorskip("numpy")
+
+        assert np.array([1], dtype=np.uint8) == pytest.approx([0], abs=5)
+        assert np.array([0], dtype=np.uint8) == pytest.approx([1], abs=5)
+        assert np.array([255], dtype=np.uint8) != pytest.approx([0])
+        assert np.array([-128], dtype=np.int8) != pytest.approx([127])
+
     def test_error_messages_invalid_args(self, assert_approx_raises_regex):
         np = pytest.importorskip("numpy")
         with pytest.raises(AssertionError) as e:
