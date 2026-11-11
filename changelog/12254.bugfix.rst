@@ -1,0 +1,3 @@
+Resolve cached submodules in string-based :meth:`pytest.MonkeyPatch.setattr` and
+:meth:`pytest.MonkeyPatch.delattr` targets even when the parent package no longer
+exposes the submodule as an attribute.
