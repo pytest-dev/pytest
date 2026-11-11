@@ -80,7 +80,7 @@ nitpick_ignore = [
     ("py:class", "_pytest.fixtures.FixtureFunctionDefinition"),
     ("py:class", "_pytest.logging.LogCaptureHandler"),
     # Intentionally undocumented/private
-    ("py:class", "_pytest._code.code.Traceback"),
+    ("py:class", "_pytest._code.source.Source"),
     ("py:class", "_pytest._py.path.LocalPath"),
     ("py:class", "_pytest.capture.CaptureResult"),
     ("py:class", "_pytest.compat.NotSetType"),

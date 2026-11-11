@@ -432,7 +432,7 @@ class Traceback(list[TracebackEntry]):
     ) -> Traceback:
         """Return a Traceback instance with certain items removed.
 
-        If the filter is an `ExceptionInfo`, removes all the ``TracebackEntry``s
+        If the filter is an `ExceptionInfo`, removes all the ``TracebackEntry`` instances
         which are hidden (see ishidden() above).
 
         Otherwise, the filter is a function that gets a single argument, a

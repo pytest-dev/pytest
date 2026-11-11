@@ -16,6 +16,24 @@ import pytest
 from pytest import MonkeyPatch
 from pytest import ScopeName
 from pytest import TestReport
+from pytest import Traceback
+from pytest import TracebackEntry
+
+
+def check_traceback_filter(
+    item: pytest.Item, excinfo: pytest.ExceptionInfo[BaseException]
+) -> None:
+    def keep(entry: TracebackEntry) -> bool:
+        return entry.path == item.path
+
+    assert_type(item.traceback_filter(excinfo), Traceback)
+    assert_type(excinfo.traceback.filter(keep), Traceback)
+
+    class CustomItem(pytest.Item):
+        def traceback_filter(
+            self, excinfo: pytest.ExceptionInfo[BaseException]
+        ) -> Traceback:
+            return super().traceback_filter(excinfo).filter(keep)
 
 
 # Issue #7488.
