@@ -15,6 +15,7 @@ import functools
 import os
 import platform
 import re
+from typing import assert_never
 from typing import Literal
 import xml.etree.ElementTree as ET
 
@@ -22,7 +23,6 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
-from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser

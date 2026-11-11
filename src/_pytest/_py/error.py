@@ -6,15 +6,11 @@ from collections.abc import Callable
 import errno
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import ParamSpec
 from typing import TypeVar
 
 
-if TYPE_CHECKING:
-    from typing_extensions import ParamSpec
-
-    P = ParamSpec("P")
-
+P = ParamSpec("P")
 R = TypeVar("R")
 
 
