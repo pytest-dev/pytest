@@ -84,7 +84,7 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
-    from _pytest.python import CallSpec
+    from _pytest.parametrize import CallSpec
     from _pytest.python import Function
     from _pytest.python import Metafunc
     from _pytest.reports import CollectReport
