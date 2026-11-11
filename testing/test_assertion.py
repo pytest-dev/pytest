@@ -6,6 +6,7 @@ from collections import UserDict
 from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import MutableSequence
+from collections.abc import Sequence
 import dataclasses
 import sys
 import textwrap
@@ -1169,6 +1170,84 @@ class TestAssert_reprcompare:
             "      3,",
             "  )",
         ]
+
+    @pytest.mark.parametrize(
+        ("left", "right", "expected"),
+        [
+            ([], [1], "Right contains one more item: 1"),
+            ([1], [], "Left contains one more item: 1"),
+            ([1, 2, 3], [1, 2, 3, 4], "Right contains one more item: 4"),
+            ([1, 2, 3], [1, 2, 0, 3], "Right contains one more item: 0"),
+            ([1, 2, 0, 3], [1, 2, 3], "Left contains one more item: 0"),
+            ([1, 2, 3], (0, 1, 2, 3), "Right contains one more item: 0"),
+            ((1, 2, 3), [0, 1, 2, 3], "Right contains one more item: 0"),
+            ([1, 2, 3], (1, 2, 0, 3), "Right contains one more item: 0"),
+            ([1, 2, 0, 3], (1, 2, 3), "Left contains one more item: 0"),
+            ([1, 2, 9], [1, 3], "Left contains one more item: 9"),
+            ([1, 3], [1, 2, 9], "Right contains one more item: 9"),
+            (
+                [1, 2, 3],
+                [0, 1, 2, 3, 4],
+                "Right contains 2 more items, first extra item: 3",
+            ),
+        ],
+    )
+    def test_sequence_extra_item_message(
+        self, left: Sequence[object], right: Sequence[object], expected: str
+    ) -> None:
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert expected in lines
+
+    def test_sequence_extra_item_nan_identity(self) -> None:
+        nan = float("nan")
+
+        lines = callequal([1, nan], [0, 1, nan], verbose=1)
+        assert lines is not None
+        assert "Right contains one more item: 0" in lines
+
+        lines = callequal([0, 1, nan], [1, nan], verbose=1)
+        assert lines is not None
+        assert "Left contains one more item: 0" in lines
+
+        lines = callequal([nan, 1], [nan, 0, 1], verbose=1)
+        assert lines is not None
+        assert "Right contains one more item: 0" in lines
+        assert not any("nan != nan" in line for line in lines)
+
+        lines = callequal([1, nan], [1, nan, 0], verbose=1)
+        assert lines is not None
+        assert "Right contains one more item: 0" in lines
+        assert not any("nan != nan" in line for line in lines)
+
+    def test_sequence_extra_item_broken_eq_falls_back(self) -> None:
+        class BrokenEq:
+            def __eq__(self, other: object) -> bool:
+                raise RuntimeError("boom")
+
+            def __repr__(self) -> str:
+                return "BrokenEq()"
+
+        lines = callequal([1, BrokenEq()], [0, 1, BrokenEq()], verbose=1)
+        assert lines is not None
+        assert "Right contains one more item: BrokenEq()" in lines
+        assert not any("representation of details failed" in line for line in lines)
+
+    def test_sequence_extra_item_ambiguous_eq_falls_back(self) -> None:
+        class AmbiguousEq:
+            def __eq__(self, other: object) -> Any:
+                return self
+
+            def __bool__(self) -> bool:
+                raise ValueError("ambiguous")
+
+            def __repr__(self) -> str:
+                return "AmbiguousEq()"
+
+        lines = callequal([1, AmbiguousEq()], [0, 1, AmbiguousEq()], verbose=1)
+        assert lines is not None
+        assert "Right contains one more item: AmbiguousEq()" in lines
+        assert not any("representation of details failed" in line for line in lines)
 
     def test_set(self) -> None:
         expl = callequal({0, 1}, {0, 2})
