@@ -171,6 +171,10 @@ class Cache:
         allowing a ``..`` that cancels out within ``base``.
         """
         path = Path(os.path.normpath(base.joinpath(name)))
+        # Normalize the base too: it may itself contain `..` segments
+        # (e.g. tox passes `$TOX_ENV_DIR` through verbatim), which would
+        # otherwise fail the containment check (see #15295).
+        base = Path(os.path.normpath(base))
         if not path.is_relative_to(base):
             raise ValueError(f"{name!r} is not allowed to escape the cache directory")
         return path
