@@ -2532,7 +2532,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 fixturedef,
             )
         )
-    available.sort()
+    available.sort(key=lambda item: item[:4])
 
     currentmodule = None
     for baseid, module, prettypath, argname, fixturedef in available:

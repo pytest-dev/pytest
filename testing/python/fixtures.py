@@ -4163,6 +4163,33 @@ class TestShowFixtures:
         """
         )
 
+    def test_show_fixtures_same_name_tied_sort_key(self, pytester: Pytester) -> None:
+        """Regression test for #15378: --fixtures crashed with a TypeError
+        when two same-name fixtures tied on all sortable fields (same
+        module, same file and line, equal-length baseids), because the
+        sort fell through to comparing FixtureDef objects."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            class Base:
+                @pytest.fixture
+                def arg1(self):
+                    return 1
+
+            class TestAaa(Base):
+                def test_a(self, arg1):
+                    pass
+
+            class TestBbb(Base):
+                def test_b(self, arg1):
+                    pass
+            """
+        )
+        result = pytester.runpytest("--fixtures")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["*arg1*", "*arg1*"])
+
     def test_fixture_disallow_twice(self):
         """Test that applying @pytest.fixture twice generates an error (#2334)."""
         with pytest.raises(ValueError):

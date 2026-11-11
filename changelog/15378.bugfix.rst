@@ -1,0 +1,1 @@
+Fixed a ``TypeError`` crash when running ``pytest --fixtures`` in a project where two fixtures with the same name are defined in the same module and file (for example, a fixture inherited from a shared base class by two test classes).
