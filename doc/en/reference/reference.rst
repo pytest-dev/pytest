@@ -3467,6 +3467,14 @@ Version and Help
 
     Show help message and configuration info.
 
+.. option:: --help-section=NAME
+
+    Show help for the option group identified by ``NAME``. Use ``custom`` for options
+    registered without an explicit group, or the name passed to
+    :meth:`pytest.Parser.getgroup` for a named group. To select a group named
+    ``custom`` or one whose name starts with ``group:``, prefix its name with
+    ``group:``.
+
 Complete Help Output
 ~~~~~~~~~~~~~~~~~~~~
 
