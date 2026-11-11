@@ -1,0 +1,1 @@
+Fix false-positive escape validation error (``ValueError: '...' is not allowed to escape the cache directory``) when ``cache_dir`` contains ``..`` segments.
