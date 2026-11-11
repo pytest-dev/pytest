@@ -877,6 +877,28 @@ class TestRmRf:
         on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
         assert not fn.exists()
 
+    def test_on_rm_rf_error_rmdir_retries_after_fixing_parent(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """An empty directory needs its parent made writable before rmdir."""
+        parent = tmp_path / "parent"
+        parent.mkdir()
+        child = parent / "child"
+        child.mkdir()
+
+        chmod_calls: list[Path] = []
+
+        def record_chmod(path: str) -> bool:
+            chmod_calls.append(Path(path))
+            return True
+
+        monkeypatch.setattr(pathlib, "_chmod_rwx", record_chmod)
+
+        exc_info = PermissionError()
+        assert on_rm_rf_error(os.rmdir, str(child), exc_info, start_path=tmp_path)
+        assert parent in chmod_calls
+        assert not child.exists()
+
 
 def attempt_symlink_to(path, to_path):
     """Try to make a symlink from "path" to "to_path", skipping in case this platform
