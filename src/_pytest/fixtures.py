@@ -2532,7 +2532,10 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 fixturedef,
             )
         )
-    available.sort()
+    # Sort by the display keys only: two defs can share every key (the same
+    # function registered under different baseids), and the trailing
+    # FixtureDef has no ordering, so comparing it would raise a TypeError.
+    available.sort(key=lambda entry: entry[:-1])
 
     currentmodule = None
     for baseid, module, prettypath, argname, fixturedef in available:
