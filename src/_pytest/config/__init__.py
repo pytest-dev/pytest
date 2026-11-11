@@ -688,6 +688,10 @@ class PytestPluginManager(PluginManager):
             anchors.append(invocation_dir)
             anchors.extend(x for x in invocation_dir.glob("test*") if x.is_dir())
 
+        root_anchor = absolutepath(invocation_dir / rootpath)
+        if root_anchor not in anchors:
+            anchors.append(root_anchor)
+
         for anchor in anchors:
             self._loadconftestmodules(
                 anchor,
