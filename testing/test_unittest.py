@@ -1573,6 +1573,366 @@ def test_do_cleanups_on_teardown_failure(pytester: Pytester) -> None:
     assert passed == 1
 
 
+def test_unittest_module_cleanups_private_api_contract() -> None:
+    """Pin the private unittest API mark-and-drain relies on (#14958)."""
+    import unittest.case
+
+    assert hasattr(unittest.case, "_module_cleanups")
+    assert isinstance(unittest.case._module_cleanups, list)
+
+    seen: list[str] = []
+
+    def cleanup() -> None:
+        seen.append("ran")
+
+    unittest.addModuleCleanup(cleanup)
+    assert len(unittest.case._module_cleanups) >= 1
+    unittest.case.doModuleCleanups()
+    assert seen == ["ran"]
+    assert unittest.case._module_cleanups == []
+
+
+def test_module_cleanups_import_time_run_at_session_end(pytester: Pytester) -> None:
+    """Import-time addModuleCleanup runs via the session-end backstop (#14958)."""
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cleanup\\n")
+
+        unittest.addModuleCleanup(cleanup)
+
+        def setUpModule():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("setUpModule\\n")
+
+        def tearDownModule():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("tearDownModule\\n")
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                with open(r"{events_file}", "a", encoding="utf-8") as f:
+                    f.write("test\\n")
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(passed=1)
+    assert events_file.read_text(encoding="utf-8").splitlines() == [
+        "setUpModule",
+        "test",
+        "tearDownModule",
+        "cleanup",
+    ]
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11), reason="enterModuleContext was added in Python 3.11"
+)
+def test_enter_module_context_runs_exit(pytester: Pytester) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        from contextlib import contextmanager
+        import unittest
+
+        @contextmanager
+        def module_cm():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cm-enter\\n")
+            yield
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cm-exit\\n")
+
+        unittest.enterModuleContext(module_cm())
+
+        def setUpModule():
+            pass
+
+        def tearDownModule():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("tearDownModule\\n")
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(passed=1)
+    assert events_file.read_text(encoding="utf-8").splitlines() == [
+        "cm-enter",
+        "tearDownModule",
+        "cm-exit",
+    ]
+
+
+def test_module_cleanups_registered_in_setup_run_after_teardown(
+    pytester: Pytester,
+) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cleanup\\n")
+
+        def setUpModule():
+            unittest.addModuleCleanup(cleanup)
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("setUpModule\\n")
+
+        def tearDownModule():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("tearDownModule\\n")
+
+        class MyTestCase(unittest.TestCase):
+            @classmethod
+            def setUpClass(cls):
+                def class_cleanup():
+                    with open(r"{events_file}", "a", encoding="utf-8") as f:
+                        f.write("class-cleanup\\n")
+                cls.addClassCleanup(class_cleanup)
+
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(passed=1)
+    assert events_file.read_text(encoding="utf-8").splitlines() == [
+        "setUpModule",
+        "class-cleanup",
+        "tearDownModule",
+        "cleanup",
+    ]
+
+
+def test_module_cleanups_run_when_setup_module_fails(pytester: Pytester) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cleanup\\n")
+
+        def setUpModule():
+            unittest.addModuleCleanup(cleanup)
+            raise Exception("setupModule boom")
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(errors=1)
+    assert events_file.read_text(encoding="utf-8").splitlines() == ["cleanup"]
+
+
+def test_module_cleanups_run_when_teardown_module_fails(pytester: Pytester) -> None:
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cleanup\\n")
+
+        def setUpModule():
+            unittest.addModuleCleanup(cleanup)
+
+        def tearDownModule():
+            raise RuntimeError("teardown boom")
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(passed=1, errors=1)
+    assert events_file.read_text(encoding="utf-8").splitlines() == ["cleanup"]
+
+
+def test_module_cleanup_failure_reported(pytester: Pytester) -> None:
+    testpath = pytester.makepyfile(
+        """
+        import unittest
+
+        def boom():
+            raise Exception("cleanup boom")
+
+        def setUpModule():
+            unittest.addModuleCleanup(boom)
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest("-s", testpath)
+    result.assert_outcomes(passed=1, errors=1)
+    result.stdout.fnmatch_lines(["*ERROR at teardown*", "*cleanup boom*"])
+
+
+def test_module_cleanup_and_setup_errors_both_visible(pytester: Pytester) -> None:
+    testpath = pytester.makepyfile(
+        """
+        import unittest
+
+        def boom():
+            raise RuntimeError("CLEANUP-ERROR")
+
+        def setUpModule():
+            unittest.addModuleCleanup(boom)
+            raise ValueError("SETUPMODULE-ERROR")
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest("-s", testpath)
+    result.assert_outcomes(errors=1)
+    # Cleanup runs in the except handler; setup remains visible as __context__.
+    result.stdout.fnmatch_lines(["*SETUPMODULE-ERROR*", "*CLEANUP-ERROR*"])
+
+
+def test_module_cleanups_mark_and_drain_isolates_modules(pytester: Pytester) -> None:
+    """Import-time cleanups of other modules must not drain at our teardown.
+
+    ``unittest.case._module_cleanups`` is process-global. A naive
+    ``doModuleCleanups()`` at module A's teardown would also run B's
+    import-time registrations (already collected), before B's tests run.
+    Mark-and-drain keeps those for the session-end backstop (#14958).
+    """
+    events_file = pytester.path / "events.txt"
+    pytester.makepyfile(
+        test_a=f"""
+        import unittest
+
+        def cleanup_a_import():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cleanup-a-import\\n")
+
+        def cleanup_a_setup():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cleanup-a-setup\\n")
+
+        unittest.addModuleCleanup(cleanup_a_import)
+
+        def setUpModule():
+            unittest.addModuleCleanup(cleanup_a_setup)
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("setup-a\\n")
+
+        def tearDownModule():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("teardown-a\\n")
+
+        class TestA(unittest.TestCase):
+            def test_a(self):
+                with open(r"{events_file}", "a", encoding="utf-8") as f:
+                    f.write("test-a\\n")
+        """,
+        test_b=f"""
+        import unittest
+
+        def cleanup_b_import():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cleanup-b-import\\n")
+
+        unittest.addModuleCleanup(cleanup_b_import)
+
+        def setUpModule():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("setup-b\\n")
+
+        def tearDownModule():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("teardown-b\\n")
+
+        class TestB(unittest.TestCase):
+            def test_b(self):
+                with open(r"{events_file}", "a", encoding="utf-8") as f:
+                    f.write("test-b\\n")
+        """,
+    )
+    result = pytester.runpytest("-qs", "test_a.py", "test_b.py")
+    result.assert_outcomes(passed=2)
+    lines = events_file.read_text(encoding="utf-8").splitlines()
+    assert lines.index("teardown-a") < lines.index("cleanup-a-setup")
+    # B must start only after A's visit-scoped cleanup — and B's import-time
+    # cleanup must not have been eaten during A's teardown.
+    assert lines.index("cleanup-a-setup") < lines.index("setup-b")
+    assert lines.index("setup-b") < lines.index("cleanup-b-import")
+    assert lines.index("teardown-b") < lines.index("cleanup-b-import")
+    assert lines.index("teardown-b") < lines.index("cleanup-a-import")
+
+
+def test_module_cleanups_multiple_failures_exception_group(
+    pytester: Pytester,
+) -> None:
+    testpath = pytester.makepyfile(
+        """
+        import unittest
+
+        def boom(n):
+            raise Exception(f"fail {n}")
+
+        def setUpModule():
+            unittest.addModuleCleanup(boom, 2)
+            unittest.addModuleCleanup(boom, 1)
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                pass
+    """
+    )
+    result = pytester.runpytest("-s", testpath)
+    result.assert_outcomes(passed=1, errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*Unittest module cleanup errors *2 sub-exceptions*",
+            "*Exception: fail 1",
+            "*Exception: fail 2",
+        ]
+    )
+
+
+def test_module_cleanups_without_setup_module_still_run(pytester: Pytester) -> None:
+    """Modules without setUpModule still get import-time cleanups at session end."""
+    events_file = pytester.path / "events.txt"
+    testpath = pytester.makepyfile(
+        f"""
+        import unittest
+
+        def cleanup():
+            with open(r"{events_file}", "a", encoding="utf-8") as f:
+                f.write("cleanup\\n")
+
+        unittest.addModuleCleanup(cleanup)
+
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                with open(r"{events_file}", "a", encoding="utf-8") as f:
+                    f.write("test\\n")
+    """
+    )
+    result = pytester.runpytest(testpath)
+    result.assert_outcomes(passed=1)
+    assert events_file.read_text(encoding="utf-8").splitlines() == ["test", "cleanup"]
+
+
 class TestClassCleanupErrors:
     """
     Make sure to show exceptions raised during class cleanup function (those registered
