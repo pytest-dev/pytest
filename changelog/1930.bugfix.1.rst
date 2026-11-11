@@ -1,0 +1,6 @@
+Assertions in a package's ``__init__.py`` are now rewritten when that file is named on the command line.
+
+The early-bailout optimisation derived the module basenames to consider from the
+initial paths, which for ``pkg/__init__.py`` yielded ``__init__`` rather than the
+importable name ``pkg``, so the rewrite hook declined the module before it was
+recognised as an initial path.
