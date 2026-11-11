@@ -33,7 +33,6 @@ class Instant:
     # Creation time of this instant, using time.time(), to measure actual time.
     # Note: using a `lambda` to correctly get the mocked time via `MockTiming`.
     # Only pass explicitly to represent timings given as plain floats.
-    # pylint: disable-next=lambda-assignment
     time: float = dataclasses.field(default_factory=lambda: time())  # noqa: PLW0108
 
     # Performance counter tick of the instant, used to measure precise elapsed time.
