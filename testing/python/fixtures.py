@@ -6294,6 +6294,36 @@ def test_fixture_above_staticmethod_still_works(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_find_wrapped_fixture_def_skips_mock_call_without_unwrap(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """`unittest.mock.call` must be skipped before `inspect.unwrap` (see #15281).
+
+    ``call`` is a ``_Call`` whose ``_mock_name`` is ``None`` and whose
+    ``__wrapped__`` returns a new ``_Call`` on every access, so unwrapping it
+    only stops at the recursion limit (slow + huge memory with a raised limit).
+    """
+    import inspect
+    from typing import cast
+    from unittest.mock import call
+
+    from _pytest.fixtures import FixtureManager
+
+    calls = []
+    real_unwrap = inspect.unwrap
+
+    def counting_unwrap(*args, **kwargs):
+        calls.append(args)
+        return real_unwrap(*args, **kwargs)
+
+    monkeypatch.setattr(inspect, "unwrap", counting_unwrap)
+    # `_find_wrapped_fixture_def` does not use `self`; call it on the class
+    # with a dummy instance to avoid constructing a full `FixtureManager`.
+    manager = cast(FixtureManager, object())
+    assert FixtureManager._find_wrapped_fixture_def(manager, call) is None
+    assert calls == []
+
+
 @pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
 def test_classmethod_above_fixture_warning_inherited(pytester: Pytester) -> None:
     """MRO ``__dict__`` lookup finds @classmethod wrappers on a base class."""

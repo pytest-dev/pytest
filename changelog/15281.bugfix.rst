@@ -1,0 +1,1 @@
+Fixed collection hanging and using gigabytes of memory when a collected module contains ``unittest.mock.call`` (or similar mock objects) at module level while the recursion limit is raised: mock objects are now skipped before traversing their ``__wrapped__`` chain.
