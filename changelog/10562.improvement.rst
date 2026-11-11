@@ -1,0 +1,1 @@
+``--stepwise`` now continues from the test that was running when the session was interrupted, for example by quitting the debugger with ``q``, instead of starting over.
