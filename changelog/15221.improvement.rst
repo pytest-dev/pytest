@@ -1,0 +1,9 @@
+pytest now uses a single collection of a level for explicit file arguments
+of the same parent directory, instead of collecting that level again for
+every file argument, which made collection time grow with the multiplication
+of those counts (pytest a/test_1.py a/test_2.py …).
+
+The previous behaviour of running the same explicitly given file multiple
+times with ``--keepduplicates``, or when the same file is selected with
+different ``::`` parts, is preserved: those occurrences keep being collected
+fresh per occurrence.

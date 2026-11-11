@@ -2807,3 +2807,102 @@ def test_strict_parametrization_ids_with_hidden_param(pytester: Pytester) -> Non
             "Duplicates:     a",
         ]
     )
+
+
+def test_file_arguments_scan_parent_level_once(pytester: Pytester) -> None:
+    """Explicit file arguments sharing a parent must not re-collect that
+    parent per file argument (#15221).
+
+    Each file argument used to walk its parents from the root again, and since
+    an explicit file at the end of a path re-collects its level fresh, the
+    whole parent level was re-scanned for each argument: after this change a
+    parent level is scanned once and reused for the remaining file arguments,
+    which keeps the same node ids and order.
+    """
+    tests = pytester.mkdir("tests")
+    for i in (1, 2, 3):
+        ensure_file(tests / f"test_{i}.py").write_text(
+            f"def test_{i}(): pass\n", encoding="utf-8"
+        )
+    ensure_file(tests / "other.py").write_text("value = 1\n", encoding="utf-8")
+
+    args = ["tests/test_1.py", "tests/test_2.py", "tests/test_3.py"]
+    items, hookrec = pytester.inline_genitems(*args)
+
+    assert [item.nodeid for item in items] == [
+        "tests/test_1.py::test_1",
+        "tests/test_2.py::test_2",
+        "tests/test_3.py::test_3",
+    ]
+    scanned = [
+        call.collection_path.name
+        for call in hookrec.getcalls("pytest_ignore_collect")
+        if call.collection_path.parent == tests
+    ]
+    # The three argument files are initial paths and skip the
+    # pytest_ignore_collect consult; only non-argument files of the parent
+    # level are consulted, and only as often as the level is scanned.
+    assert scanned == ["other.py"]
+
+
+def test_keepduplicates_runs_the_same_file_twice(pytester: Pytester) -> None:
+    tests = pytester.mkdir("tests")
+    ensure_file(tests / "test_dup.py").write_text(
+        "def test_dup(): pass\n", encoding="utf-8"
+    )
+
+    hookrec = pytester.inline_run(
+        "--collect-only", "--keepduplicates", "tests/test_dup.py", "tests/test_dup.py"
+    )
+    items = [call.item for call in hookrec.getcalls("pytest_itemcollected")]
+    assert [item.nodeid for item in items] == [
+        "tests/test_dup.py::test_dup",
+        "tests/test_dup.py::test_dup",
+    ]
+
+
+def test_same_file_with_different_parts_is_collected_twice(pytester: Pytester) -> None:
+    tests = pytester.mkdir("tests")
+    ensure_file(tests / "test_dup.py").write_text(
+        "def test_a(): pass\ndef test_b(): pass\n", encoding="utf-8"
+    )
+
+    items, _hookrec = pytester.inline_genitems(
+        "tests/test_dup.py::test_a", "tests/test_dup.py::test_b"
+    )
+    assert [item.nodeid for item in items] == [
+        "tests/test_dup.py::test_a",
+        "tests/test_dup.py::test_b",
+    ]
+
+
+def test_file_arguments_recollect_after_failed_parent_collection(
+    pytester: Pytester,
+) -> None:
+    """A failing parent-level collection is re-collected per file argument,
+    as it was before its successful report reuse (--keepduplicates aside),
+    so each failure stays reported and unchanged."""
+    tests = pytester.mkdir("tests")
+    for name in ("test_1.py", "test_2.py"):
+        ensure_file(tests / name).write_text(
+            f"def test_{name[5]}(): pass\n", encoding="utf-8"
+        )
+    ensure_file(tests / "test_neighbor.py").write_text(
+        "def test_neighbor(): pass\n", encoding="utf-8"
+    )
+    pytester.makeconftest(
+        textwrap.dedent(
+            """\
+            def pytest_collect_file(file_path, parent):
+                # A failing collect of one non-argument sibling during the
+                # directory scan fails the whole Directory collection report.
+                if file_path.name == "test_neighbor.py":
+                    raise RuntimeError("collect_neighbor_boom")
+                return None
+            """
+        )
+    )
+    result = pytester.runpytest("tests/test_1.py", "tests/test_2.py")
+    assert result.ret != 0
+    combined = result.stdout.str() + result.stderr.str()
+    assert combined.count("ERROR tests - RuntimeError: collect_neighbor_boom") == 2
