@@ -790,6 +790,34 @@ class TestRmRf:
             assert not parent_dir.exists()
             assert not [x.message for x in w]
 
+    @pytest.mark.skipif(sys.platform != "linux", reason="Linux-only review regression")
+    def test_numbered_cleanup_stops_after_persistent_enotempty(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A persistent ENOTEMPTY during numbered-dir cleanup warns once and
+        returns instead of recursing until RecursionError (#15171)."""
+        numbered = tmp_path / "pytest-0"
+        numbered.mkdir(mode=0o700)
+        original_rmdir = os.rmdir
+
+        def persistent_error(path, *args, **kwargs):
+            candidate = Path(path)
+            if candidate.parent == tmp_path and candidate.name.startswith("garbage-"):
+                raise OSError(
+                    errno.ENOTEMPTY, "controlled persistent ENOTEMPTY", str(candidate)
+                )
+            return original_rmdir(path, *args, **kwargs)
+
+        with monkeypatch.context() as scoped:
+            scoped.setattr(os, "rmdir", persistent_error)
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always", pytest.PytestWarning)
+                maybe_delete_a_numbered_dir(numbered)
+            assert any(
+                "controlled persistent ENOTEMPTY" in str(w.message) for w in caught
+            )
+        assert list(tmp_path.glob("garbage-*"))
+
     def test_find_prefixed_closes_scandir_iterator(self, tmp_path: Path) -> None:
         """find_prefixed exhausts and closes the scandir iterator cleanly (#15169)."""
         from _pytest.pathlib import find_prefixed
