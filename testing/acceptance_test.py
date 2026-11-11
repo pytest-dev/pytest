@@ -1762,8 +1762,8 @@ def test_stop_iteration_runtest_protocol(pytester: Pytester) -> None:
         [
             "=* short test summary info =*",
             "FAILED test_it.py::test_fail_call - StopIteration: 3",
-            "ERROR test_it.py::test_fail_setup - StopIteration: 1",
-            "ERROR test_it.py::test_fail_teardown - StopIteration: 2",
+            "ERROR at setup of test_it.py::test_fail_setup - StopIteration: 1",
+            "ERROR at teardown of test_it.py::test_fail_teardown - StopIteration: 2",
             "=* 1 failed, 1 passed, 2 errors in * =*",
         ]
     )

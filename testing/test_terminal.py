@@ -1409,6 +1409,44 @@ def test_fail_extra_reporting(
     )
 
 
+def test_error_extra_reporting_shows_phase(pytester: Pytester) -> None:
+    """Errors in the short test summary mention the phase they happened in (#1004)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def bad_setup():
+            raise ValueError("setup")
+
+        @pytest.fixture
+        def bad_teardown():
+            yield
+            raise ValueError("teardown")
+
+        def test_setup(bad_setup):
+            pass
+
+        def test_teardown(bad_teardown):
+            pass
+
+        def test_both(bad_teardown):
+            assert 0
+        """
+    )
+    result = pytester.runpytest("-rfE", "-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary*",
+            "FAILED test_error_extra_reporting_shows_phase.py::test_both - assert 0",
+            "ERROR at setup of test_error_extra_reporting_shows_phase.py::test_setup - ValueError: setup",
+            "ERROR at teardown of test_error_extra_reporting_shows_phase.py::test_teardown - ValueError: teardown",
+            "ERROR at teardown of test_error_extra_reporting_shows_phase.py::test_both - ValueError: teardown",
+            "*1 failed, 1 passed, 3 errors*",
+        ]
+    )
+
+
 def test_fail_reporting_on_pass(pytester: Pytester) -> None:
     pytester.makepyfile("def test_this(): assert 1")
     result = pytester.runpytest("-rf")
@@ -2654,7 +2692,8 @@ class TestProgressWithTeardown:
             [
                 r"test_teardown_with_test_also_failing.py FE\s+\[100%\]",
                 "FAILED test_teardown_with_test_also_failing.py::test_foo - assert 0",
-                "ERROR test_teardown_with_test_also_failing.py::test_foo - assert False",
+                # The added phase makes the line too long for the reprcrash message.
+                "ERROR at teardown of test_teardown_with_test_also_failing.py::test_foo",
             ]
         )
 
@@ -2741,6 +2780,8 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
             self.option = Namespace(verbose=0)
 
     class rep:
+        when = None
+
         def _get_verbose_word_with_markup(self, *args):
             return mocked_verbose_word, {}
 
