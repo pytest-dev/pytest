@@ -339,6 +339,36 @@ class BaseFunctionalTests:
             assert rep.nodeid == "test_logstart_logfinish_hooks.py::test_func"
             assert rep.location == ("test_logstart_logfinish_hooks.py", 1, "test_func")
 
+    @pytest.mark.parametrize(
+        "raise_stmt", ["pytest.exit('stop')", "raise KeyboardInterrupt"]
+    )
+    def test_logfinish_called_on_reraised_exception(
+        self, pytester: Pytester, raise_stmt: str
+    ) -> None:
+        """pytest_runtest_logfinish is still called when the test protocol is
+        aborted by an exception which is reraised (Exit, KeyboardInterrupt)."""
+        pytester.makepyfile(
+            f"""
+            import pytest
+            def test_func():
+                {raise_stmt}
+            def test_not_run():
+                pass
+        """
+        )
+        rec = pytester.inline_run(no_reraise_ctrlc=True)
+        reps = rec.getcalls("pytest_runtest_logstart pytest_runtest_logfinish")
+        assert [(x._name, x.nodeid) for x in reps] == [
+            (
+                "pytest_runtest_logstart",
+                "test_logfinish_called_on_reraised_exception.py::test_func",
+            ),
+            (
+                "pytest_runtest_logfinish",
+                "test_logfinish_called_on_reraised_exception.py::test_func",
+            ),
+        ]
+
     def test_exact_teardown_issue90(self, pytester: Pytester) -> None:
         rec = pytester.inline_runsource(
             """
