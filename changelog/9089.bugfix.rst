@@ -1,0 +1,1 @@
+Fixed collection crashing with ``PermissionError`` when scanning a directory that cannot be read due to insufficient permissions (for example a root-owned folder); unreadable directories are now skipped by ``scandir()`` instead of aborting the session.
