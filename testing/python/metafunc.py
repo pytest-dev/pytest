@@ -365,7 +365,7 @@ class TestMetafunc:
         # test methods; every test must get the ids escaped exactly once.
         # https://github.com/pytest-dev/pytest/issues/15370
         pytester.makepyfile(
-            '''
+            """
             import pytest
 
 
@@ -376,7 +376,7 @@ class TestMetafunc:
 
                 def test_two(self, v):
                     pass
-        '''
+        """
         )
         result = pytester.runpytest("--collect-only", "-q")
         out = result.stdout.str()
