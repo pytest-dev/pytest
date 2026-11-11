@@ -1,0 +1,3 @@
+Skipped the expensive unwrap of plugin attributes which cannot hide a
+fixture, making fixture discovery faster for plugins (and test suites)
+which define few or no fixtures.
