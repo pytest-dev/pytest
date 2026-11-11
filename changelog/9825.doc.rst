@@ -1,0 +1,1 @@
+Added a :ref:`ResourceWarning <resourcewarning>` section to the warnings how-to, explaining why it is reported late by the garbage collector and how to turn leaks into test failures.
