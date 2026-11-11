@@ -1,0 +1,1 @@
+The lines of the "short test summary info" section are now trimmed to the terminal width when color output is enabled -- previously the color escape codes broke the width computation, so the lines overflowed the terminal.
