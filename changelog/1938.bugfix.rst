@@ -1,0 +1,1 @@
+Fixed :meth:`MonkeyPatch.setattr <pytest.MonkeyPatch.setattr>` failing to undo patches to attributes that are not stored in the target's ``__dict__``, such as ``__bases__`` or attributes handled by a custom ``__setattr__`` or metaclass.
