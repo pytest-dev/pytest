@@ -25,6 +25,7 @@ from _pytest.raises import AbstractRaises
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
+from _pytest.runner import consume_session_teardown_error
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestWarning
 
@@ -313,6 +314,7 @@ def pytest_runtest_makereport(
 ) -> Generator[None, TestReport, TestReport]:
     rep = yield
     xfailed = item.stash.get(xfailed_key, None)
+    session_teardown_error = consume_session_teardown_error(item, call)
     if item.config.option.runxfail:
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):
@@ -320,7 +322,7 @@ def pytest_runtest_makereport(
         rep.wasxfail = call.excinfo.value.msg
         rep.outcome = "skipped"
     elif not rep.skipped and xfailed:
-        if call.excinfo:
+        if call.excinfo and not session_teardown_error:
             raises = xfailed.raises
             if raises is None or (
                 (
