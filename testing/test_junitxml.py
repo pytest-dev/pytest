@@ -1487,6 +1487,260 @@ def test_record_fixtures_xunit2(
     result.stdout.fnmatch_lines(expected_lines)
 
 
+@parametrize_families
+@pytest.mark.parametrize("api", ["fixture", "unittest"])
+def test_subtests_itemized(
+    pytester: Pytester,
+    run_and_parse: RunAndParse,
+    xunit_family: _JunitFamily,
+    api: str,
+) -> None:
+    if api == "fixture":
+        source = """
+        import pytest
+        def test_parent(subtests):
+            with subtests.test("check <&>", i=1):
+                pass
+            with subtests.test("check <&>", i=1):
+                assert False, "child failure"
+            with subtests.test("check <&>", i=1):
+                pytest.skip("child skip")
+        """
+        classname = "test_subtests_itemized"
+    else:
+        source = """
+        import unittest
+        class TestExample(unittest.TestCase):
+            def test_parent(self):
+                with self.subTest("check <&>", i=1):
+                    pass
+                with self.subTest("check <&>", i=1):
+                    self.fail("child failure")
+                with self.subTest("check <&>", i=1):
+                    self.skipTest("child skip")
+        """
+        classname = "test_subtests_itemized.TestExample"
+    pytester.makepyfile(source)
+    result, dom = run_and_parse("--junitprefix=prefix", family=xunit_family)
+    assert result.ret == 1
+    parent, *children = dom.find_by_tag("testcase")
+    assert len(children) == 3
+    parent.assert_attr(name="test_parent", classname=f"prefix.{classname}")
+    # Python 3.10's unittest defers reporting, emitting skips before the
+    # passing and failing subtests. The index follows report arrival order.
+    for i, child in enumerate(children, 1):
+        child.assert_attr(
+            name=f"test_parent [subtest {i}] [check <&>] (i=1)",
+            classname=f"prefix.{classname}",
+        )
+        if xunit_family == "xunit1":
+            child.assert_attr(file="test_subtests_itemized.py")
+            assert child["line"] == parent["line"]
+    (passed,) = [child for child in children if not child.children]
+    (failed,) = [child for child in children if child.find_first_by_tag("failure")]
+    (skipped,) = [child for child in children if child.find_first_by_tag("skipped")]
+    assert passed.children == []
+    assert "child failure" in failed.get_unique_child.text
+    assert failed.get_unique_child.tag == "failure"
+    skipped.get_unique_child.assert_attr(message="child skip")
+    if api == "fixture":
+        parent.get_unique_child.assert_attr(message="contains 1 failed subtest")
+    else:
+        # unittest emits a passing parent call after its subtest failures.
+        assert parent.children == []
+    dom.get_first_by_tag("testsuite").assert_attr(
+        tests=4, failures=2 if api == "fixture" else 1, skipped=1, errors=0
+    )
+
+
+def test_subtests_record_property(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    pytester.makepyfile(
+        """
+        def test_parent(subtests, record_property):
+            record_property("shared", "<&>")
+            with subtests.test(stage="first"):
+                record_property("inside", 1)
+            with subtests.test(stage="second"):
+                record_property("inside", 2)
+        """
+    )
+    result, dom = run_and_parse(family="xunit1")
+    result.assert_outcomes(passed=1)
+    parent, first, second = dom.find_by_tag("testcase")
+    first.assert_attr(name="test_parent [subtest 1] (stage='first')")
+    second.assert_attr(name="test_parent [subtest 2] (stage='second')")
+    for case, inside_values in [
+        (parent, ["1", "2"]),
+        (first, ["1"]),
+        (second, ["1", "2"]),
+    ]:
+        properties = case.get_unique_child
+        assert properties.tag == "properties"
+        assert [(prop["name"], prop["value"]) for prop in properties.children] == [
+            ("shared", "<&>"),
+            *[("inside", value) for value in inside_values],
+        ]
+    dom.get_first_by_tag("testsuite").assert_attr(
+        tests=3, failures=0, skipped=0, errors=0
+    )
+
+
+def test_subtests_parent_failure_and_teardown(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.fixture
+        def cleanup():
+            yield
+            raise RuntimeError("cleanup failure")
+        def test_parent(subtests, cleanup):
+            with subtests.test():
+                assert False, "child failure"
+            assert False, "parent failure"
+        """
+    )
+    _, dom = run_and_parse(family="xunit2")
+    parent, child, teardown = dom.find_by_tag("testcase")
+    child.assert_attr(name="test_parent [subtest 1] (<subtest>)")
+    assert "child failure" in child.get_unique_child.text
+    assert "parent failure" in parent.get_unique_child.text
+    assert "cleanup failure" in teardown.get_unique_child.text
+    dom.get_first_by_tag("testsuite").assert_attr(
+        tests=3, failures=2, errors=1, skipped=0
+    )
+
+
+@pytest.mark.parametrize("duration_report", ["call", "total"])
+@pytest.mark.parametrize("log_passing", [True, False])
+def test_subtests_duration_and_output(
+    pytester: Pytester,
+    run_and_parse: RunAndParse,
+    duration_report: str,
+    log_passing: bool,
+) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        from _pytest.subtests import SubtestReport
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_runtest_logreport(report):
+            report.duration = 0.25 if isinstance(report, SubtestReport) else 1.0
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        def test_parent(subtests):
+            with subtests.test():
+                print("passed output")
+            with subtests.test():
+                print("failed output")
+                assert False
+            with subtests.test():
+                print("skipped output")
+                pytest.skip("skip reason")
+            with subtests.test():
+                print("xfail output")
+                pytest.xfail("xfail reason")
+        """
+    )
+    _, dom = run_and_parse(
+        "-o",
+        f"junit_duration_report={duration_report}",
+        "-o",
+        "junit_logging=system-out",
+        "-o",
+        f"junit_log_passing_tests={log_passing}",
+        family="xunit2",
+    )
+    parent, passed, failed, skipped, xfailed = dom.find_by_tag("testcase")
+    parent.assert_attr(time="1.000" if duration_report == "call" else "3.000")
+    for i, child in enumerate([passed, failed, skipped, xfailed], 1):
+        child.assert_attr(name=f"test_parent [subtest {i}] (<subtest>)", time="0.250")
+    if log_passing:
+        assert "passed output" in passed.get_first_by_tag("system-out").text
+    else:
+        assert passed.children == []
+    for child, text in [(failed, "failed"), (skipped, "skipped"), (xfailed, "xfail")]:
+        output = child.find_by_tag("system-out")
+        assert len(output) == 1
+        assert f"{text} output" in output[0].text
+    xfailed.get_first_by_tag("skipped").assert_attr(message="xfail reason")
+    dom.get_first_by_tag("testsuite").assert_attr(
+        tests=5, failures=2, skipped=2, errors=0
+    )
+
+
+def test_subtests_passing_and_repeated_execution(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    path = pytester.makepyfile(
+        """
+        def test_parent(subtests):
+            with subtests.test():
+                pass
+            with subtests.test():
+                pass
+        def test_ordinary():
+            pass
+        """
+    )
+    result, dom = run_and_parse("--keep-duplicates", path, path, family="xunit2")
+    result.assert_outcomes(passed=4)
+    names = [case["name"] for case in dom.find_by_tag("testcase")]
+    assert (
+        names
+        == [
+            "test_parent",
+            "test_parent [subtest 1] (<subtest>)",
+            "test_parent [subtest 2] (<subtest>)",
+            "test_ordinary",
+        ]
+        * 2
+    )
+    dom.get_first_by_tag("testsuite").assert_attr(
+        tests=8, failures=0, errors=0, skipped=0
+    )
+
+
+def test_subtests_xdist(
+    pytester: Pytester, monkeypatch: MonkeyPatch, run_and_parse: RunAndParse
+) -> None:
+    pytest.importorskip("xdist")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize("i", range(4))
+        def test_parent(subtests, i):
+            with subtests.test(i=i):
+                pass
+            with subtests.test(i=i):
+                assert i % 2 == 0
+        """
+    )
+    result, dom = run_and_parse("-n2", family="xunit2")
+    assert result.ret == 1
+    cases = {case["name"]: case for case in dom.find_by_tag("testcase")}
+    assert len(cases) == 12
+    for i in range(4):
+        parent = f"test_parent[{i}]"
+        assert parent in cases
+        for index in (1, 2):
+            # The current subtest serialization applies repr again on receipt.
+            child = cases[f"{parent} [subtest {index}] (i='{i}')"]
+            assert bool(child.find_first_by_tag("failure")) == (
+                index == 2 and i % 2 == 1
+            )
+    dom.get_first_by_tag("testsuite").assert_attr(
+        tests=12, failures=4, errors=0, skipped=0
+    )
+
+
 def test_random_report_log_xdist(
     pytester: Pytester, monkeypatch: MonkeyPatch, run_and_parse: RunAndParse
 ) -> None:
