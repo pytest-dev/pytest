@@ -1,0 +1,2 @@
+Collection errors for :class:`SyntaxError` no longer repeat the stdlib
+``File "...", line N`` header when the ``FILE:LINE:COLUMN`` crash line is shown.
