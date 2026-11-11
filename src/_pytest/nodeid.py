@@ -15,9 +15,13 @@ from __future__ import annotations
 import dataclasses
 
 
-@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True, eq=False)
 class NodeId:
     """Structured identifier of a node in the collection tree.
+
+    Equality and hashing use the string form, preserving identity across cache
+    and report serialization. Custom collector names can contain delimiters such
+    as ``[`` or ``::``, so parsing cannot always recover the original fields.
 
     :param path:
         ``/``-normalized, rootpath-relative filesystem path.  Empty string
@@ -64,6 +68,14 @@ class NodeId:
             s += f"[{self.params}]"
         object.__setattr__(self, "_str_cache", s)
         return s
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, NodeId):
+            return NotImplemented
+        return str(self) == str(other)
+
+    def __hash__(self) -> int:
+        return hash(str(self))
 
     @property
     def rest(self) -> str | None:
