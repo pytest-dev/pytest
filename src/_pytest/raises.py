@@ -773,6 +773,15 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         inside any nested groups, before matching. Without this it expects you to
         fully specify the nesting structure by passing :class:`RaisesGroup` as expected
         parameter.
+    :kwparam bool ordered:
+        .. versionadded:: 8.4
+
+        By default the order of the exceptions does not matter, and the matching
+        algorithm is greedy (see the note below). When ``ordered=True`` the expected
+        exceptions must match the raised exceptions *in order*: the first expected
+        exception is matched against the first raised exception, and so on. This
+        disables the reordering done by the greedy algorithm, so it both asserts the
+        order and avoids the greedy-algorithm pitfall described below.
 
     Examples::
 
@@ -812,6 +821,10 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         with RaisesGroup(ValueError, allow_unwrapped=True):
             raise ValueError
 
+        # ordered
+        with RaisesGroup(ValueError, TypeError, ordered=True):
+            raise ExceptionGroup("", (ValueError(), TypeError()))
+
 
     :meth:`RaisesGroup.matches` can also be used directly to check a standalone exception group.
 
@@ -822,7 +835,8 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             raise ExceptionGroup("", (ValueError("hello"), ValueError("goodbye")))
 
     even though it generally does not care about the order of the exceptions in the group.
-    To avoid the above you should specify the first :exc:`ValueError` with a :class:`RaisesExc` as well.
+    To avoid the above you should specify the first :exc:`ValueError` with a :class:`RaisesExc` as well,
+    or pass ``ordered=True`` to disable the greedy reordering and match positionally.
 
     .. note::
         When raised exceptions don't match the expected ones, you'll get a detailed error
@@ -855,6 +869,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         flatten_subgroups: Literal[True],
         match: str | Pattern[str] | None = None,
         check: Callable[[BaseExceptionGroup[BaseExcT_co]], bool] | None = None,
+        ordered: bool = False,
     ) -> None: ...
 
     # simplify the typevars if possible (the following 3 are equivalent but go simpler->complicated)
@@ -870,6 +885,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         *other_exceptions: type[ExcT_1] | RaisesExc[ExcT_1],
         match: str | Pattern[str] | None = None,
         check: Callable[[ExceptionGroup[ExcT_1]], bool] | None = None,
+        ordered: bool = False,
     ) -> None: ...
 
     @overload
@@ -880,6 +896,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         *other_exceptions: RaisesGroup[ExcT_2],
         match: str | Pattern[str] | None = None,
         check: Callable[[ExceptionGroup[ExceptionGroup[ExcT_2]]], bool] | None = None,
+        ordered: bool = False,
     ) -> None: ...
 
     @overload
@@ -892,6 +909,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         check: (
             Callable[[ExceptionGroup[ExcT_1 | ExceptionGroup[ExcT_2]]], bool] | None
         ) = None,
+        ordered: bool = False,
     ) -> None: ...
 
     # same as the above 3 but handling BaseException
@@ -903,6 +921,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         *other_exceptions: type[BaseExcT_1] | RaisesExc[BaseExcT_1],
         match: str | Pattern[str] | None = None,
         check: Callable[[BaseExceptionGroup[BaseExcT_1]], bool] | None = None,
+        ordered: bool = False,
     ) -> None: ...
 
     @overload
@@ -915,6 +934,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         check: (
             Callable[[BaseExceptionGroup[BaseExceptionGroup[BaseExcT_2]]], bool] | None
         ) = None,
+        ordered: bool = False,
     ) -> None: ...
 
     @overload
@@ -935,6 +955,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             ]
             | None
         ) = None,
+        ordered: bool = False,
     ) -> None: ...
 
     def __init__(
@@ -954,6 +975,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             | Callable[[ExceptionGroup[ExcT_1]], bool]
             | None
         ) = None,
+        ordered: bool = False,
     ):
         # The type hint on the `self` and `check` parameters uses different formats
         # that are *very* hard to reconcile while adhering to the overloads, so we cast
@@ -965,6 +987,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         super().__init__(match=match, check=check)
         self.allow_unwrapped = allow_unwrapped
         self.flatten_subgroups: bool = flatten_subgroups
+        self.ordered = ordered
         self.is_baseexception = False
 
         if allow_unwrapped and other_exceptions:
@@ -1057,6 +1080,8 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             reqs.append(f"allow_unwrapped={self.allow_unwrapped}")
         if self.flatten_subgroups:
             reqs.append(f"flatten_subgroups={self.flatten_subgroups}")
+        if self.ordered:
+            reqs.append(f"ordered={self.ordered}")
         if self.match is not None:
             # If no flags were specified, discard the redundant re.compile() here.
             reqs.append(f"match={_match_pattern(self.match)!r}")
@@ -1260,6 +1285,9 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         """Helper method for RaisesGroup.matches that attempts to pair up expected and actual exceptions"""
         # The _exception parameter is not used, but necessary for the TypeGuard
 
+        if self.ordered:
+            return self._check_exceptions_ordered(actual_exceptions)
+
         # full table with all results
         results = ResultHolder(self.expected_exceptions, actual_exceptions)
 
@@ -1394,6 +1422,37 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             )
         self._fail_reason = s
         return False
+
+    def _check_exceptions_ordered(
+        self,
+        actual_exceptions: Sequence[BaseException],
+    ) -> bool:
+        """Helper method for ``RaisesGroup._check_exceptions`` used when
+        ``ordered=True``. Each expected exception is matched against the actual
+        exception at the same position, without any reordering. Sets
+        ``self._fail_reason`` and returns ``False`` on the first mismatch."""
+        if len(actual_exceptions) != len(self.expected_exceptions):
+            self._fail_reason = (
+                f"Expected {len(self.expected_exceptions)} exceptions in ordered group, "
+                f"but got {len(actual_exceptions)}: {list(actual_exceptions)!r}"
+            )
+            return False
+
+        for i, (expected, actual) in enumerate(
+            zip(self.expected_exceptions, actual_exceptions, strict=True)
+        ):
+            res = self._check_expected(expected, actual)
+            if res is not None:
+                # only prefix with the position when there's more than one
+                # exception, to keep single-exception messages identical to the
+                # unordered case.
+                if len(self.expected_exceptions) == 1:
+                    self._fail_reason = res
+                else:
+                    prefix = "\n" if res.startswith("\n") else " "
+                    self._fail_reason = f"At index {i}:{prefix}{res}"
+                return False
+        return True
 
     def __exit__(
         self,

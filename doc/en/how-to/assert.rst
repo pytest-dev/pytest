@@ -210,6 +210,16 @@ It is strict about structure and unwrapped exceptions, unlike :ref:`except* <exc
         with pytest.RaisesGroup(ValueError, allow_unwrapped=True):
             raise ValueError
 
+By default the order of the contained exceptions does not matter. If you need to assert
+that the exceptions are raised in a particular order you can pass ``ordered=True``, which
+matches the expected exceptions against the raised exceptions positionally.
+
+.. code-block:: python
+
+    def test_ordered():
+        with pytest.RaisesGroup(ValueError, TypeError, ordered=True):
+            raise ExceptionGroup("msg", [ValueError("foo"), TypeError("bar")])
+
 To specify more details about the contained exception you can use :class:`pytest.RaisesExc`
 
 .. code-block:: python
