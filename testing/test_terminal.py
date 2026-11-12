@@ -422,7 +422,7 @@ class TestTerminal:
         args = ["-c", "settings/pytest.ini", "-rA"]
         if verbosity:
             args.append(verbosity)
-        result = pytester.runpytest_subprocess(*args)
+        result = pytester.runpytest(*args)
 
         assert result.ret == ExitCode.OK
         if verbosity == "-v":
