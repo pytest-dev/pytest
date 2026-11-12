@@ -3729,3 +3729,117 @@ class TestTerminalProgressPlugin:
         # Session finish - should remove progress.
         plugin.pytest_sessionfinish()
         assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
+
+
+class TestMemoryRetentionIssue10605:
+    """Regression tests for issue #10605: Excessive memory usage with large test suites."""
+
+    def test_stats_does_not_accumulate_empty_setup_teardown(
+        self, pytester: Pytester
+    ) -> None:
+        """Verify that passed setup/teardown reports without sections are not retained
+
+        in stats[""] during standard test runs.
+        """
+        pytester.makeconftest(
+            """
+            def pytest_sessionfinish(session):
+                tr = session.config.pluginmanager.get_plugin("terminalreporter")
+                assert tr is not None
+                empty_stats = tr.stats.get("", [])
+                # No empty setup/teardown reports should be retained
+                assert len(empty_stats) == 0
+                assert len(tr.stats["passed"]) == 5
+        """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+            @pytest.mark.parametrize("x", range(5))
+            def test_pass(x):
+                assert x >= 0
+        """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=5)
+
+    def test_stats_retains_teardown_reports_with_captured_output(
+        self, pytester: Pytester
+    ) -> None:
+        """Verify that teardown reports WITH captured sections ARE retained
+
+        in stats[""] and correctly displayed in the terminal summary.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixt():
+                yield
+                print("teardown output to capture")
+
+            def test_one(fixt):
+                pass
+
+            def test_two():
+                pass
+        """
+        )
+        result = pytester.runpytest("-rP")
+        result.assert_outcomes(passed=2)
+        result.stdout.fnmatch_lines(
+            [
+                "*PASSES*",
+                "*Captured stdout teardown*",
+                "teardown output to capture*",
+            ]
+        )
+
+    def test_stats_retains_reports_when_durations_active(
+        self, pytester: Pytester
+    ) -> None:
+        """Verify that setup/teardown reports are retained in stats[""] when
+
+        --durations is requested, preserving slowest setup/teardown durations.
+        """
+        pytester.makepyfile(
+            """
+            import time
+            import pytest
+
+            @pytest.fixture
+            def slow_setup():
+                time.sleep(0.02)
+                yield
+                time.sleep(0.01)
+
+            def test_slow(slow_setup):
+                time.sleep(0.02)
+        """
+        )
+        result = pytester.runpytest("--durations=5", "-vv")
+        result.assert_outcomes(passed=1)
+        result.stdout.fnmatch_lines(["*slowest 5 durations*"])
+        result.stdout.fnmatch_lines_random(
+            [
+                "*setup*test_slow*",
+                "*call*test_slow*",
+            ]
+        )
+
+    def test_stats_retains_reports_when_times_style_active(
+        self, pytester: Pytester
+    ) -> None:
+        """Verify that setup reports are retained in stats[""] when
+
+        --console-output-style=times is used.
+        """
+        pytester.makepyfile(
+            """
+            def test_a(): pass
+            def test_b(): pass
+        """
+        )
+        result = pytester.runpytest("-o", "console_output_style=times")
+        result.assert_outcomes(passed=2)
