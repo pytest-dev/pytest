@@ -8,6 +8,7 @@ import errno
 import os
 from pathlib import Path
 import shutil
+from textwrap import indent
 from typing import Any
 from unittest.mock import mock_open
 
@@ -957,6 +958,100 @@ class TestLastFailed:
                 "*= 2 failed in *",
             ]
         )
+
+    @pytest.mark.parametrize("parent", ("directory", "package"))
+    @pytest.mark.parametrize("nested", (False, True), ids=("class", "nested-class"))
+    @pytest.mark.parametrize("parametrized", (False, True))
+    def test_lastfailed_skip_collection_with_class_failures(
+        self, pytester: Pytester, parent: str, nested: bool, parametrized: bool
+    ) -> None:
+        source = (
+            "class TestExample:\n"
+            "    def test_fail(self): assert False\n"
+            "    def test_sibling(self): pass\n"
+        )
+        failed_id = "TestExample::test_fail"
+        if parametrized:
+            source = source.replace(
+                "def test_fail(self): assert False",
+                "@pytest.mark.parametrize('value', [False, True])\n"
+                "    def test_fail(self, value): assert value",
+            )
+            failed_id += "[False]"
+        if nested:
+            source = "class TestOuter:\n" + indent(source, "    ")
+            failed_id = "TestOuter::" + failed_id
+        if parent == "package":
+            pytester.makepyfile(__init__="")
+        pytester.makepyfile(
+            test_failure="import pytest\n\n" + source,
+            test_other_a="print('IMPORTED unrelated a')\ndef test_pass(): pass",
+            test_other_b="print('IMPORTED unrelated b')\ndef test_pass(): pass",
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(failed=1, passed=3 + parametrized)
+
+        result = pytester.runpytest("--last-failed", "--collect-only", "-s", "-q", ".")
+        assert result.ret == ExitCode.OK
+        assert [
+            line for line in result.stdout.lines if line.startswith("test_failure.py::")
+        ] == [f"test_failure.py::{failed_id}"]
+        result.stdout.no_fnmatch_line("*IMPORTED unrelated*")
+        result.stdout.fnmatch_lines(
+            [f"*1/{2 + parametrized} tests collected ({1 + parametrized} deselected)*"]
+        )
+
+    @pytest.mark.parametrize(
+        ("old", "new", "passed"),
+        [
+            pytest.param(
+                "    @pytest.mark.parametrize('value', [0, 1])\n"
+                "    def test_fail(self, value): assert value == 0\n",
+                "",
+                2,
+                id="deleted-method",
+            ),
+            pytest.param("test_fail", "test_renamed", 4, id="renamed-method"),
+            pytest.param("TestExample", "TestRenamed", 4, id="renamed-class"),
+            pytest.param("[0, 1]", "[0, 2]", 4, id="renamed-parameter"),
+        ],
+    )
+    def test_lastfailed_stale_class_failure(
+        self,
+        pytester: Pytester,
+        monkeypatch: MonkeyPatch,
+        old: str,
+        new: str,
+        passed: int,
+    ) -> None:
+        monkeypatch.setattr("sys.dont_write_bytecode", True)
+        source = (
+            "import pytest\n\n"
+            "class TestExample:\n"
+            "    @pytest.mark.parametrize('value', [0, 1])\n"
+            "    def test_fail(self, value): assert value == 0\n"
+            "    def test_sibling(self): pass\n"
+        )
+        pytester.makepyfile(
+            test_failure=source,
+            test_other="print('IMPORTED unrelated')\ndef test_pass(): pass",
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(failed=1, passed=3)
+
+        pytester.makepyfile(
+            test_failure=source.replace(old, new).replace("assert value == 0", "pass")
+        )
+        result = pytester.runpytest("--last-failed", "-s")
+        result.assert_outcomes(passed=passed)
+        result.stdout.fnmatch_lines(
+            [
+                "*IMPORTED unrelated*",
+                f"collected {passed} items",
+                "run-last-failure: 1 known failures not in selected tests",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*skipped * file*")
 
     def test_lastfailed_skip_collection_with_nesting(self, pytester: Pytester) -> None:
         """Check that file skipping works even when the file with failures is

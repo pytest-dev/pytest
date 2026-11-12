@@ -277,20 +277,21 @@ class LFPluginCollWrapper:
                 reverse=True,
             )
 
-        elif isinstance(collector, File):
-            if collector.path in self.lfplugin._last_failed_paths:
-                result = res.result
-                lastfailed = self.lfplugin.lastfailed
+        elif collector.path in self.lfplugin._last_failed_paths:
+            result = res.result
+            lastfailed = self.lfplugin.lastfailed
 
-                # Only filter with known failures.
-                if not self._collected_at_least_one_failure:
-                    if not any(x.id in lastfailed for x in result):
-                        return res
-                    self.lfplugin.config.pluginmanager.register(
-                        LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
-                    )
-                    self._collected_at_least_one_failure = True
+            # Only skip files after collecting a known failure, including
+            # failures inside classes or other sub-collectors.
+            if not self._collected_at_least_one_failure:
+                if not any(x.id in lastfailed for x in result):
+                    return res
+                self.lfplugin.config.pluginmanager.register(
+                    LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
+                )
+                self._collected_at_least_one_failure = True
 
+            if isinstance(collector, File):
                 session = collector.session
                 result[:] = [
                     x
