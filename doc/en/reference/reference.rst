@@ -576,6 +576,12 @@ The ``request`` fixture is a special fixture providing information of the reques
 .. autoclass:: pytest.FixtureRequest()
     :members:
 
+Fixture functions receive a :class:`pytest.SubRequest`, which also exposes
+``param`` when the fixture is parametrized.
+
+.. autoclass:: pytest.SubRequest()
+    :members:
+
 
 .. fixture:: subtests
 

@@ -71,8 +71,6 @@ nitpick_ignore = [
     # Might want to expose/TODO (https://github.com/pytest-dev/pytest/issues/7469)
     ("py:class", "ExceptionRepr"),
     ("py:class", "Exit"),
-    ("py:class", "SubRequest"),
-    ("py:class", "SubRequest"),
     ("py:class", "TerminalReporter"),
     ("py:class", "_pytest._code.code.TerminalRepr"),
     ("py:class", "TerminalRepr"),

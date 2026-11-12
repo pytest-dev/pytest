@@ -1,0 +1,1 @@
+Exported ``SubRequest`` from ``pytest`` so plugins can annotate fixture requests without importing from ``_pytest``.

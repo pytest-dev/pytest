@@ -4328,6 +4328,24 @@ class TestContextManagerFixtureFuncs:
 
 
 class TestParameterizedSubRequest:
+    def test_public_subrequest(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=[42])
+            def value(request: pytest.SubRequest):
+                assert isinstance(request, pytest.SubRequest)
+                return request.param
+
+            def test_value(value, request: pytest.FixtureRequest):
+                assert not isinstance(request, pytest.SubRequest)
+                assert value == 42
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
     def test_call_from_fixture(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             test_call_from_fixture="""
