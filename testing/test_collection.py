@@ -1142,6 +1142,44 @@ def test_continue_on_collection_errors_maxfail(pytester: Pytester) -> None:
     res.stdout.fnmatch_lines(["collected 2 items / 2 errors", "*1 failed, 2 errors*"])
 
 
+def test_collection_errors_abort_with_custom_runtestloop(pytester: Pytester) -> None:
+    """Collection errors stop the session even if a plugin replaces
+    pytest_runtestloop (#15028)."""
+    pytester.makeconftest(
+        """
+        def pytest_runtestloop(session):
+            raise AssertionError("pytest_runtestloop should not be called")
+        """
+    )
+    pytester.makepyfile(test_broken="import this_module_does_not_exist")
+
+    res = pytester.runpytest()
+    assert res.ret == ExitCode.INTERRUPTED
+    res.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
+
+
+def test_continue_on_collection_errors_with_custom_runtestloop(
+    pytester: Pytester,
+) -> None:
+    """With --continue-on-collection-errors, a plugin's pytest_runtestloop
+    still runs after collection errors (#15028)."""
+    pytester.makeconftest(
+        """
+        def pytest_runtestloop(session):
+            print("custom runtestloop called")
+            return True
+        """
+    )
+    pytester.makepyfile(
+        test_broken="import this_module_does_not_exist",
+        test_ok="def test_ok(): pass",
+    )
+
+    res = pytester.runpytest("--continue-on-collection-errors", "-s")
+    assert res.ret == ExitCode.TESTS_FAILED
+    res.stdout.fnmatch_lines(["*custom runtestloop called*"])
+
+
 def test_fixture_scope_sibling_conftests(pytester: Pytester) -> None:
     """Regression test case for https://github.com/pytest-dev/pytest/issues/2836"""
     foo_path = pytester.mkdir("foo")
