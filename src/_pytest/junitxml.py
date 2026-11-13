@@ -293,7 +293,11 @@ class _NodeReporter:
             )
             skipped.text = bin_xml_escape(details)
             self.append(skipped)
-            self.write_captured_output(report)
+            if report.when != "teardown":
+                # For teardown reports the captured output is written by
+                # pytest_runtest_logreport; writing it here too would
+                # duplicate it in the XML.
+                self.write_captured_output(report)
 
     def finalize(self) -> None:
         data = self.to_xml()
@@ -654,6 +658,17 @@ class LogXML:
             else:
                 reporter.append_error(report)
         elif report.skipped:
+            if report.when == "teardown":
+                # A skip during teardown shares the testcase element with the
+                # earlier setup/call outcome, so it must not be counted twice
+                # (same reasoning as for teardown failures, #3850).
+                self.cnt_double_fail_tests += int(
+                    (
+                        report.id,
+                        getattr(report, "node", None),
+                    )
+                    in self.node_reporters
+                )
             reporter = self._opentestcase(report)
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
