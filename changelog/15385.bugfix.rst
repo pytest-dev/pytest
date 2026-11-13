@@ -1,0 +1,1 @@
+Fixed skipped teardown reports being double-counted in the JUnit XML ``testsuite`` totals and their captured output appearing twice -- by :user:`Lushiyao5`.
