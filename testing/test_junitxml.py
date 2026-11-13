@@ -435,6 +435,50 @@ class TestPython:
             message='failed on teardown with "Exception: Teardown Exception"'
         )
 
+    @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
+    @parametrize_families
+    def test_teardown_skip(
+        self,
+        pytester: Pytester,
+        run_and_parse: RunAndParse,
+        xunit_family: _JunitFamily,
+        junit_logging: _JunitLogging,
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import sys
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                yield
+                sys.stdout.write('hello-stdout teardown')
+                pytest.skip('skipped during teardown')
+            def test_function(arg):
+                pass
+        """
+        )
+        result, dom = run_and_parse(
+            "-o", f"junit_logging={junit_logging}", family=xunit_family
+        )
+        assert result.ret == 0
+        node = dom.get_first_by_tag("testsuite")
+        node.assert_attr(skipped=1, tests=1)
+        tnode = node.get_first_by_tag("testcase")
+        snode = tnode.get_first_by_tag("skipped")
+        snode.assert_attr(type="pytest.skip", message="skipped during teardown")
+        if junit_logging == "no":
+            assert not node.find_by_tag("system-out"), (
+                "system-out should not be generated"
+            )
+        else:
+            # The captured output must be written exactly once.
+            systemouts = node.find_by_tag("system-out")
+            assert len(systemouts) == 1, (
+                f"expected one system-out element, got {len(systemouts)}"
+            )
+            assert "hello-stdout teardown" in systemouts[0].toxml()
+
     @parametrize_families
     def test_skip_contains_name_reason(
         self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily
