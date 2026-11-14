@@ -1763,3 +1763,42 @@ class TestPackageMarks:
         found = list(item.iter_markers_with_node("pkgmark"))
         assert len(found) == 1
         assert isinstance(found[0][0], pytest.Package)
+
+    def test_package_without_tests_not_imported(self, pytester: Pytester) -> None:
+        """A package with only non-test subdirectories is not imported."""
+        pytester.makepyfile("def test(): pass")
+        pkg = pytester.mkpydir("foopkg")
+        pkg.joinpath("__init__.py").write_text("assert False", encoding="utf-8")
+        pkg.joinpath("data").mkdir()
+        pkg.joinpath("data", "x.txt").write_text("x", encoding="utf-8")
+        result = pytester.runpytest("--collect-only")
+        assert result.ret == ExitCode.OK
+
+    def test_marks_loaded_once(self, pytester: Pytester) -> None:
+        """Collecting a package twice does not add its marks again."""
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": "import pytest\npytestmark = pytest.mark.pkgmark",
+                "pkg/test_a.py": "def test_a(): pass",
+            }
+        )
+        (item,) = pytester.getitems(pytester.path / "pkg")
+        (package,) = (n for n in item.listchain() if isinstance(n, pytest.Package))
+        list(package.collect())
+        list(package.collect())
+        assert [m.name for m in package.own_markers] == ["pkgmark"]
+        assert "pkgmark" in item.keywords
+
+    def test_not_duplicated_with_several_args(self, pytester: Pytester) -> None:
+        """Two command line args in one package collect the package twice."""
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": "import pytest\npytestmark = pytest.mark.pkgmark",
+                "pkg/test_a.py": "def test_a(): pass",
+                "pkg/test_b.py": "def test_b(): pass",
+            }
+        )
+        items, _ = pytester.inline_genitems("pkg/test_a.py", "pkg/test_b.py")
+        assert len(items) == 2
+        for item in items:
+            assert len(list(item.iter_markers("pkgmark"))) == 1, item.nodeid

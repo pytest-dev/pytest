@@ -278,8 +278,6 @@ class PyobjMixin(nodes.Node):
     as its intended to always mix in before a node
     its position in the mro is unaffected"""
 
-    _ALLOW_MARKERS = True
-
     @property
     def module(self):
         """Python module object this node was collected from (can be None)."""
@@ -308,22 +306,15 @@ class PyobjMixin(nodes.Node):
         obj = getattr(self, "_obj", None)
         if obj is None:
             self._obj = obj = self._getobj()
-            # XXX evil hack
-            # used to avoid Function marker duplication
-            if self._ALLOW_MARKERS:
-                self.own_markers.extend(self._obj_markers(obj))
-                # This assumes that `obj` is called before there is a chance
-                # to add custom keys to `self.keywords`, so no fear of overriding.
-                self.keywords.update((mark.name, mark) for mark in self.own_markers)
+            self._ensure_own_markers()
         return obj
 
     @obj.setter
     def obj(self, value):
         self._obj = value
 
-    def _obj_markers(self, obj: object) -> list[Mark]:
-        """The marks applied to the node's underlying Python object."""
-        return get_unpacked_marks(obj)
+    def _load_own_markers(self) -> Iterable[Mark]:
+        return get_unpacked_marks(self.obj)
 
     def _getobj(self):
         """Get the underlying Python object. May be overwritten by subclasses."""
@@ -584,11 +575,11 @@ class Module(nodes.File, PyCollector):
     def _getobj(self):
         return importtestmodule(self.path, self.config)
 
-    def _obj_markers(self, obj: object) -> list[Mark]:
+    def _load_own_markers(self) -> Iterable[Mark]:
         # The marks of a package's __init__.py belong to the Package node.
         if self.path.name == "__init__.py" and isinstance(self.parent, Package):
-            return []
-        return super()._obj_markers(obj)
+            return ()
+        return super()._load_own_markers()
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
         self._register_setup_module_fixture()
@@ -704,6 +695,10 @@ class Package(nodes.Directory):
             nodeid=nodeid,
         )
 
+    def _load_own_markers(self) -> Iterable[Mark]:
+        init_mod = importtestmodule(self.path / "__init__.py", self.config)
+        return get_unpacked_marks(init_mod)
+
     def setup(self) -> None:
         init_mod = importtestmodule(self.path / "__init__.py", self.config)
 
@@ -723,17 +718,6 @@ class Package(nodes.Directory):
             self.addfinalizer(func)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
-        children = list(self._collect_children())
-        # Only import __init__.py for packages that have something to collect,
-        # packages without tests must not be imported.
-        if children:
-            init_mod = importtestmodule(self.path / "__init__.py", self.config)
-            marks = get_unpacked_marks(init_mod)
-            self.own_markers.extend(marks)
-            self.keywords.update((mark.name, mark) for mark in marks)
-        return children
-
-    def _collect_children(self) -> Iterator[nodes.Item | nodes.Collector]:
         # Always collect __init__.py first.
         def sort_key(entry: os.DirEntry[str]) -> object:
             return (entry.name != "__init__.py", entry.name)
@@ -1704,9 +1688,6 @@ class Function(PyobjMixin, nodes.Item):
         (``my_func[my_param]``).
     """
 
-    # Disable since functions handle it themselves.
-    _ALLOW_MARKERS = False
-
     def __init__(
         self,
         name: str,
@@ -1765,6 +1746,11 @@ class Function(PyobjMixin, nodes.Item):
         self._fixtureinfo: FuncFixtureInfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
+
+    def _load_own_markers(self) -> Iterable[Mark]:
+        # Function.__init__ adds its marks itself, together with the
+        # callspec marks.
+        return ()
 
     # todo: determine sound type limitations
     @classmethod

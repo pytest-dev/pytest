@@ -1178,6 +1178,8 @@ Each entry can be the name of an importable module or the entry point name of an
 Can be declared at the **global** level in *test modules* to apply one or more :ref:`marks <marks ref>` to all
 test functions and methods. Can be either a single mark or a list of marks (applied in left-to-right order).
 
+When declared in a package's ``__init__.py``, the marks apply to all tests in the package.
+
 .. code-block:: python
 
     import pytest
