@@ -1,0 +1,1 @@
+Fixed ``pytest -- -p <name>`` (and other arguments after ``--``) being scanned for ``-p`` plugin options instead of being treated as positional arguments, which could fail plugin import or disable plugins unintentionally -- by :user:`Lushiyao5`.

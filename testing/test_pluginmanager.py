@@ -536,6 +536,19 @@ class TestPytestPluginManagerBootstrapping:
         with pytest.raises(UsageError, match=r"^plugin main cannot be disabled$"):
             pytestpm.consider_preparse(["-p", "no:main"])
 
+    def test_preparse_args_stop_at_double_dash(
+        self, pytestpm: PytestPluginManager
+    ) -> None:
+        """Arguments after `--` are positional for argparse, so they must not
+        be scanned for `-p` options."""
+        pytestpm.consider_preparse(["--", "-p", "hello123"])
+        assert not pytestpm.has_plugin("hello123")
+        assert not pytestpm.is_blocked("hello123")
+
+        # `-p` before `--` is still processed.
+        with pytest.raises(UsageError):
+            pytestpm.consider_preparse(["-p", "hello123", "--", "xyz"])
+
     def test_plugin_prevent_register(self, pytestpm: PytestPluginManager) -> None:
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])
         l1 = pytestpm.get_plugins()
