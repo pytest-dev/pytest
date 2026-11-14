@@ -2498,6 +2498,39 @@ def _resolve_warning_category(category: str) -> type[Warning]:
     return cast(type[Warning], cat)
 
 
+@cache
+def _compile_warning_filter(
+    arg: str, *, escape: bool
+) -> tuple[
+    warnings._ActionKind,
+    re.Pattern[str] | None,
+    type[Warning],
+    re.Pattern[str] | None,
+    int,
+]:
+    action, message, category, module, lineno = parse_warning_filter(arg, escape=escape)
+    return (
+        action,
+        re.compile(message, re.IGNORECASE) if message else None,
+        category,
+        re.compile(module) if module else None,
+        lineno,
+    )
+
+
+def add_warning_filter(arg: str, *, escape: bool) -> None:
+    """Same as ``warnings.filterwarnings(*parse_warning_filter(arg, escape=escape))``,
+    but without compiling the patterns again.
+
+    The filters are added again for every test. A few hundred of them no
+    longer fit in the cache of the ``re`` module, and then
+    ``warnings.filterwarnings()`` really compiles each pattern every time.
+    """
+    warnings._add_filter(  # type: ignore[attr-defined]
+        *_compile_warning_filter(arg, escape=escape), append=False
+    )
+
+
 def apply_warning_filters(
     config_filters: Iterable[str], cmdline_filters: Iterable[str]
 ) -> None:
@@ -2506,7 +2539,7 @@ def apply_warning_filters(
     # Filters should be applied in the inverse order of precedence.
     for arg in config_filters:
         try:
-            warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
+            add_warning_filter(arg, escape=False)
         except ImportError as e:
             warnings.warn(
                 f"Failed to import filter module '{e.name}': {arg}", PytestConfigWarning
@@ -2515,7 +2548,7 @@ def apply_warning_filters(
 
     for arg in cmdline_filters:
         try:
-            warnings.filterwarnings(*parse_warning_filter(arg, escape=True))
+            add_warning_filter(arg, escape=True)
         except ImportError as e:
             warnings.warn(
                 f"Failed to import filter module '{e.name}': {arg}", PytestConfigWarning

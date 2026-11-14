@@ -22,6 +22,7 @@ from _pytest.config import _get_prog_name
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _plugin_rewrite_name
 from _pytest.config import _strtobool
+from _pytest.config import add_warning_filter
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import console_main
@@ -3195,6 +3196,20 @@ def test_parse_warning_filter(
 def test_parse_warning_filter_failure(arg: str) -> None:
     with pytest.raises(pytest.UsageError):
         parse_warning_filter(arg, escape=True)
+
+
+@pytest.mark.parametrize(
+    "arg", ["ignore", "error:some msg", "default::DeprecationWarning:some.mod:42"]
+)
+@pytest.mark.parametrize("escape", [True, False])
+def test_add_warning_filter(arg: str, escape: bool) -> None:
+    """The filter is the one warnings.filterwarnings() would have added."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(*parse_warning_filter(arg, escape=escape))
+        expected = warnings.filters[0]
+    with warnings.catch_warnings():
+        add_warning_filter(arg, escape=escape)
+        assert warnings.filters[0] == expected
 
 
 class TestDebugOptions:

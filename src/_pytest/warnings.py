@@ -6,8 +6,8 @@ from contextlib import contextmanager
 from typing import Literal
 import warnings
 
+from _pytest.config import add_warning_filter
 from _pytest.config import Config
-from _pytest.config import parse_warning_filter
 from _pytest.main import Session
 from _pytest.nodes import Item
 from _pytest.terminal import TerminalReporter
@@ -36,7 +36,7 @@ def catch_warnings_for_item(
         if item is not None:
             for mark in item.iter_markers(name="filterwarnings"):
                 for arg in mark.args:
-                    warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
+                    add_warning_filter(arg, escape=False)
 
         try:
             yield
