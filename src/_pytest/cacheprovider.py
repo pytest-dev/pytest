@@ -32,6 +32,7 @@ from _pytest.main import Session
 from _pytest.nodeid import NodeId
 from _pytest.nodes import Directory
 from _pytest.nodes import File
+from _pytest.python import Class
 from _pytest.reports import TestReport
 
 
@@ -277,31 +278,32 @@ class LFPluginCollWrapper:
                 reverse=True,
             )
 
-        elif collector.path in self.lfplugin._last_failed_paths:
-            result = res.result
-            lastfailed = self.lfplugin.lastfailed
+        elif isinstance(collector, File | Class):
+            if collector.path in self.lfplugin._last_failed_paths:
+                result = res.result
+                lastfailed = self.lfplugin.lastfailed
 
-            # Only skip files after collecting a known failure, including
-            # failures inside classes or other sub-collectors.
-            if not self._collected_at_least_one_failure:
-                if not any(x.id in lastfailed for x in result):
-                    return res
-                self.lfplugin.config.pluginmanager.register(
-                    LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
-                )
-                self._collected_at_least_one_failure = True
+                # Only skip files after collecting a known failure, including
+                # failures inside classes.
+                if not self._collected_at_least_one_failure:
+                    if not any(x.id in lastfailed for x in result):
+                        return res
+                    self.lfplugin.config.pluginmanager.register(
+                        LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
+                    )
+                    self._collected_at_least_one_failure = True
 
-            if isinstance(collector, File):
-                session = collector.session
-                result[:] = [
-                    x
-                    for x in result
-                    if x.id in lastfailed
-                    # Include any passed arguments (not trivial to filter).
-                    or session.isinitpath(x.path)
-                    # Keep all sub-collectors.
-                    or isinstance(x, nodes.Collector)
-                ]
+                if isinstance(collector, File):
+                    session = collector.session
+                    result[:] = [
+                        x
+                        for x in result
+                        if x.id in lastfailed
+                        # Include any passed arguments (not trivial to filter).
+                        or session.isinitpath(x.path)
+                        # Keep all sub-collectors.
+                        or isinstance(x, nodes.Collector)
+                    ]
 
         return res
 
