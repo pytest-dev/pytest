@@ -1,0 +1,1 @@
+Fixed :ref:`pytest.mark.xfail <pytest.mark.xfail ref>` being applied to each subtest of a test instead of to the test as a whole: a passing subtest is no longer reported as ``XPASS``, or as a failure with ``[XPASS(strict)]``, and a test whose subtest fails as the mark expects is now reported as ``XFAIL``.
