@@ -1,0 +1,1 @@
+Test runs with many :confval:`filterwarnings` entries are faster: with more than 50 of them every filter was parsed again for each test, and with a few hundred their patterns were also compiled again for each test.
