@@ -6,6 +6,7 @@ import sys
 import warnings
 
 from _pytest.config import ExitCode
+from _pytest.config import parse_warning_filter
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import Pytester
 import pytest
@@ -1170,3 +1171,25 @@ def test_pythonwarnings_not_duplicated(pytester: Pytester) -> None:
     warnings_list = config.known_args_namespace.pythonwarnings
     assert warnings_list is not None
     assert warnings_list == ["error"]
+
+
+def test_many_filters_are_parsed_once(pytester: Pytester) -> None:
+    """Filters are applied again for every test, but each one is only parsed
+    once, no matter how many there are."""
+    pytester.makeini(
+        "[pytest]\nfilterwarnings =\n"
+        + "".join(f"    ignore:message {i}\n" for i in range(60))
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("i", range(5))
+        def test_it(i):
+            pass
+        """
+    )
+    parse_warning_filter.cache_clear()
+    reprec = pytester.inline_run()
+    reprec.assertoutcome(passed=5)
+    assert parse_warning_filter.cache_info().misses == 60

@@ -17,6 +17,7 @@ import contextlib
 import copy
 import dataclasses
 import enum
+from functools import cache
 from functools import lru_cache
 import glob
 import importlib
@@ -2394,7 +2395,7 @@ def _strtobool(val: str) -> bool:
         raise ValueError(f"invalid truth value {val!r}")
 
 
-@lru_cache(maxsize=50)
+@cache
 def parse_warning_filter(
     arg: str, *, escape: bool
 ) -> tuple[warnings._ActionKind, str, type[Warning], str, int]:
