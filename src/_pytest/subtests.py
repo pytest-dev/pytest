@@ -37,6 +37,7 @@ from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
 from _pytest.runner import get_reraise_exceptions
+from _pytest.skipping import subtest_report_key
 from _pytest.stash import StashKey
 
 
@@ -248,9 +249,12 @@ class _SubTestContextManager:
             when="call",
             _ispytest=True,
         )
-        report = self.ihook.pytest_runtest_makereport(
-            item=self.request.node, call=call_info
-        )
+        item = self.request.node
+        item.stash[subtest_report_key] = True
+        try:
+            report = self.ihook.pytest_runtest_makereport(item=item, call=call_info)
+        finally:
+            del item.stash[subtest_report_key]
         sub_report = SubtestReport._new(
             report,
             SubtestContext(msg=self.msg, kwargs=self.kwargs),

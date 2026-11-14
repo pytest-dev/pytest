@@ -276,6 +276,11 @@ def evaluate_xfail_marks(item: Item) -> Xfail | None:
 
 # Saves the xfail mark evaluation. Can be refreshed during call if None.
 xfailed_key = StashKey[Xfail | None]()
+# Subtests are reported through the item of their test, but an xfail mark is
+# about the test as a whole: a passing subtest is no XPASS, and a test with a
+# subtest that failed as the mark expects has not passed.
+subtest_report_key = StashKey[bool]()
+subtest_xfailed_key = StashKey[bool]()
 
 
 @hookimpl(tryfirst=True)
@@ -313,6 +318,7 @@ def pytest_runtest_makereport(
 ) -> Generator[None, TestReport, TestReport]:
     rep = yield
     xfailed = item.stash.get(xfailed_key, None)
+    subtest = item.stash.get(subtest_report_key, False)
     if item.config.option.runxfail:
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):
@@ -334,10 +340,15 @@ def pytest_runtest_makereport(
             ):
                 rep.outcome = "skipped"
                 rep.wasxfail = xfailed.reason
+                if subtest:
+                    item.stash[subtest_xfailed_key] = True
             else:
                 rep.outcome = "failed"
-        elif call.when == "call":
-            if xfailed.strict:
+        elif call.when == "call" and not subtest:
+            if item.stash.get(subtest_xfailed_key, False):
+                rep.outcome = "skipped"
+                rep.wasxfail = xfailed.reason
+            elif xfailed.strict:
                 rep.outcome = "failed"
                 rep.longrepr = "[XPASS(strict)] " + xfailed.reason
             else:

@@ -211,6 +211,54 @@ def test_skip(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> Non
     )
 
 
+def test_xfail_mark(pytester: pytest.Pytester) -> None:
+    """An xfail mark is about the test as a whole, not about each of its subtests."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail(strict=True, reason="bug")
+        def test_subtest_fails(subtests):
+            with subtests.test("passes"):
+                pass
+            with subtests.test("fails"):
+                assert False
+
+        @pytest.mark.xfail(strict=True, reason="bug")
+        def test_body_fails(subtests):
+            with subtests.test("passes"):
+                pass
+            assert False
+
+        @pytest.mark.xfail(strict=True, reason="bug")
+        def test_all_pass(subtests):
+            with subtests.test("passes"):
+                pass
+
+        @pytest.mark.xfail(reason="bug")
+        def test_all_pass_not_strict(subtests):
+            with subtests.test("passes"):
+                pass
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*::test_subtest_fails SUBPASSED[[]passes[]] *",
+            "*::test_subtest_fails SUBXFAIL[[]fails[]] (bug) *",
+            "*::test_subtest_fails XFAIL (bug) *",
+            "*::test_body_fails SUBPASSED[[]passes[]] *",
+            "*::test_body_fails XFAIL (bug) *",
+            "*::test_all_pass SUBPASSED[[]passes[]] *",
+            "*::test_all_pass FAILED *",
+            "*::test_all_pass_not_strict SUBPASSED[[]passes[]] *",
+            "*::test_all_pass_not_strict XPASS (bug) *",
+            "[[]XPASS(strict)[]] bug",
+            "* 1 failed, 3 xfailed, 1 xpassed, 4 subtests passed in *",
+        ]
+    )
+
+
 def test_xfail(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("COLUMNS", "120")
     pytester.makepyfile(
