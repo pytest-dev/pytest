@@ -179,6 +179,14 @@ class TestRaises:
         result.stdout.no_fnmatch_line("*File*")
         result.stdout.no_fnmatch_line("*line*")
 
+    def test_raises_match_invalid_type(self) -> None:
+        """A ``match`` which is neither a str nor a Pattern is rejected eagerly
+        instead of failing later with an obscure TypeError from ``re.search``."""
+        with pytest.raises(
+            TypeError, match=r"match must be a str or re\.Pattern, got int"
+        ):
+            pytest.raises(match=123)  # type: ignore[arg-type]
+
     def test_raises_match_failure_suppresses_exception_context(
         self, pytester: Pytester
     ) -> None:

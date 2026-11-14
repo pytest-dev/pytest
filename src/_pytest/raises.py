@@ -370,6 +370,11 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
         match: str | Pattern[str] | None,
         check: Callable[[BaseExcT_co], bool] | None,
     ) -> None:
+        if match is not None and not isinstance(match, (str, Pattern)):
+            raise TypeError(
+                f"match must be a str or re.Pattern, got {type(match).__name__}: "
+                f"{match!r}"
+            )
         if isinstance(match, str):
             # juggle error in order to avoid context to fail (necessary?)
             re_error = None
