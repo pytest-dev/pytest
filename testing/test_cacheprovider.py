@@ -525,6 +525,30 @@ class TestLastFailed:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 failed in*"])
 
+    def test_lastfailed_with_bad_collector(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            class BadCollector(pytest.Collector):
+                def collect(self):
+                    raise self.CollectError("custom collection failed")
+
+            def pytest_pycollect_makeitem(collector, name):
+                if name == "bad":
+                    return BadCollector.from_parent(collector, name=name)
+            """
+        )
+        pytester.makepyfile(test_bad="bad = object()")
+
+        result = pytester.runpytest()
+        result.assert_outcomes(errors=1)
+        assert self.get_cached_last_failed(pytester) == ["test_bad.py::bad"]
+
+        result = pytester.runpytest("--lf")
+        result.assert_outcomes(errors=1)
+        result.stdout.fnmatch_lines(["*custom collection failed*"])
+
     @pytest.mark.parametrize("parent", ("directory", "package"))
     def test_terminal_report_lastfailed(self, pytester: Pytester, parent: str) -> None:
         if parent == "package":
