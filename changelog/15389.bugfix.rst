@@ -1,0 +1,1 @@
+``pytest.raises()`` now fails fast with a ``TypeError`` when ``match`` is not a ``str`` or compiled pattern, instead of crashing later with a confusing error when the block raises -- by :user:`Lushiyao5`.
