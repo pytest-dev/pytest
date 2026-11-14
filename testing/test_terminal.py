@@ -528,7 +528,7 @@ class TestTerminal:
             """
             import pytest
 
-            @pytest.mark.skip(reason="123")
+            @pytest.mark.skip(reason="one two three")
             def test_1():
                 pass
 
@@ -579,7 +579,7 @@ class TestTerminal:
         )
 
         common_output = [
-            "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
+            "test_verbose_skip_reason.py::test_1 SKIPPED (one two three) *",
             "test_verbose_skip_reason.py::test_2 XPASS (456) *",
             "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
             "test_verbose_skip_reason.py::test_4 XFAIL  *",
