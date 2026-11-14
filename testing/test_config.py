@@ -2039,6 +2039,14 @@ def test_plugin_preparse_prevents_setuptools_loading(
         )
 
 
+def test_p_option_not_parsed_after_double_dash(pytester: Pytester) -> None:
+    """`-p` appearing after `--` is a positional argument, not an option."""
+    result = pytester.runpytest_subprocess("--", "-p", "nonexistent_plugin_xyz")
+    output = result.stdout.str() + result.stderr.str()
+    assert 'Error importing plugin "nonexistent_plugin_xyz"' not in output
+    assert "file or directory not found: -p" in output
+
+
 @pytest.mark.parametrize("disable_plugin_method", ["env_var", "flag", ""])
 @pytest.mark.parametrize("enable_plugin_method", ["env_var", "flag", ""])
 def test_disable_plugin_autoload(

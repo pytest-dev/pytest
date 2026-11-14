@@ -849,6 +849,10 @@ class PytestPluginManager(PluginManager):
             opt = args[i]
             i += 1
             if isinstance(opt, str):
+                if opt == "--":
+                    # Everything after `--` is treated as positional arguments
+                    # by argparse, so it must not be scanned for `-p` options.
+                    break
                 if opt == "-p":
                     try:
                         parg = args[i]
