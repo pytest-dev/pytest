@@ -1,1 +1,1 @@
-``pytestmark`` defined in a package's ``__init__.py`` is now applied to all tests collected from that package.
+:globalvar:`pytestmark` defined in a package's ``__init__.py`` is now applied to all tests collected from that package.
