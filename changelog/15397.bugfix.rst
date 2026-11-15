@@ -1,0 +1,3 @@
+JUnit XML reports now escape invalid XML characters in names supplied to
+:fixture:`record_property` and :fixture:`record_testsuite_property`, preventing
+unreadable reports and encoding errors during report writing.
