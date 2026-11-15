@@ -1111,6 +1111,31 @@ def test_current_test_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> N
     assert "PYTEST_CURRENT_TEST" not in os.environ
 
 
+def test_current_test_env_var_deleted_in_teardown(pytester: Pytester) -> None:
+    """Deleting PYTEST_CURRENT_TEST during teardown must not error.
+
+    The final _update_current_test_var(item, None) call popped the variable
+    unconditionally, so a teardown finalizer that deleted it caused a
+    KeyError reported as a teardown error.
+    """
+    pytester.makepyfile(
+        """
+        import os
+        import pytest
+
+        @pytest.fixture
+        def delete_current_test_var():
+            yield
+            os.environ.pop("PYTEST_CURRENT_TEST", None)
+
+        def test_delete_current_test_var(delete_current_test_var):
+            pass
+        """
+    )
+    result = pytester.runpytest_inprocess()
+    result.assert_outcomes(passed=1)
+
+
 class TestReportContents:
     """Test user-level API of ``TestReport`` objects."""
 

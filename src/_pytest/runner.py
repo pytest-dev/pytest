@@ -214,7 +214,9 @@ def _update_current_test_var(
         value = value.replace("\x00", "(null)")
         os.environ[var_name] = value
     else:
-        os.environ.pop(var_name)
+        # pop with default: teardown finalizers may have deleted the
+        # variable themselves, and there is nothing to restore then.
+        os.environ.pop(var_name, None)
 
 
 def pytest_report_teststatus(report: BaseReport) -> tuple[str, str, str] | None:
