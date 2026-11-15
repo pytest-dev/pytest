@@ -602,6 +602,51 @@ class TestAssert_reprcompare:
         assert "- " + "a" * 50 + "eggs" in lines
         assert "+ " + "a" * 50 + "spam" in lines
 
+    @pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"])
+    @pytest.mark.parametrize("removed", [True, False])
+    def test_text_skipping_preserves_line_start(self, newline, removed) -> None:
+        prefix = newline.join(["[metadata]", "name = pkg", "version = 1.0", ""])
+        shorter = prefix + "license_files = LICENSES" + newline
+        longer = prefix + "license_file = LICENSE" + newline
+        longer += "license_files = LICENSES" + newline
+        left, right = (shorter, longer) if removed else (longer, shorter)
+
+        lines = list(_compare_eq_text(left, right, util.dummy_highlighter, 0, "ndiff"))
+
+        assert lines == [
+            f"Skipping {len(prefix)} identical leading characters in diff, use -v to show",
+            ("- " if removed else "+ ") + "license_file = LICENSE",
+            "  license_files = LICENSES",
+        ]
+
+    @pytest.mark.parametrize("prefix", ["", "header\n"])
+    def test_text_skipping_keeps_long_line_context_bounded(self, prefix) -> None:
+        left = prefix + "a" * 200 + "x"
+        right = prefix + "a" * 200 + "y"
+
+        lines = list(_compare_eq_text(left, right, util.dummy_highlighter, 0, "ndiff"))
+
+        assert lines[0] == (
+            f"Skipping {len(prefix) + 190} identical leading characters in diff, use -v to show"
+        )
+        assert "+ " + "a" * 10 + "x" in lines
+        assert "- " + "a" * 10 + "y" in lines
+
+    def test_text_skipping_preserves_line_with_common_suffix(self) -> None:
+        prefix = "shared header\n" * 4
+        suffix = "\n" + "z" * 60
+        left = prefix + "option = x" + suffix
+        right = prefix + "option = y" + suffix
+
+        lines = list(_compare_eq_text(left, right, util.dummy_highlighter, 0, "ndiff"))
+
+        assert lines[0] == (
+            f"Skipping {len(prefix)} identical leading characters in diff, use -v to show"
+        )
+        assert "identical trailing characters" in lines[1]
+        assert "+ option = x" in lines
+        assert "- option = y" in lines
+
     def test_multiline_text_diff(self) -> None:
         left = "foo\nspam\nbar"
         right = "foo\neggs\nbar"
