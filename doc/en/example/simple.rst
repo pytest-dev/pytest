@@ -1048,6 +1048,25 @@ such as ``cx_freeze`` or ``py2exe``, you can use ``pytest.freeze_includes()``
 to obtain the full list of internal pytest modules. How to configure the tools
 to find the internal modules varies from tool to tool, however.
 
+When using ``--pyargs`` in a PyInstaller-frozen application, test sources
+must also exist as files on disk. A test package imported from PyInstaller's
+embedded ``PYZ`` archive is not sufficient: pytest resolves ``--pyargs``
+arguments to filesystem paths before collecting test files.
+
+For example, if the tests belong to ``myapp.test``, include their source
+files in the ``Analysis`` call in the PyInstaller ``.spec`` file:
+
+.. code-block:: python
+
+    a = Analysis(
+        ["main.py"],
+        datas=[("myapp", "myapp")],  # codespell:ignore datas
+    )
+
+This makes the test sources available alongside the frozen modules, allowing
+``--pyargs myapp.test`` to collect them. It does not enable pytest to collect
+tests directly from the ``PYZ`` archive.
+
 Instead of freezing the pytest runner as a separate executable, you can make
 your frozen program work as the pytest runner by some clever
 argument handling during program startup. This allows you to
