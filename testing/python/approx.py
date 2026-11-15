@@ -599,6 +599,19 @@ class TestApprox:
             # If ``nan_ok=True``, then NaN is equal to NaN.
             assert op(a, approx(x, nan_ok=True))
 
+    def test_actual_nan(self):
+        # A NaN actual value is never approximately equal to a finite
+        # expected value (#15335).  A Decimal NaN used to raise
+        # InvalidOperation here instead of comparing unequal.
+        assert Decimal("NaN") != approx(Decimal("1.1"))
+        assert Decimal("NaN") != approx(1)
+        assert Decimal("NaN") != approx(Decimal("1.1"), nan_ok=True)
+        assert [Decimal("NaN")] != approx([Decimal("1.1")])
+        assert {"a": Decimal("NaN")} != approx({"a": Decimal("1.1")})
+        # Float NaN in the same place just compares unequal.
+        actual = float("nan")
+        assert actual != approx(1.0)
+
     def test_int(self):
         within_1e6 = [(1000001, 1000000), (-1000001, -1000000)]
         for a, x in within_1e6:
