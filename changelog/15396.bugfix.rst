@@ -1,0 +1,1 @@
+Fixed ``MonkeyPatch.undo()`` aborting the restoration of later changes when an attribute could not be deleted (e.g. deleted by the code under test or a setter-only property), leaking state across tests -- by :user:`Lushiyao5`.
