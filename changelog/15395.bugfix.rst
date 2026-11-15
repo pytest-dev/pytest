@@ -1,0 +1,1 @@
+Fixed an internal ``KeyError`` (reported as a teardown ``ERROR``) when the ``PYTEST_CURRENT_TEST`` environment variable is deleted during teardown -- by :user:`Lushiyao5`.
