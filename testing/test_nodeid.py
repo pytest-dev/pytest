@@ -24,9 +24,14 @@ class TestNodeId:
         assert str(node_id) == "a/test_b.py::test_c[1-x]"
 
     def test_str_missing_str_cache(self) -> None:
-        # Simulate Python 3.10.0 (https://github.com/python/cpython/issues/88815):
-        # slotted dataclass fields with init=False and a default are never set,
-        # so _str_cache may be missing entirely (gh-15337).
+        """
+        Simulate Python 3.10.0 (https://github.com/python/cpython/issues/88815):
+        slotted dataclass fields with init=False and a default are never set,
+        so _str_cache may be missing entirely (#15337).
+
+        This test can be removed and the related code in NodeId.__str__ can be cleaned up once we
+        drop Python 3.10 support.
+        """
         node_id = NodeId(path="a/test_b.py", names=("test_c",))
         # Ensure the attribute exists first so the deletion works on every
         # interpreter version (on 3.10.0 it is never set in the first place).

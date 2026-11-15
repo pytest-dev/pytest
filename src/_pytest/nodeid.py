@@ -61,6 +61,7 @@ class NodeId:
         # fields with ``init=False`` and a default value are never set
         # (https://github.com/python/cpython/issues/88815), so the attribute
         # may be missing entirely.
+        # This may be cleaned up to `cache = self.__str_cache` once Python 3.10 is dropped.
         cache: str | None = getattr(self, "_str_cache", None)
         if cache is not None:
             return cache
