@@ -536,6 +536,9 @@ class LogXML:
         # List of reports that failed on call but teardown is pending.
         self.open_reports: list[TestReport] = []
         self.cnt_double_fail_tests = 0
+        # Skipped teardown reports folded into an existing testcase element:
+        # they inflate stats["skipped"] without adding a testcase.
+        self.cnt_teardown_skips = 0
 
         # Replaces convenience family with real family.
         if self.family == "legacy":
@@ -662,13 +665,16 @@ class LogXML:
                 # A skip during teardown shares the testcase element with the
                 # earlier setup/call outcome, so it must not be counted twice
                 # (same reasoning as for teardown failures, #3850).
-                self.cnt_double_fail_tests += int(
-                    (
-                        report.id,
-                        getattr(report, "node", None),
-                    )
-                    in self.node_reporters
-                )
+                folded = (
+                    report.id,
+                    getattr(report, "node", None),
+                ) in self.node_reporters
+                self.cnt_double_fail_tests += int(folded)
+                # The folded report inflates stats["skipped"] without adding
+                # a testcase; keep the skipped attribute consistent with the
+                # tests total (a separate counter so the failure path, whose
+                # folded reports are counted in errors, is not touched).
+                self.cnt_teardown_skips += int(folded)
             reporter = self._opentestcase(report)
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
@@ -739,7 +745,7 @@ class LogXML:
                 name=self.suite_name,
                 errors=str(self.stats["error"]),
                 failures=str(self.stats["failure"]),
-                skipped=str(self.stats["skipped"]),
+                skipped=str(self.stats["skipped"] - self.cnt_teardown_skips),
                 tests=str(numtests),
                 time=f"{duration.seconds:.3f}",
                 timestamp=self.suite_start.as_utc().astimezone().isoformat(),

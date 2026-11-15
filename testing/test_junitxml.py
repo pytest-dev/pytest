@@ -463,7 +463,9 @@ class TestPython:
         )
         assert result.ret == 0
         node = dom.get_first_by_tag("testsuite")
-        node.assert_attr(skipped=1, tests=1)
+        # The folded teardown skip is discounted from both totals: one
+        # testcase, and skipped stays at 0 since the call outcome passed.
+        node.assert_attr(skipped=0, tests=1)
         tnode = node.get_first_by_tag("testcase")
         snode = tnode.get_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="skipped during teardown")
@@ -478,6 +480,34 @@ class TestPython:
                 f"expected one system-out element, got {len(systemouts)}"
             )
             assert "hello-stdout teardown" in systemouts[0].toxml()
+
+    @parametrize_families
+    def test_call_skip_plus_teardown_skip_totals(
+        self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily
+    ) -> None:
+        """An item skipping twice keeps the suite totals consistent.
+
+        The folded teardown skip inflates stats["skipped"] without adding a
+        testcase, so the skipped attribute would exceed tests without the
+        counter that discounts folded reports.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                yield
+                pytest.skip("teardown skip")
+
+            def test_call_skip_then_teardown_skip(arg):
+                pytest.skip("call skip")
+            """
+        )
+        _, dom = run_and_parse(family=xunit_family)
+        node = dom.get_first_by_tag("testsuite")
+        node.assert_attr(skipped=1, tests=1)
+        assert len(dom.find_by_tag("testcase")) == 1
 
     @parametrize_families
     def test_skip_contains_name_reason(
