@@ -607,6 +607,65 @@ def test_undo_slot_attribute_on_instance() -> None:
     assert obj.x == 1
 
 
+def test_undo_continues_when_attribute_deleted_during_test() -> None:
+    """An attribute deleted again outside of monkeypatch does not abort undo().
+
+    undo() used to raise AttributeError in that case, which aborted all
+    remaining undo steps (setenv, syspath, chdir, ...); setitem/delitem
+    undo already tolerates this ("was already deleted").
+    """
+    monkeypatch = MonkeyPatch()
+
+    class Target:
+        pass
+
+    target = Target()
+    monkeypatch.setattr(target, "x", 1, raising=False)
+    del target.x  # deleted again by the code under test
+    monkeypatch.setenv("_PYTEST_MP_UNDO_PROBE_A", "a")
+    monkeypatch.setenv("_PYTEST_MP_UNDO_PROBE_B", "b")
+    try:
+        monkeypatch.undo()
+        assert "_PYTEST_MP_UNDO_PROBE_A" not in os.environ
+        assert "_PYTEST_MP_UNDO_PROBE_B" not in os.environ
+        assert "x" not in vars(target)
+    finally:
+        os.environ.pop("_PYTEST_MP_UNDO_PROBE_A", None)
+        os.environ.pop("_PYTEST_MP_UNDO_PROBE_B", None)
+
+
+def test_undo_setattr_setter_only_property() -> None:
+    """A patch written through a setter-only property is undone without a crash.
+
+    There is no old value to restore for such a descriptor (it cannot be
+    read), so undo() skips the deletion instead of raising AttributeError,
+    which used to abort all remaining undo steps.
+    """
+    monkeypatch = MonkeyPatch()
+
+    class Sample:
+        value: int | None = None
+
+        @property
+        def prop(self) -> int:
+            raise AttributeError("write-only attribute")
+
+        @prop.setter
+        def prop(self, value: int) -> None:
+            self.value = value
+
+    obj = Sample()
+    monkeypatch.setattr(obj, "prop", 5, raising=False)
+    assert obj.value == 5
+    monkeypatch.setenv("_PYTEST_MP_UNDO_PROBE_C", "c")
+    try:
+        monkeypatch.undo()
+        assert "_PYTEST_MP_UNDO_PROBE_C" not in os.environ
+        assert obj.value == 5  # the setter's side effect remains, best effort
+    finally:
+        os.environ.pop("_PYTEST_MP_UNDO_PROBE_C", None)
+
+
 def test_issue1338_name_resolving() -> None:
     pytest.importorskip("requests")
     monkeypatch = MonkeyPatch()
