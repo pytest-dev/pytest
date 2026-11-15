@@ -1232,7 +1232,7 @@ class TestLastFailed:
         assert result.ret == 0
         result.stdout.fnmatch_lines(
             [
-                "collected * items*",
+                "collected 2 items",
                 "run-last-failure: rerun previous 2 failures",
                 "",
                 "<Dir *>",
@@ -1242,7 +1242,7 @@ class TestLastFailed:
                 "        <Function test_fail>",
                 "      <Function test_other>",
                 "",
-                "*= 2*tests collected*",
+                "*= 2 tests collected in *",
             ],
             consecutive=True,
         )
