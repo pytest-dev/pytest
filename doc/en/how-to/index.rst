@@ -54,6 +54,7 @@ pytest and other test systems
    existingtestsuite
    unittest
    xunit_setup
+   pyinstaller
 
 pytest development environment
 ------------------------------

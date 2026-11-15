@@ -1,0 +1,1 @@
+Added :ref:`freezing-pyinstaller`, a how-to guide for shipping tests with a PyInstaller application and running them through the frozen executable.
