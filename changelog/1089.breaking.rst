@@ -8,7 +8,6 @@ only for tox.
 
 The first run after upgrading starts without the previous ``--lf``/``--nf``/``--sw`` state. When an
 older pytest's cache is found in the tox environment, the header says it is being ignored. To keep the
-cache in the tox environment anyway, spell out the old location::
-
-    [pytest]
-    cache_dir = $TOX_ENV_DIR/.pytest_cache
+cache out of the project tree, use the ``user`` :confval:`cache_policy` rather than pointing
+:confval:`cache_dir` at the tox environment: a cache directory outside the rootdir, as with a
+``toxworkdir`` outside the project, is :ref:`deprecated <cache-dir-outside-rootdir>`.
