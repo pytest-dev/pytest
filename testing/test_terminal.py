@@ -1469,6 +1469,64 @@ def test_pass_output_reporting(pytester: Pytester) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("report_chars", "outcome", "mark", "statement"),
+    [
+        ("P", "passed", "", "pass"),
+        ("X", "xpassed", "@pytest.mark.xfail(strict=False)", "pass"),
+        ("f", "failed", "", "assert False"),
+    ],
+)
+def test_teardown_output_summary_scans_reports_linearly(
+    pytester: Pytester, report_chars: str, outcome: str, mark: str, statement: str
+) -> None:
+    pytester.makeconftest(
+        """
+        from pathlib import Path
+        import pytest
+
+        class CountingReports(list):
+            visits = 0
+
+            def __iter__(self):
+                for report in super().__iter__():
+                    self.visits += 1
+                    yield report
+
+        @pytest.hookimpl(wrapper=True, tryfirst=True)
+        def pytest_terminal_summary(terminalreporter):
+            reports = CountingReports(terminalreporter.stats.get("", ()))
+            terminalreporter.stats[""] = reports
+            yield
+            Path("report-visits.txt").write_text(f"{reports.visits} {len(reports)}")
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.fixture(autouse=True)
+        def teardown_output(request):
+            yield
+            print(f"teardown-{{request.node.callspec.params['number']}}")
+
+        @pytest.mark.parametrize("number", range(30))
+        {mark}
+        def test_case(number):
+            {statement}
+        """
+    )
+    result = pytester.runpytest(f"-r{report_chars}")
+    result.assert_outcomes(**{outcome: 30})
+    lines = result.stdout.lines
+    for number in range(30):
+        assert lines.count(f"teardown-{number}") == 1
+    visits, count = map(int, (pytester.path / "report-visits.txt").read_text().split())
+    # Count work instead of timing it: each report should be visited a bounded
+    # number of times, rather than once for every test whose output is shown.
+    assert visits <= 10 * count
+
+
 def test_color_yes(pytester: Pytester, color_mapping) -> None:
     p1 = pytester.makepyfile(
         """
