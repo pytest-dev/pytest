@@ -1959,11 +1959,9 @@ class FixtureManager:
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures visible to node."""
-        # Storage order, not closest-first: a base class' usefixtures must keep
-        # being requested before a subclass', which is what own_markers order
-        # gives. Only marker *lookup* is closest-first (#14329).
+        # A base class' usefixtures keep being requested before a subclass'.
         for marker_node, mark in node._iter_markers_with_node(
-            name="usefixtures", closest_first=False
+            name="usefixtures", order=nodes.MarkerOrder.STORED
         ):
             if not mark.args:
                 marker_node.warn(

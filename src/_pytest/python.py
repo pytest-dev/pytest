@@ -142,11 +142,10 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_generate_tests(metafunc: Metafunc) -> None:
-    # Storage order, not closest-first: parametrize markers compose rather than
-    # shadow each other, and an inherited class-level one has to keep composing
-    # base-first so that the generated IDs stay stable (#14329).
+    # An inherited class-level parametrize keeps composing base-first, so the
+    # generated IDs stay stable (#14329).
     for _node, marker in metafunc.definition._iter_markers_with_node(
-        name="parametrize", closest_first=False
+        name="parametrize", order=nodes.MarkerOrder.STORED
     ):
         metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
 

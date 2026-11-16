@@ -10,6 +10,7 @@ from _pytest.config import Config
 from _pytest.config import parse_warning_filter
 from _pytest.main import Session
 from _pytest.nodes import Item
+from _pytest.nodes import MarkerOrder
 from _pytest.terminal import TerminalReporter
 from _pytest.tracemalloc import tracemalloc_message
 import pytest
@@ -34,10 +35,9 @@ def catch_warnings_for_item(
         # apply filters from "filterwarnings" marks
         nodeid = "" if item is None else item.nodeid
         if item is not None:
-            # Storage order, not closest-first: the filter applied last wins, and
-            # within a class that has to stay the subclass' (#14329).
+            # The filter applied last wins, so apply the closest one last.
             for _node, mark in item._iter_markers_with_node(
-                name="filterwarnings", closest_first=False
+                name="filterwarnings", order=MarkerOrder.FARTHEST_FIRST
             ):
                 for arg in mark.args:
                     warnings.filterwarnings(*parse_warning_filter(arg, escape=False))

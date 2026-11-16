@@ -1,0 +1,4 @@
+:ref:`filterwarnings <pytest.mark.filterwarnings ref>` marks on a closer level now take precedence
+over marks on a farther one: a mark from parametrization over one on the test function, the function
+over its class, and a class over the module. Previously the farthest mark won, so for example a
+module or class level ``filterwarnings("error")`` overrode a test's own ``filterwarnings("ignore")``.

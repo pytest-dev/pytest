@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import MutableMapping
 from collections.abc import Sequence
+import enum
 from functools import cached_property
 from functools import lru_cache
 import os
@@ -51,6 +52,31 @@ if TYPE_CHECKING:
 
 
 SEP = "/"
+
+
+class MarkerOrder(enum.Enum):
+    """The orders :meth:`Node._iter_markers_with_node` can yield markers in.
+
+    A node's ``own_markers`` are stored farthest-first: a :class:`~pytest.Class`
+    stores its MRO base class first, a :class:`~pytest.Function` stores its
+    decorator marks before its parametrization marks. Marks stacked as
+    decorators on one object stay bottom-up in all three orders.
+    """
+
+    #: Closest node first, and each node's markers closest-first (a subclass'
+    #: before its base class'). For looking a marker up: the first match is
+    #: the one that applies (#14329). A Function's parametrization marks are
+    #: not moved ahead of its decorator marks; that waits on the
+    #: FunctionDefinition node owning the decorator marks (#14769).
+    CLOSEST_FIRST = enum.auto()
+    #: Closest node first, each node's markers as stored. For consumers that
+    #: compose markers and must keep the order they always composed in:
+    #: ``usefixtures`` and ``parametrize``.
+    STORED = enum.auto()
+    #: Farthest node first, each node's markers as stored, so a closer marker
+    #: always comes later. For consumers where the last marker applied wins:
+    #: ``filterwarnings`` (#10406).
+    FARTHEST_FIRST = enum.auto()
 
 
 def norm_sep(path: str | os.PathLike[str]) -> str:
@@ -381,25 +407,20 @@ class Node(abc.ABC, metaclass=NodeMeta):
         yield from self._iter_markers_with_node(name)
 
     def _iter_markers_with_node(
-        self, name: str | None = None, *, closest_first: bool = True
+        self,
+        name: str | None = None,
+        *,
+        order: MarkerOrder = MarkerOrder.CLOSEST_FIRST,
     ) -> Iterator[tuple[Node, Mark]]:
-        """Iterate over all markers of the node, as (node, mark) tuples.
-
-        The collection chain is always walked from closest to farthest.
-        ``closest_first`` only selects how a single node's own markers are
-        ordered: closest-first (the default, what :meth:`iter_markers` and
-        :meth:`get_closest_marker` want) or in ``own_markers`` storage order.
-
-        The two differ only on nodes that inherit markers -- a
-        :class:`~pytest.Class` and its MRO -- where storage order is
-        base-first. Consumers that compose markers rather than look one up,
-        such as ``usefixtures`` and ``parametrize``, want storage order so
-        that the composition keeps running base-first.
-        """
-        for node in self.iter_parents():
+        """Iterate over all markers of the node, as (node, mark) tuples,
+        in the given :class:`MarkerOrder`."""
+        nodes: Iterable[Node] = self.iter_parents()
+        if order is MarkerOrder.FARTHEST_FIRST:
+            nodes = reversed(list(nodes))
+        for node in nodes:
             marks = (
                 node._iter_own_markers_closest_first()
-                if closest_first
+                if order is MarkerOrder.CLOSEST_FIRST
                 else node.own_markers
             )
             for mark in marks:
