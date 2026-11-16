@@ -14,6 +14,37 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+.. _cache-dir-outside-rootdir:
+
+``cache_dir`` outside the rootdir
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.3
+
+A :confval:`cache_dir` that resolves outside the :ref:`rootdir <rootdir>`, or to
+the rootdir itself or one of its parents, is deprecated and will be rejected in
+pytest 10. This includes absolute paths and ``..``. Such a directory is usually
+not a pytest cache, and :option:`--cache-clear` deletes ``v/`` and ``d/`` from it.
+
+Move the cache directory inside the rootdir, or remove the setting to use the
+default ``.pytest_cache``. Defaults are not affected: the ``$TOX_ENV_DIR`` default
+is never warned about, wherever the tox work directory lies.
+
+.. code-block:: ini
+
+    # Deprecated
+    [pytest]
+    cache_dir = ../.pytest_cache
+
+    # Use this instead
+    [pytest]
+    cache_dir = .pytest_cache
+
+A cache directory that lies inside the rootdir but is taken outside it by a
+symlink, such as a ``.pytest_cache`` symlink to another file system, is already
+an error.
+
+
 .. _toml-numeric-strings:
 
 Numeric strings for integer options in TOML

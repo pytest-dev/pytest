@@ -24,7 +24,9 @@ from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import CACHE_DIR_OUTSIDE_ROOTDIR
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
@@ -116,6 +118,7 @@ class Cache:
         """
         check_ispytest(_ispytest)
         cachedir = cls.cache_dir_from_config(config, _ispytest=True)
+        _check_cache_dir_containment(config, _cache_dir_unresolved(config), cachedir)
         if config.getoption("cacheclear") and cachedir.is_dir():
             if cachedir.joinpath("CACHEDIR.TAG").is_file():
                 cls.clear_cache(cachedir, _ispytest=True)
@@ -152,7 +155,7 @@ class Cache:
         check_ispytest(_ispytest)
         # resolve(), not normpath(): the key containment check in _join_within
         # needs a canonical base, and on POSIX normpath gets "symlink/.." wrong.
-        return resolve_from_str(config.getini("cache_dir"), config.rootpath).resolve()
+        return _cache_dir_unresolved(config).resolve()
 
     def warn(self, fmt: str, *, _ispytest: bool = False, **args: object) -> None:
         """Issue a cache warning.
@@ -562,6 +565,44 @@ def pytest_addoption(parser: Parser) -> None:
         "cached ``lastfailed`` data was found. "
         "``all`` (the default) runs the full test suite again. "
         "``none`` just emits a message about no known failures and exits successfully.",
+    )
+
+
+def _cache_dir_unresolved(config: Config) -> Path:
+    return resolve_from_str(config.getini("cache_dir"), config.rootpath)
+
+
+def _strictly_within(path: Path, root: Path) -> bool:
+    return path != root and path.is_relative_to(root)
+
+
+def _lexically_within_rootdir(config: Config, path: Path) -> bool:
+    lexical = Path(os.path.normpath(path))
+    return _strictly_within(lexical, config.rootpath) or _strictly_within(
+        lexical, config.rootpath.resolve()
+    )
+
+
+def _check_cache_dir_containment(config: Config, path: Path, cachedir: Path) -> None:
+    """Reject a symlink escape, deprecate a configured cache_dir outside the rootdir.
+
+    An unconfigured default is never warned about: ``.pytest_cache`` can only
+    leave the rootdir through a symlink, and a ``$TOX_ENV_DIR`` default
+    outside it is left alone until #14835 removes that default.
+    """
+    rootdir = config.rootpath.resolve()
+    if _strictly_within(cachedir, rootdir):
+        return
+    if _lexically_within_rootdir(config, path):
+        raise UsageError(
+            f"cache_dir {path} is inside the rootdir, "
+            f"but a symlink takes it to {cachedir}, outside the rootdir"
+        )
+    if "cache_dir" not in config._inicfg:
+        return
+    config.issue_config_time_warning(
+        CACHE_DIR_OUTSIDE_ROOTDIR.format(cachedir=cachedir, rootdir=rootdir),
+        stacklevel=2,
     )
 
 
