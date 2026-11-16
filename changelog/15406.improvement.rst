@@ -1,0 +1,1 @@
+Avoid quadratic report scanning when displaying captured teardown output in passed, xpassed, and failed test summaries.
