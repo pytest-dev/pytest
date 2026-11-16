@@ -1,0 +1,3 @@
+A :confval:`cache_dir` containing ``..`` no longer fails every run with ``INTERNALERROR ... is not allowed to escape the cache directory``, a regression in pytest 9.2.0. The cache directory is now resolved before use, following symlinks the way the operating system does.
+
+:option:`--cache-clear` now leaves a cache directory that has no ``CACHEDIR.TAG`` untouched and issues a :class:`~pytest.PytestCacheWarning` instead. Previously it deleted ``v/`` and ``d/`` from whatever directory :confval:`cache_dir` named, including user directories such as the project root or its parent.
