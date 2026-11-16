@@ -20,8 +20,10 @@ import enum
 from functools import lru_cache
 import glob
 import importlib
+import importlib.machinery
 import importlib.metadata
 import inspect
+import json
 import os
 import pathlib
 import re
@@ -303,7 +305,7 @@ def console_main() -> int:
 
     from _pytest.deprecated import CONSOLE_MAIN
 
-    warnings.warn(CONSOLE_MAIN, stacklevel=2)
+    warnings.warn(CONSOLE_MAIN.format(), stacklevel=2)
     return _console_main()
 
 
@@ -1006,6 +1008,47 @@ def _get_plugin_specs_as_list(
     )
 
 
+def _plugin_rewrite_name(module: str) -> str | None:
+    """Return the name to mark so that ``module`` is rewritten.
+
+    This is the outermost package of ``module`` that is not a namespace
+    package: a namespace package can be shared with distributions that have
+    nothing to do with the plugin, and marking it would rewrite those too.
+
+    Names are resolved through ``PathFinder`` because it does not import
+    anything, and the plugin must not be imported before it is marked.
+    """
+    parts = module.split(".")
+    search_path: list[str] | None = None
+    for i, part in enumerate(parts):
+        spec = importlib.machinery.PathFinder.find_spec(part, search_path)
+        if spec is None:
+            return None
+        if spec.origin is not None or spec.submodule_search_locations is None:
+            return ".".join(parts[: i + 1])
+        search_path = list(spec.submodule_search_locations)
+    return None
+
+
+def _is_editable_install(dist: importlib.metadata.Distribution) -> bool:
+    """Whether the distribution was installed in editable mode (PEP 660).
+
+    Such installs do not record the package's Python files in the distribution
+    metadata, so they need special handling when looking for modules to rewrite.
+    """
+    read_text = getattr(dist, "read_text", None)
+    if read_text is None:
+        return False
+    direct_url = read_text("direct_url.json")
+    if not direct_url:
+        return False
+    try:
+        dir_info = json.loads(direct_url).get("dir_info", {})
+    except ValueError:
+        return False
+    return bool(dir_info.get("editable"))
+
+
 def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
     """Given an iterable of file names in a source distribution, return the "names" that should
     be marked for assertion rewrite.
@@ -1218,6 +1261,7 @@ class Config:
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
         self._inicache: dict[str, Any] = {}
+        self._warned_verbosity_strings: set[str] = set()
         self._inicfg: ConfigDict = {}
         self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
@@ -1241,7 +1285,7 @@ class Config:
         @property
         def inicfg(self) -> _DeprecatedInicfgProxy:
             warnings.warn(
-                _pytest.deprecated.CONFIG_INICFG,
+                _pytest.deprecated.CONFIG_INICFG.format(),
                 stacklevel=2,
             )
             return _DeprecatedInicfgProxy(self)
@@ -1477,15 +1521,25 @@ class Config:
             # no need to continue.
             return
 
-        package_files = (
-            str(file)
-            for dist in importlib.metadata.distributions()
-            if any(ep.group == "pytest11" for ep in dist.entry_points)
-            for file in dist.files or []
-        )
-
-        for name in _iter_rewritable_modules(package_files):
-            hook.mark_rewrite(name)
+        for dist in importlib.metadata.distributions():
+            entry_points = [ep for ep in dist.entry_points if ep.group == "pytest11"]
+            if not entry_points:
+                continue
+            names = set(
+                _iter_rewritable_modules(str(file) for file in dist.files or [])
+            )
+            if not names and _is_editable_install(dist):
+                # An editable install lists no Python files, so fall back
+                # to the package owning each plugin entry point (#11783).
+                names = {
+                    name
+                    for ep in entry_points
+                    if (
+                        name := _plugin_rewrite_name(ep.value.partition(":")[0].strip())
+                    )
+                }
+            for name in names:
+                hook.mark_rewrite(name)
 
     def _configure_python_path(self) -> None:
         # `pythonpath = a b` will set `sys.path` to `[a, b, x, y, z, ...]`
@@ -2215,8 +2269,26 @@ class Config:
         level = self.getini(ini_name)
         if level == Config._VERBOSITY_INI_DEFAULT:
             return global_level
-
-        return int(level)
+        if isinstance(level, int):
+            return level
+        try:
+            int_level = int(level)
+        except ValueError:
+            raise UsageError(
+                f"{self.inipath}: config option '{ini_name}' expects an int "
+                f"or 'auto', got {level!r}"
+            ) from None
+        # A numeric str only gets here from TOML: in ini mode the int member
+        # of the option type already converted it.
+        if ini_name not in self._warned_verbosity_strings:
+            self._warned_verbosity_strings.add(ini_name)
+            self.issue_config_time_warning(
+                _pytest.deprecated.TOML_NUMERIC_STRING.format(
+                    name=ini_name, value=level
+                ),
+                stacklevel=2,
+            )
+        return int_level
 
     @staticmethod
     def _verbosity_ini_name(verbosity_type: str) -> str:
@@ -2236,7 +2308,9 @@ class Config:
         parser.addini(
             Config._verbosity_ini_name(verbosity_type),
             help=help,
-            type="string",
+            # str rather than Literal["auto"]: numeric strings in TOML are
+            # deprecated but still accepted, see get_verbosity.
+            type=int | str,
             default=Config._VERBOSITY_INI_DEFAULT,
         )
 

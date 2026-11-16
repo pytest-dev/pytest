@@ -81,32 +81,36 @@ def get_empty_parameterset_mark(
 
 
 class ParameterSet(NamedTuple):
-    """A set of values for a set of parameters along with associated marks and
+    """The return type of :func:`pytest.param`.
+
+    A set of values for a set of parameters along with associated marks and
     an optional ID for the set.
 
-    Examples::
-
-        pytest.param(1, 2, 3)
-        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
-
-        pytest.param("hello", id="greeting")
-        # ParameterSet(values=("hello",), marks=(), id="greeting")
-
-        # Parameter set with marks
-        pytest.param(42, marks=pytest.mark.xfail)
-        # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
-
-        # From parametrize mark (parameter names + list of parameter sets)
-        pytest.mark.parametrize(
-            ("a", "b", "expected"),
-            [
-                (1, 2, 3),
-                pytest.param(40, 2, 42, id="everything"),
-            ],
-        )
-        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
-        # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
+    .. versionadded:: 9.2
     """
+
+    # Examples:
+    #
+    #     pytest.param(1, 2, 3)
+    #     # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+    #
+    #     pytest.param("hello", id="greeting")
+    #     # ParameterSet(values=("hello",), marks=(), id="greeting")
+    #
+    #     # Parameter set with marks
+    #     pytest.param(42, marks=pytest.mark.xfail)
+    #     # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
+    #
+    #     # From parametrize mark (parameter names + list of parameter sets)
+    #     pytest.mark.parametrize(
+    #         ("a", "b", "expected"),
+    #         [
+    #             (1, 2, 3),
+    #             pytest.param(40, 2, 42, id="everything"),
+    #         ],
+    #     )
+    #     # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+    #     # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
 
     values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
@@ -119,6 +123,7 @@ class ParameterSet(NamedTuple):
         marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
         id: str | _HiddenParam | None = None,
     ) -> ParameterSet:
+        """:meta private:"""
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
@@ -144,6 +149,8 @@ class ParameterSet(NamedTuple):
         force_tuple: bool = False,
     ) -> ParameterSet:
         """Extract from an object or objects.
+
+        :meta private:
 
         :param parameterset:
             A legacy style parameterset that may or may not be a tuple,
@@ -259,6 +266,10 @@ class ParameterSet(NamedTuple):
         return argnames, parameters
 
 
+# mypy doesn't like `__module__` defined inline in the NamedTuple.
+ParameterSet.__module__ = "pytest"
+
+
 @final
 @dataclasses.dataclass(frozen=True)
 class Mark:
@@ -273,8 +284,8 @@ class Mark:
 
     #: Source Mark for ids with parametrize Marks.
     _param_ids_from: Mark | None = dataclasses.field(default=None, repr=False)
-    #: Resolved/generated ids with parametrize Marks.
-    _param_ids_generated: Sequence[str] | None = dataclasses.field(
+    #: Materialized (unresolved) ids with parametrize Marks.
+    _param_ids_generated: Sequence[object | None] | None = dataclasses.field(
         default=None, repr=False
     )
 
@@ -284,7 +295,7 @@ class Mark:
         args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
         param_ids_from: Mark | None = None,
-        param_ids_generated: Sequence[str] | None = None,
+        param_ids_generated: Sequence[object | None] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:

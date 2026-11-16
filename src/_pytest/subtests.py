@@ -11,13 +11,13 @@ from contextlib import contextmanager
 from contextlib import ExitStack
 from contextlib import nullcontext
 import dataclasses
-import time
 from types import TracebackType
 from typing import Any
 from typing import TYPE_CHECKING
 
 import pluggy
 
+from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._io.saferepr import saferepr
 from _pytest.capture import CaptureFixture
@@ -216,8 +216,7 @@ class _SubTestContextManager:
     def __enter__(self) -> None:
         __tracebackhide__ = True
 
-        self._start = time.time()
-        self._precise_start = time.perf_counter()
+        self._start = timing.Instant()
         self._exc_info = None
 
         self._exit_stack = ExitStack()
@@ -242,16 +241,10 @@ class _SubTestContextManager:
 
         self._exit_stack.close()
 
-        precise_stop = time.perf_counter()
-        duration = precise_stop - self._precise_start
-        stop = time.time()
-
         call_info = CallInfo[None](
-            None,
-            exc_info,
-            start=self._start,
-            stop=stop,
-            duration=duration,
+            result=None,
+            excinfo=exc_info,
+            duration=self._start.elapsed(),
             when="call",
             _ispytest=True,
         )
@@ -381,9 +374,8 @@ def pytest_report_teststatus(
             if quiet:
                 return "", "", ""
             elif outcome == "skipped":
-                category = "xfailed"
-                short = "y"  # x letter is used for regular xfail, y for subtest xfail
-                status = "SUBXFAIL"
+                # x letter is used for regular xfail, y for subtest xfail
+                return "xfailed", "y", f"SUBXFAIL{description}"
             # outcome == "passed" in an xfail is only possible via a @pytest.mark.xfail mark, which
             # is not applicable to a subtest, which only handles pytest.xfail().
             else:  # pragma: no cover
@@ -392,21 +384,15 @@ def pytest_report_teststatus(
                 # passed in case of xfail.
                 # Let's pass this report to the next hook.
                 return None
-            return category, short, f"{status}{description}"
 
         if report.failed:
             return outcome, "u", f"SUBFAILED{description}"
-        else:
-            if report.passed:
-                if quiet:
-                    return "", "", ""
-                else:
-                    return f"subtests {outcome}", "u", f"SUBPASSED{description}"
-            elif report.skipped:
-                if quiet:
-                    return "", "", ""
-                else:
-                    return outcome, "-", f"SUBSKIPPED{description}"
+        elif quiet:
+            return "", "", ""
+        elif report.passed:
+            return f"subtests {outcome}", "u", f"SUBPASSED{description}"
+        elif report.skipped:
+            return outcome, "-", f"SUBSKIPPED{description}"
 
     else:
         failed_subtests_count = config.stash[failed_subtests_key][report.id]
