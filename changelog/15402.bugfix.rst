@@ -1,0 +1,1 @@
+Reverted the fix for :issue:`10644` from pytest 9.2.0: :meth:`monkeypatch.setattr() <pytest.MonkeyPatch.setattr>` no longer deletes the instance attribute on undo when the original value was inherited, because that broke undo for objects with a custom ``__setattr__``, :class:`unittest.mock.MagicMock` children and ``__getattr__``-based containers (:issue:`15099`, :issue:`15287`).
