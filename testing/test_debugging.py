@@ -1402,6 +1402,22 @@ def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
     assert result.ret == 2
 
 
+def test_pdb_wrapper_do_eof_sets_quit(monkeypatch: MonkeyPatch) -> None:
+    """In the test above do_EOF runs under pdb's trace function, which hides it
+    from coverage. set_quit() is stubbed here because it calls sys.settrace(None)."""
+    import io
+    import pdb  # noqa: T100
+
+    from _pytest.debugging import pytestPDB
+
+    wrapper_cls = pytestPDB._get_pdb_wrapper_class(pdb.Pdb, None)
+    p = wrapper_cls(stdout=io.StringIO())
+    calls = []
+    monkeypatch.setattr(p, "set_quit", lambda: calls.append(True))
+    assert p.do_EOF("") == 1
+    assert calls == [True]
+
+
 def test_pdb_wrapper_class_is_reused(pytester: Pytester) -> None:
     p1 = pytester.makepyfile(
         """
