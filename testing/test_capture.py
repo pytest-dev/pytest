@@ -1770,3 +1770,79 @@ def test_libedit_workaround(pytester: Pytester) -> None:
     match = re.search(r"^value: '(.*)'\r?$", rest, re.MULTILINE)
     assert match is not None
     assert match.group(1) == "hi"
+
+
+class TestTerminalStdout:
+    """The capture-immune duplicate of stdout used for terminal output (#8973)."""
+
+    @pytest.fixture
+    def terminal_stdout(self, tmp_path):
+        """A TerminalStdout duplicated from a real file, plus that file."""
+
+        def make(name: str = "out.txt"):
+            path = tmp_path / name
+            f = path.open("w", encoding="utf-8")
+            terminal_stdout = capture.TerminalStdout(
+                os.dup(f.fileno()), original_stdout=f
+            )
+            return terminal_stdout, f, path
+
+        return make
+
+    def test_writes_are_unbuffered(self, terminal_stdout) -> None:
+        out, f, path = terminal_stdout()
+        with f:
+            try:
+                out.write("hello")
+                assert path.read_text(encoding="utf-8") == "hello"
+            finally:
+                out.close()
+
+    def test_flushes_the_duplicated_stream_first(self, terminal_stdout) -> None:
+        """Output still sitting in the original stream's buffer must reach the
+        terminal before ours, or the two appear out of order."""
+        out, f, path = terminal_stdout()
+        with f:
+            try:
+                f.write("buffered")
+                out.write("direct")
+                assert path.read_text(encoding="utf-8") == "buffereddirect"
+            finally:
+                out.close()
+
+    def test_close_releases_the_duplicated_descriptor(self, terminal_stdout) -> None:
+        out, f, _ = terminal_stdout()
+        with f:
+            fd = out.fileno()
+            out.close()
+            assert out.closed
+            with pytest.raises(OSError):
+                os.fstat(fd)
+            # Closing twice is harmless -- it must not close an unrelated fd
+            # that has meanwhile been handed out the same number.
+            out.close()
+            # The stream we duplicated from is untouched.
+            assert not f.closed
+
+    def test_falls_back_to_sys_stdout_when_absent(self, pytester: Pytester) -> None:
+        config = pytester.parseconfig()
+        # Whether one got created depends on the *outer* run's capture mode, so
+        # drop it explicitly rather than assume. The registered cleanup still
+        # holds it, so nothing leaks.
+        if capture.terminal_stdout_key in config.stash:
+            del config.stash[capture.terminal_stdout_key]
+        assert capture.get_terminal_stdout(config) is sys.stdout
+
+    def test_reporter_writes_without_the_capture_plugin(
+        self, pytester: Pytester
+    ) -> None:
+        """With -p no:capture nothing is duplicated; sys.stdout is the terminal."""
+        pytester.makepyfile("""
+            def test_foo(request):
+                reporter = request.config.pluginmanager.getplugin("terminalreporter")
+                reporter.ensure_newline()
+                reporter.write("NOCAPTURE_MARKER", flush=True)
+        """)
+        result = pytester.runpytest_subprocess("-p", "no:capture")
+        result.assert_outcomes(passed=1)
+        result.stdout.fnmatch_lines(["*NOCAPTURE_MARKER*"])
