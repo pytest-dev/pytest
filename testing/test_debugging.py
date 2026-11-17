@@ -1396,15 +1396,17 @@ def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
             pass
         """
     )
-    result = pytester.runpytest(str(p1))
+    # Out of process: bdb's set_quit() calls sys.settrace(None), which would
+    # switch coverage off for the rest of this test.
+    result = pytester.runpytest_subprocess(str(p1))
     result.stdout.fnmatch_lines(["E *BdbQuit", "*Interrupted: Debugger quit*"])
     result.assert_outcomes(failed=1)
     assert result.ret == 2
 
 
 def test_pdb_wrapper_do_eof_sets_quit(monkeypatch: MonkeyPatch) -> None:
-    """In the test above do_EOF runs under pdb's trace function, which hides it
-    from coverage. set_quit() is stubbed here because it calls sys.settrace(None)."""
+    """The test above runs out of process, so this covers do_EOF in-process.
+    set_quit() is stubbed because it calls sys.settrace(None)."""
     import io
     import pdb  # noqa: T100
 
