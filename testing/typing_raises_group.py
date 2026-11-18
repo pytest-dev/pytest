@@ -223,6 +223,14 @@ def check_raisesgroup_overloads() -> None:
     RaisesGroup(ValueError, flatten_subgroups=True)
     RaisesGroup(RaisesExc(ValueError), flatten_subgroups=True)
 
+    # ordered is accepted alongside the other parameters
+    RaisesGroup(ValueError, TypeError, ordered=True)
+    RaisesGroup(ValueError, match="foo", ordered=True)
+    RaisesGroup(ValueError, check=bool, ordered=True)
+    RaisesGroup(RaisesExc(ValueError), ordered=True)
+    RaisesGroup(RaisesGroup(ValueError), ordered=True)
+    RaisesGroup(ValueError, flatten_subgroups=True, ordered=True)
+
     # if they're both false we can of course specify nested raisesgroup
     RaisesGroup(RaisesGroup(ValueError))
 
