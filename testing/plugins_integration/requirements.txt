@@ -6,10 +6,10 @@ pytest-cov==7.1.0
 pytest-django==4.14.0
 pytest-flakes==4.0.5
 pytest-html==4.2.0
-pytest-mock==3.16.0
+pytest-mock==3.17.0
 pytest-rerunfailures==16.7
 pytest-sugar==1.1.1
 pytest-trio==0.8.0
 pytest-twisted==1.14.3
-twisted==26.10.0rc1
+twisted==26.10.0
 pytest-xvfb==3.1.1

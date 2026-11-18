@@ -284,8 +284,8 @@ class Mark:
 
     #: Source Mark for ids with parametrize Marks.
     _param_ids_from: Mark | None = dataclasses.field(default=None, repr=False)
-    #: Resolved/generated ids with parametrize Marks.
-    _param_ids_generated: Sequence[str] | None = dataclasses.field(
+    #: Materialized (unresolved) ids with parametrize Marks.
+    _param_ids_generated: Sequence[object | None] | None = dataclasses.field(
         default=None, repr=False
     )
 
@@ -295,7 +295,7 @@ class Mark:
         args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
         param_ids_from: Mark | None = None,
-        param_ids_generated: Sequence[str] | None = None,
+        param_ids_generated: Sequence[object | None] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
