@@ -504,7 +504,10 @@ class ApproxScalar(Approx[ExpectedT]):
                     f"relative tolerance for a scalar value must be an int, float or Decimal, "
                     f"got {type(rel).__name__}"
                 )
-            if not isinstance(expected, SupportsAbs):
+            # Non-numeric expected values compare exactly without a tolerance.
+            if isinstance(expected, Complex | Decimal) and not isinstance(
+                expected, SupportsAbs
+            ):
                 raise TypeError(
                     f"expected value must support abs(...) when relative tolerance is used, "
                     f"got {type(expected).__name__}"
@@ -636,7 +639,6 @@ class ApproxScalar(Approx[ExpectedT]):
         # because we don't want to raise errors about the relative tolerance if
         # we aren't even going to use it.
         rel = self.rel if self.rel is not None else self.DEFAULT_RELATIVE_TOLERANCE
-        # expected is SupportAbs, checked in __init__.
         # The typing here is not exact...
         abs_expected: ExpectedT = abs(self.expected)  # type: ignore[arg-type]
         relative_tolerance: float | Decimal = rel * abs_expected  # type: ignore[operator]
