@@ -704,6 +704,38 @@ def test_popen_default_stdin_stderr_and_stdin_None(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_run_utf8_output(pytester: Pytester) -> None:
+    """UTF-8 output from a command is decoded as UTF-8"""
+    p1 = pytester.makepyfile(
+        r"""
+        import sys
+
+        sys.stdout.buffer.write(b"h\xc3\xb6llo\n")
+        sys.stderr.buffer.write(b"w\xc3\xb6rld\n")
+        """
+    )
+    result = pytester.runpython(p1)
+    assert result.ret == 0
+    assert result.stdout.lines == ["höllo"]
+    assert result.stderr.lines == ["wörld"]
+
+
+def test_run_undecodable_output(pytester: Pytester) -> None:
+    """Output which is not valid UTF-8 is escaped instead of raising (#7623)"""
+    p1 = pytester.makepyfile(
+        r"""
+        import sys
+
+        sys.stdout.buffer.write(b"before \xf6 after\n")
+        sys.stderr.buffer.write(b"\xf6\n")
+        """
+    )
+    result = pytester.runpython(p1)
+    assert result.ret == 0
+    assert result.stdout.lines == [r"before \xf6 after"]
+    assert result.stderr.lines == [r"\xf6"]
+
+
 def test_spawn_uses_tmphome(pytester: Pytester) -> None:
     tmphome = str(pytester.path)
     assert os.environ.get("HOME") == tmphome
