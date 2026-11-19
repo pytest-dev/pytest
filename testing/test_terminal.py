@@ -2773,7 +2773,11 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
 
     class config:
         def __init__(self):
-            self.option = Namespace(verbose=0)
+            self.option = Namespace(verbose=0, force_short_summary=False)
+
+        def get_verbosity(self, verbosity_type=None):
+            assert verbosity_type == Config.VERBOSITY_ASSERTIONS
+            return self.option.verbose
 
     class rep:
         def _get_verbose_word_with_markup(self, *args):
@@ -2865,6 +2869,15 @@ def test_short_summary_with_verbose(
         ],
     )
 
+    # -v also keeps the current truncated behavior.
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            "* assert 'AAA...",
+        ],
+    )
+
     # No truncation with -vv.
     result = pytester.runpytest("-vv")
     result.stdout.fnmatch_lines(
@@ -2904,8 +2917,60 @@ def test_full_sequence_print_with_vv(
     )
 
 
-def test_force_short_summary(monkeypatch: MonkeyPatch, pytester: Pytester) -> None:
+@pytest.mark.parametrize("use_ci", [False, True])
+def test_short_summary_on_ci(monkeypatch: MonkeyPatch, pytester: Pytester, use_ci: bool) -> None:
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: use_ci)
+
+    pytester.makepyfile("def test(): assert 0, 'this_failed' * 100")
+
+    result = pytester.runpytest()
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            "*AssertionError: " + "this_failed" * 100,
+        ]
+        if use_ci
+        else ["*short test summary info*", "*AssertionError: this_failedthis_fa..."]
+    )
+
+
+def test_short_summary_assertion_verbosity(monkeypatch: MonkeyPatch, pytester: Pytester) -> None:
     monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+    config_file = pytester.makeini("[pytest]\nverbosity_assertions = 2")
+    pytester.makepyfile("def test(): assert 'A' * 200 == 'B' * 200")
+
+    result = pytester.runpytest("-c", str(config_file))
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            "*assert 'AAAAA* == 'BBBBB*",
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    ("use_ci", "pytest_args", "ini_options"),
+    [
+        pytest.param(True, (), None, id="ci"),
+        pytest.param(False, ("-vv",), None, id="vv"),
+        pytest.param(
+            False,
+            (),
+            "[pytest]\nverbosity_assertions = 2",
+            id="verbosity_assertions",
+        ),
+    ],
+)
+def test_force_short_summary(
+    monkeypatch: MonkeyPatch,
+    pytester: Pytester,
+    use_ci: bool,
+    pytest_args: tuple[str, ...],
+    ini_options: str | None,
+) -> None:
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: use_ci)
 
     pytester.makepyfile(
         """
@@ -2914,7 +2979,12 @@ def test_force_short_summary(monkeypatch: MonkeyPatch, pytester: Pytester) -> No
         """
     )
 
-    result = pytester.runpytest("-vv", "--force-short-summary")
+    args = (*pytest_args, "--force-short-summary")
+    if ini_options is not None:
+        config_file = pytester.makeini(ini_options)
+        args = ("-c", str(config_file), *args)
+
+    result = pytester.runpytest(*args)
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         ["*short test summary info*", "*AssertionError: assert 'a\\na\\na\\na..."]
