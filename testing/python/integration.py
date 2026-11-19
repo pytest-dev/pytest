@@ -72,7 +72,7 @@ class TestMockDecoration:
         # Only attributes patched with DEFAULT are passed as keyword arguments.
         @patch.multiple(T, a=DEFAULT, b=DEFAULT, c=1)
         def f(x, a, b, c):
-            pass
+            pass  # pragma: no cover
 
         values = getfuncargnames(f)
         assert values == ("x", "c")
