@@ -1,0 +1,2 @@
+Invalidate a cached fixture when an overridden dependency selects a different fixture definition.
+Keep finalizers from previous dependency definitions from tearing down the replacement fixture.

@@ -19,6 +19,189 @@ from _pytest.python import Function
 import pytest
 
 
+@pytest.mark.parametrize("scope", ["session", "module"])
+@pytest.mark.parametrize("parametrized", [False, True])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_fixture_cache_with_overridden_dependency(
+    pytester: Pytester, scope: str, parametrized: bool, reverse: bool
+) -> None:
+    """An overridden dependency must invalidate the wrapper cache (#2844)."""
+    pytester.makepyfile(state="events = []\nactive = set()")
+    pytester.makeconftest(
+        f"""
+        import pytest
+        from state import active, events
+
+        @pytest.fixture(scope={scope!r})
+        def wrapper(request, dependency):
+            assert not active
+            active.add(dependency)
+            events.append(("wrapper setup", dependency))
+            yield dependency
+            active.remove(dependency)
+            events.append(("wrapper teardown", dependency))
+        """
+    )
+    for name in ("first", "second"):
+        params = f", params=[{name + ' A'!r}, {name + ' B'!r}]" if parametrized else ""
+        value = "request.param" if parametrized else repr(name)
+        pytester.makepyfile(
+            **{
+                f"test_{name}": f"""
+                import pytest
+                import state
+
+                @pytest.fixture(scope={scope!r}{params})
+                def dependency(request):
+                    value = {value}
+                    state.events.append(("dependency setup", value))
+                    yield value
+                    assert value not in state.active
+                    state.events.append(("dependency teardown", value))
+
+                def test_one(wrapper, dependency):
+                    assert wrapper == dependency
+
+                def test_two(wrapper, dependency):
+                    assert wrapper == dependency
+                """
+            }
+        )
+    paths = ["test_first.py", "test_second.py"]
+    if reverse:
+        paths.reverse()
+    result = pytester.inline_run(*paths)
+    result.assertoutcome(passed=8 if parametrized else 4)
+    state = result.getcalls("pytest_runtest_call")[0].item.module.state
+    assert not state.active
+    values = (
+        ["first A", "first B", "second A", "second B"]
+        if parametrized
+        else ["first", "second"]
+    )
+    for value in values:
+        lifecycle = [
+            ("dependency setup", value),
+            ("wrapper setup", value),
+            ("wrapper teardown", value),
+            ("dependency teardown", value),
+        ]
+        assert [event for event in state.events if event[1] == value] == lifecycle
+
+
+def test_overridden_dependency_old_finalizer_preserves_new_cache(
+    pytester: Pytester,
+) -> None:
+    """A previous dependency must not tear down the replacement wrapper."""
+    pytester.makepyfile(state="setups = []")
+    order = [
+        "test_first.py::test_initial[1]",
+        "test_second.py::test_override",
+        "test_first.py::test_dependency_only[2]",
+        "test_second.py::test_still_cached",
+    ]
+    pytester.makeconftest(
+        f"""
+        import pytest
+        import state
+
+        @pytest.hookimpl(wrapper=True)
+        def pytest_collection_modifyitems(items):
+            yield
+            items.sort(key=lambda item: {order!r}.index(item.nodeid))
+
+        @pytest.fixture(scope="session")
+        def wrapper(dependency):
+            state.setups.append(dependency)
+            yield dependency
+        """
+    )
+    pytester.makepyfile(
+        test_first="""
+        import pytest
+
+        @pytest.fixture(scope="session", params=[1, 2])
+        def dependency(request):
+            return request.param
+
+        def test_initial(wrapper):
+            assert wrapper == 1
+
+        def test_dependency_only(dependency):
+            assert dependency == 2
+        """,
+        test_second="""
+        import pytest
+        import state
+
+        @pytest.fixture(scope="session")
+        def dependency():
+            return "override"
+
+        def test_override(wrapper):
+            assert wrapper == "override"
+
+        def test_still_cached(wrapper):
+            assert wrapper == "override"
+            assert state.setups == [1, "override"]
+        """,
+    )
+    result = pytester.inline_run(*order)
+    result.assertoutcome(passed=4)
+
+
+def test_fixture_cached_error_with_overridden_dependency(pytester: Pytester) -> None:
+    """Overrides must also invalidate cached setup errors, without losing reuse."""
+    pytester.makepyfile(state="setups = []")
+    pytester.makeconftest(
+        """
+        import pytest
+        import state
+
+        @pytest.fixture(scope="session")
+        def wrapper(dependency):
+            state.setups.append(dependency)
+            if dependency == "bad":
+                raise ValueError("bad dependency")
+            return dependency
+        """
+    )
+    pytester.makepyfile(
+        test_first="""
+        import pytest
+
+        @pytest.fixture(scope="session")
+        def dependency():
+            return "bad"
+
+        @pytest.mark.xfail(raises=ValueError, strict=True)
+        def test_one(wrapper):
+            pass
+
+        @pytest.mark.xfail(raises=ValueError, strict=True)
+        def test_two(wrapper):
+            pass
+        """,
+        test_second="""
+        import pytest
+        import state
+
+        @pytest.fixture(scope="session")
+        def dependency():
+            return "good"
+
+        def test_one(wrapper):
+            assert wrapper == "good"
+
+        def test_two(wrapper):
+            assert wrapper == "good"
+            assert state.setups == ["bad", "good"]
+        """,
+    )
+    result = pytester.inline_run("test_first.py", "test_second.py")
+    result.assertoutcome(passed=2, skipped=2)
+
+
 def test_getfuncargnames_functions():
     """Test getfuncargnames for normal functions"""
 
