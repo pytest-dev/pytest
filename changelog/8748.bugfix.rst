@@ -1,0 +1,1 @@
+Mocks passed as keyword arguments by :func:`unittest.mock.patch.multiple` are no longer requested as fixtures.
