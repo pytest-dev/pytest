@@ -2918,7 +2918,9 @@ def test_full_sequence_print_with_vv(
 
 
 @pytest.mark.parametrize("use_ci", [False, True])
-def test_short_summary_on_ci(monkeypatch: MonkeyPatch, pytester: Pytester, use_ci: bool) -> None:
+def test_short_summary_on_ci(
+    monkeypatch: MonkeyPatch, pytester: Pytester, use_ci: bool
+) -> None:
     monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: use_ci)
 
     pytester.makepyfile("def test(): assert 0, 'this_failed' * 100")
@@ -2935,7 +2937,9 @@ def test_short_summary_on_ci(monkeypatch: MonkeyPatch, pytester: Pytester, use_c
     )
 
 
-def test_short_summary_assertion_verbosity(monkeypatch: MonkeyPatch, pytester: Pytester) -> None:
+def test_short_summary_assertion_verbosity(
+    monkeypatch: MonkeyPatch, pytester: Pytester
+) -> None:
     monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
     config_file = pytester.makeini("[pytest]\nverbosity_assertions = 2")
     pytester.makepyfile("def test(): assert 'A' * 200 == 'B' * 200")
