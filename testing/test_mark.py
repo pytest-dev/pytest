@@ -1677,3 +1677,128 @@ def test_module_getattr_without_attributeerror(pytester: Pytester) -> None:
     # The module is buggy (__getattr__ returns None for all attributes),
     # so no tests are collected, but pytest should NOT crash with a TypeError.
     assert result.ret != ExitCode.INTERNAL_ERROR
+
+
+class TestPackageMarks:
+    """``pytestmark`` in a package's ``__init__.py`` applies to its contents (#14737)."""
+
+    def test_inherited_by_all_descendants(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": "import pytest\npytestmark = pytest.mark.pkgmark",
+                "pkg/test_a.py": "def test_a(): pass",
+                "pkg/sub/__init__.py": "",
+                "pkg/sub/test_sub.py": "def test_sub(): pass",
+                "pkg/plain/test_plain.py": "def test_plain(): pass",
+            }
+        )
+        pytester.makefile(".txt", **{"pkg/test_doc": ">>> 1\n1"})
+        items, _ = pytester.inline_genitems("--doctest-glob=*.txt")
+        assert len(items) == 4
+        for item in items:
+            found = list(item.iter_markers_with_node("pkgmark"))
+            assert len(found) == 1, item.nodeid
+            node, _ = found[0]
+            assert isinstance(node, pytest.Package)
+            assert node.name == "pkg"
+
+        result = pytester.runpytest("--doctest-glob=*.txt", "-m", "not pkgmark")
+        result.assert_outcomes(deselected=4)
+        result = pytester.runpytest("--doctest-glob=*.txt", "-k", "pkgmark")
+        result.assert_outcomes(passed=4)
+
+    def test_non_python_only(self, pytester: Pytester) -> None:
+        """Marks apply even when no Python test module is in the package."""
+        pytester.makepyfile(
+            **{"pkg/__init__.py": "import pytest\npytestmark = pytest.mark.pkgmark"}
+        )
+        pytester.makefile(".txt", **{"pkg/test_doc": ">>> 1\n1"})
+        (item,) = pytester.getitems(pytester.path / "pkg")
+        assert item.get_closest_marker("pkgmark") is not None
+
+    def test_skip(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": (
+                    "import pytest\npytestmark = pytest.mark.skip(reason='off')"
+                ),
+                "pkg/test_a.py": "def test_a(): assert False",
+            }
+        )
+        pytester.runpytest().assert_outcomes(skipped=1)
+        pytester.runpytest("pkg/test_a.py").assert_outcomes(skipped=1)
+
+    def test_collection_time_marks(self, pytester: Pytester) -> None:
+        """Marks used while collecting (parametrize, usefixtures) apply too."""
+        pytester.makeconftest("import pytest\n@pytest.fixture\ndef fx(): pass")
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": (
+                    "import pytest\n"
+                    "pytestmark = [\n"
+                    "    pytest.mark.parametrize('x', [1, 2]),\n"
+                    "    pytest.mark.usefixtures('fx'),\n"
+                    "]"
+                ),
+                "pkg/test_a.py": (
+                    "def test_a(x, request):\n    assert 'fx' in request.fixturenames"
+                ),
+            }
+        )
+        pytester.runpytest().assert_outcomes(passed=2)
+
+    def test_init_module_does_not_duplicate(self, pytester: Pytester) -> None:
+        """A collected __init__.py leaves its marks to the Package node."""
+        pytester.makeini("[pytest]\npython_files = *.py")
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": (
+                    "import pytest\n"
+                    "pytestmark = pytest.mark.pkgmark\n"
+                    "def test_in_init(): pass"
+                ),
+            }
+        )
+        (item,) = pytester.getitems(pytester.path / "pkg")
+        found = list(item.iter_markers_with_node("pkgmark"))
+        assert len(found) == 1
+        assert isinstance(found[0][0], pytest.Package)
+
+    def test_package_without_tests_not_imported(self, pytester: Pytester) -> None:
+        """A package with only non-test subdirectories is not imported."""
+        pytester.makepyfile("def test(): pass")
+        pkg = pytester.mkpydir("foopkg")
+        pkg.joinpath("__init__.py").write_text("assert False", encoding="utf-8")
+        pkg.joinpath("data").mkdir()
+        pkg.joinpath("data", "x.txt").write_text("x", encoding="utf-8")
+        result = pytester.runpytest("--collect-only")
+        assert result.ret == ExitCode.OK
+
+    def test_marks_loaded_once(self, pytester: Pytester) -> None:
+        """Collecting a package twice does not add its marks again."""
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": "import pytest\npytestmark = pytest.mark.pkgmark",
+                "pkg/test_a.py": "def test_a(): pass",
+            }
+        )
+        (item,) = pytester.getitems(pytester.path / "pkg")
+        (package,) = (n for n in item.listchain() if isinstance(n, pytest.Package))
+        list(package.collect())
+        list(package.collect())
+        assert [m.name for m in package.own_markers] == ["pkgmark"]
+        assert "pkgmark" in item.keywords
+
+    def test_not_duplicated_with_several_args(self, pytester: Pytester) -> None:
+        """Two command line args in one package collect the package twice."""
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": "import pytest\npytestmark = pytest.mark.pkgmark",
+                "pkg/test_a.py": "def test_a(): pass",
+                "pkg/test_b.py": "def test_b(): pass",
+            }
+        )
+        items, _ = pytester.inline_genitems("pkg/test_a.py", "pkg/test_b.py")
+        assert len(items) == 2
+        for item in items:
+            assert len(list(item.iter_markers("pkgmark"))) == 1, item.nodeid

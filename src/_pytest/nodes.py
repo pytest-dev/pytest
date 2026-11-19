@@ -198,6 +198,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
 
         #: The marker objects belonging to this node.
         self.own_markers: list[Mark] = []
+        self._own_markers_loaded = False
 
         #: Extra names for ``-k`` to match this node and its children on.
         self.extra_keyword_matches: set[str] = set()
@@ -326,6 +327,30 @@ class Node(abc.ABC, metaclass=NodeMeta):
             item = item.parent
         chain.reverse()
         return chain
+
+    def _load_own_markers(self) -> Iterable[Mark]:
+        """Return the marks declared on the object this node wraps.
+
+        Called at most once per node, by :meth:`_ensure_own_markers`.
+        """
+        return ()
+
+    def _ensure_own_markers(self) -> None:
+        """Add the marks of :meth:`_load_own_markers` to the node, once.
+
+        Python collectors call this when their object is first accessed, and
+        every :class:`Item` calls it on its parents when it is created, so
+        the marks are known before any item reads them. A node without items
+        below it is never asked, so e.g. a package without tests is never
+        imported for its marks.
+        """
+        if self._own_markers_loaded:
+            return
+        self._own_markers_loaded = True
+        marks = list(self._load_own_markers())
+        # Declared marks come before dynamically added ones.
+        self.own_markers[:0] = marks
+        self.keywords.update((mark.name, mark) for mark in marks)
 
     def add_marker(self, marker: str | MarkDecorator, append: bool = True) -> None:
         """Dynamically add a marker object to the node.
@@ -706,6 +731,9 @@ class Item(Node, abc.ABC):
             **kw,
         )
         self._report_sections: list[tuple[str, str, str]] = []
+
+        for node in self.iter_parents():
+            node._ensure_own_markers()
 
         #: A list of tuples (name, value) that holds user defined properties
         #: for this test.

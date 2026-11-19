@@ -348,6 +348,19 @@ or multiple markers::
 
     pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
 
+To apply marks to every test in a package, set :globalvar:`pytestmark` in the
+package's ``__init__.py``. The marks apply to all tests collected from the
+package and its subdirectories, including non-Python tests such as doctest
+files::
+
+    # content of mypkg/__init__.py
+    import pytest
+
+    pytestmark = pytest.mark.webtest
+
+pytest only imports ``__init__.py`` for its marks when the package contains
+tests.
+
 
 Due to legacy reasons, before class decorators were introduced, it is possible to set the
 :globalvar:`pytestmark` attribute on a test class like this:
