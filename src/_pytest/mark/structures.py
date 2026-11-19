@@ -81,32 +81,36 @@ def get_empty_parameterset_mark(
 
 
 class ParameterSet(NamedTuple):
-    """A set of values for a set of parameters along with associated marks and
+    """The return type of :func:`pytest.param`.
+
+    A set of values for a set of parameters along with associated marks and
     an optional ID for the set.
 
-    Examples::
-
-        pytest.param(1, 2, 3)
-        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
-
-        pytest.param("hello", id="greeting")
-        # ParameterSet(values=("hello",), marks=(), id="greeting")
-
-        # Parameter set with marks
-        pytest.param(42, marks=pytest.mark.xfail)
-        # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
-
-        # From parametrize mark (parameter names + list of parameter sets)
-        pytest.mark.parametrize(
-            ("a", "b", "expected"),
-            [
-                (1, 2, 3),
-                pytest.param(40, 2, 42, id="everything"),
-            ],
-        )
-        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
-        # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
+    .. versionadded:: 9.2
     """
+
+    # Examples:
+    #
+    #     pytest.param(1, 2, 3)
+    #     # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+    #
+    #     pytest.param("hello", id="greeting")
+    #     # ParameterSet(values=("hello",), marks=(), id="greeting")
+    #
+    #     # Parameter set with marks
+    #     pytest.param(42, marks=pytest.mark.xfail)
+    #     # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
+    #
+    #     # From parametrize mark (parameter names + list of parameter sets)
+    #     pytest.mark.parametrize(
+    #         ("a", "b", "expected"),
+    #         [
+    #             (1, 2, 3),
+    #             pytest.param(40, 2, 42, id="everything"),
+    #         ],
+    #     )
+    #     # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+    #     # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
 
     values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
@@ -119,6 +123,7 @@ class ParameterSet(NamedTuple):
         marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
         id: str | _HiddenParam | None = None,
     ) -> ParameterSet:
+        """:meta private:"""
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
@@ -144,6 +149,8 @@ class ParameterSet(NamedTuple):
         force_tuple: bool = False,
     ) -> ParameterSet:
         """Extract from an object or objects.
+
+        :meta private:
 
         :param parameterset:
             A legacy style parameterset that may or may not be a tuple,
@@ -217,7 +224,20 @@ class ParameterSet(NamedTuple):
         if parameters:
             # Check all parameter sets have the correct number of values.
             for param in parameters:
-                if len(param.values) != len(argnames):
+                try:
+                    values_len = len(param.values)
+                except TypeError:
+                    values_len = None
+                if values_len is None:
+                    fail(
+                        f'{nodeid}: in "parametrize" expected a sequence of values, '
+                        "for a single value use a one-element tuple like "
+                        "('value',), "
+                        f"got {type(param.values).__name__}:\n"
+                        f"  {param.values}",
+                        pytrace=False,
+                    )
+                if values_len != len(argnames):
                     msg = (
                         '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
                         "  {names}\n"
@@ -230,7 +250,7 @@ class ParameterSet(NamedTuple):
                             values=param.values,
                             names=argnames,
                             names_len=len(argnames),
-                            values_len=len(param.values),
+                            values_len=values_len,
                         ),
                         pytrace=False,
                     )
@@ -244,6 +264,10 @@ class ParameterSet(NamedTuple):
                 )
             )
         return argnames, parameters
+
+
+# mypy doesn't like `__module__` defined inline in the NamedTuple.
+ParameterSet.__module__ = "pytest"
 
 
 @final
@@ -260,8 +284,8 @@ class Mark:
 
     #: Source Mark for ids with parametrize Marks.
     _param_ids_from: Mark | None = dataclasses.field(default=None, repr=False)
-    #: Resolved/generated ids with parametrize Marks.
-    _param_ids_generated: Sequence[str] | None = dataclasses.field(
+    #: Materialized (unresolved) ids with parametrize Marks.
+    _param_ids_generated: Sequence[object | None] | None = dataclasses.field(
         default=None, repr=False
     )
 
@@ -271,7 +295,7 @@ class Mark:
         args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
         param_ids_from: Mark | None = None,
-        param_ids_generated: Sequence[str] | None = None,
+        param_ids_generated: Sequence[object | None] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -420,6 +444,34 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
+def _as_mark_sequence(pytestmark: Any) -> Sequence[Mark | MarkDecorator]:
+    """Normalize a raw ``pytestmark`` attribute value into a sequence.
+
+    A single mark may be assigned directly (``pytestmark = pytest.mark.foo``);
+    anything else is expected to be a sequence of marks. ``str``/``bytes`` are
+    not treated as sequences here, so that an accidental
+    ``pytestmark = "foo"`` reports the string itself as the offending value
+    rather than its first character.
+    """
+    if isinstance(pytestmark, Sequence) and not isinstance(pytestmark, (str, bytes)):
+        return pytestmark
+    return [pytestmark]
+
+
+def get_mro_mark_groups(cls: type) -> list[list[Mark]]:
+    """Obtain the marks applied directly to each class of ``cls``'s MRO.
+
+    The groups are returned closest-first (``cls`` itself, then its bases in
+    MRO order); within a group the marks keep their decorator stacking order.
+    """
+    return [
+        list(
+            normalize_mark_list(_as_mark_sequence(klass.__dict__.get("pytestmark", [])))
+        )
+        for klass in cls.__mro__
+    ]
+
+
 def get_unpacked_marks(
     obj: object | type,
     *,
@@ -428,22 +480,16 @@ def get_unpacked_marks(
     """Obtain the unpacked marks that are stored on an object.
 
     If obj is a class and consider_mro is true, return marks applied to
-    this class and all of its super-classes in MRO order. If consider_mro
-    is false, only return marks applied directly to this class.
+    this class and all of its super-classes in reversed MRO order (farthest
+    base class first). If consider_mro is false, only return marks applied
+    directly to this class.
     """
     if isinstance(obj, type):
-        if not consider_mro:
-            mark_lists = [obj.__dict__.get("pytestmark", [])]
-        else:
-            mark_lists = [
-                x.__dict__.get("pytestmark", []) for x in reversed(obj.__mro__)
+        if consider_mro:
+            return [
+                mark for group in reversed(get_mro_mark_groups(obj)) for mark in group
             ]
-        mark_list = []
-        for item in mark_lists:
-            if isinstance(item, list):
-                mark_list.extend(item)
-            else:
-                mark_list.append(item)
+        mark_list = _as_mark_sequence(obj.__dict__.get("pytestmark", []))
     else:
         mark_attribute = getattr(obj, "pytestmark", [])
         if mark_attribute is None:
@@ -457,10 +503,8 @@ def get_unpacked_marks(
                 stacklevel=2,
             )
             mark_list = []
-        elif isinstance(mark_attribute, list):
-            mark_list = mark_attribute
         else:
-            mark_list = [mark_attribute]
+            mark_list = _as_mark_sequence(mark_attribute)
     return list(normalize_mark_list(mark_list))
 
 

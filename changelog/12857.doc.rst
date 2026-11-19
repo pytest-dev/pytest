@@ -1,1 +1,0 @@
-Documented how ``--confcutdir`` affects initial ``conftest.py`` discovery.

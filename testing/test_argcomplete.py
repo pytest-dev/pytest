@@ -95,5 +95,5 @@ class TestArgComplete:
 
         ffc = FastFilesCompleter()
         fc = FilesCompleter()
-        for x in "/usr/".split():
+        for x in ["/usr/"]:
             assert not equal_with_bash(x, ffc, fc, out=sys.stdout)

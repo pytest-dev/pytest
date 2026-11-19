@@ -8,6 +8,7 @@ from typing import Any
 
 import _pytest._code
 from _pytest.config import ExitCode
+from _pytest.config.exceptions import UsageError
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
@@ -80,7 +81,7 @@ class TestModule:
 
     def test_module_considers_pluginmanager_at_import(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol("pytest_plugins='xasdlkj',")
-        with pytest.raises(ImportError):
+        with pytest.raises(UsageError):
             modcol.obj()
 
     def test_invalid_test_module_name(self, pytester: Pytester) -> None:

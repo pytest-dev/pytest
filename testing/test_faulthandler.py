@@ -118,6 +118,23 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
     assert result.ret == 0
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"), [(5, 5), (0.01, 0.01), ('"0.01"', "0.01")]
+)
+def test_timeout_toml(
+    pytester: Pytester, value: float | str, expected: float | str
+) -> None:
+    """The timeout accepts native TOML numbers and strings."""
+    pytester.maketoml(
+        f"""
+        [pytest]
+        faulthandler_timeout = {value}
+        """
+    )
+    config = pytester.parseconfig()
+    assert config.getini("faulthandler_timeout") == expected
+
+
 @pytest.mark.keep_ci_var
 @pytest.mark.skipif(
     "CI" in os.environ and sys.platform == "linux" and sys.version_info >= (3, 14),

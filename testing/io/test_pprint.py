@@ -9,6 +9,7 @@ from collections import UserDict
 from collections import UserList
 from collections import UserString
 from dataclasses import dataclass
+import sys
 import textwrap
 from types import MappingProxyType
 from types import SimpleNamespace
@@ -649,6 +650,56 @@ def test_simplenamespace_subclass_uses_class_name() -> None:
 
     pp = PrettyPrinter()
     assert pp.pformat(MyNamespace(one=1)) == "MyNamespace(\n    one=1,\n)"
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 15), reason="frozendict is a builtin since Python 3.15"
+)
+def test_frozendict() -> None:
+    # For mypy, which checks against Python 3.10.
+    if sys.version_info >= (3, 15):  # pragma: no cover
+        pp = PrettyPrinter()
+        assert pp.pformat(frozendict()) == "frozendict()"  # noqa: F821
+        assert pp.pformat(frozendict({"one": 1, "two": 2})) == textwrap.dedent(  # noqa: F821
+            """\
+            frozendict({
+                'one': 1,
+                'two': 2,
+            })"""
+        )
+
+        class MyFrozenDict(frozendict):  # noqa: F821
+            pass
+
+        assert pp.pformat(MyFrozenDict({"one": 1})) == textwrap.dedent(
+            """\
+            MyFrozenDict({
+                'one': 1,
+            })"""
+        )
+
+        # As a dict key (frozendict is hashable), it goes through _safe_repr.
+        key = frozendict({"one": 1})  # noqa: F821
+        assert pp.pformat({key: 0}) == textwrap.dedent(
+            """\
+            {
+                frozendict({'one': 1}): 0,
+            }"""
+        )
+        nested = frozendict({"one": frozendict({"two": 2})})  # noqa: F821
+        assert PrettyPrinter(depth=1).pformat({nested: 0}) == textwrap.dedent(
+            """\
+            {
+                frozendict({...}): 0,
+            }"""
+        )
+        empty = frozendict()  # noqa: F821
+        assert pp.pformat({empty: 0}) == textwrap.dedent(
+            """\
+            {
+                frozendict(): 0,
+            }"""
+        )
 
 
 def test_safe_tuple_sorts_unorderable_pairs() -> None:

@@ -150,7 +150,7 @@ def test_unicode(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.skip("issue #13485")
+@pytest.mark.skip("see issue #13485")
 def test_works_with_filterwarnings(pytester: Pytester) -> None:
     """Ensure our warnings capture does not mess with pre-installed filters (#2430)."""
     pytester.makepyfile(
@@ -423,6 +423,98 @@ def test_option_precedence_mark(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-W", "ignore")
     result.stdout.fnmatch_lines(["* 1 failed in*"])
+
+
+def test_filterwarnings_subclass_mark_beats_base_class(pytester: Pytester) -> None:
+    """Closest-first marker lookup must not hand precedence to the base class.
+
+    The filter applied last wins, so ``filterwarnings`` keeps applying the MRO
+    base-first, as it did before #14329.
+    """
+    pytester.makepyfile(
+        """
+        import pytest, warnings
+
+        @pytest.mark.filterwarnings("error")
+        class TestBase:
+            pass
+
+        @pytest.mark.filterwarnings("ignore")
+        class TestChild(TestBase):
+            def test_it(self):
+                warnings.warn(UserWarning("boom"))
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_filterwarnings_closest_mark_wins(pytester: Pytester) -> None:
+    """A ``filterwarnings`` mark on a closer node beats one on a farther node:
+    parametrization over function over class over module (#10406).
+
+    The filter applied last wins, so marks used to be applied the wrong way
+    round, and the farthest mark won -- except where a Function stored its
+    parametrization marks after its decorator marks and the two inversions
+    cancelled out.
+    """
+    pytester.makepyfile(
+        """
+        import pytest, warnings
+
+        pytestmark = pytest.mark.filterwarnings("error")
+
+        def warn():
+            warnings.warn(UserWarning("boom"))
+
+        @pytest.mark.filterwarnings("ignore")
+        def test_function_beats_module():
+            warn()
+
+        @pytest.mark.filterwarnings("error")
+        class TestClassError:
+            @pytest.mark.filterwarnings("ignore")
+            def test_method_beats_class(self):
+                warn()
+
+            @pytest.mark.parametrize(
+                "_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))]
+            )
+            def test_param_beats_class(self, _):
+                warn()
+
+        @pytest.mark.filterwarnings("error")
+        @pytest.mark.parametrize(
+            "_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))]
+        )
+        def test_param_beats_function_decorated_above(_):
+            warn()
+
+        @pytest.mark.parametrize(
+            "_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))]
+        )
+        @pytest.mark.filterwarnings("error")
+        def test_param_beats_function_decorated_below(_):
+            warn()
+
+        @pytest.mark.filterwarnings("ignore")
+        class TestBase:
+            pass
+
+        @pytest.mark.filterwarnings("error")
+        class TestChild(TestBase):
+            def test_subclass_beats_base(self):
+                with pytest.raises(UserWarning):
+                    warn()
+
+        @pytest.mark.filterwarnings("ignore:boom")
+        @pytest.mark.filterwarnings("error")
+        def test_same_node_upper_decorator_still_wins():
+            warn()
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=7)
 
 
 def test_accept_unknown_category(pytester: Pytester) -> None:
@@ -1059,6 +1151,23 @@ class TestMaxWarnings:
             """
             [pytest]
             max_warnings = 1
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    @pytest.mark.parametrize("value", ["1", '"1"'])
+    def test_max_warnings_toml_option(self, pytester: Pytester, value: str) -> None:
+        """max_warnings can be set via TOML configuration.
+
+        Supports both int and str (for backward compat).
+        """
+        pytester.maketoml(
+            f"""
+            [pytest]
+            max_warnings = {value}
             """
         )
         pytester.makepyfile(self.PYFILE)

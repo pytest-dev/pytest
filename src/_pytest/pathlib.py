@@ -651,8 +651,7 @@ def import_path(
 
         if module_file.endswith((".pyc", ".pyo")):
             module_file = module_file[:-1]
-        if module_file.endswith(os.sep + "__init__.py"):
-            module_file = module_file[: -(len(os.sep + "__init__.py"))]
+        module_file = module_file.removesuffix(os.sep + "__init__.py")
 
         try:
             is_same = _is_same(str(path), module_file)
@@ -1095,4 +1094,12 @@ def samefile_nofollow(p1: Path, p2: Path) -> bool:
 
     Unlike Path.samefile(), does not resolve symlinks.
     """
-    return os.path.samestat(p1.lstat(), p2.lstat())
+    s1, s2 = p1.lstat(), p2.lstat()
+    # On Windows st_ino is the file ID, which file systems are free to not support,
+    # in which case it is 0 for every file -- WinFsp mounts such as sshfs-win are one
+    # example. os.path.samestat() would then consider any two files on the volume to
+    # be the same (python/cpython#78116), so treat a zero file ID as "unknown" and
+    # leave the caller with plain path comparison (#14864).
+    if s1.st_ino == 0 or s2.st_ino == 0:
+        return False
+    return os.path.samestat(s1, s2)

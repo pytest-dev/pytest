@@ -19,6 +19,7 @@ from _pytest import fixtures
 from _pytest import python
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
@@ -80,12 +81,14 @@ class TestMetafunc:
 
         @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
-            _nodeid: str
+            _id: NodeId
             obj: object
 
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
-        definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
+        definition: Any = DefinitionMock._create(
+            obj=func, _id=NodeId(path="mock", names=("nodeid",))
+        )
         definition._fixtureinfo = fixtureinfo
         definition.session = SessionMock(config, FixtureManagerMock({}))
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
@@ -329,6 +332,14 @@ class TestMetafunc:
         metafunc.parametrize("y", [3, 4], ids=it)
         ids = [x.id for x in metafunc._calls]
         assert ids == ["4-6", "4-7", "5-6", "5-7"]
+
+    def test_parametrize_ids_shared_mark_resolved_once(self) -> None:
+        """Ids stored on a shared mark are raw, not resolved again (#15370)."""
+        mark = pytest.mark.parametrize("x", [1], ids=iter(["a\nb"])).mark
+        for _ in range(2):
+            metafunc = self.Metafunc(lambda x: None)
+            metafunc.parametrize(*mark.args, **mark.kwargs, _param_mark=mark)
+            assert [c.id for c in metafunc._calls] == ["a\\nb"]
 
     def test_parametrize_empty_list(self) -> None:
         """#510"""

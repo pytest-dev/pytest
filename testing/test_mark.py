@@ -16,6 +16,7 @@ from _pytest.mark import MarkGenerator
 from _pytest.mark.expression import Expression
 from _pytest.mark.structures import _EmptyParameterSetMark
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
+from _pytest.nodeid import NodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
@@ -611,6 +612,30 @@ def test_parametrized_collect_with_wrong_args(pytester: Pytester) -> None:
     )
 
 
+def test_parametrized_collect_with_non_sequence_values(pytester: Pytester) -> None:
+    """Test collect parametrized func with tuple-style argnames and scalar values."""
+    py_file = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("x,", [None])
+        def test_func(x):
+            pass
+    """
+    )
+
+    result = pytester.runpytest(py_file)
+    result.stdout.fnmatch_lines(
+        [
+            "test_parametrized_collect_with_non_sequence_values.py::test_func: "
+            'in "parametrize" expected a sequence of values, '
+            "for a single value use a one-element tuple like ('value',), "
+            "got NoneType:",
+            "  None",
+        ]
+    )
+
+
 def test_parametrized_with_kwargs(pytester: Pytester) -> None:
     """Test collect parametrized func with wrong number of args."""
     py_file = pytester.makepyfile(
@@ -783,6 +808,84 @@ class TestFunctional:
         (item,) = items
         default = pytest.mark.foo(location="default")
         assert item.get_closest_marker("foo", default) is default.mark
+
+    def test_mark_closest_mro(self, pytester: Pytester) -> None:
+        """Marks should be collected from MRO from nearest to furthest (#14329)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+
+            @pytest.mark.foo(0)
+            class TestParent:
+                def test_only_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 0
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [0]
+
+                @pytest.mark.foo(1)
+                def test_function_and_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 1
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [1, 0]
+
+
+            @pytest.mark.foo(2)
+            class TestChild(TestParent):
+                def test_only_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 2
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [2, 0]
+
+                @pytest.mark.foo(3)
+                def test_function_and_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 3
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [3, 2, 0]
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=4)
+
+    def test_mark_closest_mro_with_dynamic_class_marker(
+        self, pytester: Pytester
+    ) -> None:
+        """Dynamic markers added to a Class collector via add_marker keep
+        their ``append`` semantics relative to the MRO markers (#14329).
+
+        MRO markers iterate closest-first (child=1, base=0); a marker
+        prepended with ``append=False`` must come before them, an appended
+        one (``append=True``) after them.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collectstart(collector):
+                if getattr(collector, "name", None) == "TestChild":
+                    # resolve obj first so the MRO markers are already stored in
+                    # own_markers, giving add_marker(append=True) a defined slot
+                    # after them (prepend/insert(0) is closest regardless).
+                    collector.obj
+                    collector.add_marker(pytest.mark.foo("appended"))
+                    collector.add_marker(pytest.mark.foo("prepended"), append=False)
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.foo(0)
+            class TestBase:
+                pass
+
+            @pytest.mark.foo(1)
+            class TestChild(TestBase):
+                def test_it(self, request):
+                    args = [m.args[0] for m in request.node.iter_markers("foo")]
+                    # prepended (closest), MRO child->base, then appended (farthest)
+                    assert args == ["prepended", 1, 0, "appended"]
+                    assert request.node.get_closest_marker("foo").args[0] == "prepended"
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
 
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(
@@ -1032,6 +1135,36 @@ class TestKeywordSelection:
         _passed, _skipped, failed = reprec.countoutcomes()
         assert failed == 1
 
+    @pytest.mark.parametrize("keyword", ["pytestmark", "wrapped", "cache_parameters"])
+    def test_no_match_on_ignored_function_attributes(
+        self, pytester: Pytester, keyword: str
+    ) -> None:
+        """`-k` ignores attributes that end up in a test function's __dict__
+        without being meant as keywords (#4569)."""
+        pytester.makepyfile(
+            """
+            import functools
+            import pytest
+
+            def deco(fn):
+                @functools.wraps(fn)
+                def wrapper(*args, **kwargs):
+                    return fn(*args, **kwargs)
+                return wrapper
+
+            @pytest.mark.some_mark
+            def test_marked(): pass
+
+            @deco
+            def test_decorated(): pass
+
+            @functools.lru_cache
+            def test_cached(): pass
+            """
+        )
+        result = pytester.runpytest("-k", keyword)
+        result.assert_outcomes(deselected=3)
+
     @pytest.mark.xfail
     def test_keyword_extra_dash(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -1102,6 +1235,106 @@ class TestKeywordSelection:
 
         # do not collect anything based on names outside the collection tree
         assert get_collected_names("-k", pytester._name) == []
+
+    def test_keyword_matches_marks_from_parents(self, pytester: Pytester) -> None:
+        """`-k` matches marker names from the module, class and base classes."""
+        pytester.makepyfile(
+            """
+            import pytest
+            pytestmark = pytest.mark.modmark
+
+            @pytest.mark.basemark
+            class Base:
+                def test_inherited(self): pass
+
+            @pytest.mark.classmark
+            class TestClass(Base):
+                def test_method(self): pass
+
+            def test_toplevel(): pass
+            """
+        )
+        for keyword, selected in [
+            ("modmark", 3),
+            ("classmark", 2),
+            ("basemark", 2),
+        ]:
+            result = pytester.runpytest("-k", keyword)
+            result.assert_outcomes(passed=selected, deselected=3 - selected)
+
+    def test_keyword_does_not_match_mark_arguments(self, pytester: Pytester) -> None:
+        """`-k` matches marker names, not what the marker was called with."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.mymark("someargument", somekwarg="anotherargument")
+            def test_one(): pass
+            """
+        )
+        for keyword in ["someargument", "anotherargument", "somekwarg"]:
+            result = pytester.runpytest("-k", keyword)
+            result.assert_outcomes(deselected=1)
+
+    def test_keyword_matches_dynamically_added_mark(self, pytester: Pytester) -> None:
+        """A mark added in a conftest `pytest_collection_modifyitems` is seen by
+        `-k`, because conftest hook implementations run before the ones of the
+        mark plugin doing the deselection."""
+        pytester.makeconftest(
+            """
+            def pytest_collection_modifyitems(items):
+                for item in items:
+                    if item.name == "test_one":
+                        item.add_marker("addedmark")
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_one(): pass
+            def test_two(): pass
+            """
+        )
+        result = pytester.runpytest("-k", "addedmark")
+        result.assert_outcomes(passed=1, deselected=1)
+
+    def test_keyword_matches_item_extra_keyword_matches(
+        self, pytester: Pytester
+    ) -> None:
+        """`extra_keyword_matches` is honoured on the item itself, not just on
+        a parent collector."""
+        pytester.makeconftest(
+            """
+            def pytest_collection_modifyitems(items):
+                for item in items:
+                    if item.name == "test_one":
+                        item.extra_keyword_matches.add("extrakeyword")
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_one(): pass
+            def test_two(): pass
+            """
+        )
+        result = pytester.runpytest("-k", "extrakeyword")
+        result.assert_outcomes(passed=1, deselected=1)
+
+    @pytest.mark.parametrize("option", ["-k", "-m"])
+    def test_writing_to_keywords_does_not_select(
+        self, pytester: Pytester, option: str
+    ) -> None:
+        """Writing into `item.keywords` does not make a test selectable: `-k`
+        collects its names separately, and `-m` only looks at markers."""
+        pytester.makeconftest(
+            """
+            def pytest_collection_modifyitems(items):
+                for item in items:
+                    item.keywords["setviakeywords"] = True
+            """
+        )
+        pytester.makepyfile("def test_one(): pass")
+        result = pytester.runpytest(option, "setviakeywords")
+        result.assert_outcomes(deselected=1)
 
 
 class TestMarkDecorator:
@@ -1262,19 +1495,25 @@ def test_mark_expressions_no_smear(pytester: Pytester) -> None:
     deselected_tests = dlist[0].items
     assert len(deselected_tests) == 1
 
-    # todo: fixed
-    # keywords smear - expected behaviour
-    # reprec_keywords = pytester.inline_run("-k", "FOO")
-    # passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
-    # assert passed_k == 2
-    # assert skipped_k == failed_k == 0
+    # Marks used to smear onto the shared base class function object, so that
+    # -k FOO matched both subclasses; it no longer does.
+    reprec_keywords = pytester.inline_run("-k", "FOO")
+    passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
+    assert passed_k == 1
+    assert skipped_k == failed_k == 0
+
+    # -m matches marker names exactly, so the case has to match too.
+    reprec_lower = pytester.inline_run("-m", "foo")
+    assert reprec_lower.countoutcomes() == [0, 0, 0]
 
 
 def test_addmarker_order(pytester) -> None:
-    session = mock.Mock()
+    session = mock.Mock(spec=Collector)
     session.own_markers = []
+    session._iter_own_markers_closest_first.return_value = session.own_markers
     session.parent = None
     session.nodeid = ""
+    session.id = NodeId(path="")
     session.path = pytester.path
     node = Node.from_parent(session, name="Test")
     node.add_marker("foo")
@@ -1379,6 +1618,68 @@ def test_mark_mro() -> None:
     assert get_unpacked_marks(C, consider_mro=False) == [xfail("c").mark]
 
 
+def test_pytestmark_accepts_any_sequence() -> None:
+    """``pytestmark`` may be any sequence of marks, not just a list."""
+    from _pytest.mark.structures import get_unpacked_marks
+
+    xfail = pytest.mark.xfail
+
+    class A:
+        pytestmark: tuple[pytest.MarkDecorator, ...] = (xfail("a"), xfail("b"))
+
+    class B(A):
+        pytestmark = (xfail("c"),)
+
+    assert get_unpacked_marks(A, consider_mro=False) == [
+        xfail("a").mark,
+        xfail("b").mark,
+    ]
+    assert get_unpacked_marks(B) == [
+        xfail("a").mark,
+        xfail("b").mark,
+        xfail("c").mark,
+    ]
+
+    class Single:
+        pytestmark = xfail("single")
+
+    assert get_unpacked_marks(Single) == [xfail("single").mark]
+
+
+def test_pytestmark_string_reports_the_string() -> None:
+    """A ``str`` is not unpacked as a sequence, so the error names it."""
+    from _pytest.mark.structures import get_unpacked_marks
+
+    class Oops:
+        pytestmark = "xfail"
+
+    with pytest.raises(TypeError, match="got 'xfail' instead of Mark"):
+        get_unpacked_marks(Oops)
+
+
+def test_pytestmark_tuple_on_module_and_class(pytester: Pytester) -> None:
+    """End to end: tuple ``pytestmark`` works at module and class level."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        pytestmark = (pytest.mark.mod_a, pytest.mark.mod_b)
+
+        class TestBase:
+            pytestmark = (pytest.mark.base,)
+
+        class TestChild(TestBase):
+            pytestmark = (pytest.mark.child,)
+
+            def test_it(self, request):
+                names = [mark.name for mark in request.node.iter_markers()]
+                assert names == ["child", "base", "mod_a", "mod_b"]
+        """
+    )
+    result = pytester.runpytest("-W", "ignore::pytest.PytestUnknownMarkWarning")
+    result.assert_outcomes(passed=1)
+
+
 # @pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/10447")
 def test_mark_fixture_order_mro(pytester: Pytester):
     """This ensures we walk marks of the mro starting with the base classes
@@ -1411,6 +1712,234 @@ def test_mark_fixture_order_mro(pytester: Pytester):
         """
     )
     result = pytester.runpytest(foo)
+    result.assert_outcomes(passed=1)
+
+
+def test_mark_usefixtures_order_unaffected_by_mro(pytester: Pytester) -> None:
+    """Closest-first marker *lookup* must not reorder ``usefixtures`` setup.
+
+    ``usefixtures`` markers compose rather than shadow each other, so they keep
+    following ``own_markers`` storage order: base class before subclass, and
+    stacked decorators bottom-up (#14329).
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        order = []
+
+        @pytest.fixture
+        def mod(): order.append("mod")
+
+        @pytest.fixture
+        def base(): order.append("base")
+
+        @pytest.fixture
+        def first(): order.append("first")
+
+        @pytest.fixture
+        def second(): order.append("second")
+
+        pytestmark = pytest.mark.usefixtures("mod")
+
+        @pytest.mark.usefixtures("base")
+        class Base:
+            pass
+
+        @pytest.mark.usefixtures("first")
+        @pytest.mark.usefixtures("second")
+        class TestThings(Base):
+            def test_order(self):
+                assert order == ["base", "second", "first", "mod"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_mark_parametrize_ids_unaffected_by_mro(pytester: Pytester) -> None:
+    """Closest-first marker *lookup* must not reorder ``parametrize`` IDs.
+
+    An inherited class-level ``parametrize`` keeps composing base-first, so the
+    generated IDs stay what they were before #14329.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("a", ["x"])
+        class Base:
+            pass
+
+        @pytest.mark.parametrize("b", [1])
+        class TestChild(Base):
+            def test_it(self, a, b):
+                pass
+        """
+    )
+    result = pytester.runpytest("--collect-only", "-q")
+    result.stdout.fnmatch_lines(["*::TestChild::test_it[[]x-1[]]"])
+
+
+def test_mark_mro_marker_object_reused_by_add_marker(pytester: Pytester) -> None:
+    """A mark object applied via the MRO *and* added dynamically must not
+    confuse the closest-first reordering of a Class collector (#14329)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        shared = pytest.mark.foo("shared")
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.obj  # resolve, so the MRO markers are in own_markers
+                collector.add_marker(shared)
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        from conftest import shared
+
+        @shared
+        class TestBase:
+            pass
+
+        class TestChild(TestBase):
+            def test_it(self, request):
+                args = [m.args[0] for m in request.node.iter_markers("foo")]
+                assert args == ["shared", "shared"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_mark_iter_markers_does_not_resolve_class_obj(pytester: Pytester) -> None:
+    """Iterating a Class collector's markers must not force ``obj`` resolution.
+
+    Importing the class is a side effect a plugin inspecting markers during
+    collection has no reason to trigger, so without a resolved ``obj`` the
+    stored ``own_markers`` are yielded as-is (#14329).
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        seen = []
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.add_marker(pytest.mark.foo("dynamic"))
+                args = [m.args[0] for m in collector.iter_markers("foo")]
+                seen.append((args, getattr(collector, "_obj", None) is None))
+
+        def pytest_sessionfinish():
+            assert seen == [(["dynamic"], True)], seen
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.foo(0)
+        class TestBase:
+            pass
+
+        @pytest.mark.foo(1)
+        class TestChild(TestBase):
+            def test_it(self):
+                pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize(
+    "rewrite, expected",
+    [
+        pytest.param(
+            "collector.own_markers.insert(0, pytest.mark.foo('inserted').mark)",
+            ["inserted", "child", "base"],
+            id="insert-before-run",
+        ),
+        pytest.param(
+            "collector.add_marker(pytest.mark.foo('prepended'), append=False)",
+            ["prepended", "child", "base"],
+            id="add_marker-prepend",
+        ),
+        pytest.param(
+            "del collector.own_markers[0]",
+            ["child"],
+            id="run-broken",
+        ),
+    ],
+)
+def test_mark_class_own_markers_rewritten_by_plugin(
+    pytester: Pytester, rewrite: str, expected: list[str]
+) -> None:
+    """A plugin shifting the MRO run in ``own_markers`` must not make marker
+    iteration splice a stale run back in, losing or duplicating marks; a run
+    it broke up is iterated as stored (#14329)."""
+    pytester.makeconftest(
+        f"""
+        import pytest
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.obj  # resolve, so the MRO run is recorded
+                {rewrite}
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.mark.foo("base")
+        class TestBase:
+            pass
+
+        @pytest.mark.foo("child")
+        class TestChild(TestBase):
+            def test_it(self, request):
+                args = [m.args[0] for m in request.node.iter_markers("foo")]
+                assert args == {expected!r}
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_mark_class_own_markers_emptied_by_plugin(pytester: Pytester) -> None:
+    """A plugin rewriting ``own_markers`` must not make marker iteration splice
+    a stale MRO run back in (#14329)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.obj  # resolve, so the MRO run is recorded
+                collector.own_markers.clear()
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.foo(0)
+        class TestBase:
+            pass
+
+        @pytest.mark.foo(1)
+        class TestChild(TestBase):
+            def test_it(self, request):
+                assert list(request.node.iter_markers("foo")) == []
+        """
+    )
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 

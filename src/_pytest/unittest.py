@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from unittest import TestCase
 
 from _pytest import fixtures
+from _pytest import timing
 import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest.compat import assert_never
@@ -129,8 +130,6 @@ class UnitTestCase(Class):
         tearDownClass (#517)."""
         setup = getattr(cls, "setUpClass", None)
         teardown = getattr(cls, "tearDownClass", None)
-        if setup is None and teardown is None:
-            return None
         cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
         def process_teardown_exceptions() -> None:
@@ -202,7 +201,7 @@ class UnitTestCase(Class):
         setup = getattr(cls, "setup_method", None)
         teardown = getattr(cls, "teardown_method", None)
         if setup is None and teardown is None:
-            return None
+            return
 
         def unittest_setup_method_fixture(
             request: FixtureRequest,
@@ -443,12 +442,11 @@ class TestCaseFunction(Function):
             case unreachable:
                 assert_never(unreachable)
 
+        # unittest reports subtests after the fact, without timing.
         call_info = CallInfo[None](
-            None,
-            exception_info,
-            start=0,
-            stop=0,
-            duration=0,
+            result=None,
+            excinfo=exception_info,
+            duration=timing.UNMEASURED,
             when="call",
             _ispytest=True,
         )

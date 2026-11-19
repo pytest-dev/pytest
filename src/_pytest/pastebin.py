@@ -35,7 +35,7 @@ def pytest_addoption(parser: Parser) -> None:
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config: Config) -> None:
     if config.option.pastebin:
-        config.issue_config_time_warning(PASTEBIN, 2)
+        config.issue_config_time_warning(PASTEBIN.format(), 2)
 
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin("terminalreporter")

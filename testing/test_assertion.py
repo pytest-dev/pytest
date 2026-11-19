@@ -1,12 +1,15 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections import ChainMap
+from collections import UserDict
 from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import MutableSequence
 import dataclasses
 import sys
 import textwrap
+from types import MappingProxyType
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
@@ -1051,6 +1054,68 @@ class TestAssert_reprcompare:
             "Use -v to get more diff",
         ]
 
+    @pytest.mark.parametrize(
+        "wrap",
+        [
+            pytest.param(MappingProxyType, id="mappingproxy"),
+            pytest.param(ChainMap, id="chainmap"),
+            pytest.param(UserDict, id="userdict"),
+        ],
+    )
+    def test_stdlib_mapping_types(self, wrap) -> None:
+        """Non-dict stdlib mappings get the structured mapping diff."""
+        lines = callequal(wrap({"a": 0, "b": 1}), wrap({"a": 1, "b": 1, "c": 2}))
+
+        assert lines is not None
+        assert lines[2:] == [
+            "Omitting 1 identical items, use -vv to show",
+            "Differing items:",
+            "{'a': 0} != {'a': 1}",
+            "Right contains 1 more item:",
+            "{'c': 2}",
+            "Use -v to get more diff",
+        ]
+
+    def test_mapping_with_own_key_equivalence(self) -> None:
+        """Keys are matched up the way the mapping itself matches them.
+
+        A mapping is free to consider keys equivalent that do not compare
+        equal on their own, so the comparison goes through the key views
+        rather than through ``set()`` of the plain keys.
+        """
+
+        class CaseInsensitiveMapping(Mapping[str, int]):
+            """Keys are looked up case-insensitively but kept as given.
+
+            This is how ``requests.structures.CaseInsensitiveDict`` and
+            similar header mappings behave.
+            """
+
+            def __init__(self, values: dict[str, int]) -> None:
+                self._values = {k.lower(): (k, v) for k, v in values.items()}
+
+            def __getitem__(self, key: str) -> int:
+                return self._values[key.lower()][1]
+
+            def __iter__(self) -> Iterator[str]:
+                return (k for k, _ in self._values.values())
+
+            def __len__(self) -> int:  # pragma: no cover
+                return len(self._values)
+
+        lines = callequal(
+            CaseInsensitiveMapping({"content-type": 0, "accept": 1}),
+            CaseInsensitiveMapping({"Content-Type": 1, "Accept": 1}),
+        )
+
+        assert lines is not None
+        assert lines[2:] == [
+            "Omitting 1 identical items, use -vv to show",
+            "Differing items:",
+            "{'Content-Type': 0} != {'Content-Type': 1}",
+            "Use -v to get more diff",
+        ]
+
     def test_sequence_different_items(self) -> None:
         lines = callequal((1, 2), (3, 4, 5), verbose=2)
         assert lines == [
@@ -1136,7 +1201,7 @@ class TestAssert_reprcompare:
             def insert(self, index, value):
                 pass
 
-        expl = callequal(TestSequence([0, 1]), list([0, 2]))
+        expl = callequal(TestSequence([0, 1]), [0, 2])
         assert expl is not None
         assert len(expl) > 1
 

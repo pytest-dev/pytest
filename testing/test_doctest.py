@@ -272,6 +272,35 @@ class TestDoctests:
             ]
         )
 
+    @pytest.mark.parametrize("outcome", ["skip", "xfail"])
+    @pytest.mark.parametrize("continue_on_failure", [False, True])
+    def test_optionflags_restored_after_outcome(
+        self, pytester: Pytester, outcome: str, continue_on_failure: bool
+    ) -> None:
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            def first():
+                '''
+                >>> pytest.{outcome}("reason")  # doctest: -ELLIPSIS
+                '''
+
+            def second():
+                '''
+                >>> print("foobar")
+                foo...
+                '''
+            """
+        )
+        args = ["--doctest-modules"]
+        if continue_on_failure:
+            args.append("--doctest-continue-on-failure")
+        result = pytester.runpytest(*args)
+        result.assert_outcomes(
+            passed=1, skipped=int(outcome == "skip"), xfailed=int(outcome == "xfail")
+        )
+
     def test_docstring_partial_context_around_error(self, pytester: Pytester):
         """Test that we show some context before the actual line of a failing
         doctest.
@@ -678,6 +707,59 @@ class TestDoctests:
         )
         reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1, passed=1)
+
+    @pytest.mark.parametrize("continue_on_failure", [False, True])
+    @pytest.mark.parametrize("first_example", ["0.", "1 / 0"])
+    @pytest.mark.parametrize(
+        "optionflags, directive, second_example, second_output, passed",
+        [
+            pytest.param("ELLIPSIS", "+NUMBER", "1.", "0.", 0, id="enable-number"),
+            pytest.param(
+                "", "+ELLIPSIS", 'print("foobar")', "foo...", 0, id="enable-ellipsis"
+            ),
+            pytest.param(
+                "ELLIPSIS",
+                "-ELLIPSIS",
+                'print("foobar")',
+                "foo...",
+                1,
+                id="disable-ellipsis",
+            ),
+        ],
+    )
+    def test_optionflags_do_not_leak_between_docstrings(
+        self,
+        pytester: Pytester,
+        continue_on_failure: bool,
+        first_example: str,
+        optionflags: str,
+        directive: str,
+        second_example: str,
+        second_output: str,
+        passed: int,
+    ) -> None:
+        """A failing docstring must not change another's comparison options (#9924)."""
+        pytester.makeini(f"[pytest]\ndoctest_optionflags = {optionflags}")
+        pytester.makepyfile(
+            f"""
+            def first():
+                '''
+                >>> {first_example}  # doctest: {directive}
+                2.
+                '''
+
+            def second():
+                '''
+                >>> {second_example}
+                {second_output}
+                '''
+            """
+        )
+        args = ["--doctest-modules"]
+        if continue_on_failure:
+            args.append("--doctest-continue-on-failure")
+        result = pytester.runpytest(*args)
+        result.assert_outcomes(failed=2 - passed, passed=passed)
 
     def test_ignored_whitespace(self, pytester: Pytester):
         pytester.makeini(

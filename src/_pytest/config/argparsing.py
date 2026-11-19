@@ -6,6 +6,7 @@ from collections.abc import Callable
 from collections.abc import Sequence
 import dataclasses
 import os
+import re
 import sys
 import textwrap
 import types
@@ -568,14 +569,57 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         return ", ".join(return_list)
 
     def _split_lines(self, text: str, width: int) -> list[str]:
-        """Wrap lines after splitting on original newlines.
+        return _split_help_text(text, width)
 
-        This allows to have explicit line breaks in the help text.
-        """
-        lines = []
-        for line in text.splitlines():
-            lines.extend(textwrap.wrap(line.strip(), width))
-        return lines
+    def _format_action(self, action: argparse.Action) -> str:
+        # A blank line in a help text is padded out to the help column by
+        # argparse; strip the trailing whitespace that leaves behind.
+        return re.sub(
+            r"[ \t]+$", "", super()._format_action(action), flags=re.MULTILINE
+        )
+
+
+# A list item marker, e.g. "- ", "* ", "1. " or "(1) ".
+_BULLET = re.compile(r"^([-*+]|\(?\d+[.)])\s+")
+
+
+def _split_help_text(text: str, width: int) -> list[str]:
+    """Wrap help text to ``width`` while preserving its line structure.
+
+    Explicit line breaks are kept, so that a help text can use paragraphs and
+    lists instead of being reflowed into one blob (see #6817).  Each line keeps
+    its own indentation, and the continuation lines of a list item are indented
+    to hang under the item's text.
+    """
+    # Dedent the body, but not the first line: it usually sits inline after the
+    # opening quotes of a docstring-style help text, and so contributes no
+    # common indentation of its own.
+    first, newline, rest = text.partition("\n")
+    lines: list[str] = []
+    for line in (first.strip() + newline + textwrap.dedent(rest)).splitlines():
+        stripped = line.lstrip()
+        if not stripped:
+            lines.append("")
+            continue
+        indent = line[: len(line) - len(stripped)]
+        bullet = _BULLET.match(stripped)
+        subsequent_indent = indent + " " * len(bullet.group()) if bullet else indent
+        lines.extend(
+            textwrap.wrap(
+                stripped,
+                width,
+                initial_indent=indent,
+                subsequent_indent=subsequent_indent,
+                break_on_hyphens=False,
+            )
+        )
+    # Leading and trailing blank lines would only offset the text from the
+    # option it documents.
+    while lines and not lines[0]:
+        del lines[0]
+    while lines and not lines[-1]:
+        del lines[-1]
+    return lines
 
 
 class OverrideIniAction(argparse.Action):

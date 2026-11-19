@@ -6,6 +6,8 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import MutableMapping
+from collections.abc import Sequence
+import enum
 from functools import cached_property
 from functools import lru_cache
 import os
@@ -34,6 +36,8 @@ from _pytest.config import ConftestImportFailure
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
+from _pytest.nodeid import coerce_node_id
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.stash import Stash
@@ -48,6 +52,31 @@ if TYPE_CHECKING:
 
 
 SEP = "/"
+
+
+class MarkerOrder(enum.Enum):
+    """The orders :meth:`Node._iter_markers_with_node` can yield markers in.
+
+    A node's ``own_markers`` are stored farthest-first: a :class:`~pytest.Class`
+    stores its MRO base class first, a :class:`~pytest.Function` stores its
+    decorator marks before its parametrization marks. Marks stacked as
+    decorators on one object stay bottom-up in all three orders.
+    """
+
+    #: Closest node first, and each node's markers closest-first (a subclass'
+    #: before its base class'). For looking a marker up: the first match is
+    #: the one that applies (#14329). A Function's parametrization marks are
+    #: not moved ahead of its decorator marks; that waits on the
+    #: FunctionDefinition node owning the decorator marks (#14769).
+    CLOSEST_FIRST = enum.auto()
+    #: Closest node first, each node's markers as stored. For consumers that
+    #: compose markers and must keep the order they always composed in:
+    #: ``usefixtures`` and ``parametrize``.
+    STORED = enum.auto()
+    #: Farthest node first, each node's markers as stored, so a closer marker
+    #: always comes later. For consumers where the last marker applied wins:
+    #: ``filterwarnings`` (#10406).
+    FARTHEST_FIRST = enum.auto()
 
 
 def norm_sep(path: str | os.PathLike[str]) -> str:
@@ -135,7 +164,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     # Note that __dict__ is still available.
     __slots__ = (
         "__dict__",
-        "_nodeid",
+        "_id",
         "_store",
         "config",
         "name",
@@ -147,12 +176,12 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def __init__(
         self,
         name: str,
-        parent: Node | None = None,
+        parent: Collector | None = None,
         config: Config | None = None,
         session: Session | None = None,
         fspath: None = None,
         path: Path | None = None,
-        nodeid: str | None = None,
+        nodeid: NodeId | str | None = None,
     ) -> None:
         #: A unique name within the scope of the parent node.
         self.name: str = name
@@ -183,22 +212,37 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.path: pathlib.Path = path
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
-        #: Keywords/markers collected from all scopes.
+        #: Mapping of the names collected for this node and its parents: the
+        #: node names themselves, the names of the markers applied to them
+        #: (mapping to the :class:`~pytest.Mark`), and, for a test function,
+        #: its attributes and parametrization id.
+        #:
+        #: Mostly useful for ``"markname" in item.keywords`` checks. Note that
+        #: this mapping is not what ``-k`` matches against, so writing to it
+        #: does not affect test selection, and that it is unrelated to
+        #: :attr:`extra_keyword_matches`.
         self.keywords: MutableMapping[str, Any] = NodeKeywords(self)
 
         #: The marker objects belonging to this node.
         self.own_markers: list[Mark] = []
 
-        #: Allow adding of extra keywords to use for matching.
+        #: Extra names for ``-k`` to match this node and its children on.
         self.extra_keyword_matches: set[str] = set()
 
         if nodeid is not None:
-            assert "::()" not in nodeid
-            self._nodeid = nodeid
+            if not isinstance(nodeid, (NodeId, str)):  # pragma: no cover
+                raise ValueError(
+                    f"nodeid must be a NodeId, str, "
+                    f"or None, got {nodeid!r} (name={name}). Do not pass nodeid explicitly -- use "
+                    f"Node.from_parent() and let pytest compute it automatically."
+                )
+            # Accept nodeid as string for now because some downstream consumers
+            # (plugins defining custom Node subclasses) still pass nodeid as a plain string.
+            self._id = coerce_node_id(nodeid)
         else:
-            if not self.parent:
+            if not self.parent:  # pragma: no cover
                 raise TypeError("nodeid or parent must be provided")
-            self._nodeid = self.parent.nodeid + "::" + self.name
+            self._id = self.parent.id.child(self.name)
 
         #: A place where plugins can store information on the node for their
         #: own use.
@@ -207,7 +251,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self._store = self.stash
 
     @classmethod
-    def from_parent(cls, parent: Node, **kw) -> Self:
+    def from_parent(cls, parent: Collector, **kw) -> Self:
         """Public constructor for Nodes.
 
         This indirection got introduced in order to enable removing
@@ -272,10 +316,15 @@ class Node(abc.ABC, metaclass=NodeMeta):
     @property
     def nodeid(self) -> str:
         """A ::-separated string denoting its collection tree address."""
-        return self._nodeid
+        return str(self._id)
 
-    def __hash__(self) -> int:
-        return hash(self._nodeid)
+    @property
+    def id(self) -> NodeId:  # pragma: no cover
+        """The structured (non-string) form of :attr:`nodeid`.
+
+        :meta private:
+        """
+        return self._id
 
     def setup(self) -> None:
         pass
@@ -321,14 +370,24 @@ class Node(abc.ABC, metaclass=NodeMeta):
             marker_ = getattr(MARK_GEN, marker)
         else:
             raise ValueError("is not a string or pytest.mark.* Marker")
-        self.keywords[marker_.name] = marker_
+        self.keywords[marker_.name] = marker_.mark
         if append:
             self.own_markers.append(marker_.mark)
         else:
             self.own_markers.insert(0, marker_.mark)
 
+    def _extend_own_markers(self, marks: Sequence[Mark]) -> None:
+        """Append freshly unpacked markers to ``own_markers``.
+
+        A hook for nodes that need to remember where in ``own_markers`` those
+        markers landed (e.g. :class:`~pytest.Class`, for its MRO run).
+        """
+        self.own_markers.extend(marks)
+
     def iter_markers(self, name: str | None = None) -> Iterator[Mark]:
         """Iterate over all markers of the node.
+
+        The markers are returned from closest to farthest.
 
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of the markers of the node.
@@ -340,13 +399,42 @@ class Node(abc.ABC, metaclass=NodeMeta):
     ) -> Iterator[tuple[Node, Mark]]:
         """Iterate over all markers of the node.
 
+        The markers are returned from closest to farthest.
+
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
-        for node in self.iter_parents():
-            for mark in node.own_markers:
+        yield from self._iter_markers_with_node(name)
+
+    def _iter_markers_with_node(
+        self,
+        name: str | None = None,
+        *,
+        order: MarkerOrder = MarkerOrder.CLOSEST_FIRST,
+    ) -> Iterator[tuple[Node, Mark]]:
+        """Iterate over all markers of the node, as (node, mark) tuples,
+        in the given :class:`MarkerOrder`."""
+        nodes: Iterable[Node] = self.iter_parents()
+        if order is MarkerOrder.FARTHEST_FIRST:
+            nodes = reversed(list(nodes))
+        for node in nodes:
+            marks = (
+                node._iter_own_markers_closest_first()
+                if order is MarkerOrder.CLOSEST_FIRST
+                else node.own_markers
+            )
+            for mark in marks:
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
+
+    def _iter_own_markers_closest_first(self) -> Iterable[Mark]:
+        """Yield own markers in closest-first order.
+
+        For most nodes this is just own_markers in order.
+        Overridden by nodes whose own_markers contain markers from
+        multiple levels (e.g. Class nodes with MRO-inherited markers).
+        """
+        return self.own_markers
 
     @overload
     def get_closest_marker(self, name: str) -> Mark | None: ...
@@ -521,8 +609,7 @@ class Collector(Node, abc.ABC):
         if isinstance(excinfo.value, self.CollectError) and not self.config.getoption(
             "fulltrace", False
         ):
-            exc = excinfo.value
-            return str(exc.args[0])
+            return str(excinfo.value)
 
         # Respect explicit tbstyle option, but default to "short"
         # (_repr_failure_py uses "long" with "fulltrace" option always).
@@ -565,10 +652,10 @@ class FSCollector(Collector, abc.ABC):
         path_or_parent: Path | Node | None = None,
         path: Path | None = None,
         name: str | None = None,
-        parent: Node | None = None,
+        parent: Collector | None = None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: str | None = None,
+        nodeid: NodeId | None = None,
     ) -> None:
         if path_or_parent:
             if isinstance(path_or_parent, Node):
@@ -597,12 +684,16 @@ class FSCollector(Collector, abc.ABC):
 
         if nodeid is None:
             try:
-                nodeid = str(self.path.relative_to(session.config.rootpath))
+                path_str: str | None = str(
+                    self.path.relative_to(session.config.rootpath)
+                )
             except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
+                path_str = _check_initialpaths_for_relpath(session._initialpaths, path)
 
-            if nodeid:
-                nodeid = norm_sep(nodeid)
+            if path_str:
+                path_str = norm_sep(path_str)
+            if path_str is not None:
+                nodeid = NodeId(path=path_str)
 
         super().__init__(
             name=name,
@@ -665,7 +756,7 @@ class Item(Node, abc.ABC):
         parent=None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: str | None = None,
+        nodeid: NodeId | str | None = None,
         **kw,
     ) -> None:
         # The first two arguments are intentionally passed positionally,

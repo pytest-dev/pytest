@@ -162,3 +162,13 @@ def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
+
+
+@pytest.mark.parametrize("args, expected", [((), ""), (("msg",), "msg")])
+def test_collector_repr_failure_collect_error(
+    pytester: Pytester, args: tuple[str, ...], expected: str
+) -> None:
+    col = pytester.getmodulecol("")
+    with pytest.raises(col.CollectError) as excinfo:
+        raise col.CollectError(*args)
+    assert col.repr_failure(excinfo) == expected
