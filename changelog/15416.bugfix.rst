@@ -1,0 +1,1 @@
+Fixed pytest failing at the end of the session on Windows when the ``tmp_path`` symlinks cannot be followed, for example when the process runs with RedirectionGuard enabled (``WinError 448``).
