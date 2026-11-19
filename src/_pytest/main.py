@@ -148,6 +148,13 @@ def pytest_addoption(parser: Parser) -> None:
         type=int | str,
         default=None,
     )
+    parser.addini(
+        "error_later_report",
+        default="test",
+        help="What an 'error_later' warning filter fails: "
+        "'test' fails the test that emitted the warning, "
+        "'session' lists them and fails at the end of the session",
+    )
 
     group = parser.getgroup("collect", "collection")
     group.addoption(
