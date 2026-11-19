@@ -1282,8 +1282,13 @@ class FixtureDef(Generic[FixtureValue]):
         # We make sure to do this after checking for cached value to avoid
         # adding our finalizer multiple times. (#12135)
         finalizer = functools.partial(self.finish, request=request)
-        for parent_fixture in requested_fixtures_that_should_finalize_us:
-            parent_fixture.addfinalizer(finalizer)
+        # Function-scoped fixtures are always torn down by SetupState at the end
+        # of each test, before any higher-scoped fixture can be torn down or
+        # invalidated, so registering with requested fixtures is not needed and
+        # would only accumulate finalizers on them (#4871).
+        if self._scope is not Scope.Function:
+            for parent_fixture in requested_fixtures_that_should_finalize_us:
+                parent_fixture.addfinalizer(finalizer)
 
         # Register the pytest_fixture_post_finalizer as the first finalizer,
         # which is executed last.
