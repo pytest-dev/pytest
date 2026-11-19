@@ -15,6 +15,11 @@ from _pytest.tracemalloc import tracemalloc_message
 import pytest
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 @contextmanager
 def catch_warnings_for_item(
     config: Config,

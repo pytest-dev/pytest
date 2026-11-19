@@ -38,6 +38,11 @@ if TYPE_CHECKING:
     import pexpect
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 @final
 class Testdir:
     """
