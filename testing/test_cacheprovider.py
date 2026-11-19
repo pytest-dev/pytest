@@ -1169,6 +1169,10 @@ class TestLastFailed:
         )
         assert result.ret == 0
 
+        result = pytester.runpytest("--lf", "--lfnf=none")
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
+        result.assert_outcomes(deselected=1)
+
     def test_packages(self, pytester: Pytester) -> None:
         """Regression test for #7758.
 

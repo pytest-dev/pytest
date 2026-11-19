@@ -1,0 +1,1 @@
+``--lf --lfnf=none`` now deselects all tests when none of the selected tests match a cached failure, including when a failing test was removed.

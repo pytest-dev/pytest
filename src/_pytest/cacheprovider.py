@@ -400,6 +400,12 @@ class LFPlugin:
                 self._report_status = (
                     f"{len(self.lastfailed)} known failures not in selected tests"
                 )
+                if (
+                    config.getoption("lf")
+                    and config.getoption("last_failed_no_failures") == "none"
+                ):
+                    config.hook.pytest_deselected(items=previously_passed)
+                    items.clear()
             else:
                 if self.config.getoption("lf"):
                     items[:] = previously_failed
