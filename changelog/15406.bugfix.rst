@@ -1,0 +1,1 @@
+Fixed quadratic slowdown of the ``-rP``/``-rX`` and failure summaries in large test suites, caused by rescanning all teardown reports for every test.
