@@ -1959,7 +1959,10 @@ class FixtureManager:
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures visible to node."""
-        for marker_node, mark in node.iter_markers_with_node(name="usefixtures"):
+        # A base class' usefixtures keep being requested before a subclass'.
+        for marker_node, mark in node._iter_markers_with_node(
+            name="usefixtures", order=nodes.MarkerOrder.STORED
+        ):
             if not mark.args:
                 marker_node.warn(
                     PytestWarning(
