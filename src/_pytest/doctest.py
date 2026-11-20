@@ -499,6 +499,14 @@ class DoctestModule(Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
+            def _is_routine(self, obj: object) -> bool:
+                """Stop unwrapping at mock objects: ``mock.call.__wrapped__``
+                is always a new object, so the stdlib unwraps it up to
+                ``sys.getrecursionlimit()`` (#15333)."""
+                with _patch_unwrap_mock_aware():
+                    # Type ignored because this is a private function.
+                    return super()._is_routine(obj)  # type:ignore[misc,no-any-return]
+
             py_ver_info_minor = sys.version_info[:2]
             is_find_lineno_broken = (
                 py_ver_info_minor < (3, 11)
