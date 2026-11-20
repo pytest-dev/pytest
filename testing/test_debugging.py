@@ -1382,12 +1382,8 @@ def test_pdbcls_via_local_module(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*runcall_called*", "* 1 passed in *"])
 
 
-@pytest.mark.xfail(
-    sys.version_info >= (3, 14),
-    reason="C-D now quits the test session, rather than failing the test. See https://github.com/python/cpython/issues/124703",
-)
 def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
-    """It is not guaranteed that DontReadFromInput's read is called."""
+    """BdbQuit from Ctrl+D / EOFError should fail the current test and stop the session."""
     p1 = pytester.makepyfile(
         """
         def input_without_read(*args, **kwargs):
@@ -1397,12 +1393,34 @@ def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
             import builtins
             monkeypatch.setattr(builtins, "input", input_without_read)
             __import__('pdb').set_trace()
+
+        def test_after_bdbquit():
+            # This test should not run because BdbQuit stops the session.
+            pass
         """
     )
-    result = pytester.runpytest(str(p1))
+    # Out of process: bdb's set_quit() calls sys.settrace(None), which would
+    # switch coverage off for the rest of this test.
+    result = pytester.runpytest_subprocess(str(p1))
+    result.stdout.fnmatch_lines(["E *BdbQuit", "*Interrupted: Debugger quit*"])
     result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["E *BdbQuit", "*= 1 failed in*"])
-    assert result.ret == 1
+    assert result.ret == 2
+
+
+def test_pdb_wrapper_do_eof_sets_quit(monkeypatch: MonkeyPatch) -> None:
+    """The test above runs out of process, so this covers do_EOF in-process.
+    set_quit() is stubbed because it calls sys.settrace(None)."""
+    import io
+    import pdb  # noqa: T100
+
+    from _pytest.debugging import pytestPDB
+
+    wrapper_cls = pytestPDB._get_pdb_wrapper_class(pdb.Pdb, None)
+    p = wrapper_cls(stdout=io.StringIO())
+    calls = []
+    monkeypatch.setattr(p, "set_quit", lambda: calls.append(True))
+    assert p.do_EOF("") == 1
+    assert calls == [True]
 
 
 def test_pdb_wrapper_class_is_reused(pytester: Pytester) -> None:
