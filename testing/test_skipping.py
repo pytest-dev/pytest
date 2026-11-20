@@ -1056,6 +1056,53 @@ def test_skipif_class(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*2 skipped*"])
 
 
+def test_xfail_subclass_mark_beats_base_class(pytester: Pytester) -> None:
+    """A subclass' ``xfail`` shadows its base class', the way a method's
+    already shadowed its class' (#14329).
+
+    Before #14329 the base class' strict ``xfail`` won, failing the test.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail(strict=True, raises=ValueError)
+        class TestBase:
+            pass
+
+        @pytest.mark.xfail(reason="child")
+        class TestChild(TestBase):
+            def test_unexpected_pass(self):
+                pass
+        """
+    )
+    result = pytester.runpytest("-rX")
+    result.assert_outcomes(xpassed=1)
+    result.stdout.fnmatch_lines(["XPASS*test_unexpected_pass - child"])
+
+
+def test_skipif_subclass_mark_beats_base_class(pytester: Pytester) -> None:
+    """The first ``skipif`` evaluated is the subclass', so its reason is the
+    one reported (#14329)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.skipif(True, reason="base")
+        class TestBase:
+            pass
+
+        @pytest.mark.skipif(True, reason="child")
+        class TestChild(TestBase):
+            def test_it(self):
+                pass
+        """
+    )
+    result = pytester.runpytest("-rs")
+    result.assert_outcomes(skipped=1)
+    result.stdout.fnmatch_lines(["SKIPPED*child"])
+
+
 def test_skipped_reasons_functional(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_one="""
@@ -1569,16 +1616,17 @@ def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines("*_pytest.outcomes.Exit: foo*")
 
 
-@pytest.mark.parametrize(
-    "reason",
-    [
-        "sys.version_info < (3, 6)",
-        "sys.platform.startswith('win')",
-        "os.name == 'nt'",
-    ],
-)
+SUSPECT_REASONS = [
+    "sys.version_info < (3, 6)",
+    "sys.platform.startswith('win')",
+    "os.name == 'nt'",
+]
+
+
+@pytest.mark.parametrize("reason", SUSPECT_REASONS)
 def test_skip_reason_looks_like_condition_warns(
-    pytester: Pytester, reason: str
+    pytester: Pytester,
+    reason: str,
 ) -> None:
     pytester.makepyfile(
         f"""
@@ -1591,9 +1639,30 @@ def test_skip_reason_looks_like_condition_warns(
     )
     result = pytester.runpytest("-W", "default::pytest.PytestWarning")
     result.stdout.fnmatch_lines(
-        ["*looks like a condition*Did you mean pytest.mark.skipif?"]
+        [
+            "*looks like a condition*Did you mean pytest.mark.skipif ?",
+            "*If intentional, pass reason as a keyword argument to disable this warning.",
+        ]
     )
     result.assert_outcomes(skipped=1, warnings=1)
+
+
+@pytest.mark.parametrize("reason", SUSPECT_REASONS)
+def test_skip_reason_looks_like_condition_kwarg(
+    pytester: Pytester,
+    reason: str,
+) -> None:
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.mark.skip({reason=!r})
+        def test_func():
+            pass
+        """
+    )
+    result = pytester.runpytest("-W", "default::pytest.PytestWarning")
+    result.assert_outcomes(skipped=1, warnings=0)
 
 
 @pytest.mark.parametrize(
