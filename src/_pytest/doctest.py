@@ -508,6 +508,23 @@ class DoctestModule(Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
+            def _find(
+                self, tests, obj, name, module, source_lines, globs, seen
+            ) -> None:
+                """Override _find to work around issue in stdlib.
+
+                https://github.com/pytest-dev/pytest/issues/3456
+                https://github.com/pytest-dev/pytest/issues/15333
+                https://github.com/python/cpython/issues/69718
+                """
+                if _is_mocked(obj):
+                    return
+                with _patch_unwrap_mock_aware():
+                    # Type ignored because this is a private function.
+                    super()._find(  # type:ignore[misc]
+                        tests, obj, name, module, source_lines, globs, seen
+                    )
+
             py_ver_info_minor = sys.version_info[:2]
             is_find_lineno_broken = (
                 py_ver_info_minor < (3, 11)

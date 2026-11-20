@@ -1,0 +1,1 @@
+Avoid deep unwrapping recursion and runaway memory usage during doctest collection on modules importing ``unittest.mock.call`` when recursion limit is elevated (:issue:`15333`).

@@ -1812,6 +1812,30 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, pytester: Py
     result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
+def test_doctest_mock_call_elevated_recursion_limit(pytester: Pytester) -> None:
+    """Ensure MockAwareDocTestFinder avoids deep unwrap recursion on mock.call
+
+    https://github.com/pytest-dev/pytest/issues/15333
+    """
+    pytester.makeconftest(
+        """
+        import sys
+        sys.setrecursionlimit(10_000)
+        """
+    )
+    pytester.makepyfile(
+        """
+        '''
+        >>> 1
+        1
+        '''
+        from unittest.mock import call
+        """
+    )
+    result = pytester.runpytest("--doctest-modules")
+    result.stdout.fnmatch_lines(["* 1 passed *"])
+
+
 class Broken:
     def __getattr__(self, _):
         raise KeyError("This should be an AttributeError")
