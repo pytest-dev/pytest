@@ -397,7 +397,13 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
 def cleanup_dead_symlinks(root: Path) -> None:
     for left_dir in root.iterdir():
         if left_dir.is_symlink():
-            if not left_dir.resolve().exists():
+            try:
+                target = left_dir.resolve()
+            except OSError:
+                # The link cannot be followed, for example on Windows with
+                # RedirectionGuard enabled (WinError 448). Leave it alone.
+                continue
+            if not target.exists():
                 left_dir.unlink()
 
 
