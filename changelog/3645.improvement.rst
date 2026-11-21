@@ -1,0 +1,1 @@
+Invalid arguments to :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` -- for example a misspelled keyword or missing ``argvalues`` -- are now reported with a short message naming the test and the expected signature, instead of a ``TypeError`` about pytest internals with a long traceback.
