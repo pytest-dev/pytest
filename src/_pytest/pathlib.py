@@ -158,9 +158,11 @@ def on_rm_rf_error(
         return False
 
     # Chmod + retry.
-    # For files, we need to recursively go upwards in the directories to
-    # ensure they all are also accessible and writable.
-    if p.is_file():
+    # For files and directories, we need to recursively go upwards in the
+    # directories to ensure they all are also accessible and writable. In
+    # particular, os.rmdir on an empty directory fails when its parent is not
+    # writable, so chmod-ing only the leaf is not sufficient.
+    if p.is_file() or p.is_dir():
         for parent in p.parents:  # pragma: no branch
             _chmod_rwx(str(parent))
             # Stop when we reach the original path passed to rm_rf.
@@ -168,7 +170,11 @@ def on_rm_rf_error(
                 break
     _chmod_rwx(str(path))
 
-    func(path)
+    try:
+        func(path)
+    except OSError:
+        # A stubborn entry must not abort removal of the rest of the tree.
+        return False
     return True
 
 

@@ -1,0 +1,1 @@
+Clean up temporary directories when an empty directory has a read-only parent.
