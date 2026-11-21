@@ -1,0 +1,1 @@
+Pytest now clears pending fixture finalizers when fixture setup fails before a result is cached, allowing later parametrized values to run without an internal assertion.
