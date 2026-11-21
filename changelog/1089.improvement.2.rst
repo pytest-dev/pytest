@@ -1,0 +1,9 @@
+The cache entries backing ``--lf``/``--ff``, ``--nf`` and ``--sw`` are now pinned to the environment they
+were recorded in, using the new :attr:`CacheScope.ENV <pytest.CacheScope.ENV>` scope.
+
+Running the same project under several environments - a tox or nox matrix, or simply two virtualenvs - no
+longer has each run overwrite the previous one's last-failed set, without needing a separate cache
+directory per environment.
+
+Existing ``lastfailed``, ``nodeids`` and ``stepwise`` cache entries are not migrated, so the first run
+after upgrading behaves as if the cache were empty.

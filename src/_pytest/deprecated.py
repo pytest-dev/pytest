@@ -177,6 +177,14 @@ TERMINAL_WRITE_LINE_BYTES = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-write-line-bytes",
 )
 
+CACHE_DIR_OUTSIDE_ROOTDIR = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "cache_dir {cachedir} is not inside the rootdir {rootdir}.\n"
+    "A cache directory outside the rootdir, or the rootdir itself or one of its "
+    "parents, is deprecated.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#cache-dir-outside-rootdir",
+)
+
 
 def check_ispytest(ispytest: bool) -> None:
     if not ispytest:
