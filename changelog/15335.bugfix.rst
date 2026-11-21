@@ -1,0 +1,1 @@
+Fixed ``pytest.approx()`` raising ``decimal.InvalidOperation`` instead of comparing unequal when the actual value is a Decimal NaN.
