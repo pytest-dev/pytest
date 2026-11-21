@@ -623,6 +623,7 @@ class Session(nodes.Collector):
         self._notfound: list[tuple[str, Sequence[nodes.Collector]]] = []
         self._initial_parts: list[CollectionArgument] = []
         self._collection_cache: dict[nodes.Collector, CollectReport] = {}
+        self._repeated_file_arguments: set[Path] = set()
         self.items: list[nodes.Item] = []
 
         self._bestrelpathcache: dict[Path, str] = _bestrelpath_cache(config.rootpath)
@@ -816,6 +817,7 @@ class Session(nodes.Collector):
         self._notfound = []
         self._initial_parts = []
         self._collection_cache = {}
+        self._repeated_file_arguments = set()
         self.items = []
         items: Sequence[nodes.Item | nodes.Collector] = self.items
         consider_namespace_packages: bool = self.config.getini(
@@ -841,6 +843,21 @@ class Session(nodes.Collector):
                 self._initial_parts = normalize_collection_arguments(collection_args)
             else:
                 self._initial_parts = collection_args
+
+            # Explicit file argument paths that occur in more than one of the
+            # initial arguments (--keepduplicates, or the same file selected
+            # with different parts) re-collect their parent level fresh, per
+            # occurrence, in Session.collect. Identical path-sharing of file
+            # arguments collected exactly once reuses the level's collection
+            # report instead (#15221).
+            file_argument_counts: dict[Path, int] = {}
+            for collection_argument in self._initial_parts:
+                if collection_argument.path.is_file():
+                    path = collection_argument.path
+                    file_argument_counts[path] = file_argument_counts.get(path, 0) + 1
+            self._repeated_file_arguments = {
+                path for path, count in file_argument_counts.items() if count > 1
+            }
 
             for collection_argument in self._initial_parts:
                 initialpaths.append(collection_argument.path)
@@ -879,6 +896,7 @@ class Session(nodes.Collector):
             self._notfound = []
             self._initial_parts = []
             self._collection_cache = {}
+            self._repeated_file_arguments = set()
             hook.pytest_collection_finish(session=self)
 
         if genitems:
@@ -992,12 +1010,46 @@ class Session(nodes.Collector):
                 else:
                     # For backward compat, files given directly multiple
                     # times on the command line should not be deduplicated.
-                    handle_dupes = not (
-                        len(matchparts) == 1
-                        and isinstance(matchparts[0], Path)
-                        and matchparts[0].is_file()
+                    file_argument: Path | None = (
+                        matchparts[0]
+                        if (
+                            len(matchparts) == 1
+                            and isinstance(matchparts[0], Path)
+                            and matchparts[0].is_file()
+                        )
+                        else None
                     )
-                    rep, duplicate = self._collect_one_node(matchnode, handle_dupes)
+                    if file_argument is None:
+                        rep, duplicate = self._collect_one_node(matchnode)
+                    elif file_argument in self._repeated_file_arguments:
+                        # The file path occurs in more than one initial
+                        # argument (--keepduplicates, or the same file
+                        # selected with different parts): collect this
+                        # occurrence from scratch, as before, so the file is
+                        # not deduplicated (#15221).
+                        rep, duplicate = self._collect_one_node(
+                            matchnode, handle_dupes=False
+                        )
+                    else:
+                        # This file path is collected exactly once: reuse
+                        # this level's cached report instead of re-collecting
+                        # the whole level for each explicit file argument.
+                        # The node ids and their order are unchanged, and the
+                        # file itself is not deduplicated (#15221).
+                        if (
+                            matchnode in self._collection_cache
+                            and not self._collection_cache[matchnode].passed
+                        ):
+                            # A previously cached report for this level
+                            # failed: re-collect from scratch, as it would
+                            # have been before successful reports were
+                            # reused, so the failure and its report are
+                            # unchanged.
+                            rep, duplicate = self._collect_one_node(
+                                matchnode, handle_dupes=False
+                            )
+                        else:
+                            rep, duplicate = self._collect_one_node(matchnode)
                     if not duplicate and not rep.passed:
                         # Report collection failures here to avoid failing to
                         # run some test specified in the command line because
