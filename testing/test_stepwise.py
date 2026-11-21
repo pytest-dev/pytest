@@ -543,3 +543,39 @@ def test_cache_error(pytester: Pytester) -> None:
             "* 1 passed in *",
         ]
     )
+
+
+def test_continue_from_test_interrupted_by_quitting_debugger(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Quitting the debugger interrupts the session without a failed report,
+    --stepwise should continue from that test next time (#10562)."""
+    pytester.makepyfile(
+        """
+        import os
+        import pytest
+
+        def test_1(): pass
+
+        def test_2():
+            if os.environ.get("QUIT_DEBUGGER"):
+                # What pytest does when "q" is used in the debugger.
+                pytest.exit("Quitting debugger")
+
+        def test_3(): pass
+        """
+    )
+    monkeypatch.setenv("QUIT_DEBUGGER", "1")
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(["*::test_1 *PASSED*", "*Quitting debugger*"])
+
+    monkeypatch.delenv("QUIT_DEBUGGER")
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "stepwise: skipping 1 already passed items (cache from *, use --sw-reset to discard).",
+            "*::test_2 *PASSED*",
+            "*::test_3 *PASSED*",
+            "* 2 passed, 1 deselected in *",
+        ]
+    )
