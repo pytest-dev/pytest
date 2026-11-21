@@ -1,0 +1,3 @@
+Fixture finalizers registered with ``request.addfinalizer()`` now run even if
+fixture setup is interrupted after registration, including by
+``KeyboardInterrupt`` or an exception from a ``pytest_fixture_setup`` hook.
