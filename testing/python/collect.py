@@ -124,7 +124,7 @@ class TestModule:
                 "*cannot import name *NOT_AVAILABLE*",
             ]
         )
-        assert result.ret == 2
+        assert result.ret == ExitCode.COLLECTION_ERROR
 
         stdout = result.stdout.str()
         if verbose == 2:
@@ -145,7 +145,7 @@ class TestModule:
                 "*raise ImportError*Something bad happened*",
             ]
         )
-        assert result.ret == 2
+        assert result.ret == ExitCode.COLLECTION_ERROR
 
 
 class TestClass:
@@ -1495,7 +1495,7 @@ def test_collect_error_with_fulltrace(pytester: Pytester) -> None:
             "E   assert 0",
             "",
             "test_collect_error_with_fulltrace.py:1: AssertionError",
-            "*! Interrupted: 1 error during collection !*",
+            "*! CollectionInterrupted: 1 error during collection !*",
         ]
     )
 
