@@ -32,6 +32,7 @@ from _pytest.main import Session
 from _pytest.nodeid import NodeId
 from _pytest.nodes import Directory
 from _pytest.nodes import File
+from _pytest.python import Class
 from _pytest.reports import TestReport
 
 
@@ -277,12 +278,12 @@ class LFPluginCollWrapper:
                 reverse=True,
             )
 
-        elif isinstance(collector, File):
+        elif isinstance(collector, File | Class):
             if collector.path in self.lfplugin._last_failed_paths:
                 result = res.result
                 lastfailed = self.lfplugin.lastfailed
 
-                # Only filter with known failures.
+                # Only skip files after collecting a known failure.
                 if not self._collected_at_least_one_failure:
                     if not any(x.id in lastfailed for x in result):
                         return res
