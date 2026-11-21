@@ -1,0 +1,1 @@
+Fixed a crash (``TypeError``) when running ``pytest --fixtures`` if the same fixture function was registered under two nodes.
