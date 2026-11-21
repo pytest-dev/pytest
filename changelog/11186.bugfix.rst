@@ -1,0 +1,2 @@
+Fixed the terminal reporting a nonexistent test path when a configuration file
+sets the root directory outside the collected test files.
