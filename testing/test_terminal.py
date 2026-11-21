@@ -6,6 +6,7 @@ from __future__ import annotations
 from io import StringIO
 import os
 from pathlib import Path
+import re
 import sys
 import textwrap
 from types import SimpleNamespace
@@ -1407,6 +1408,27 @@ def test_fail_extra_reporting(
             f"FAILED test_fail_extra_reporting.py::test_this {expected_message}",
         ]
     )
+
+
+def test_fail_extra_reporting_truncation_with_color(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """The short summary line is trimmed to the terminal width also when
+    color is enabled: the escape codes of the markup take no columns."""
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.setenv("COLUMNS", "80")
+    pytester.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
+
+    def summary_lines(*args: str) -> list[str]:
+        result = pytester.runpytest(*args)
+        lines = [re.sub(r"\x1b\[[\d;]*m", "", line) for line in result.stdout.lines]
+        return [line for line in lines if line.startswith("FAILED ")]
+
+    expected = summary_lines("--color=no")
+    assert len(expected) == 1
+    assert expected[0].endswith(" - Assert...")
+    assert len(expected[0]) == 80
+    assert summary_lines("--color=yes") == expected
 
 
 def test_fail_reporting_on_pass(pytester: Pytester) -> None:
