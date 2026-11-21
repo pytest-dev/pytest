@@ -1,0 +1,5 @@
+Added :meth:`Node.traceback_filter <_pytest.nodes.Node.traceback_filter>` for customizing
+failure tracebacks without replacing standard failure formatting, and exported
+:class:`pytest.Traceback` and :class:`pytest.TracebackEntry` for type annotations.
+Existing ``_traceback_filter`` overrides remain supported; the public method takes
+precedence when both are overridden. Default filtering behavior is unchanged.
