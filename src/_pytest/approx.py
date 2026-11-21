@@ -431,6 +431,9 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         for i, (approx_value, other_value) in enumerate(
             zip(approx_side_as_map, other_side, strict=True)
         ):
+            # Unbox numpy scalars first: e.g. `0 - np.uint8(1)` wraps around
+            # to 255 instead of -1 (see #15314).
+            other_value = _unbox_numpy_scalar(other_value)
             if approx_value != other_value:
                 try:
                     abs_diff = abs(approx_value.expected - other_value)
@@ -477,7 +480,7 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
-        return zip(actual, self.expected, strict=True)
+        return zip((_unbox_numpy_scalar(a) for a in actual), self.expected, strict=True)
 
 
 class ApproxScalar(Approx[ExpectedT]):
