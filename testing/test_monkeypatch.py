@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import importlib
 import os
 from pathlib import Path
 import re
@@ -53,6 +54,46 @@ def test_setattr() -> None:
 
 
 class TestSetattrWithImportPath:
+    @pytest.mark.parametrize("operation", ["setattr", "delattr"])
+    @pytest.mark.parametrize("exposure", ["normal", "missing", "shadowed"])
+    def test_cached_submodule(
+        self,
+        pytester: Pytester,
+        monkeypatch: MonkeyPatch,
+        operation: str,
+        exposure: str,
+    ) -> None:
+        package_path = pytester.mkpydir("cached_module_package")
+        package_path.joinpath("child.py").write_text("value = 1", encoding="utf-8")
+        pytester.syspathinsert()
+        child = importlib.import_module("cached_module_package.child")
+        package = importlib.import_module("cached_module_package")
+        target = package.child
+        if exposure == "missing":
+            monkeypatch.delattr(package, "child")
+        elif exposure == "shadowed":
+
+            class Shadow:
+                value = 1
+
+            monkeypatch.setattr(package, "child", Shadow)
+            target = Shadow
+
+        with monkeypatch.context() as mp:
+            if operation == "setattr":
+                mp.setattr("cached_module_package.child.value", 2)
+                assert target.value == 2
+            else:
+                mp.delattr("cached_module_package.child.value")
+                assert not hasattr(target, "value")
+
+            if exposure == "shadowed":
+                assert child.value == 1
+
+        assert target.value == 1
+        if exposure == "missing":
+            assert not hasattr(package, "child")
+
     def test_string_expression(self, monkeypatch: MonkeyPatch) -> None:
         with monkeypatch.context() as mp:
             mp.setattr("os.path.abspath", lambda x: "hello2")
