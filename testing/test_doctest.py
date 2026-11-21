@@ -7,9 +7,9 @@ from pathlib import Path
 import sys
 import textwrap
 
+from _pytest.compat import _is_mocked
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
-from _pytest.doctest import _is_mocked
 from _pytest.doctest import _is_setup_py
 from _pytest.doctest import _patch_unwrap_mock_aware
 from _pytest.doctest import DoctestItem
