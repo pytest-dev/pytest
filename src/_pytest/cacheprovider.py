@@ -455,18 +455,18 @@ class NFPlugin:
         res = yield
 
         if self.active:
-            new_items: dict[NodeId, nodes.Item] = {}
-            other_items: dict[NodeId, nodes.Item] = {}
+            new_items: list[nodes.Item] = []
+            other_items: list[nodes.Item] = []
             for item in items:
                 if item.id not in self.cached_nodeids:
-                    new_items[item.id] = item
+                    new_items.append(item)
                 else:
-                    other_items[item.id] = item
+                    other_items.append(item)
 
             items[:] = self._get_increasing_order(
-                new_items.values()
-            ) + self._get_increasing_order(other_items.values())
-            self.cached_nodeids.update(new_items)
+                new_items
+            ) + self._get_increasing_order(other_items)
+            self.cached_nodeids.update(item.id for item in new_items)
         else:
             self.cached_nodeids.update(item.id for item in items)
 
