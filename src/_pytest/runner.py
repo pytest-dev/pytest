@@ -115,8 +115,12 @@ def pytest_sessionfinish(session: Session) -> None:
 def pytest_runtest_protocol(item: Item, nextitem: Item | None) -> bool:
     ihook = item.ihook
     ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
-    runtestprotocol(item, nextitem=nextitem)
-    ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
+    try:
+        runtestprotocol(item, nextitem=nextitem)
+    finally:
+        # Exit and KeyboardInterrupt propagate out of runtestprotocol (see
+        # get_reraise_exceptions); still pair every logstart with a logfinish.
+        ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
     return True
 
 
