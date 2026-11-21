@@ -1,0 +1,2 @@
+Fixed indirect parametrizations with different scopes reusing a fixture value
+when their parameter values compared equal.
