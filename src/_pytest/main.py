@@ -1043,6 +1043,8 @@ class Session(nodes.Collector):
 
             if not any_matched_in_initial_part:
                 report_arg = "::".join((str(argpath), *names))
+                if parametrization is not None:
+                    report_arg += parametrization
                 self._notfound.append((report_arg, notfound_collectors))
 
             self.trace.root.indent -= 1
