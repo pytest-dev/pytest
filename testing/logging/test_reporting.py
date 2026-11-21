@@ -1334,6 +1334,30 @@ def test_log_propagation_false(pytester: Pytester) -> None:
     assert not list(report.get_sections("Captured stderr call"))
 
 
+def test_live_log_once_when_non_propagating_logger_starts_propagating(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("i15064.live")
+        logger.propagate = False
+
+        def test_log():
+            logger.propagate = True
+            logger.warning("only once")
+        """
+    )
+    log_file = pytester.path / "pytest.log"
+    result = pytester.runpytest(
+        "--log-cli-level=WARNING", f"--log-file={log_file}", "--log-file-level=WARNING"
+    )
+    result.assert_outcomes(passed=1)
+    assert result.stdout.str().count("only once") == 1
+    assert log_file.read_text(encoding="utf-8").count("only once") == 1
+
+
 def test_colored_ansi_esc_caplogtext(pytester: Pytester) -> None:
     """Make sure that caplog.text does not contain ANSI escape sequences."""
     pytester.makepyfile(
