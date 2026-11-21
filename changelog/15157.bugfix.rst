@@ -1,0 +1,3 @@
+Fix string-based :meth:`pytest.MonkeyPatch.setattr` and
+:meth:`pytest.MonkeyPatch.delattr` for cached submodules whose attribute is missing
+from the parent package.

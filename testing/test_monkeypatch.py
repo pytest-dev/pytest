@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import importlib
 import os
 from pathlib import Path
 import re
@@ -53,6 +54,29 @@ def test_setattr() -> None:
 
 
 class TestSetattrWithImportPath:
+    @pytest.mark.parametrize("operation", ["setattr", "delattr"])
+    def test_cached_module_without_parent_attribute(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch, operation: str
+    ) -> None:
+        package_path = pytester.mkdir("cached_target_package")
+        (package_path / "__init__.py").write_text("", encoding="utf-8")
+        (package_path / "child.py").write_text("value = 1", encoding="utf-8")
+        monkeypatch.syspath_prepend(str(pytester.path))
+        child = importlib.import_module("cached_target_package.child")
+        package = importlib.import_module("cached_target_package")
+        monkeypatch.delattr(package, "child")
+
+        # A cached module is still importable without its parent attribute.
+        assert importlib.import_module("cached_target_package.child") is child
+        with monkeypatch.context() as mp:
+            if operation == "setattr":
+                mp.setattr("cached_target_package.child.value", 2)
+                assert child.value == 2
+            else:
+                mp.delattr("cached_target_package.child.value")
+                assert not hasattr(child, "value")
+        assert child.value == 1
+
     def test_string_expression(self, monkeypatch: MonkeyPatch) -> None:
         with monkeypatch.context() as mp:
             mp.setattr("os.path.abspath", lambda x: "hello2")
