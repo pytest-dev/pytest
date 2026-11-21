@@ -22,7 +22,7 @@ import pytest
 
 class HelpAction(argparse.Action):
     """An argparse Action that will raise a PrintHelp exception in order to skip
-    the rest of the argument parsing when --help is passed.
+    the rest of the argument parsing when a help option is passed.
 
     This prevents argparse from raising UsageError when `--help` is used along
     with missing required arguments when any are defined, for example by
@@ -33,17 +33,11 @@ class HelpAction(argparse.Action):
     `namespace._raise_print_help = True`. Otherwise it just sets the option.
     """
 
-    def __init__(
-        self, option_strings: Sequence[str], dest: str, *, help: str | None = None
-    ) -> None:
-        super().__init__(
-            option_strings=option_strings,
-            dest=dest,
-            nargs=0,
-            const=True,
-            default=False,
-            help=help,
-        )
+    def __init__(self, option_strings: Sequence[str], dest: str, **kwargs: Any) -> None:
+        kwargs.setdefault("nargs", 0)
+        kwargs.setdefault("const", True)
+        kwargs.setdefault("default", False)
+        super().__init__(option_strings, dest, **kwargs)
 
     def __call__(
         self,
@@ -52,7 +46,9 @@ class HelpAction(argparse.Action):
         values: str | Sequence[Any] | None,
         option_string: str | None = None,
     ) -> None:
-        setattr(namespace, self.dest, self.const)
+        value = self.const if self.nargs == 0 else values
+        setattr(namespace, self.dest, value)
+        setattr(namespace, "help", True)
 
         if getattr(namespace, "_raise_print_help", False):
             raise PrintHelp
@@ -76,12 +72,14 @@ def pytest_addoption(parser: Parser) -> None:
         dest="help",
         help="Show help message and configuration info",
     )
-    group.addoption(  # separate help flag that can be subsets
+    group.addoption(
         "--help-group",
-        action="store",
+        action=HelpAction,
+        nargs=None,
         default=None,
         dest="help_group",
-        help="Show help message and configuration info for a specific group of option(s). ",
+        metavar="GROUP",
+        help="Show help for a specific option group.",
     )
     group._addoption(  # private to use reserved lower-case short option
         "-p",

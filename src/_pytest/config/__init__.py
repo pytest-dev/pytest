@@ -1799,9 +1799,6 @@ class Config:
         self._validate_plugins()
         self._warn_about_skipped_plugins()
 
-        if self.known_args_namespace.help_group is not None:
-            self.option.help_group = self.known_args_namespace.help_group
-
         if self.known_args_namespace.confcutdir is None:
             if self.inipath is not None:
                 confcutdir = str(self.inipath.parent)
@@ -1822,6 +1819,15 @@ class Config:
                 )
             else:
                 raise
+
+        if self.known_args_namespace.help_group is not None:
+            available_groups = [group.name for group in self._parser._groups]
+            if self.known_args_namespace.help_group not in available_groups:
+                raise UsageError(
+                    f"unknown help group {self.known_args_namespace.help_group!r}; "
+                    f"available groups: {', '.join(available_groups)}"
+                )
+            self.option.help_group = self.known_args_namespace.help_group
 
         try:
             self._parser.parse(args, namespace=self.option)
