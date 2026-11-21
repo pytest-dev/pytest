@@ -1388,6 +1388,44 @@ def test_record_property_on_test_and_teardown_failure(
     result.stdout.fnmatch_lines(["*= 1 failed, 1 error *"])
 
 
+@pytest.mark.parametrize(
+    ("fixture_name", "parent_tag", "family"),
+    [
+        ("record_property", "testcase", "xunit1"),
+        ("record_testsuite_property", "testsuite", "xunit1"),
+        ("record_testsuite_property", "testsuite", "xunit2"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("name", "expected_name"),
+    [
+        ("control\x00\x1b", "control#x00#x1B"),
+        ("unicode\ud800\ufffe", "unicode#xD800#xFFFE"),
+        ('café <&>"', 'café <&>"'),
+    ],
+)
+def test_record_property_name_escaping(
+    pytester: Pytester,
+    run_and_parse: RunAndParse,
+    fixture_name: str,
+    parent_tag: str,
+    family: _JunitFamily,
+    name: str,
+    expected_name: str,
+) -> None:
+    pytester.makepyfile(
+        f"""
+        def test_record({fixture_name}):
+            {fixture_name}({name!r}, "value")
+        """
+    )
+    result, dom = run_and_parse(family=family)
+    result.assert_outcomes(passed=1)
+    parent = dom.get_first_by_tag(parent_tag)
+    prop = parent.get_first_by_tag("properties").get_first_by_tag("property")
+    prop.assert_attr(name=expected_name, value="value")
+
+
 def test_record_property_same_name(
     pytester: Pytester, run_and_parse: RunAndParse
 ) -> None:
