@@ -636,6 +636,62 @@ class RunResult:
         )
 
 
+#: Top level packages :class:`Pytester` refuses to drop when it restores its
+#: ``sys.modules`` snapshot.
+#:
+#: Restoring the snapshot removes every module the test imported.  A module
+#: which installed *process global* state while being imported cannot be
+#: removed that way: the state outlives the module object, and the next import
+#: creates a second module instance which installs the state a second time.
+#:
+#: Entries are top level package names on purpose - preserving only part of a
+#: package leaves the package torn in half, which is its own kind of breakage.
+#: That also keeps the check to a single set lookup per module, on a code path
+#: that runs once per module in ``sys.modules`` per test.
+#:
+#: Use ``scripts/check-preserved-modules.py`` to audit this list against the
+#: standard library of a given Python version.
+PRESERVED_MODULE_PACKAGES: Final = frozenset(
+    {
+        # Some zope modules used by twisted-related tests keep internal state
+        # and can't be deleted; we had some trouble in the past with
+        # `zope.interface` for example.
+        "zope",
+        # Preserve readline due to https://bugs.python.org/issue41033.
+        # pexpect issues a SIGWINCH.
+        "readline",
+        # `rlcompleter` registers an atexit handler which resets readline's
+        # completer, so an orphaned copy leaks a handler per test.
+        "rlcompleter",
+        # `multiprocessing.util` registers atexit and `os.register_at_fork`
+        # handlers, and `multiprocessing.resource_tracker` owns a tracker server
+        # process; an orphaned copy of either outlives the module and fails at
+        # interpreter shutdown.  See #14841.
+        "multiprocessing",
+        # `concurrent.futures` caches its lazily imported executor classes in its
+        # own namespace, so a dropped `concurrent.futures.process` keeps being
+        # referenced - and the reference no longer pickles to the live module.
+        "concurrent",
+        # `asyncio.events` registers an `os.register_at_fork()` handler which
+        # resets the running loop in the child; an orphaned copy resets the loop
+        # of a module nothing uses anymore, leaving the live one untouched.
+        "asyncio",
+        # `random` reseeds its global instance via `os.register_at_fork()`.  An
+        # orphaned copy reseeds nothing that is still in use, so forked children
+        # of the live module can hand out the same "random" numbers.
+        "random",
+        # execnet registers atexit handlers for its gateway processes, and keeps
+        # thread local state.
+        "execnet",
+    }
+)
+
+
+def module_is_preserved(name: str) -> bool:
+    """Whether ``name`` is one of the preserved packages, or lives in one."""
+    return name.partition(".")[0] in PRESERVED_MODULE_PACKAGES
+
+
 class SysModulesSnapshot:
     def __init__(self, preserve: Callable[[str], bool] | None = None) -> None:
         self.__preserve = preserve
@@ -744,16 +800,7 @@ class Pytester:
         self._sys_path_snapshot.restore()
 
     def __take_sys_modules_snapshot(self) -> SysModulesSnapshot:
-        # Some zope modules used by twisted-related tests keep internal state
-        # and can't be deleted; we had some trouble in the past with
-        # `zope.interface` for example.
-        #
-        # Preserve readline due to https://bugs.python.org/issue41033.
-        # pexpect issues a SIGWINCH.
-        def preserve_module(name):
-            return name.startswith(("zope", "readline"))
-
-        return SysModulesSnapshot(preserve=preserve_module)
+        return SysModulesSnapshot(preserve=module_is_preserved)
 
     def make_hook_recorder(self, pluginmanager: PytestPluginManager) -> HookRecorder:
         """Create a new :class:`HookRecorder` for a :class:`PytestPluginManager`."""
