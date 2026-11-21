@@ -124,6 +124,23 @@ def _is_data_descriptor(cls: type, name: str) -> bool:
     return False
 
 
+def _getattr_for_patch(target: object, name: str) -> object:
+    """Read an attribute without binding descriptors when restoring raw storage.
+
+    Instance data descriptors still need their value read: undo restores that
+    value through the descriptor's setter, rather than replacing the descriptor.
+    """
+    import inspect
+
+    if not inspect.isclass(target) and _is_data_descriptor(type(target), name):
+        return getattr(target, name, NOTSET)
+    value = inspect.getattr_static(target, name, NOTSET)
+    if value is NOTSET:
+        # Preserve attributes provided dynamically by __getattr__.
+        return getattr(target, name, NOTSET)
+    return value
+
+
 @final
 class MonkeyPatch:
     """Helper to conveniently monkeypatch attributes/items/environment
@@ -251,7 +268,10 @@ class MonkeyPatch:
                     "import string"
                 )
 
-        oldval = getattr(target, name, NOTSET)
+        if raising:
+            oldval = getattr(target, name, NOTSET)
+        else:
+            oldval = _getattr_for_patch(target, name)
         if raising and oldval is NOTSET:
             raise AttributeError(f"{target!r} has no attribute {name!r}")
 
@@ -298,11 +318,18 @@ class MonkeyPatch:
                 )
             name, target = derive_importpath(target, raising)
 
-        if not hasattr(target, name):
+        if raising:
+            exists = hasattr(target, name)
+            oldval: object = NOTSET
+            if exists:
+                oldval = getattr(target, name, NOTSET)
+        else:
+            oldval = _getattr_for_patch(target, name)
+            exists = oldval is not NOTSET
+        if not exists:
             if raising:
                 raise AttributeError(name)
         else:
-            oldval = getattr(target, name, NOTSET)
             # Avoid class descriptors like staticmethod/classmethod.
             if inspect.isclass(target):
                 oldval = target.__dict__.get(name, NOTSET)
