@@ -1,0 +1,1 @@
+Added the :option:`--help-section` option to display help for a single option group, including custom options and options added by plugins.

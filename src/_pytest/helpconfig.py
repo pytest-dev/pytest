@@ -13,6 +13,7 @@ from typing import Any
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
+from _pytest.config import UsageError
 from _pytest.config.argparsing import _ini_type_repr
 from _pytest.config.argparsing import _split_help_text
 from _pytest.config.argparsing import Parser
@@ -58,6 +59,31 @@ class HelpAction(argparse.Action):
             raise PrintHelp
 
 
+class HelpSectionAction(argparse.Action):
+    def __init__(
+        self,
+        option_strings: Sequence[str],
+        dest: str,
+        *,
+        default: Any = None,
+        help: str | None = None,
+    ) -> None:
+        super().__init__(
+            option_strings, dest, default=default, help=help, metavar="NAME"
+        )
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
+        setattr(namespace, self.dest, values)
+        if getattr(namespace, "_raise_print_help", False):
+            raise PrintHelp
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("debugconfig")
     group.addoption(
@@ -75,6 +101,12 @@ def pytest_addoption(parser: Parser) -> None:
         action=HelpAction,
         dest="help",
         help="Show help message and configuration info",
+    )
+    group.addoption(
+        "--help-section",
+        action=HelpSectionAction,
+        default=None,
+        help="Show help for one option group by its name.",
     )
     group._addoption(  # private to use reserved lower-case short option
         "-p",
@@ -171,6 +203,13 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.version > 1:
         show_version_verbose(config)
         return ExitCode.OK
+    elif config.option.help_section is not None:
+        config._do_configure()
+        try:
+            showhelp(config, section=config.option.help_section)
+        finally:
+            config._ensure_unconfigure()
+        return ExitCode.OK
     elif config.option.help:
         config._do_configure()
         showhelp(config)
@@ -179,12 +218,19 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     return None
 
 
-def showhelp(config: Config) -> None:
+def showhelp(config: Config, *, section: str | None = None) -> None:
     reporter: TerminalReporter | None = config.pluginmanager.get_plugin(
         "terminalreporter"
     )
     assert reporter is not None
     tw = reporter._tw
+    if section is not None:
+        try:
+            tw.write(config._parser._format_group_help(section))
+        except ValueError as exc:
+            raise UsageError(str(exc)) from exc
+        return
+
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line(

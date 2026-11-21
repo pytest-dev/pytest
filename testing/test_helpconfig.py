@@ -51,6 +51,92 @@ def test_help(pytester: Pytester) -> None:
     )
 
 
+def test_help_section_custom(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addoption("--custom-option", help="custom option help")
+            group = parser.getgroup("example-plugin", "Example plugin")
+            group.addoption("--plugin-option", help="plugin option help")
+    """
+    )
+
+    result = pytester.runpytest("--help-section=custom")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        ["Custom options:", "*--custom-option=CUSTOM_OPTION*", "*custom option help*"]
+    )
+    result.stdout.no_fnmatch_line("*--plugin-option*")
+    result.stdout.no_fnmatch_line("*usage:*")
+
+
+def test_help_section_skips_required_options(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addoption("--required-option", required=True, help="required option")
+    """
+    )
+
+    result = pytester.runpytest("--help-section=custom")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*--required-option=REQUIRED_OPTION*"])
+
+
+def test_help_section_named_group(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addoption("--custom-option", help="custom option help")
+            group = parser.getgroup("example-plugin", "Example plugin")
+            group.addoption("--plugin-option", help="plugin option help")
+    """
+    )
+
+    result = pytester.runpytest("--help-section=example-plugin")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        ["Example plugin:", "*--plugin-option=PLUGIN_OPTION*", "*plugin option help*"]
+    )
+    result.stdout.no_fnmatch_line("*--custom-option*")
+    result.stdout.no_fnmatch_line("*usage:*")
+
+
+def test_help_section_unknown(pytester: Pytester) -> None:
+    result = pytester.runpytest("--help-section=unknown")
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        ["*unknown help section 'unknown'; available sections: custom, *"]
+    )
+
+
+def test_help_section_group_named_custom(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addoption("--anonymous-option", help="anonymous option help")
+            group = parser.getgroup("custom", "Custom plugin")
+            group.addoption("--named-custom-option", help="named custom option help")
+            group = parser.getgroup("group:plugin", "Prefixed plugin")
+            group.addoption("--prefixed-option", help="prefixed option help")
+    """
+    )
+
+    result = pytester.runpytest("--help-section=custom")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*--anonymous-option=ANONYMOUS_OPTION*"])
+    result.stdout.no_fnmatch_line("*--named-custom-option*")
+
+    result = pytester.runpytest("--help-section=group:custom")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*--named-custom-option=NAMED_CUSTOM_OPTION*"])
+    result.stdout.no_fnmatch_line("*--anonymous-option*")
+
+    result = pytester.runpytest("--help-section=group:group:plugin")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*--prefixed-option=PREFIXED_OPTION*"])
+
+
 def test_help_ini_union_and_literal_types(pytester: Pytester) -> None:
     """Union and Literal ini options display their members/choices in --help."""
     pytester.makeconftest(

@@ -133,7 +133,11 @@ class Parser:
         self.optparser = PytestArgumentParser(usage, self.extra_info, prog=prog)
         anonymous_arggroup = self.optparser.add_argument_group("Custom options")
         self._anonymous = OptionGroup(
-            anonymous_arggroup, "_anonymous", self, _ispytest=True
+            anonymous_arggroup,
+            "_anonymous",
+            self,
+            _ispytest=True,
+            description="Custom options",
         )
         self._groups = [self._anonymous]
         # Maps option strings -> dest, e.g. "-V" and "--version" to "version".
@@ -178,7 +182,9 @@ class Parser:
                 return group
 
         arggroup = self.optparser.add_argument_group(description or name)
-        group = OptionGroup(arggroup, name, self, _ispytest=True)
+        group = OptionGroup(
+            arggroup, name, self, _ispytest=True, description=description
+        )
         i = 0
         for i, grp in enumerate(self._groups):
             if grp.name == after:
@@ -188,6 +194,41 @@ class Parser:
         # access its internals ☹.
         self.optparser._action_groups.insert(i + 1, self.optparser._action_groups.pop())
         return group
+
+    def _format_group_help(self, name: str) -> str:
+        """Format the help for one option group, identified by its name."""
+        if name == "custom":
+            group = self._anonymous
+        else:
+            group = next(
+                (
+                    group
+                    for group in self._groups[1:]
+                    if self._get_group_help_name(group) == name
+                ),
+                None,
+            )
+            if group is None:
+                available = [
+                    "custom",
+                    *(self._get_group_help_name(group) for group in self._groups[1:]),
+                ]
+                raise ValueError(
+                    f"unknown help section {name!r}; available sections: "
+                    f"{', '.join(available)}"
+                )
+
+        formatter = self.optparser._get_formatter()
+        formatter.start_section(group.description)
+        formatter.add_arguments([option._action for option in group.options])
+        formatter.end_section()
+        return formatter.format_help()
+
+    @staticmethod
+    def _get_group_help_name(group: OptionGroup) -> str:
+        if group.name == "custom" or group.name.startswith("group:"):
+            return f"group:{group.name}"
+        return group.name
 
     def addoption(self, *opts: str, **attrs: Any) -> None:
         """Register a command line option.
@@ -429,10 +470,13 @@ class OptionGroup:
         name: str,
         parser: Parser | None,
         _ispytest: bool = False,
+        *,
+        description: str | None = None,
     ) -> None:
         check_ispytest(_ispytest)
         self._arggroup = arggroup
         self.name = name
+        self.description = description or name
         self.options: list[Argument] = []
         self.parser = parser
 
