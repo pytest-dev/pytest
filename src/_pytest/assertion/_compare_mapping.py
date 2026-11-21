@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Collection
 from collections.abc import Iterator
+from collections.abc import KeysView
 from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 import heapq
 import pprint
 
@@ -11,6 +13,17 @@ from _pytest._io.saferepr import saferepr
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
+
+
+def _keys_view(mapping: Mapping[object, object]) -> AbstractSet[object]:
+    """Return a set-like view of ``mapping``'s keys.
+
+    Some mappings override ``keys()`` to return a plain list (for example
+    ``starlette.datastructures.Headers``); wrap those in a ``KeysView``, which
+    still resolves membership through the mapping.
+    """
+    keys = mapping.keys()
+    return keys if isinstance(keys, AbstractSet) else KeysView(mapping)
 
 
 def _compare_eq_mapping(
@@ -24,8 +37,8 @@ def _compare_eq_mapping(
     # operations resolve membership through the mappings themselves, so a
     # mapping with its own key equivalence (case-insensitive keys, for
     # example) is compared the way it compares itself.
-    keys_left = left.keys()
-    keys_right = right.keys()
+    keys_left = _keys_view(left)
+    keys_right = _keys_view(right)
     common = keys_left & keys_right
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:

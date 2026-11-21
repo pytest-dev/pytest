@@ -1116,6 +1116,44 @@ class TestAssert_reprcompare:
             "Use -v to get more diff",
         ]
 
+    def test_mapping_with_list_keys(self) -> None:
+        """A mapping whose ``keys()`` returns a list still gets the mapping diff.
+
+        ``starlette.datastructures.Headers`` is such a mapping: it overrides
+        ``keys()`` to return a list, which has no set operations.
+        """
+
+        class ListKeysMapping(Mapping[str, int]):
+            def __init__(self, values: dict[str, int]) -> None:
+                self._values = values
+
+            def __getitem__(self, key: str) -> int:
+                return self._values[key]
+
+            def __iter__(self) -> Iterator[str]:
+                return iter(self._values)
+
+            def __len__(self) -> int:  # pragma: no cover
+                return len(self._values)
+
+            def keys(self) -> list[str]:  # type: ignore[override]
+                return list(self._values)
+
+        lines = callequal(
+            ListKeysMapping({"a": 0, "b": 1}),
+            ListKeysMapping({"a": 1, "b": 1, "c": 2}),
+        )
+
+        assert lines is not None
+        assert lines[2:] == [
+            "Omitting 1 identical items, use -vv to show",
+            "Differing items:",
+            "{'a': 0} != {'a': 1}",
+            "Right contains 1 more item:",
+            "{'c': 2}",
+            "Use -v to get more diff",
+        ]
+
     def test_sequence_different_items(self) -> None:
         lines = callequal((1, 2), (3, 4, 5), verbose=2)
         assert lines == [
