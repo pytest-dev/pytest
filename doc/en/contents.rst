@@ -47,6 +47,7 @@ How-to guides
    how-to/existingtestsuite
    how-to/unittest
    how-to/xunit_setup
+   how-to/pyinstaller
 
    how-to/bash-completion
 

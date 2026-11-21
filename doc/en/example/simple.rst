@@ -1048,6 +1048,9 @@ such as ``cx_freeze`` or ``py2exe``, you can use ``pytest.freeze_includes()``
 to obtain the full list of internal pytest modules. How to configure the tools
 to find the internal modules varies from tool to tool, however.
 
+To ship your tests with a PyInstaller application and run them through the
+frozen executable, see :ref:`freezing-pyinstaller`.
+
 Instead of freezing the pytest runner as a separate executable, you can make
 your frozen program work as the pytest runner by some clever
 argument handling during program startup. This allows you to
