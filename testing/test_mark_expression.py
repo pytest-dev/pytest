@@ -238,6 +238,9 @@ def test_invalid_idents(ident: str) -> None:
         ("mark(var)", "expected =; got right parenthesis"),
         ("mark(var=none)", 'unexpected character/s "none"'),
         ("mark(var=1.1)", 'unexpected character/s "1.1"'),
+        # isdigit() also accepts characters int() cannot parse, such as "²".
+        ("mark(var=²)", 'unexpected character/s "²"'),
+        ("mark(var=-²)", 'unexpected character/s "-²"'),
         ("mark(var=')", """closing quote "'" is missing"""),
         ('mark(var=")', 'closing quote """ is missing'),
         ("""mark(var="')""", 'closing quote """ is missing'),
