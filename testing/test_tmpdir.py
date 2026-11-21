@@ -1019,3 +1019,22 @@ def test_tmp_path_retention_policy_invalid(pytester: Pytester) -> None:
             "'all' | 'failed' | 'none', got 'compress'"
         ]
     )
+
+
+def test_tmp_path_retention_count_invalid(pytester: Pytester) -> None:
+    """An invalid tmp_path_retention_count fails with a clean usage error."""
+    pytester.makepyprojecttoml(
+        """
+        [tool.pytest]
+        tmp_path_retention_count = "banana"
+        """
+    )
+    pytester.makepyfile("def test(): pass")
+    result = pytester.runpytest()
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            "*ERROR: *config option 'tmp_path_retention_count' expects an int, "
+            "got 'banana'"
+        ]
+    )
