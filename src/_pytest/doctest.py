@@ -28,7 +28,7 @@ from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.approx import approx
-from _pytest.compat import safe_getattr
+from _pytest.compat import _is_mocked
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import fixture
@@ -464,15 +464,6 @@ def _check_all_skipped(test: doctest.DocTest) -> None:
         skip("all tests skipped by +SKIP option")
 
 
-def _is_mocked(obj: object) -> bool:
-    """Return if an object is possibly a mock object by checking the
-    existence of a highly improbable attribute."""
-    return (
-        safe_getattr(obj, "pytest_mock_example_attribute_that_shouldnt_exist", None)
-        is not None
-    )
-
-
 @contextmanager
 def _patch_unwrap_mock_aware() -> Generator[None]:
     """Context manager which replaces ``inspect.unwrap`` with a version
@@ -508,6 +499,14 @@ class DoctestModule(Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
+            def _is_routine(self, obj: object) -> bool:
+                """Stop unwrapping at mock objects: ``mock.call.__wrapped__``
+                is always a new object, so the stdlib unwraps it up to
+                ``sys.getrecursionlimit()`` (#15333)."""
+                with _patch_unwrap_mock_aware():
+                    # Type ignored because this is a private function.
+                    return super()._is_routine(obj)  # type:ignore[misc,no-any-return]
+
             py_ver_info_minor = sys.version_info[:2]
             is_find_lineno_broken = (
                 py_ver_info_minor < (3, 11)

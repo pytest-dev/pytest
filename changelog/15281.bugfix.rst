@@ -1,0 +1,1 @@
+Fixed excessive memory use and slow collection when a test module imports ``unittest.mock.call`` and the recursion limit has been raised, a regression in pytest 9.2.0.

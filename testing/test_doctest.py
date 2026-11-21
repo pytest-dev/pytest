@@ -7,9 +7,9 @@ from pathlib import Path
 import sys
 import textwrap
 
+from _pytest.compat import _is_mocked
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
-from _pytest.doctest import _is_mocked
 from _pytest.doctest import _is_setup_py
 from _pytest.doctest import _patch_unwrap_mock_aware
 from _pytest.doctest import DoctestItem
@@ -1806,6 +1806,32 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, pytester: Py
             >>> 1 + 1
             2
             '''
+        """
+    )
+    result = pytester.runpytest("--doctest-modules")
+    result.stdout.fnmatch_lines(["* 1 passed *"])
+
+
+def test_doctest_mock_objects_unwrap_stops_early(pytester: Pytester) -> None:
+    """Collection must not follow mock-like ``__wrapped__`` chains up to the
+    recursion limit (#15333)."""
+    pytester.makepyfile(
+        """
+        '''
+        >>> Probe.hits < 5
+        True
+        '''
+
+        class Probe:
+            # Like mock.call: every attribute exists, __wrapped__ is a new object.
+            hits = 0
+
+            def __getattr__(self, name):
+                if name == "__wrapped__":
+                    type(self).hits += 1
+                return Probe()
+
+        probe = Probe()
         """
     )
     result = pytester.runpytest("--doctest-modules")
