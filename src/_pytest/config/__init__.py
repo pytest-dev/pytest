@@ -911,6 +911,18 @@ class PytestPluginManager(PluginManager):
         self, spec: types.ModuleType | str | Sequence[str] | None
     ) -> None:
         plugins = _get_plugin_specs_as_list(spec)
+        # Pre-mark plugins so side-effect imports are rewritten too (#2353).
+        # Skip blocked, registered or already imported ones. Their own import
+        # handles the warning.
+        self.rewrite_hook.mark_rewrite(
+            *(
+                _resolve_plugin_import_spec(plugin)
+                for plugin in plugins
+                if _resolve_plugin_import_spec(plugin) not in sys.modules
+                and not self.is_blocked(plugin)
+                and self.get_plugin(plugin) is None
+            )
+        )
         for import_spec in plugins:
             self.import_plugin(import_spec, consider_entry_points=True)
 
@@ -930,7 +942,7 @@ class PytestPluginManager(PluginManager):
         if self.is_blocked(modname) or self.get_plugin(modname) is not None:
             return
 
-        importspec = "_pytest." + modname if modname in builtin_plugins else modname
+        importspec = _resolve_plugin_import_spec(modname)
         self.rewrite_hook.mark_rewrite(importspec)
 
         if consider_entry_points:
@@ -1006,6 +1018,11 @@ def _get_plugin_specs_as_list(
     raise UsageError(
         f"Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: {specs!r}"
     )
+
+
+def _resolve_plugin_import_spec(modname: str) -> str:
+    """Resolve a plugin name to its import name (builtins live under ``_pytest``)."""
+    return "_pytest." + modname if modname in builtin_plugins else modname
 
 
 def _plugin_rewrite_name(module: str) -> str | None:
@@ -1261,6 +1278,7 @@ class Config:
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
         self._inicache: dict[str, Any] = {}
+        self._warned_verbosity_strings: set[str] = set()
         self._inicfg: ConfigDict = {}
         self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
@@ -2268,8 +2286,26 @@ class Config:
         level = self.getini(ini_name)
         if level == Config._VERBOSITY_INI_DEFAULT:
             return global_level
-
-        return int(level)
+        if isinstance(level, int):
+            return level
+        try:
+            int_level = int(level)
+        except ValueError:
+            raise UsageError(
+                f"{self.inipath}: config option '{ini_name}' expects an int "
+                f"or 'auto', got {level!r}"
+            ) from None
+        # A numeric str only gets here from TOML: in ini mode the int member
+        # of the option type already converted it.
+        if ini_name not in self._warned_verbosity_strings:
+            self._warned_verbosity_strings.add(ini_name)
+            self.issue_config_time_warning(
+                _pytest.deprecated.TOML_NUMERIC_STRING.format(
+                    name=ini_name, value=level
+                ),
+                stacklevel=2,
+            )
+        return int_level
 
     @staticmethod
     def _verbosity_ini_name(verbosity_type: str) -> str:
@@ -2289,7 +2325,9 @@ class Config:
         parser.addini(
             Config._verbosity_ini_name(verbosity_type),
             help=help,
-            type=int | Literal["auto"],
+            # str rather than Literal["auto"]: numeric strings in TOML are
+            # deprecated but still accepted, see get_verbosity.
+            type=int | str,
             default=Config._VERBOSITY_INI_DEFAULT,
         )
 

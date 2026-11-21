@@ -333,6 +333,14 @@ class TestMetafunc:
         ids = [x.id for x in metafunc._calls]
         assert ids == ["4-6", "4-7", "5-6", "5-7"]
 
+    def test_parametrize_ids_shared_mark_resolved_once(self) -> None:
+        """Ids stored on a shared mark are raw, not resolved again (#15370)."""
+        mark = pytest.mark.parametrize("x", [1], ids=iter(["a\nb"])).mark
+        for _ in range(2):
+            metafunc = self.Metafunc(lambda x: None)
+            metafunc.parametrize(*mark.args, **mark.kwargs, _param_mark=mark)
+            assert [c.id for c in metafunc._calls] == ["a\\nb"]
+
     def test_parametrize_empty_list(self) -> None:
         """#510"""
 

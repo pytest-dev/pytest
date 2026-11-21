@@ -1,1 +1,0 @@
-Cache writes now emit :class:`pytest.PytestCacheWarning` when writing or closing the cache file fails, consistent with errors opening the file.

@@ -1186,24 +1186,22 @@ class TerminalReporter:
                 if not reports:
                     return
                 self.write_sep("=", sep_title)
+                teardown_reports = self._get_teardown_reports()
                 for rep in reports:
                     if rep.sections:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, green=True, bold=True)
                         self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.id)
+                    for report in teardown_reports.get(rep.id, ()):
+                        self.print_teardown_sections(report)
 
-    def _get_teardown_reports(self, node_id: NodeId) -> list[TestReport]:
-        reports = self.getreports("")
-        return [
-            report
-            for report in reports
-            if report.when == "teardown" and report.id == node_id
-        ]
-
-    def _handle_teardown_sections(self, node_id: NodeId) -> None:
-        for report in self._get_teardown_reports(node_id):
-            self.print_teardown_sections(report)
+    def _get_teardown_reports(self) -> dict[NodeId, list[TestReport]]:
+        """Passed teardown reports, grouped by node id."""
+        by_id: dict[NodeId, list[TestReport]] = {}
+        for report in self.getreports(""):
+            if report.when == "teardown":
+                by_id.setdefault(report.id, []).append(report)
+        return by_id
 
     def print_teardown_sections(self, rep: TestReport) -> None:
         showcapture = self.config.option.showcapture
@@ -1247,11 +1245,13 @@ class TerminalReporter:
                         self._outrep_summary(rep)
                         self.write_line(line)
                 else:
+                    teardown_reports = self._get_teardown_reports()
                     for rep in reports:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
-                        self._handle_teardown_sections(rep.id)
+                        for report in teardown_reports.get(rep.id, ()):
+                            self.print_teardown_sections(report)
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":

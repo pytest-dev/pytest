@@ -6,6 +6,8 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import MutableMapping
+from collections.abc import Sequence
+import enum
 from functools import cached_property
 from functools import lru_cache
 import os
@@ -50,6 +52,31 @@ if TYPE_CHECKING:
 
 
 SEP = "/"
+
+
+class MarkerOrder(enum.Enum):
+    """The orders :meth:`Node._iter_markers_with_node` can yield markers in.
+
+    A node's ``own_markers`` are stored farthest-first: a :class:`~pytest.Class`
+    stores its MRO base class first, a :class:`~pytest.Function` stores its
+    decorator marks before its parametrization marks. Marks stacked as
+    decorators on one object stay bottom-up in all three orders.
+    """
+
+    #: Closest node first, and each node's markers closest-first (a subclass'
+    #: before its base class'). For looking a marker up: the first match is
+    #: the one that applies (#14329). A Function's parametrization marks are
+    #: not moved ahead of its decorator marks; that waits on the
+    #: FunctionDefinition node owning the decorator marks (#14769).
+    CLOSEST_FIRST = enum.auto()
+    #: Closest node first, each node's markers as stored. For consumers that
+    #: compose markers and must keep the order they always composed in:
+    #: ``usefixtures`` and ``parametrize``.
+    STORED = enum.auto()
+    #: Farthest node first, each node's markers as stored, so a closer marker
+    #: always comes later. For consumers where the last marker applied wins:
+    #: ``filterwarnings`` (#10406).
+    FARTHEST_FIRST = enum.auto()
 
 
 def norm_sep(path: str | os.PathLike[str]) -> str:
@@ -349,8 +376,18 @@ class Node(abc.ABC, metaclass=NodeMeta):
         else:
             self.own_markers.insert(0, marker_.mark)
 
+    def _extend_own_markers(self, marks: Sequence[Mark]) -> None:
+        """Append freshly unpacked markers to ``own_markers``.
+
+        A hook for nodes that need to remember where in ``own_markers`` those
+        markers landed (e.g. :class:`~pytest.Class`, for its MRO run).
+        """
+        self.own_markers.extend(marks)
+
     def iter_markers(self, name: str | None = None) -> Iterator[Mark]:
         """Iterate over all markers of the node.
+
+        The markers are returned from closest to farthest.
 
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of the markers of the node.
@@ -362,13 +399,42 @@ class Node(abc.ABC, metaclass=NodeMeta):
     ) -> Iterator[tuple[Node, Mark]]:
         """Iterate over all markers of the node.
 
+        The markers are returned from closest to farthest.
+
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
-        for node in self.iter_parents():
-            for mark in node.own_markers:
+        yield from self._iter_markers_with_node(name)
+
+    def _iter_markers_with_node(
+        self,
+        name: str | None = None,
+        *,
+        order: MarkerOrder = MarkerOrder.CLOSEST_FIRST,
+    ) -> Iterator[tuple[Node, Mark]]:
+        """Iterate over all markers of the node, as (node, mark) tuples,
+        in the given :class:`MarkerOrder`."""
+        nodes: Iterable[Node] = self.iter_parents()
+        if order is MarkerOrder.FARTHEST_FIRST:
+            nodes = reversed(list(nodes))
+        for node in nodes:
+            marks = (
+                node._iter_own_markers_closest_first()
+                if order is MarkerOrder.CLOSEST_FIRST
+                else node.own_markers
+            )
+            for mark in marks:
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
+
+    def _iter_own_markers_closest_first(self) -> Iterable[Mark]:
+        """Yield own markers in closest-first order.
+
+        For most nodes this is just own_markers in order.
+        Overridden by nodes whose own_markers contain markers from
+        multiple levels (e.g. Class nodes with MRO-inherited markers).
+        """
+        return self.own_markers
 
     @overload
     def get_closest_marker(self, name: str) -> Mark | None: ...
@@ -543,8 +609,7 @@ class Collector(Node, abc.ABC):
         if isinstance(excinfo.value, self.CollectError) and not self.config.getoption(
             "fulltrace", False
         ):
-            exc = excinfo.value
-            return str(exc.args[0])
+            return str(excinfo.value)
 
         # Respect explicit tbstyle option, but default to "short"
         # (_repr_failure_py uses "long" with "fulltrace" option always).

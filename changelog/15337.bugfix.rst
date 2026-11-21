@@ -1,0 +1,1 @@
+Fixed an ``INTERNALERROR`` crash when running pytest on Python 3.10.0 exactly: a slotted dataclass field was never initialized on that interpreter version (:issue:`15337`).
