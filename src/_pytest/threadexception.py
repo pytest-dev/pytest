@@ -3,7 +3,6 @@ from __future__ import annotations
 import collections
 from collections.abc import Callable
 import functools
-import sys
 import threading
 import traceback
 from typing import NamedTuple
@@ -14,10 +13,6 @@ from _pytest.nodes import Item
 from _pytest.stash import StashKey
 from _pytest.tracemalloc import tracemalloc_message
 import pytest
-
-
-if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup
 
 
 class ThreadExceptionMeta(NamedTuple):

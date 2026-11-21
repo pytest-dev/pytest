@@ -526,7 +526,7 @@ class LogCaptureFixture:
         :param level:
             The logger level caplog should capture.
             All logging is enabled if a non-standard logging level string is supplied.
-            Valid level strings are in :data:`logging._nameToLevel`.
+            Valid level strings are the keys of :func:`logging.getLevelNamesMapping`.
         :param logger_obj: The logger object to check.
 
         :return: The original disabled logging level.
@@ -535,7 +535,7 @@ class LogCaptureFixture:
 
         if isinstance(level, str):
             # Try to translate the level string to an int for `logging.disable()`
-            level = logging.getLevelName(level)  # type: ignore[deprecated]
+            level = logging.getLevelNamesMapping().get(level, level)
 
         if not isinstance(level, int):
             # The level provided was not valid, so just un-disable all logging.

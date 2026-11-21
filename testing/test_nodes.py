@@ -37,8 +37,7 @@ def test_subclassing_both_item_and_collector_deprecated(
 ) -> None:
     """Verifies we warn on diamond inheritance from both Item and Collector."""
     # We do not expect any warnings messages to be issued during class definition.
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
+    with warnings.catch_warnings(action="error"):
 
         class SoWrong(nodes.Item, nodes.File):
             def __init__(self, parent: nodes.Collector, path: Path) -> None:

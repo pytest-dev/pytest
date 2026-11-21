@@ -4,7 +4,7 @@ import dataclasses
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
-from typing import TYPE_CHECKING
+from typing import Self
 
 from _pytest import nodes
 from _pytest.cacheprovider import Cache
@@ -14,9 +14,6 @@ from _pytest.main import Session
 from _pytest.nodeid import NodeId
 from _pytest.reports import TestReport
 
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 STEPWISE_CACHE_DIR = "cache/stepwise"
 

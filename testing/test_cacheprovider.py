@@ -9,9 +9,9 @@ import os
 from pathlib import Path
 import shutil
 from typing import Any
+from typing import assert_never
 from unittest.mock import mock_open
 
-from _pytest.compat import assert_never
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester

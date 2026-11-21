@@ -21,6 +21,7 @@ from pathlib import Path
 import sys
 import types
 from typing import Any
+from typing import assert_never
 from typing import cast
 from typing import Final
 from typing import final
@@ -39,7 +40,6 @@ from _pytest._code import Source
 from _pytest._code.code import ExceptionInfoFormatter
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
 from _pytest.compat import getfuncargnames
@@ -77,10 +77,6 @@ from _pytest.scope import Scope
 from _pytest.scope import ScopeName
 from _pytest.warning_types import PytestWarning
 from _pytest.warning_types import warn_explicit_for
-
-
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
 
 
 if TYPE_CHECKING:

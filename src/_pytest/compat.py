@@ -14,7 +14,6 @@ from pathlib import Path
 import sys
 from typing import Any
 from typing import Final
-from typing import NoReturn
 from typing import TYPE_CHECKING
 
 import py
@@ -278,14 +277,6 @@ def get_user_id() -> int | None:
         ERROR = -1
         uid = os.getuid()
         return uid if uid != ERROR else None
-
-
-if sys.version_info >= (3, 11):
-    from typing import assert_never
-else:
-
-    def assert_never(value: NoReturn) -> NoReturn:
-        assert False, f"Unhandled value: {value} ({type(value).__name__})"
 
 
 class CallableBool:

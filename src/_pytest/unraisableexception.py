@@ -16,10 +16,6 @@ from _pytest.tracemalloc import tracemalloc_message
 import pytest
 
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup
-
-
 # This is a stash item and not a simple constant to allow pytester to override it.
 gc_collect_iterations_key = StashKey[int]()
 

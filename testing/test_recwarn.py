@@ -490,8 +490,7 @@ class TestWarns:
                 warnings.warn("some deprecation warning", DeprecationWarning)
 
     def test_re_emit_match_multiple(self) -> None:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")  # if anything is re-emitted
+        with warnings.catch_warnings(action="error"):  # if anything is re-emitted
             with pytest.warns(UserWarning, match="user warning"):
                 warnings.warn("first user warning", UserWarning)
                 warnings.warn("second user warning", UserWarning)

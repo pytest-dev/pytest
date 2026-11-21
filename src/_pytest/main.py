@@ -50,7 +50,7 @@ from _pytest.warning_types import PytestWarning
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
     from _pytest.fixtures import FixtureManager
 

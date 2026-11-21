@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from dataclasses import KW_ONLY
 import os
 from pathlib import Path
-import sys
+import tomllib
 from typing import Literal
 from typing import TypeAlias
 
@@ -62,11 +62,6 @@ def _parse_toml_file(path: Path) -> dict[str, object]:
 
     Raise UsageError if the file cannot be parsed.
     """
-    if sys.version_info >= (3, 11):
-        import tomllib
-    else:
-        import tomli as tomllib
-
     toml_text = path.read_text(encoding="utf-8")
     try:
         return tomllib.loads(toml_text)

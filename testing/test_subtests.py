@@ -2,16 +2,12 @@ from __future__ import annotations
 
 from enum import Enum
 import json
-import sys
 from typing import Literal
 
 from _pytest._io.saferepr import saferepr
 from _pytest.subtests import SubtestContext
 from _pytest.subtests import SubtestReport
 import pytest
-
-
-IS_PY311 = sys.version_info[:2] >= (3, 11)
 
 
 def test_failures(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> None:

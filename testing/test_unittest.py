@@ -1388,17 +1388,6 @@ def test_async_support(pytester: Pytester) -> None:
     reprec.assertoutcome(failed=1, passed=2)
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 11), reason="asynctest is not compatible with Python 3.11+"
-)
-def test_asynctest_support(pytester: Pytester) -> None:
-    """Check asynctest support (#7110)"""
-    pytest.importorskip("asynctest")
-    pytester.copy_example("unittest/test_unittest_asynctest.py")
-    reprec = pytester.inline_run()
-    reprec.assertoutcome(failed=1, passed=2)
-
-
 def test_plain_unittest_does_not_support_async(pytester: Pytester) -> None:
     """Async functions in plain unittest.TestCase subclasses are not supported without plugins.
 
