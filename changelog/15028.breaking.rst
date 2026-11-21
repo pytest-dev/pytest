@@ -1,0 +1,3 @@
+The check that stops the session after collection errors now runs in the default :hook:`pytest_collection` implementation instead of :hook:`pytest_runtestloop`.
+Plugins that replace ``pytest_runtestloop`` now also stop after collection errors, unless ``--continue-on-collection-errors`` is given.
+Plugins that replace ``pytest_collection`` entirely need to perform this check themselves if they want the same behavior.
