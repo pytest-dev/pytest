@@ -406,7 +406,7 @@ disable = [
 ]
 
 [tool.codespell]
-ignore-words-list = "afile,asend,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,tesults,varius,wil"
+ignore-words-list = "afile,asend,asser,assertio,caf,feld,hove,ned,noes,notin,paramete,parth,tesults,varius,wil"
 skip = "AUTHORS,*/plugin_list.rst"
 write-changes = true
 

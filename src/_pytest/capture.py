@@ -201,18 +201,26 @@ class EncodedFile(io.TextIOWrapper):
 
 
 class CaptureIO(io.TextIOWrapper):
-    def __init__(self) -> None:
-        super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
+    def __init__(self, encoding: str = "UTF-8", errors: str = "strict") -> None:
+        super().__init__(
+            io.BytesIO(),
+            encoding=encoding,
+            errors=errors,
+            newline="",
+            write_through=True,
+        )
 
     def getvalue(self) -> str:
         assert isinstance(self.buffer, io.BytesIO)
-        return self.buffer.getvalue().decode("UTF-8")
+        return self.buffer.getvalue().decode(self.encoding, "replace")
 
 
 class TeeCaptureIO(CaptureIO):
-    def __init__(self, other: TextIO) -> None:
+    def __init__(
+        self, other: TextIO, encoding: str = "UTF-8", errors: str = "strict"
+    ) -> None:
         self._other = other
-        super().__init__()
+        super().__init__(encoding=encoding, errors=errors)
 
     def write(self, s: str) -> int:
         super().write(s)
@@ -359,6 +367,24 @@ class NoCapture(CaptureBase[str]):
         pass
 
 
+def _original_codec(stream: object) -> tuple[str, str]:
+    """Best-effort encoding and error handler of the stream that capture replaces."""
+    encoding = getattr(stream, "encoding", None)
+    errors = getattr(stream, "errors", None)
+    return (
+        encoding if isinstance(encoding, str) else "UTF-8",
+        errors if isinstance(errors, str) else "strict",
+    )
+
+
+def _encode_for_replay(data: str, encoding: str, errors: str) -> bytes:
+    """Encode captured text for replay without failing on replacement characters."""
+    try:
+        return data.encode(encoding, errors)
+    except UnicodeEncodeError:
+        return data.encode(encoding, "backslashreplace")
+
+
 class SysCaptureBase(CaptureBase[AnyStr]):
     def __init__(
         self, fd: int, tmpfile: TextIO | None = None, *, tee: bool = False
@@ -370,7 +396,11 @@ class SysCaptureBase(CaptureBase[AnyStr]):
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = CaptureIO() if not tee else TeeCaptureIO(self._old)
+                encoding, errors = _original_codec(self._old)
+                if tee:
+                    tmpfile = TeeCaptureIO(self._old, encoding=encoding, errors=errors)
+                else:
+                    tmpfile = CaptureIO(encoding=encoding, errors=errors)
         self.tmpfile = tmpfile
         self._state = "initialized"
 
@@ -457,7 +487,12 @@ class SysCapture(SysCaptureBase[str]):
 
     def writeorg(self, data: str) -> None:
         self._assert_state("writeorg", ("started", "suspended"))
-        self._old.write(data)
+        try:
+            self._old.write(data)
+        except UnicodeEncodeError:
+            encoding, _ = _original_codec(self._old)
+            text = data.encode(encoding, "backslashreplace").decode(encoding, "replace")
+            self._old.write(text)
         self._old.flush()
 
 
@@ -489,10 +524,12 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             self.tmpfile = open(os.devnull, encoding="utf-8")
             self.syscapture: CaptureBase[str] = SysCapture(targetfd)
         else:
+            orig_stream = getattr(sys, patchsysdict.get(targetfd, ""), None)
+            encoding, errors = _original_codec(orig_stream)
             self.tmpfile = EncodedFile(
                 TemporaryFile(buffering=0),
-                encoding="utf-8",
-                errors="replace",
+                encoding=encoding,
+                errors=errors,
                 newline="",
                 write_through=True,
             )
@@ -595,7 +632,8 @@ class FDCapture(FDCaptureBase[str]):
         if os.fstat(self.tmpfile.fileno()).st_size == 0:
             return self.EMPTY_BUFFER
         self.tmpfile.seek(0)
-        res = self.tmpfile.read()
+        encoding = self.tmpfile.encoding or "UTF-8"
+        res = cast(bytes, self.tmpfile.buffer.read()).decode(encoding, "replace")
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
@@ -603,8 +641,9 @@ class FDCapture(FDCaptureBase[str]):
     def writeorg(self, data: str) -> None:
         """Write to original file descriptor."""
         self._assert_state("writeorg", ("started", "suspended"))
-        # XXX use encoding of original stream
-        os.write(self.targetfd_save, data.encode("utf-8"))
+        encoding = self.tmpfile.encoding or "UTF-8"
+        errors = self.tmpfile.errors or "strict"
+        os.write(self.targetfd_save, _encode_for_replay(data, encoding, errors))
 
 
 # MultiCapture
