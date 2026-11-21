@@ -1,0 +1,1 @@
+Fixed an internal ``AssertionError`` when a :hook:`pytest_fixture_setup` implementation raises before the fixture result is cached: the remaining parameters of the same fixture now run normally, and :hook:`pytest_fixture_post_finalizer` is still called for the failed setup. This was a regression in pytest 9.1.0.

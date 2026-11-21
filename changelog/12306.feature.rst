@@ -1,0 +1,3 @@
+:hook:`pytest_fixture_post_finalizer` now receives a ``teardown_exception`` argument with the exception raised while tearing down the fixture: the exception itself, a :class:`BaseExceptionGroup` if several finalizers of the fixture failed, or ``None`` if teardown succeeded. Use it instead of :func:`sys.exc_info`, which has not reliably reflected teardown errors inside this hook since pytest 8.1.
+
+The hook now also always receives the request that set the fixture up, and exceptions raised by implementations of the hook propagate instead of being reported as fixture teardown errors.
