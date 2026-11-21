@@ -200,6 +200,73 @@ class TestGeneralUsage:
             ]
         )
 
+    @pytest.mark.parametrize(
+        "selection",
+        [
+            "test_p[3]",
+            "test_p[]",
+            "test_plain[1]",
+            "test_missing[1]",
+            "test_ids[x::z]",
+            "TestC::test_m[9]",
+        ],
+    )
+    def test_not_found_keeps_parametrization(
+        self, pytester: Pytester, selection: str
+    ) -> None:
+        """The "not found" error shows the argument as typed (#15422)."""
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("a", [1, 2])
+            def test_p(a): pass
+
+            def test_plain(): pass
+
+            @pytest.mark.parametrize("a", ["x::y"])
+            def test_ids(a): pass
+
+            class TestC:
+                @pytest.mark.parametrize("b", [1])
+                def test_m(self, b): pass
+            """
+        )
+        arg = f"{p.name}::{selection}"
+        result = pytester.runpytest(arg)
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            [f"ERROR: not found: {arg}", "(no match in any of *)"]
+        )
+
+    def test_not_found_pyargs_reports_module_name(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            **{"pkg/__init__.py": "", "pkg/test_m.py": "def test_a(): pass"}
+        )
+        pytester.syspathinsert()
+        result = pytester.runpytest("--pyargs", "pkg.test_m::test_a[1]")
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(["ERROR: not found: pkg.test_m::test_a[1]"])
+
+    def test_select_in_directory_with_brackets(self, pytester: Pytester) -> None:
+        """Paths containing "[" can be selected (#10329)."""
+        pytester.makepyfile(
+            **{
+                "d[1]/test_d.py": """
+                    import pytest
+                    @pytest.mark.parametrize("a", [1, 2])
+                    def test_d(a): pass
+                """
+            }
+        )
+        result = pytester.runpytest("--co", "-q", "d[1]/test_d.py::test_d[2]")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(
+            ["d[[]1]/test_d.py::test_d[[]2]", "1 test collected*"]
+        )
+        result = pytester.runpytest(str(pytester.path / "d[1]"), "--co", "-q")
+        result.stdout.fnmatch_lines(["2 tests collected*"])
+
     @pytest.mark.filterwarnings("default")
     def test_better_reporting_on_conftest_load_failure(
         self, pytester: Pytester
