@@ -1,0 +1,1 @@
+Fixed ``faulthandler_timeout`` being cancelled at the first failure in a test, so the timeout no longer covers the rest of the test body or fixture teardown. A hanging teardown after a failed test now dumps a traceback (and exits with ``faulthandler_exit_on_timeout``) as documented.
