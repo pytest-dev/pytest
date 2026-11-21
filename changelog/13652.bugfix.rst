@@ -1,0 +1,1 @@
+pytest now reports the actual extra item in ``Left contains one more item`` and ``Right contains one more item`` assertion messages. This works for lists and tuples, including mixed ``list``/``tuple`` comparisons and when both sequences contain the same ``nan`` object. If pytest cannot determine the extra item, it keeps the previous message.
