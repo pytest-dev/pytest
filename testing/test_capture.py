@@ -5,6 +5,7 @@ from collections.abc import Generator
 import contextlib
 import io
 from io import UnsupportedOperation
+import logging
 import os
 import re
 import subprocess
@@ -13,6 +14,7 @@ import textwrap
 from typing import BinaryIO
 from typing import cast
 from typing import TextIO
+from unittest.mock import Mock
 
 from _pytest import capture
 from _pytest.capture import _get_multicapture
@@ -20,6 +22,7 @@ from _pytest.capture import CaptureFixture
 from _pytest.capture import CaptureManager
 from _pytest.capture import CaptureResult
 from _pytest.capture import MultiCapture
+from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -1526,6 +1529,126 @@ def test_windowsconsoleio_workaround_non_standard_streams() -> None:
 
     stream = cast(TextIO, DummyStream())
     _windowsconsoleio_workaround(stream)
+
+
+def test_has_stale_logging_stream_handler() -> None:
+    from _pytest.capture import _has_stale_logging_stream_handler
+
+    old_stdout = io.StringIO()
+    old_stderr = io.StringIO()
+    other_stream = io.StringIO()
+
+    logger = logging.getLogger()
+    handler = logging.StreamHandler(old_stderr)
+    logger.addHandler(handler)
+
+    try:
+        assert _has_stale_logging_stream_handler(old_stdout, old_stderr)
+
+        handler.setStream(other_stream)
+
+        assert not _has_stale_logging_stream_handler(old_stdout, old_stderr)
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+
+
+def test_does_not_warn_when_standard_streams_are_not_replaced(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    from _pytest.capture import _warn_if_stale_logging_streams
+
+    old_stdout = io.StringIO()
+    old_stderr = io.StringIO()
+
+    logger = logging.getLogger("test_logging_warning_without_stream_replacement")
+    handler = logging.StreamHandler(old_stderr)
+    logger.addHandler(handler)
+
+    config = Mock(spec=Config)
+
+    monkeypatch.setattr(sys, "stdout", old_stdout)
+    monkeypatch.setattr(sys, "stderr", old_stderr)
+
+    try:
+        _warn_if_stale_logging_streams(
+            config,
+            old_stdout,
+            old_stderr,
+        )
+
+        config.issue_config_time_warning.assert_not_called()
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+
+
+def test_warns_for_stale_logging_stream_handler(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    from _pytest.capture import _warn_if_stale_logging_streams
+
+    old_stdout = io.StringIO()
+    old_stderr = io.StringIO()
+
+    logger = logging.getLogger("test_stale_logging_warning")
+    handler = logging.StreamHandler(old_stderr)
+    logger.addHandler(handler)
+
+    config = Mock(spec=Config)
+
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    monkeypatch.setattr(sys, "stderr", io.StringIO())
+
+    try:
+        _warn_if_stale_logging_streams(
+            config,
+            old_stdout,
+            old_stderr,
+        )
+
+        config.issue_config_time_warning.assert_called_once()
+
+        warning = config.issue_config_time_warning.call_args.args[0]
+        stacklevel = config.issue_config_time_warning.call_args.kwargs["stacklevel"]
+
+        assert isinstance(warning, pytest.PytestWarning)
+        assert "logging handler is holding a reference" in str(warning)
+        assert stacklevel == 2
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+
+
+def test_does_not_warn_for_non_stale_logging_stream_handler(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    from _pytest.capture import _warn_if_stale_logging_streams
+
+    old_stdout = io.StringIO()
+    old_stderr = io.StringIO()
+    other_stream = io.StringIO()
+
+    logger = logging.getLogger("test_non_stale_logging_warning")
+    handler = logging.StreamHandler(other_stream)
+    logger.addHandler(handler)
+
+    config = Mock(spec=Config)
+
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    monkeypatch.setattr(sys, "stderr", io.StringIO())
+
+    try:
+        _warn_if_stale_logging_streams(
+            config,
+            old_stdout,
+            old_stderr,
+        )
+
+        config.issue_config_time_warning.assert_not_called()
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
 
 
 def test_dontreadfrominput_has_encoding(pytester: Pytester) -> None:
