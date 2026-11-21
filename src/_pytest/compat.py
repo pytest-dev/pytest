@@ -105,6 +105,24 @@ def num_mock_patch_args(function) -> int:
     )
 
 
+def mock_patch_kwarg_names(function) -> frozenset[str]:
+    """Return names of keyword arguments passed by ``patch.multiple`` (if any)."""
+    patchings = getattr(function, "patchings", None)
+    if not patchings:
+        return frozenset()
+
+    mock_sentinel = getattr(sys.modules.get("mock"), "DEFAULT", object())
+    ut_mock_sentinel = getattr(sys.modules.get("unittest.mock"), "DEFAULT", object())
+
+    return frozenset(
+        patcher.attribute_name
+        for p in patchings
+        if p.attribute_name
+        for patcher in (p, *p.additional_patchers)
+        if patcher.new is mock_sentinel or patcher.new is ut_mock_sentinel
+    )
+
+
 def getfuncargnames(
     function: Callable[..., object],
     *,
@@ -171,6 +189,8 @@ def getfuncargnames(
     # Remove any names that will be replaced with mocks.
     if hasattr(function, "__wrapped__"):
         arg_names = arg_names[num_mock_patch_args(function) :]
+        mock_kwarg_names = mock_patch_kwarg_names(function)
+        arg_names = tuple(arg for arg in arg_names if arg not in mock_kwarg_names)
     return arg_names
 
 

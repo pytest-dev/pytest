@@ -60,6 +60,57 @@ class TestMockDecoration:
         values = getfuncargnames(f)
         assert values == ("y", "z")
 
+    def test_getfuncargnames_patch_multiple(self) -> None:
+        from unittest.mock import DEFAULT
+        from unittest.mock import patch
+
+        from _pytest.compat import getfuncargnames
+
+        class T:
+            a = b = c = None
+
+        # Only attributes patched with DEFAULT are passed as keyword arguments.
+        @patch.multiple(T, a=DEFAULT, b=DEFAULT, c=1)
+        def f(x, a, b, c):
+            pass  # pragma: no cover
+
+        values = getfuncargnames(f)
+        assert values == ("x", "c")
+
+    def test_unittest_mock_patch_multiple(self, pytester: Pytester) -> None:
+        """Mocks passed by patch.multiple are not requested as fixtures (#8748)."""
+        pytester.makepyfile(
+            """
+            import os.path
+            from unittest.mock import DEFAULT, patch
+
+            class Foo:
+                def bar(self):
+                    pass
+
+                def baz(self):
+                    pass
+
+            class TestFoo:
+                @patch.multiple(Foo, bar=DEFAULT)
+                def test_method(self, bar):
+                    Foo().bar()
+                    bar.assert_called_once_with()
+
+            @patch("os.path.abspath")
+            @patch.multiple(Foo, bar=DEFAULT, baz=DEFAULT)
+            def test_function(abspath, bar, baz, tmp_path):
+                os.path.abspath("hello")
+                abspath.assert_any_call("hello")
+                Foo().baz()
+                baz.assert_called_once_with()
+                bar.assert_not_called()
+                assert tmp_path.is_dir()
+        """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=2)
+
     def test_unittest_mock(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
