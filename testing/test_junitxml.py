@@ -1894,6 +1894,62 @@ def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
         assert len(node.find_by_tag("system-out")) == 0
 
 
+@parametrize_families
+@pytest.mark.parametrize("log_passing_tests", [True, False])
+@pytest.mark.parametrize("teardown_error", [True, False])
+def test_setup_error_keeps_captured_output(
+    pytester: Pytester,
+    run_and_parse: RunAndParse,
+    xunit_family: _JunitFamily,
+    log_passing_tests: bool,
+    teardown_error: bool,
+) -> None:
+    pytester.makepyfile(
+        f"""
+        import logging
+        import sys
+        import pytest
+
+        def emit(phase):
+            print(phase + " stdout")
+            print(phase + " stderr", file=sys.stderr)
+            logging.warning(phase + " log")
+
+        @pytest.fixture
+        def broken_setup(request):
+            def cleanup():
+                emit("teardown")
+                if {teardown_error!r}:
+                    raise RuntimeError("teardown failed")
+
+            request.addfinalizer(cleanup)
+            emit("setup")
+            raise RuntimeError("setup failed")
+
+        def test_example(broken_setup):
+            pass
+        """
+    )
+    result, dom = run_and_parse(
+        "-o",
+        "junit_logging=all",
+        "-o",
+        f"junit_log_passing_tests={log_passing_tests}",
+        family=xunit_family,
+    )
+    result.assert_outcomes(errors=2 if teardown_error else 1)
+    testcase = dom.get_first_by_tag("testcase")
+    # Both phases' output should be retained exactly once, even if cleanup fails.
+    stdout_nodes = testcase.find_by_tag("system-out")
+    stderr_nodes = testcase.find_by_tag("system-err")
+    assert len(stdout_nodes) == 1
+    assert len(stderr_nodes) == 1
+    for phase in ("setup", "teardown"):
+        assert stdout_nodes[0].text.count(f"{phase} stdout") == 1
+        assert stdout_nodes[0].text.count(f"{phase} log") == 1
+        assert stderr_nodes[0].text.count(f"{phase} stderr") == 1
+
+
 def test_no_message_quiet(pytester: Pytester) -> None:
     """Do not show the summary banner when --quiet is given (#13700)."""
     pytester.makepyfile("def test(): pass")
