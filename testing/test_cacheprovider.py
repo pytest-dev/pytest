@@ -8,6 +8,7 @@ import errno
 import os
 from pathlib import Path
 import shutil
+import sys
 from typing import Any
 from unittest.mock import mock_open
 
@@ -288,6 +289,190 @@ def test_cache_reportheader_external_abspath(
     )
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines([f"cachedir: {external_cache}"])
+
+
+FAILING_AND_PASSING = """
+def test_fail(): assert False
+def test_pass(): pass
+"""
+
+
+def test_cache_dir_with_dotdot(pytester: Pytester) -> None:
+    """A cache_dir with ``..`` crashed every key access with an INTERNALERROR (#15295)."""
+    rootdir = pytester.mkdir("sub")
+    rootdir.joinpath("pytest.ini").write_text(
+        "[pytest]\ncache_dir = ../.pytest_cache\n", encoding="utf-8"
+    )
+    rootdir.joinpath("test_it.py").write_text(FAILING_AND_PASSING, encoding="utf-8")
+    pytester.runpytest(rootdir).assert_outcomes(passed=1, failed=1)
+
+    result = pytester.runpytest(rootdir, "--lf")
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(["run-last-failure: rerun previous 1 failure"])
+    assert pytester.path.joinpath(".pytest_cache", "v", "cache", "lastfailed").is_file()
+
+
+def test_cache_dir_dotdot_through_symlinked_rootdir(
+    pytester: Pytester, tmp_path_factory: TempPathFactory
+) -> None:
+    """``..`` is resolved the way the OS does.
+
+    POSIX follows the symlink first, so ``link/..`` is the target's parent.
+    Windows collapses ``..`` lexically first, so it is the link's own parent.
+    """
+    from _pytest.pathlib import symlink_or_skip
+
+    elsewhere = tmp_path_factory.mktemp("elsewhere")
+    real_rootdir = elsewhere / "sub"
+    real_rootdir.mkdir()
+    real_rootdir.joinpath("pytest.ini").write_text(
+        "[pytest]\ncache_dir = ../cache\n", encoding="utf-8"
+    )
+    real_rootdir.joinpath("test_it.py").write_text(
+        FAILING_AND_PASSING, encoding="utf-8"
+    )
+    link = pytester.path / "link"
+    symlink_or_skip(real_rootdir, link)
+
+    pytester.runpytest(link).assert_outcomes(passed=1, failed=1)
+    expected, other = elsewhere, pytester.path
+    if sys.platform == "win32":
+        expected, other = other, expected
+    assert expected.joinpath("cache", "v", "cache", "lastfailed").is_file()
+    assert not other.joinpath("cache").exists()
+
+
+def test_tox_env_dir_with_dotdot(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    """``toxworkdir = ../.tox`` crashed every run that configured no cache_dir (#15295)."""
+    rootdir = pytester.mkdir("sub")
+    rootdir.joinpath("pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+    rootdir.joinpath("test_it.py").write_text(FAILING_AND_PASSING, encoding="utf-8")
+    monkeypatch.setenv("TOX_ENV_DIR", str(rootdir / ".." / ".tox" / "py"))
+    pytester.runpytest(rootdir).assert_outcomes(passed=1, failed=1)
+
+    result = pytester.runpytest(rootdir, "--lf", "-v")
+    result.assert_outcomes(failed=1, warnings=0)
+    result.stdout.fnmatch_lines(["run-last-failure: rerun previous 1 failure"])
+    tox_cache = pytester.path.joinpath(".tox", "py", ".pytest_cache")
+    assert tox_cache.joinpath("v", "cache", "lastfailed").is_file()
+    assert not rootdir.joinpath(".pytest_cache").exists()
+
+
+def test_cache_clear_skips_untagged_dir(pytester: Pytester) -> None:
+    """``--cache-clear`` deleted ``v/`` and ``d/`` from any directory cache_dir named."""
+    rootdir = pytester.mkdir("sub")
+    rootdir.joinpath("pytest.ini").write_text(
+        "[pytest]\ncache_dir = ..\n", encoding="utf-8"
+    )
+    rootdir.joinpath("test_it.py").write_text("def test_pass(): pass", encoding="utf-8")
+    user_file = pytester.path.joinpath("v", "important.txt")
+    user_file.parent.mkdir()
+    user_file.write_text("keep me", encoding="utf-8")
+
+    result = pytester.runpytest(rootdir, "--cache-clear")
+    result.assert_outcomes(passed=1, warnings=2)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestCacheWarning: --cache-clear: * was not created by pytest "
+            "(it has no CACHEDIR.TAG), not deleting anything from it"
+        ]
+    )
+    assert user_file.read_text(encoding="utf-8") == "keep me"
+
+
+@pytest.mark.parametrize("cache_dir", ["../outside", ".", "..", "ABSOLUTE"])
+def test_cache_dir_outside_rootdir_deprecated(
+    pytester: Pytester, tmp_path_factory: TempPathFactory, cache_dir: str
+) -> None:
+    if cache_dir == "ABSOLUTE":
+        cache_dir = str(tmp_path_factory.mktemp("absolute"))
+    rootdir = pytester.mkdir("sub")
+    rootdir.joinpath("pytest.ini").write_text(
+        f"[pytest]\ncache_dir = {cache_dir}\n", encoding="utf-8"
+    )
+    rootdir.joinpath("test_it.py").write_text("def test_pass(): pass", encoding="utf-8")
+    result = pytester.runpytest(rootdir)
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        ["*PytestRemovedIn10Warning: cache_dir * is not inside the rootdir *"]
+    )
+
+
+@pytest.mark.parametrize("cache_dir", ["sub/../.cache", "nested/cache"])
+def test_cache_dir_inside_rootdir_not_deprecated(
+    pytester: Pytester, cache_dir: str
+) -> None:
+    pytester.makeini(f"[pytest]\ncache_dir = {cache_dir}\n")
+    pytester.makepyfile("def test_pass(): pass")
+    pytester.runpytest().assert_outcomes(passed=1, warnings=0)
+
+
+def test_tox_env_dir_inside_rootdir_not_deprecated(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / ".tox" / "py"))
+    pytester.makepyfile("def test_pass(): pass")
+    pytester.runpytest().assert_outcomes(passed=1, warnings=0)
+    assert pytester.path.joinpath(".tox", "py", ".pytest_cache").is_dir()
+
+
+@pytest.mark.parametrize(
+    "cache_dir",
+    [
+        None,
+        pytest.param(
+            "link/../cache",
+            marks=pytest.mark.skipif(
+                sys.platform == "win32",
+                reason="Windows collapses .. before following the link: no escape",
+            ),
+        ),
+    ],
+)
+def test_cache_dir_symlink_escape_is_an_error(
+    pytester: Pytester, tmp_path_factory: TempPathFactory, cache_dir: str | None
+) -> None:
+    """A cache dir that looks inside the rootdir but a symlink takes outside it."""
+    from _pytest.pathlib import symlink_or_skip
+
+    outside = tmp_path_factory.mktemp("outside") / "sub"
+    outside.mkdir()
+    if cache_dir is None:
+        symlink_or_skip(outside, pytester.path / ".pytest_cache")
+        pytester.makeini("[pytest]")
+    else:
+        symlink_or_skip(outside, pytester.path / "link")
+        pytester.makeini(f"[pytest]\ncache_dir = {cache_dir}\n")
+    pytester.makepyfile("def test_pass(): pass")
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        ["*cache_dir * is inside the rootdir, but a symlink takes it to *"]
+    )
+
+
+def test_cache_dir_symlink_within_rootdir_is_fine(pytester: Pytester) -> None:
+    from _pytest.pathlib import symlink_or_skip
+
+    target = pytester.mkdir("real_cache")
+    symlink_or_skip(target, pytester.path / ".pytest_cache")
+    pytester.makepyfile("def test_pass(): pass")
+    pytester.runpytest().assert_outcomes(passed=1, warnings=0)
+    assert target.joinpath("v").is_dir()
+
+
+def test_cache_clear_clears_pytest_created_dir(pytester: Pytester) -> None:
+    pytester.makepyfile("def test_pass(): pass")
+    pytester.runpytest()
+    lastfailed = pytester.path.joinpath(".pytest_cache", "v", "cache", "nodeids")
+    assert lastfailed.is_file()
+    pytester.makeconftest(
+        """
+        def pytest_configure(config):
+            assert config.cache.get("cache/nodeids", None) is None
+        """
+    )
+    pytester.runpytest("--cache-clear").assert_outcomes(passed=1)
 
 
 def test_cache_show(pytester: Pytester) -> None:
@@ -1416,19 +1601,20 @@ def test_preserve_keys_order(pytester: Pytester) -> None:
 def test_does_not_create_boilerplate_in_existing_dirs(pytester: Pytester) -> None:
     from _pytest.cacheprovider import Cache
 
+    existing = pytester.mkdir("existing")
     pytester.makeini(
         """
         [pytest]
-        cache_dir = .
+        cache_dir = existing
         """
     )
     config = pytester.parseconfig()
     cache = Cache.for_config(config, _ispytest=True)
     cache.set("foo", "bar")
 
-    assert os.path.isdir("v")  # cache contents
-    assert not os.path.exists(".gitignore")
-    assert not os.path.exists("README.md")
+    assert existing.joinpath("v").is_dir()  # cache contents
+    assert not existing.joinpath(".gitignore").exists()
+    assert not existing.joinpath("README.md").exists()
 
 
 def test_cachedir_tag(pytester: Pytester) -> None:

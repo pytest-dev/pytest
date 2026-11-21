@@ -1,0 +1,1 @@
+A cache directory that lies inside the rootdir but resolves outside it through a symlink, such as a ``.pytest_cache`` symlink to another file system, is now a usage error. This applies to the default cache directory as well. See :ref:`cache-dir-outside-rootdir`.
