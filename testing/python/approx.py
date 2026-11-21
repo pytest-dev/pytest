@@ -599,6 +599,12 @@ class TestApprox:
             # If ``nan_ok=True``, then NaN is equal to NaN.
             assert op(a, approx(x, nan_ok=True))
 
+    def test_actual_nan(self):
+        actual = Decimal("NaN")
+        assert actual != approx(Decimal("1.1"))
+        assert not (actual == approx(Decimal("1.1"), nan_ok=True))
+        assert [actual] != approx([Decimal("1.1")])
+
     def test_int(self):
         within_1e6 = [(1000001, 1000000), (-1000001, -1000000)]
         for a, x in within_1e6:
