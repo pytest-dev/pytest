@@ -1,0 +1,1 @@
+Fixed quadratic collection cost when many test files from the same directory are passed as command-line arguments: the parent directory is no longer re-collected for each file argument, unless ``--keep-duplicates`` is used.
