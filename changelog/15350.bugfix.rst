@@ -1,0 +1,1 @@
+Fixed an internal :class:`AttributeError` when passing something other than a mark to the ``marks`` argument of :func:`pytest.param` -- it raises a :class:`TypeError` again, as before pytest 8.4.
