@@ -1,0 +1,1 @@
+Fix :class:`pytest.RaisesGroup` calling its ``check`` callback on a contained exception while constructing a failure message. The callback is now called only on the exception group.
