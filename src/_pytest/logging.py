@@ -363,7 +363,7 @@ class catching_logs(Generic[_HandlerType]):
         # Attach to all non-propagating loggers (won't reach root).
         # Note that will miss loggers that *become* non-propagating
         # after the `__enter__`. Not worth the trouble for now.
-        for logger in root_logger.manager.loggerDict.values():
+        for logger in list(root_logger.manager.loggerDict.values()):
             if (
                 isinstance(logger, logging.Logger)
                 and not logger.propagate

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 import logging
+import threading
 
 from _pytest.logging import caplog_records_key
+from _pytest.logging import catching_logs
 from _pytest.pytester import Pytester
 import pytest
 
@@ -30,6 +32,64 @@ def cleanup_disabled_logging() -> Iterator[None]:
 def test_fixture_help(pytester: Pytester) -> None:
     result = pytester.runpytest("--fixtures")
     result.stdout.fnmatch_lines(["*caplog*"])
+
+
+def test_capture_handles_concurrent_logger_registration() -> None:
+    manager = logging.root.manager
+    unique_name = f"pytest.test_capture_concurrent.{threading.get_ident()}"
+    trigger_name = f"{unique_name}.trigger"
+    worker_name = f"{unique_name}.worker"
+    registration_finished = threading.Event()
+    worker: threading.Thread | None = None
+    worker_errors: list[Exception] = []
+
+    def register_logger() -> None:
+        try:
+            logging.getLogger(worker_name)
+        except Exception as exc:
+            worker_errors.append(exc)
+        finally:
+            registration_finished.set()
+
+    class TriggerLogger(logging.Logger):
+        @property
+        def propagate(self) -> bool:
+            nonlocal worker
+            worker = threading.Thread(target=register_logger)
+            worker.start()
+            assert registration_finished.wait(timeout=2)
+            return True
+
+        @propagate.setter
+        def propagate(self, value: bool) -> None:
+            pass
+
+    previous_trigger = manager.loggerDict.get(trigger_name)
+    previous_worker = manager.loggerDict.get(worker_name)
+    manager.loggerDict[trigger_name] = TriggerLogger(trigger_name)
+    handler = logging.NullHandler()
+    capture = catching_logs(handler)
+    try:
+        with capture:
+            pass
+        if worker is not None:
+            worker.join(timeout=2)
+        assert not worker or not worker.is_alive()
+        assert not worker_errors
+    finally:
+        if worker is not None:
+            worker.join(timeout=2)
+        for logger in capture.attached_loggers:
+            logger.removeHandler(handler)
+        capture.attached_loggers.clear()
+        if previous_trigger is None:
+            manager.loggerDict.pop(trigger_name, None)
+        else:
+            manager.loggerDict[trigger_name] = previous_trigger
+        if previous_worker is None:
+            manager.loggerDict.pop(worker_name, None)
+        else:
+            manager.loggerDict[worker_name] = previous_worker
 
 
 def test_change_level(caplog: pytest.LogCaptureFixture) -> None:
