@@ -426,14 +426,53 @@ def test_check() -> None:
     def is_value_error(e: BaseException) -> bool:
         return isinstance(e, ValueError)
 
-    # helpful suggestion if the user thinks the check is for the sub-exception
+    # the check is only called with the group, never with the contained
+    # exception (see #14324), so no "did return True for the expected" suggestion
     with (
         fails_raises_group(
-            f"check {is_value_error} did not return True on the ExceptionGroup, but did return True for the expected ValueError. You might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
+            f"check {is_value_error} did not return True on the ExceptionGroup"
         ),
         RaisesGroup(ValueError, check=is_value_error),
     ):
         raise ExceptionGroup("", (ValueError(),))
+
+
+def test_check_not_called_with_subexception_issue_14324() -> None:
+    # https://github.com/pytest-dev/pytest/issues/14324
+    # `check` is documented to be called with the *group*. When the group check
+    # fails, the internal helper-call with a contained sub-exception must not
+    # crash with AttributeError if the check assumes it receives a group,
+    # and the check must not be user-visible called with sub-exceptions.
+
+    # Case 1: a check that uses group attributes must not raise AttributeError
+    # when the group check returns False.
+    def check_len_gt_1(e: BaseException) -> bool:
+        return len(e.exceptions) > 1  # type: ignore[attr-defined]
+
+    check_repr = repr_callable(check_len_gt_1)
+    with (
+        fails_raises_group(
+            f"check {check_repr} did not return True on the ExceptionGroup"
+        ),
+        RaisesGroup(ValueError, match="Main message", check=check_len_gt_1),
+    ):
+        raise ExceptionGroup("Main message", (ValueError("foo"),))
+
+    # Case 2: the user's check must only ever be called with the group itself,
+    # never with contained exceptions.
+    seen: list[BaseException] = []
+
+    def check_only_sees_group(e: BaseException) -> bool:
+        seen.append(e)
+        return isinstance(e, BaseExceptionGroup) and len(e.exceptions) > 1
+
+    exc = ExceptionGroup("Main message", (ValueError("foo"),))
+    with (
+        pytest.raises(Failed),
+        RaisesGroup(ValueError, match="Main message", check=check_only_sees_group),
+    ):
+        raise exc
+    assert seen == [exc]
 
 
 def test_unwrapped_match_check() -> None:
