@@ -29,6 +29,7 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest.compat import ItemLocation
 from _pytest.config import Config
 from _pytest.nodeid import coerce_node_id
 from _pytest.nodeid import NodeId
@@ -62,7 +63,7 @@ def getworkerinfoline(node):
 
 class BaseReport:
     when: str | None
-    location: tuple[str, int | None, str] | None
+    location: ItemLocation | None
     longrepr: (
         ExceptionInfo[BaseException] | tuple[str, int, str] | str | TerminalRepr | None
     )
@@ -344,7 +345,7 @@ class TestReport(BaseReport):
     def __init__(
         self,
         nodeid: str | NodeId,
-        location: tuple[str, int | None, str],
+        location: ItemLocation | tuple[str, int | None, str],
         keywords: Mapping[str, Literal[1]],
         outcome: Literal["passed", "failed", "skipped"],
         longrepr: ExceptionInfo[BaseException]
@@ -363,12 +364,19 @@ class TestReport(BaseReport):
         #: Normalized collection nodeid.
         self._id = coerce_node_id(nodeid)
 
-        #: A (filesystempath, lineno, domaininfo) tuple indicating the
-        #: actual location of a test item - it might be different from the
-        #: collected one e.g. if a method is inherited from a different module.
+        #: An :class:`ItemLocation <pytest.ItemLocation>` (filesystempath, lineindex, domaininfo)
+        #: indicating the actual location of a test item - it might be
+        #: different from the collected one e.g. if a method is inherited
+        #: from a different module.
         #: The filesystempath may be relative to ``config.rootdir``.
-        #: The line number is 0-based.
-        self.location: tuple[str, int | None, str] = location
+        #: The line number (``lineindex``) is 0-based.
+        self.location: ItemLocation = (
+            location
+            if isinstance(location, ItemLocation)
+            else ItemLocation(*location)
+            if len(location) == 3
+            else location
+        )
 
         #: The names in :attr:`Node.keywords <_pytest.nodes.Node.keywords>`
         #: of the item, each mapping to ``1``: only the names survive into the
@@ -532,8 +540,8 @@ class CollectReport(BaseReport):
     @property
     def location(  # type:ignore[override]
         self,
-    ) -> tuple[str, int | None, str] | None:
-        return (self.fspath, None, self.fspath)
+    ) -> ItemLocation | None:
+        return ItemLocation(self.fspath, None, self.fspath)
 
     def __repr__(self) -> str:
         return f"<CollectReport {self.nodeid!r} lenresult={len(self.result)} outcome={self.outcome!r}>"
@@ -648,6 +656,8 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
             d[name] = os.fspath(d[name])
         elif name == "result":
             d[name] = None  # for now
+    if "location" in d and isinstance(d["location"], ItemLocation):
+        d["location"] = tuple(d["location"])
     return d
 
 
@@ -730,5 +740,8 @@ def _report_kwargs_from_json(reportdict: dict[str, Any]) -> dict[str, Any]:
         for section in reportdict["longrepr"]["sections"]:
             exception_info.addsection(*section)
         reportdict["longrepr"] = exception_info
+
+    if "location" in reportdict and reportdict["location"] is not None:
+        reportdict["location"] = ItemLocation(*reportdict["location"])
 
     return reportdict
