@@ -1033,7 +1033,10 @@ def _contains_decimal(expected: object) -> bool:
     if _is_sequence_like(expected):
         # ``.flat`` also makes a 0-d numpy array iterable, which it is not
         # otherwise, despite being sized and subscriptable.
-        values = getattr(expected, "flat", expected)
+        try:
+            values = getattr(expected, "flat", expected)
+        except NotImplementedError:  # ``.flat`` raises like this on a jax.Array
+            return False  # But JAX arrays cannot contain `Decimal` anyway
         return any(isinstance(value, Decimal) for value in values)
     return False
 

@@ -49,6 +49,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
+from _pytest.compat import override
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.config import Config
@@ -66,6 +67,7 @@ from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import _HiddenParam
+from _pytest.mark.structures import get_mro_mark_groups
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import HIDDEN_PARAM
 from _pytest.mark.structures import Mark
@@ -140,7 +142,11 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_generate_tests(metafunc: Metafunc) -> None:
-    for marker in metafunc.definition.iter_markers(name="parametrize"):
+    # An inherited class-level parametrize keeps composing base-first, so the
+    # generated IDs stay stable (#14329).
+    for _node, marker in metafunc.definition._iter_markers_with_node(
+        name="parametrize", order=nodes.MarkerOrder.STORED
+    ):
         metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
 
 
@@ -311,7 +317,7 @@ class PyobjMixin(nodes.Node):
             # XXX evil hack
             # used to avoid Function marker duplication
             if self._ALLOW_MARKERS:
-                self.own_markers.extend(get_unpacked_marks(self.obj))
+                self._extend_own_markers(get_unpacked_marks(self.obj))
                 # This assumes that `obj` is called before there is a chance
                 # to add custom keys to `self.keywords`, so no fear of overriding.
                 self.keywords.update((mark.name, mark) for mark in self.own_markers)
@@ -766,10 +772,84 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | N
 class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
 
+    #: Where the MRO-inherited markers were last seen in ``own_markers``, the
+    #: run as stored (base-first), and the same run closest-first. ``None``
+    #: until ``obj`` is resolved and the markers are unpacked.
+    _mro_marks: tuple[int, tuple[Mark, ...], tuple[Mark, ...]] | None = None
+
     @classmethod
     def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
+
+    @override
+    def _extend_own_markers(self, marks: Sequence[Mark]) -> None:
+        """Record where the MRO run lands, so it can be reordered by a slice."""
+        groups = get_mro_mark_groups(self._obj)
+        self._mro_marks = (
+            len(self.own_markers),
+            tuple(marks),
+            tuple(mark for group in groups for mark in group),
+        )
+        super()._extend_own_markers(marks)
+
+    def _find_mro_run(self) -> int | None:
+        """Return where the recorded MRO run starts in ``own_markers`` now.
+
+        ``own_markers`` is a public list: ``add_marker(append=False)`` or a
+        plugin's ``insert()``/``remove()`` shift or break the run. The run is
+        matched by identity as a whole, so a ``Mark`` object that also appears
+        outside the run (one passed to ``add_marker`` as well) cannot be
+        mistaken for part of it. Returns ``None`` when the run is gone.
+        """
+        assert self._mro_marks is not None
+        start, stored, _ = self._mro_marks
+        own_markers = self.own_markers
+
+        def run_at(index: int) -> bool:
+            window = own_markers[index : index + len(stored)]
+            return len(window) == len(stored) and all(
+                a is b for a, b in zip(window, stored, strict=True)
+            )
+
+        if run_at(start):
+            return start
+        for index in range(len(own_markers) - len(stored) + 1):
+            if run_at(index):
+                self._mro_marks = (index, *self._mro_marks[1:])
+                return index
+        return None
+
+    @override
+    def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
+        """Yield own markers closest-first.
+
+        ``own_markers`` holds the MRO-inherited markers as one contiguous run
+        in base-first order (the order :func:`get_unpacked_marks` produced them
+        in), possibly surrounded by markers added dynamically via
+        :meth:`~_pytest.nodes.Node.add_marker`. Yield ``own_markers`` as stored
+        -- so dynamic markers keep their ``append`` position, just like on a
+        plain node -- but with that run replaced by its closest-first
+        (child before parent) counterpart.
+
+        If the run was broken up, ``own_markers`` is yielded as stored.
+        """
+        own_markers = self.own_markers
+        if self._mro_marks is None or not self._mro_marks[1]:
+            # ``obj`` was not resolved yet, so own_markers cannot contain MRO
+            # markers - and resolving it here would be a nasty side effect.
+            yield from own_markers
+            return
+
+        start = self._find_mro_run()
+        if start is None:
+            yield from own_markers
+            return
+
+        closest_first = self._mro_marks[2]
+        yield from own_markers[:start]
+        yield from closest_first
+        yield from own_markers[start + len(closest_first) :]
 
     def newinstance(self):
         return self.obj()
@@ -1417,19 +1497,19 @@ class Metafunc:
 
         self._validate_if_using_arg_names(argnames, indirect)
 
-        # Use any already (possibly) generated ids with parametrize Marks.
-        if _param_mark and _param_mark._param_ids_from:
-            generated_ids = _param_mark._param_ids_from._param_ids_generated
-            if generated_ids is not None:
-                ids = generated_ids
+        # Store the raw ids on the source parametrize Mark, so that an iterator
+        # (#759) is consumed only once by all tests sharing the mark. They are
+        # resolved (escaped, made unique) on every call.
+        if _param_mark and (source := _param_mark._param_ids_from):
+            if source._param_ids_generated is not None:
+                ids = source._param_ids_generated
+            elif ids is not None and not callable(ids):
+                ids = self._validate_ids(ids, parametersets)
+                object.__setattr__(source, "_param_ids_generated", ids)
 
         ids = self._resolve_parameter_set_ids(
             argnames, ids, parametersets, nodeid=self.definition.nodeid
         )
-
-        # Store used (possibly generated) ids with parametrize Marks.
-        if _param_mark and _param_mark._param_ids_from and generated_ids is None:
-            object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
         # Calculate directness.
         arg_directness = _resolve_args_directness(

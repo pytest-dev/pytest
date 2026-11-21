@@ -528,7 +528,7 @@ class TestTerminal:
             """
             import pytest
 
-            @pytest.mark.skip(reason="123")
+            @pytest.mark.skip(reason="one two three")
             def test_1():
                 pass
 
@@ -579,7 +579,7 @@ class TestTerminal:
         )
 
         common_output = [
-            "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
+            "test_verbose_skip_reason.py::test_1 SKIPPED (one two three) *",
             "test_verbose_skip_reason.py::test_2 XPASS (456) *",
             "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
             "test_verbose_skip_reason.py::test_4 XFAIL  *",
@@ -1467,6 +1467,41 @@ def test_pass_output_reporting(pytester: Pytester) -> None:
             "*= 2 passed in *",
         ]
     )
+
+
+def test_pass_output_reporting_teardown_per_test(pytester: Pytester) -> None:
+    """Each test's captured teardown output is shown under that test (#15406)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(autouse=True)
+        def fix(request):
+            yield
+            print(f"teardown {request.node.name}")
+
+        def test_a():
+            print("call a")
+
+        def test_b():
+            print("call b")
+    """
+    )
+    result = pytester.runpytest("-rP")
+    result.stdout.fnmatch_lines(
+        [
+            "*_ test_a _*",
+            "call a",
+            "*- Captured stdout teardown -*",
+            "teardown test_a",
+            "*_ test_b _*",
+            "call b",
+            "*- Captured stdout teardown -*",
+            "teardown test_b",
+        ],
+        consecutive=False,
+    )
+    assert result.stdout.str().count("teardown test_") == 2
 
 
 def test_color_yes(pytester: Pytester, color_mapping) -> None:

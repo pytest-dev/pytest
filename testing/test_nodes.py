@@ -202,3 +202,13 @@ def test_custom_item_hidden_traceback(
     assert "custom failure" in output
     assert "def runtest(self):" in output
     assert ("__tracebackhide__ = True" in output) == fulltrace
+
+
+@pytest.mark.parametrize("args, expected", [((), ""), (("msg",), "msg")])
+def test_collector_repr_failure_collect_error(
+    pytester: Pytester, args: tuple[str, ...], expected: str
+) -> None:
+    col = pytester.getmodulecol("")
+    with pytest.raises(col.CollectError) as excinfo:
+        raise col.CollectError(*args)
+    assert col.repr_failure(excinfo) == expected

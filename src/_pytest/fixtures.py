@@ -564,9 +564,18 @@ class FixtureRequest(abc.ABC):
         result.extend(set(self._fixture_defs).difference(result))
         return result
 
+    # The return type is intentionally ``Any``.
+    # The concrete node type depends on the request scope, so the only correct
+    # annotation would be a broad one (``Item | Collector``). That would force
+    # users to ``assert isinstance(...)`` or ``cast`` whenever they know the
+    # actual type (e.g. ``request.node.function`` in a function-scoped
+    # fixture), so we trade type safety for convenience here.
+    # It is spelled out explicitly because pyright in strict mode reports an
+    # unannotated return as ``Unknown`` rather than ``Any``.
+    # See https://github.com/pytest-dev/pytest/issues/13888#issuecomment-3511168937.
     @property
     @abc.abstractmethod
-    def node(self):
+    def node(self) -> Any:
         """Underlying collection node (depends on current request scope)."""
         raise NotImplementedError()
 
@@ -1273,8 +1282,13 @@ class FixtureDef(Generic[FixtureValue]):
         # We make sure to do this after checking for cached value to avoid
         # adding our finalizer multiple times. (#12135)
         finalizer = functools.partial(self.finish, request=request)
-        for parent_fixture in requested_fixtures_that_should_finalize_us:
-            parent_fixture.addfinalizer(finalizer)
+        # Function-scoped fixtures are always torn down by SetupState at the end
+        # of each test, before any higher-scoped fixture can be torn down or
+        # invalidated, so registering with requested fixtures is not needed and
+        # would only accumulate finalizers on them (#4871).
+        if self._scope is not Scope.Function:
+            for parent_fixture in requested_fixtures_that_should_finalize_us:
+                parent_fixture.addfinalizer(finalizer)
 
         # Register the pytest_fixture_post_finalizer as the first finalizer,
         # which is executed last.
@@ -1950,7 +1964,10 @@ class FixtureManager:
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures visible to node."""
-        for marker_node, mark in node.iter_markers_with_node(name="usefixtures"):
+        # A base class' usefixtures keep being requested before a subclass'.
+        for marker_node, mark in node._iter_markers_with_node(
+            name="usefixtures", order=nodes.MarkerOrder.STORED
+        ):
             if not mark.args:
                 marker_node.warn(
                     PytestWarning(
