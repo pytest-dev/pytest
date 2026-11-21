@@ -1298,3 +1298,35 @@ def test_teardown_session_stopped(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("--stepwise")
     result.assert_outcomes(failed=1, errors=1)
+
+
+def test_item_report_sections_cleared_after_protocol(pytester: Pytester) -> None:
+    """Verify that item._report_sections is cleared after test execution
+
+    to prevent retaining captured output strings in memory (#10605).
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        recorded_sections = []
+
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_runtest_protocol(item, nextitem):
+            yield
+            # After protocol finishes, _report_sections on item should be cleared
+            recorded_sections.append(len(item._report_sections))
+
+        def pytest_sessionfinish(session):
+            assert recorded_sections == [0]
+    """
+    )
+    pytester.makepyfile(
+        """
+        import sys
+        def test_captured_stdout():
+            sys.stdout.write("hello from stdout")
+    """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)

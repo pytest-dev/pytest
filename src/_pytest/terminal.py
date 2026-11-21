@@ -649,10 +649,24 @@ class TerminalReporter:
             markup = None
         else:
             word, markup = word
-        self._add_stats(category, [rep])
         if not letter and not word:
-            # Probably passed setup/teardown.
+            # Passed setup/teardown: only retain in stats[""] when the report
+            # has captured output (sections) that may need to be shown at
+            # session end, or when "times" progress mode is active (which needs
+            # setup reports for per-module timing counts), or when durations
+            # reporting is enabled (which inspects all reports in stats.values()).
+            # Skipping unconditional accumulation here resolves #10605: with large
+            # parametrized suites the thousands of empty passed-setup /
+            # passed-teardown report objects were the dominant source of memory
+            # growth during the test run.
+            if (
+                rep.sections
+                or self._show_progress_info == "times"
+                or self.config.option.durations is not None
+            ):
+                self._add_stats(category, [rep])
             return
+        self._add_stats(category, [rep])
         if markup is None:
             was_xfail = hasattr(report, "wasxfail")
             if rep.passed and not was_xfail:
