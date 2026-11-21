@@ -76,6 +76,13 @@ def pytest_addoption(parser: Parser) -> None:
         dest="help",
         help="Show help message and configuration info",
     )
+    group.addoption(  # separate help flag that can be subsets
+        "--help-group",
+        action="store",
+        default=None,
+        dest="help_group",
+        help="Show help message and configuration info for a specific group of option(s). ",
+    )
     group._addoption(  # private to use reserved lower-case short option
         "-p",
         action="append",

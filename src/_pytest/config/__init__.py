@@ -1799,6 +1799,9 @@ class Config:
         self._validate_plugins()
         self._warn_about_skipped_plugins()
 
+        if self.known_args_namespace.help_group is not None:
+            self.option.help_group = self.known_args_namespace.help_group
+
         if self.known_args_namespace.confcutdir is None:
             if self.inipath is not None:
                 confcutdir = str(self.inipath.parent)
