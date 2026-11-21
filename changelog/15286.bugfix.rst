@@ -1,0 +1,3 @@
+Fixed ``monkeypatch.setattr`` deleting a class's ``__annotations__`` on undo
+instead of restoring them on Python 3.14+, where annotations are computed
+(PEP 649/749) rather than stored in the class ``__dict__``.
