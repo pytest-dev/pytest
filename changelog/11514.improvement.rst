@@ -1,0 +1,1 @@
+The error raised when two plugins register the same command-line option now names the plugins involved when they can be identified, for example ``option names {'--browser'} already added by plugins: ['plugin1', 'plugin2']``, and mentions an unidentified source otherwise.
