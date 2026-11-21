@@ -2187,6 +2187,50 @@ class TestFixtureManagerParseFactories:
         result = pytester.runpytest("foo")
         result.stdout.fnmatch_lines(["*passed*"])
 
+    @pytest.mark.parametrize("through_fixture", [False, True])
+    def test_missing_fixture_custom_item(
+        self, pytester: Pytester, through_fixture: bool
+    ) -> None:
+        requested = "wrapper" if through_fixture else "missing_fixture"
+        pytester.makeconftest(
+            f"""
+            import pytest
+            from _pytest.fixtures import TopRequest
+
+            @pytest.fixture
+            def wrapper(missing_fixture):
+                pass
+
+            class CustomItem(pytest.Item):
+                def setup(self):
+                    self.funcargs = {{}}
+                    self.fixturenames = []
+                    self._fixtureinfo = self.session._fixturemanager.getfixtureinfo(
+                        node=self, func=None, cls=None
+                    )
+                    request = TopRequest(self, _ispytest=True)
+                    request.getfixturevalue({requested!r})
+
+                def runtest(self):
+                    pass
+
+                def reportinfo(self):
+                    return self.path, 0, self.name
+
+            class CustomFile(pytest.File):
+                def collect(self):
+                    yield CustomItem.from_parent(self, name="custom")
+
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".custom":
+                    return CustomFile.from_parent(parent, path=file_path)
+            """
+        )
+        pytester.makefile(".custom", example="")
+        result = pytester.runpytest()
+        result.assert_outcomes(errors=1)
+        result.stdout.fnmatch_lines(["*fixture 'missing_fixture' not found*"])
+
 
 class TestAutouseDiscovery:
     @pytest.fixture

@@ -982,10 +982,16 @@ class FixtureLookupError(LookupError):
     def formatrepr(self) -> FixtureLookupErrorRepr:
         tblines: list[str] = []
         addline = tblines.append
-        stack = [self.request._pyfuncitem.obj]
+        item = self.request._pyfuncitem
+        function = getattr(item, "obj", None)
+        stack = [function] if function is not None else []
+        fspath: str | Path = item.path
+        lineno = item.location[1] or 0
+        if not stack:
+            addline(f"file {fspath}, line {lineno + 1}")
         stack.extend(x.func for x in self.fixturestack)
         msg = self.msg
-        if msg is not None and len(stack) > 1:
+        if msg is not None and self.fixturestack:
             # The last fixture raise an error, let's present
             # it at the requesting side.
             stack = stack[:-1]
