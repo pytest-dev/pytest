@@ -9,6 +9,7 @@ from fractions import Fraction
 from math import inf
 from math import nan
 from math import sqrt
+from numbers import Complex
 import operator
 from operator import eq
 from operator import ne
@@ -1044,8 +1045,16 @@ class TestApprox:
             pytest.param({"key": b"bytes"}, id="dict-with-bytes"),
         ],
     )
-    def test_nonnumeric_okay_if_equal(self, x):
-        assert x == approx(x)
+    @pytest.mark.parametrize("rel", [None, 1e-6])
+    def test_nonnumeric_okay_if_equal(self, x, rel):
+        assert x == approx(x, rel=rel)
+
+    def test_mixed_sequence_with_relative_tolerance(self) -> None:
+        expected = approx([1.0, None], rel=1e-6)
+        assert [1.0, None] == expected
+        assert [1.0000005, None] == expected
+        assert [1.000002, None] != expected
+        assert [1.0000005, 0] != expected
 
     @pytest.mark.parametrize(
         "x",
@@ -1420,11 +1429,15 @@ class TestApprox:
             pytest.approx(0, rel=datetime.timedelta(1))
 
     def test_scalar_rel_abs_expected_validation(self) -> None:
+        @Complex.register
+        class NumericWithoutAbs:
+            pass
+
         with pytest.raises(
             TypeError,
             match=re.escape("expected value must support abs(...) when relative"),
         ):
-            pytest.approx(object(), rel=1)
+            pytest.approx(NumericWithoutAbs(), rel=1)
 
     def test_scalar_abs_type_validation(self) -> None:
         with pytest.raises(

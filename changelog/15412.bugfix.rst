@@ -1,0 +1,2 @@
+Fixed :func:`pytest.approx` raising a :exc:`TypeError` for non-numeric values,
+such as ``None`` in a sequence, when a relative tolerance is supplied.
