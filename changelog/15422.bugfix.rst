@@ -1,0 +1,1 @@
+Preserve the ``[...]`` parametrization in collection "not found" error diagnostics when selecting a non-existent parameter variant.

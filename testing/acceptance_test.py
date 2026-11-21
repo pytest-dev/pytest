@@ -200,6 +200,26 @@ class TestGeneralUsage:
             ]
         )
 
+    def test_not_found_with_parametrization(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("a", [pytest.param(1, id="one")])
+            def test_x(a):
+                assert a
+            """
+        )
+        result = pytester.runpytest(f"{p}::test_x[missing]")
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            [
+                f"ERROR: not found: {p}::test_x[missing]",
+                "(no match in any of *)",
+                "",
+            ]
+        )
+
     @pytest.mark.filterwarnings("default")
     def test_better_reporting_on_conftest_load_failure(
         self, pytester: Pytester
