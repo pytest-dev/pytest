@@ -1,0 +1,1 @@
+Preserve short line prefixes in non-verbose multiline assertion diffs, so removing or adding a line does not produce misleading partial-line replacements.
