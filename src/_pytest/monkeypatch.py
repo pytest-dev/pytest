@@ -336,7 +336,7 @@ class MonkeyPatch:
 
         If ``prepend`` is a character, read the current environment variable
         value and prepend the ``value`` adjoined with the ``prepend``
-        character.
+        character. If the variable is unset or empty, ``value`` is used as is.
         """
         if not isinstance(value, str):
             warnings.warn(  # type: ignore[unreachable]
@@ -347,7 +347,7 @@ class MonkeyPatch:
                 stacklevel=2,
             )
             value = str(value)
-        if prepend and name in os.environ:
+        if prepend and os.environ.get(name):
             value = value + prepend + os.environ[name]
         self.setitem(os.environ, name, value)
 

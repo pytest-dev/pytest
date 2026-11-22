@@ -1,0 +1,1 @@
+:meth:`MonkeyPatch.setenv <pytest.MonkeyPatch.setenv>` with ``prepend`` no longer adds a trailing separator when the environment variable is set but empty.
