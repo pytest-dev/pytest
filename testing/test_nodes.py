@@ -164,6 +164,54 @@ def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
 
 
+@pytest.mark.parametrize("fulltrace", [False, True])
+@pytest.mark.parametrize("phase", ["setup", "runtest"])
+@pytest.mark.parametrize(
+    "failure", ["raise ValueError('custom failure')", "pytest.fail('custom failure')"]
+)
+def test_custom_item_traceback_filter(
+    pytester: Pytester, fulltrace: bool, phase: str, failure: str
+) -> None:
+    """Custom items hide __tracebackhide__ and pytest/pluggy frames (#7692)."""
+    pytester.makeconftest(
+        f"""
+        import pytest
+
+        def hidden_helper():
+            __tracebackhide__ = True
+            {failure}
+
+        class CustomItem(pytest.Item):
+            def setup(self):
+                {"hidden_helper()" if phase == "setup" else "pass"}
+
+            def runtest(self):
+                {"hidden_helper()" if phase == "runtest" else "pass"}
+
+        class CustomFile(pytest.File):
+            def collect(self):
+                yield CustomItem.from_parent(self, name="custom")
+
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == ".custom":
+                return CustomFile.from_parent(parent, path=file_path)
+        """
+    )
+    pytester.makefile(".custom", test_custom="")
+    args = ["--tb=long"]
+    if fulltrace:
+        args.append("--full-trace")
+    result = pytester.runpytest(*args)
+    if phase == "setup":
+        result.assert_outcomes(errors=1)
+    else:
+        result.assert_outcomes(failed=1)
+    output = result.stdout.str()
+    assert f"def {phase}(self):" in output
+    assert ("__tracebackhide__ = True" in output) == fulltrace
+    assert ("def from_call(" in output) == fulltrace
+
+
 @pytest.mark.parametrize("args, expected", [((), ""), (("msg",), "msg")])
 def test_collector_repr_failure_collect_error(
     pytester: Pytester, args: tuple[str, ...], expected: str

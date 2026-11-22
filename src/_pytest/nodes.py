@@ -24,6 +24,7 @@ import warnings
 import pluggy
 
 import _pytest._code
+from _pytest._code import filter_traceback
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
@@ -490,7 +491,11 @@ class Node(abc.ABC, metaclass=NodeMeta):
         return None
 
     def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
-        return excinfo.traceback
+        traceback = excinfo.traceback
+        ntraceback = traceback.filter(filter_traceback)
+        if not ntraceback:
+            ntraceback = traceback
+        return ntraceback.filter(excinfo)
 
     def _repr_failure_py(
         self,
