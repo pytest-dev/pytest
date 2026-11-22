@@ -212,6 +212,33 @@ def test_custom_item_traceback_filter(
     assert ("def from_call(" in output) == fulltrace
 
 
+def test_custom_item_traceback_filter_keeps_internal_only(pytester: Pytester) -> None:
+    """If only internal frames remain, the unfiltered traceback is shown (#7692)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        namespace = {}
+        exec(compile("def runtest(self): raise ValueError('generated')", "<gen>", "exec"), namespace)
+
+        class CustomItem(pytest.Item):
+            runtest = namespace["runtest"]
+
+        class CustomFile(pytest.File):
+            def collect(self):
+                yield CustomItem.from_parent(self, name="custom")
+
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == ".custom":
+                return CustomFile.from_parent(parent, path=file_path)
+        """
+    )
+    pytester.makefile(".custom", test_custom="")
+    result = pytester.runpytest("--tb=long")
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(["*def from_call(*", "*ValueError: generated"])
+
+
 @pytest.mark.parametrize("args, expected", [((), ""), (("msg",), "msg")])
 def test_collector_repr_failure_collect_error(
     pytester: Pytester, args: tuple[str, ...], expected: str
