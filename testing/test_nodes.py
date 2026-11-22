@@ -261,6 +261,21 @@ def pytest_runtest_setup(item):
     assert "def from_call(" not in output
 
 
+def test_traceback_filter_fallbacks_use_node_default(pytester: Pytester) -> None:
+    """Function without an object and Collector without a path use the Node default."""
+    item = pytester.getitem("def test_func(): pass")
+    collector = item.parent
+    assert collector is not None
+    del item._obj  # type: ignore[attr-defined]
+    del collector.path
+    with pytest.raises(ValueError) as excinfo:
+        raise ValueError
+    for node in (item, collector):
+        assert node._traceback_filter(excinfo) == nodes.Node._traceback_filter(
+            node, excinfo
+        )
+
+
 @pytest.mark.parametrize("args, expected", [((), ""), (("msg",), "msg")])
 def test_collector_repr_failure_collect_error(
     pytester: Pytester, args: tuple[str, ...], expected: str
