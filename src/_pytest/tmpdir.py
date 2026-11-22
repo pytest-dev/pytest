@@ -30,6 +30,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import TOML_NUMERIC_STRING
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
@@ -97,7 +98,18 @@ class TempPathFactory:
         :meta private:
         """
         check_ispytest(_ispytest)
-        count = int(config.getini("tmp_path_retention_count"))
+        count = config.getini("tmp_path_retention_count")
+        if isinstance(count, str):
+            # A str only gets here from TOML: in ini mode the int member of
+            # the option type already converted it.
+            value = count
+            count = int(value)
+            config.issue_config_time_warning(
+                TOML_NUMERIC_STRING.format(
+                    name="tmp_path_retention_count", value=value
+                ),
+                stacklevel=2,
+            )
         if count < 0:
             raise ValueError(
                 f"tmp_path_retention_count must be >= 0. Current input: {count}."
@@ -299,6 +311,7 @@ def pytest_addoption(parser: Parser) -> None:
         "tmp_path_retention_count",
         help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
         default=3,
+        # str: numeric strings in TOML are deprecated but still accepted.
         type=int | str,
     )
 
