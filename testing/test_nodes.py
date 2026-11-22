@@ -164,79 +164,101 @@ def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
 
 
+CUSTOM_ITEM_CONFTEST = """
+import pytest
+
+def hidden_helper():
+    __tracebackhide__ = True
+    {failure}
+
+namespace = {{}}
+exec(compile("def generated(): raise ValueError('generated')", "<gen>", "exec"), namespace)
+
+class CustomItem(pytest.Item):
+    def setup(self):
+        {setup}
+
+    def runtest(self):
+        {runtest}
+
+class CustomFile(pytest.File):
+    def collect(self):
+        yield CustomItem.from_parent(self, name="custom")
+
+def pytest_collect_file(file_path, parent):
+    if file_path.suffix == ".custom":
+        return CustomFile.from_parent(parent, path=file_path)
+"""
+
+
+def run_custom_item(
+    pytester: Pytester,
+    *args: str,
+    setup: str = "pass",
+    runtest: str = "pass",
+    failure: str = "raise ValueError('custom failure')",
+    extra: str = "",
+) -> str:
+    pytester.makeconftest(
+        CUSTOM_ITEM_CONFTEST.format(setup=setup, runtest=runtest, failure=failure)
+        + extra
+    )
+    pytester.makefile(".custom", test_custom="")
+    result = pytester.runpytest(*args)
+    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    return result.stdout.str()
+
+
+@pytest.mark.parametrize("tbstyle", ["auto", "long"])
 @pytest.mark.parametrize("fulltrace", [False, True])
 @pytest.mark.parametrize("phase", ["setup", "runtest"])
 @pytest.mark.parametrize(
     "failure", ["raise ValueError('custom failure')", "pytest.fail('custom failure')"]
 )
 def test_custom_item_traceback_filter(
-    pytester: Pytester, fulltrace: bool, phase: str, failure: str
+    pytester: Pytester, tbstyle: str, fulltrace: bool, phase: str, failure: str
 ) -> None:
     """Custom items hide __tracebackhide__ and pytest/pluggy frames (#7692)."""
-    pytester.makeconftest(
-        f"""
-        import pytest
-
-        def hidden_helper():
-            __tracebackhide__ = True
-            {failure}
-
-        class CustomItem(pytest.Item):
-            def setup(self):
-                {"hidden_helper()" if phase == "setup" else "pass"}
-
-            def runtest(self):
-                {"hidden_helper()" if phase == "runtest" else "pass"}
-
-        class CustomFile(pytest.File):
-            def collect(self):
-                yield CustomItem.from_parent(self, name="custom")
-
-        def pytest_collect_file(file_path, parent):
-            if file_path.suffix == ".custom":
-                return CustomFile.from_parent(parent, path=file_path)
-        """
+    args = [f"--tb={tbstyle}"] + (["--full-trace"] if fulltrace else [])
+    output = run_custom_item(
+        pytester, *args, failure=failure, **{phase: "hidden_helper()"}
     )
-    pytester.makefile(".custom", test_custom="")
-    args = ["--tb=long"]
-    if fulltrace:
-        args.append("--full-trace")
-    result = pytester.runpytest(*args)
-    if phase == "setup":
-        result.assert_outcomes(errors=1)
-    else:
-        result.assert_outcomes(failed=1)
-    output = result.stdout.str()
+    assert "custom failure" in output
     assert f"def {phase}(self):" in output
     assert ("__tracebackhide__ = True" in output) == fulltrace
     assert ("def from_call(" in output) == fulltrace
+    assert ("def _multicall(" in output) == fulltrace
 
 
-def test_custom_item_traceback_filter_keeps_internal_only(pytester: Pytester) -> None:
-    """If only internal frames remain, the unfiltered traceback is shown (#7692)."""
-    pytester.makeconftest(
-        """
-        import pytest
+def test_custom_item_traceback_keeps_frames_below_item(pytester: Pytester) -> None:
+    """Generated code called by the item is still shown (#7692)."""
+    output = run_custom_item(pytester, runtest="namespace['generated']()")
+    assert "def runtest(self):" in output
+    assert "<gen>:1: ValueError" in output
+    assert "def from_call(" not in output
 
-        namespace = {}
-        exec(compile("def runtest(self): raise ValueError('generated')", "<gen>", "exec"), namespace)
 
-        class CustomItem(pytest.Item):
-            runtest = namespace["runtest"]
+def test_custom_item_traceback_ignores_plugin_wrappers(pytester: Pytester) -> None:
+    """Hook wrappers above the item are cut, like for test functions (#7692)."""
+    wrapper = """
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_call(item):
+    return (yield)
+"""
+    output = run_custom_item(pytester, runtest="hidden_helper()", extra=wrapper)
+    assert "def runtest(self):" in output
+    assert "def pytest_runtest_call(" not in output
 
-        class CustomFile(pytest.File):
-            def collect(self):
-                yield CustomItem.from_parent(self, name="custom")
 
-        def pytest_collect_file(file_path, parent):
-            if file_path.suffix == ".custom":
-                return CustomFile.from_parent(parent, path=file_path)
-        """
-    )
-    pytester.makefile(".custom", test_custom="")
-    result = pytester.runpytest("--tb=long")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*def from_call(*", "*ValueError: generated"])
+def test_custom_item_traceback_hook_error(pytester: Pytester) -> None:
+    """Without a frame of the item, leading pytest/pluggy frames are cut (#7692)."""
+    hook = """
+def pytest_runtest_setup(item):
+    raise ValueError("hook failure")
+"""
+    output = run_custom_item(pytester, extra=hook)
+    assert "def pytest_runtest_setup(item):" in output
+    assert "def from_call(" not in output
 
 
 @pytest.mark.parametrize("args, expected", [((), ""), (("msg",), "msg")])

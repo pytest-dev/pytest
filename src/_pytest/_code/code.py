@@ -338,6 +338,19 @@ class TracebackEntry:
             return tbh(excinfo)
         return tbh
 
+    def isinternal(self) -> bool:
+        """Return True if this entry is in pytest's or pluggy's own code."""
+        # entry.path might point to a non-existing file, in which case it will
+        # also return a str object. See #1133.
+        parents = Path(self.path).parents
+        return _PLUGGY_DIR in parents or _PYTEST_DIR in parents
+
+    def isgenerated(self) -> bool:
+        """Return True if this entry is in dynamically generated code
+        (a ``<...>`` filename, for example from ``exec``)."""
+        raw_filename = self.frame.code.raw.co_filename
+        return "<" in raw_filename and ">" in raw_filename
+
     def __str__(self) -> str:
         name = self.frame.code.name
         try:
@@ -411,6 +424,16 @@ class Traceback(list[TracebackEntry]):
             if firstlineno is not None and x.frame.code.firstlineno != firstlineno:
                 continue
             return Traceback(x._rawentry)
+        return self
+
+    def cut_internal(self) -> Traceback:
+        """Return a Traceback without the leading pytest and pluggy entries.
+
+        If every entry is internal, return the traceback unchanged.
+        """
+        for i, entry in enumerate(self):
+            if not entry.isinternal():
+                return self[i:]
         return self
 
     @overload
@@ -1622,25 +1645,7 @@ def filter_traceback(entry: TracebackEntry) -> bool:
     * dynamically generated code (no code to show up for it);
     * internal traceback from pytest or its internal libraries, py and pluggy.
     """
-    # entry.path might sometimes return a str object when the entry
-    # points to dynamically generated code.
-    # See https://bitbucket.org/pytest-dev/py/issues/71.
-    raw_filename = entry.frame.code.raw.co_filename
-    is_generated = "<" in raw_filename and ">" in raw_filename
-    if is_generated:
-        return False
-
-    # entry.path might point to a non-existing file, in which case it will
-    # also return a str object. See #1133.
-    p = Path(entry.path)
-
-    parents = p.parents
-    if _PLUGGY_DIR in parents:
-        return False
-    if _PYTEST_DIR in parents:
-        return False
-
-    return True
+    return not entry.isgenerated() and not entry.isinternal()
 
 
 def filter_excinfo_traceback(
