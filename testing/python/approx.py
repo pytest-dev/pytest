@@ -1318,6 +1318,39 @@ class TestApprox:
         with pytest.raises(decimal.FloatOperation):
             approx(expected)._repr_compare(other)
 
+    def test_mixed_decimal_and_float_relative_diff_sequence_raises_float_operation(
+        self, monkeypatch
+    ) -> None:
+        """The relative-difference running maximum can also mix Decimal and float.
+
+        The relative-diff handler must re-raise decimal.FloatOperation (a
+        TypeError subclass) instead of swallowing it and underreporting the
+        maximum.
+        """
+        expected = [3, Decimal(2)]
+        other = [2, Decimal(1)]
+        # Relative differences 0.5 (float) and 1 (Decimal).
+        explanation = approx(expected)._repr_compare(other)
+        assert any("Max relative difference: 1" in line for line in explanation)
+
+        monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
+        with pytest.raises(decimal.FloatOperation):
+            approx(expected)._repr_compare(other)
+
+    def test_mixed_decimal_and_float_relative_diff_mapping_raises_float_operation(
+        self, monkeypatch
+    ) -> None:
+        """Same re-raise requirement for the mapping relative-diff handler."""
+        expected = {"a": 3, "b": Decimal(2)}
+        other = {"a": 2, "b": Decimal(1)}
+        # Relative differences 1/3 (float) and 1/2 (Decimal).
+        explanation = approx(expected)._repr_compare(other)
+        assert any("Max relative difference: 0.5" in line for line in explanation)
+
+        monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
+        with pytest.raises(decimal.FloatOperation):
+            approx(expected)._repr_compare(other)
+
     def test_decimal_nan_tolerance_raises_value_error(self) -> None:
         """A Decimal NaN tolerance must not escape as decimal.InvalidOperation."""
         nan_abs = approx(Decimal(1), abs=Decimal("NaN"))
@@ -1435,6 +1468,30 @@ class TestApprox:
 
 class TestApproxDatetime:
     """Tests for datetime/timedelta support in approx (issue #8395)."""
+
+    def test_datetime_in_sequence_failure_details(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        start = datetime(2024, 1, 1)
+        explanation = approx(
+            [start + timedelta(minutes=1)], abs=timedelta(seconds=1)
+        )._repr_compare([start])
+        # Failure details must be rendered rather than crash with
+        # "representation of details failed" (#15434).
+        assert explanation[0].startswith("comparison failed.")
+        assert "Max absolute difference: 0:01:00" in explanation
+
+    def test_datetime_in_mapping_failure_details(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        start = datetime(2024, 1, 1)
+        explanation = approx(
+            {"t": start + timedelta(minutes=1)}, abs=timedelta(seconds=1)
+        )._repr_compare({"t": start})
+        assert explanation[0].startswith("comparison failed.")
+        assert "Max absolute difference: 0:01:00" in explanation
 
     def test_datetime_exactly_equal(self):
         from datetime import datetime

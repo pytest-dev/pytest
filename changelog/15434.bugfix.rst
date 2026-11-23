@@ -1,0 +1,1 @@
+Fixed ``pytest.approx`` failure details crashing with "representation of details failed" when comparing sequences or mappings of :class:`datetime.datetime` -- relative differences, which are meaningless for datetimes, are now skipped in the failure report.

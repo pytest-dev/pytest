@@ -344,14 +344,24 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
                         if approx_value.expected == 0:
                             rel_diff_is_infinite = True
                         else:
-                            max_rel_diff = _max_diff(
-                                max_rel_diff,
-                                abs(
-                                    # TODO: The type error here seems correct.
-                                    (approx_value.expected - other_value)  # type: ignore[operator]
-                                    / approx_value.expected
-                                ),
-                            )
+                            try:
+                                max_rel_diff = _max_diff(
+                                    max_rel_diff,
+                                    abs(
+                                        # TODO: The type error here seems correct.
+                                        (approx_value.expected - other_value)  # type: ignore[operator]
+                                        / approx_value.expected
+                                    ),
+                                )
+                            # decimal.FloatOperation subclasses TypeError, so it
+                            # would be caught below and silently underreport
+                            # the maximum relative difference.
+                            except FloatOperation:
+                                raise
+                            except TypeError:
+                                # Relative differences are meaningless for
+                                # non-numeric values (e.g. datetime).
+                                pass
                     except ZeroDivisionError:
                         pass
                 different_ids.append(approx_key)
@@ -446,9 +456,19 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
                     if other_value == 0:
                         rel_diff_is_infinite = True
                     else:
-                        max_rel_diff = _max_diff(
-                            max_rel_diff, abs_diff / abs(other_value)
-                        )
+                        try:
+                            max_rel_diff = _max_diff(
+                                max_rel_diff, abs_diff / abs(other_value)
+                            )
+                        # decimal.FloatOperation subclasses TypeError, so it
+                        # would be caught below and silently underreport the
+                        # maximum relative difference.
+                        except FloatOperation:
+                            raise
+                        except TypeError:
+                            # Relative differences are meaningless for
+                            # non-numeric values (e.g. datetime).
+                            pass
                 different_ids.append(i)
 
         max_abs_diff, max_rel_diff = _vetted_diffs(
