@@ -26,7 +26,6 @@ import warnings
 
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
-from _pytest.outcomes import Exit
 from _pytest.outcomes import fail
 
 
@@ -309,11 +308,7 @@ class WarningsChecker(WarningsRecorder):
         # pytest.warns should *not* trigger "DID NOT WARN" and get suppressed
         # when the warning doesn't happen. Control-flow exceptions should always
         # propagate.
-        if exc_val is not None and (
-            not isinstance(exc_val, Exception)
-            # Exit is an Exception, not a BaseException, for some reason.
-            or isinstance(exc_val, Exit)
-        ):
+        if exc_val is not None and not isinstance(exc_val, Exception):
             return
 
         def found_str() -> str:

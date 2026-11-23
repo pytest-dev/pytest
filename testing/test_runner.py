@@ -735,6 +735,27 @@ def test_pytest_exit_returncode(pytester: Pytester) -> None:
     assert result.ret == 98
 
 
+def test_pytest_exit_not_caught_by_except_exception(pytester: Pytester) -> None:
+    """pytest.exit() must not be swallowed by code catching Exception, like
+    the other outcome exceptions."""
+    pytester.makepyfile(
+        """\
+        import pytest
+        def test_foo():
+            try:
+                pytest.exit("some exit msg", 99)
+            except Exception:
+                pass
+        def test_bar():
+            pass
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["*! *Exit: some exit msg !*"])
+    result.stdout.no_fnmatch_line("*passed*")
+    assert result.ret == 99
+
+
 def test_pytest_fail_notrace_runtest(pytester: Pytester) -> None:
     """Test pytest.fail(..., pytrace=False) does not show tracebacks during test run."""
     pytester.makepyfile(

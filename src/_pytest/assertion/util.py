@@ -9,7 +9,6 @@ from collections.abc import Sequence
 from collections.abc import Set as AbstractSet
 from unicodedata import normalize
 
-from _pytest import outcomes
 import _pytest._code
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
@@ -177,8 +176,6 @@ def assertrepr_compare(
                     yield ""
                 summary_yielded = True
             yield line
-    except outcomes.Exit:
-        raise
     except Exception:
         repr_crash = _pytest._code.ExceptionInfo.from_current()._getreprcrash()
         if not summary_yielded:
