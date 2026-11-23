@@ -286,21 +286,44 @@ def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
         )
 
 
+_lock_through_dir_fd = {os.open, os.unlink} <= os.supports_dir_fd
+
+
 def create_cleanup_lock(p: Path) -> Path:
-    """Create a lock to prevent premature directory cleanup."""
+    """Create a lock to prevent premature directory cleanup.
+
+    Where the platform allows it, the lock is created through a descriptor of
+    the directory. Another process may rename the directory while this one
+    creates the lock, and the lock then lands in the renamed directory. It is
+    removed from there before raising, so that it cannot keep the other process
+    from removing the directory (#15435).
+    """
     lock_path = get_lock_path(p)
+    dir_fd = None
+    name = str(lock_path)
+    if _lock_through_dir_fd:
+        dir_fd = os.open(p, os.O_RDONLY)
+        name = lock_path.name
     try:
-        fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-    except FileExistsError as e:
-        raise OSError(f"cannot create lockfile in {p}") from e
-    else:
+        try:
+            fd = os.open(
+                name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644, dir_fd=dir_fd
+            )
+        except FileExistsError as e:
+            raise OSError(f"cannot create lockfile in {p}") from e
         pid = os.getpid()
         spid = str(pid).encode()
         os.write(fd, spid)
         os.close(fd)
         if not lock_path.is_file():
+            if dir_fd is not None:
+                with contextlib.suppress(OSError):
+                    os.unlink(name, dir_fd=dir_fd)
             raise OSError("lock path got renamed after successful creation")
         return lock_path
+    finally:
+        if dir_fd is not None:
+            os.close(dir_fd)
 
 
 def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
@@ -320,6 +343,33 @@ def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
     return register(cleanup_on_exit)
 
 
+def _rm_rf_lock_last(path: Path) -> None:
+    """Remove a directory as rm_rf does, but remove its lock only after
+    everything else in it, just before the directory itself."""
+    onerror = partial(on_rm_rf_error, start_path=path)
+
+    def remove(func: Callable[[str], None], name: str) -> None:
+        try:
+            func(name)
+        except OSError as exc:
+            onerror(func, name, exc)
+
+    lock = get_lock_path(path)
+    entries: list[os.DirEntry[str]] = []
+    try:
+        with os.scandir(path) as it:
+            entries = [entry for entry in it if entry.name != lock.name]
+    except OSError as exc:
+        onerror(os.scandir, str(path), exc)
+    for entry in entries:
+        if entry.is_dir(follow_symlinks=False):
+            rm_rf(Path(entry.path))
+        else:
+            remove(os.unlink, entry.path)
+    remove(os.unlink, str(lock))
+    remove(os.rmdir, str(path))
+
+
 def maybe_delete_a_numbered_dir(path: Path) -> None:
     """Remove a numbered directory if its lock can be obtained and it does
     not seem to be in use."""
@@ -331,7 +381,11 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
 
         garbage = parent.joinpath(f"garbage-{uuid.uuid4()}")
         path.rename(garbage)
-        rm_rf(garbage)
+        # The lock moved with the directory. It is removed only after
+        # everything else, so that no other process can lock the directory
+        # while this one empties it (#15435).
+        lock_path = get_lock_path(garbage)
+        _rm_rf_lock_last(garbage)
     except OSError:
         #  known races:
         #  * other process did a cleanup at the same time
@@ -346,6 +400,34 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
                 lock_path.unlink()
             except OSError:
                 pass
+
+
+def maybe_delete_a_garbage_dir(path: Path) -> None:
+    """Remove a garbage directory, taking it over by renaming it.
+
+    Unlike :func:`maybe_delete_a_numbered_dir`, this writes no lock into the
+    directory first. A garbage directory without a lock may still be being
+    emptied by another process: by this function, which takes no lock, by
+    :func:`maybe_delete_a_numbered_dir` between removing its lock and its last
+    ``rmdir``, or by an older pytest, whose ``rm_rf`` removed the ``.lock``
+    long before its last ``rmdir``. A lock written into the directory in that
+    time is an entry that last ``rmdir`` finds, and it fails with "Directory
+    not empty".
+
+    Renaming is enough to take it over, since only one rename of a name can
+    succeed. A process still emptying the directory then finds its entries
+    already removed, or the directory itself gone, and ``rm_rf`` ignores both.
+    """
+    path = ensure_extended_length_path(path)
+    try:
+        garbage = path.parent.joinpath(f"garbage-{uuid.uuid4()}")
+        path.rename(garbage)
+        rm_rf(garbage)
+    except OSError:
+        #  known races:
+        #  * other process removed or took over the directory first
+        #  * other process emptying the same directory at the same time
+        return
 
 
 def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) -> bool:
@@ -410,7 +492,8 @@ def cleanup_numbered_dir(
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
     for path in root.glob("garbage-*"):
-        try_cleanup(path, consider_lock_dead_if_created_before)
+        if ensure_deletable(path, consider_lock_dead_if_created_before):
+            maybe_delete_a_garbage_dir(path)
 
     cleanup_dead_symlinks(root)
 
