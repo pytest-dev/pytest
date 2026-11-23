@@ -619,6 +619,26 @@ class TestNumberedDir:
         dir_num = len(list(tmp_path.iterdir()))
         assert dir_num == 0
 
+    def test_cleanup_garbage_dir_without_lock(self, tmp_path, monkeypatch):
+        garbage = tmp_path / "garbage-1234"
+        (garbage / "sub").mkdir(parents=True)
+        lock_calls = []
+        real_create_lock = pathlib.create_cleanup_lock
+
+        def record_lock(path):
+            lock_calls.append(path)
+            return real_create_lock(path)
+
+        monkeypatch.setattr(pathlib, "create_cleanup_lock", record_lock)
+        cleanup_numbered_dir(
+            root=tmp_path,
+            prefix=self.PREFIX,
+            keep=0,
+            consider_lock_dead_if_created_before=0,
+        )
+        assert not garbage.exists()
+        assert lock_calls == []
+
     def test_cleanup_locked(self, tmp_path):
         p = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
 
