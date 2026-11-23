@@ -5753,6 +5753,39 @@ def test_fixture_invalidated_by_wider_scoped_param(pytester: Pytester) -> None:
     result.assert_outcomes(passed=3)
 
 
+def test_indirect_promoted_fixture_invalidated_by_param_change(
+    pytester: Pytester,
+) -> None:
+    """
+    A function-scoped fixture promoted to a wider scope via indirect
+    parametrization must be torn down when a requested parametrized fixture
+    changes (#15436).
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module", params=["first", "second"])
+        def parent(request):
+            resource = {"name": request.param, "open": True}
+            yield resource
+            resource["open"] = False
+
+        @pytest.fixture
+        def child(parent):
+            yield parent
+            assert parent["open"]
+
+        @pytest.mark.parametrize("child", [None], indirect=True, scope="module")
+        def test_current_parent(child, parent):
+            assert child is parent
+            assert child["open"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:
     """
     Make sure scope from parametrize does not affect fixture's ability to be

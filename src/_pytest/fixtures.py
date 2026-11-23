@@ -1285,8 +1285,11 @@ class FixtureDef(Generic[FixtureValue]):
         # Function-scoped fixtures are always torn down by SetupState at the end
         # of each test, before any higher-scoped fixture can be torn down or
         # invalidated, so registering with requested fixtures is not needed and
-        # would only accumulate finalizers on them (#4871).
-        if self._scope is not Scope.Function:
+        # would only accumulate finalizers on them (#4871). However, if an
+        # indirectly parametrized fixture is promoted to a wider request scope,
+        # it outlives individual tests and must register with requested fixtures
+        # so it is finalized if a parent parameter changes (#15436).
+        if self._scope is not Scope.Function or request._scope is not Scope.Function:
             for parent_fixture in requested_fixtures_that_should_finalize_us:
                 parent_fixture.addfinalizer(finalizer)
 

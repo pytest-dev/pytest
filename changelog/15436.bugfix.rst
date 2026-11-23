@@ -1,0 +1,1 @@
+Fixed regression where function-scoped fixtures promoted to higher scopes via indirect parametrization were not finalized when requested higher-scoped parametrized fixtures changed.
