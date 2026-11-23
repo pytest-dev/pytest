@@ -321,6 +321,29 @@ def test_strict_prohibits_unregistered_markers_in_markexpr(
     )
 
 
+def test_strict_unknown_marker_in_markexpr_with_xdist(
+    markexpr_pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Unknown marker in -m with --strict-markers under xdist must report
+    the usage error directly instead of an INTERNALERROR (#15346)."""
+    pytest.importorskip("xdist")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+    result = markexpr_pytester.runpytest(
+        "-n",
+        "1",
+        "--dist",
+        "worksteal",
+        "--strict-markers",
+        "-m",
+        "unregisteredmark",
+    )
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        ["*Unknown marker(s) in '-m' expression: unregisteredmark*"]
+    )
+    assert "INTERNALERROR" not in result.stderr.str()
+
+
 def test_strict_allows_registered_markers_in_markexpr(
     markexpr_pytester: Pytester,
 ) -> None:

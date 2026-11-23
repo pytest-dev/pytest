@@ -30,6 +30,7 @@ from _pytest.stash import StashKey
 
 
 if TYPE_CHECKING:
+    from _pytest.main import Session
     from _pytest.nodes import Item
 
 
@@ -327,6 +328,26 @@ def _parse_expression(expr: str, exc_message: str) -> Expression:
 def pytest_collection_modifyitems(items: list[Item], config: Config) -> None:
     deselect_by_keyword(items, config)
     deselect_by_mark(items, config)
+
+
+@hookimpl
+def pytest_sessionstart(session: Session) -> None:
+    """Validate -m/-k selection expressions before collection starts.
+
+    This runs on the controller process before any xdist workers are
+    started, so that a usage error in the expression (an unknown marker
+    with --strict-markers, or a malformed -k expression) is reported
+    directly instead of killing a worker mid-collection, which used to
+    surface as an INTERNALERROR (see #15346).
+    """
+    config = session.config
+    markexpr = config.option.markexpr
+    if markexpr:
+        expr = _parse_expression(markexpr, "Wrong expression passed to '-m'")
+        _validate_marker_names(expr, config)
+    keywordexpr = config.option.keyword.lstrip()
+    if keywordexpr:
+        _parse_expression(keywordexpr, "Wrong expression passed to '-k'")
 
 
 def pytest_configure(config: Config) -> None:

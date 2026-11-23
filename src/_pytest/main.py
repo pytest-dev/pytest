@@ -875,6 +875,16 @@ class Session(nodes.Collector):
             hook.pytest_collection_modifyitems(
                 session=self, config=self.config, items=items
             )
+        except BaseException:
+            # Collection failed: drop any items collected so far so that
+            # `pytest_collection_finish` (called in the `finally` below)
+            # does not report them as successfully collected.  Otherwise a
+            # plugin such as pytest-xdist would schedule the stale items on
+            # a worker which is about to exit with the real error, ending
+            # in "INTERNALERROR: Unexpectedly no active workers available"
+            # instead of the actual error.
+            self.items = []
+            raise
         finally:
             self._notfound = []
             self._initial_parts = []

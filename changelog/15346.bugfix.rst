@@ -1,0 +1,6 @@
+Fixed an ``INTERNALERROR`` when using ``-m`` with an unknown marker under
+``--strict-markers`` (or a malformed ``-k`` expression) together with
+pytest-xdist: the usage error is now reported directly instead of the
+worker dying mid-collection. Also, when collection fails,
+``pytest_collection_finish`` no longer reports the partially collected items
+as successfully collected.

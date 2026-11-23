@@ -512,6 +512,30 @@ class TestSession:
         assert len(colitems) == 1
         assert colitems[0].path == topdir
 
+    def test_collection_finish_reports_no_items_when_modifyitems_fails(
+        self, pytester: Pytester
+    ) -> None:
+        """`pytest_collection_finish` must not see stale items when
+        collection fails in `pytest_collection_modifyitems` (#15346).
+
+        Otherwise a plugin such as pytest-xdist reports the stale items
+        as successfully collected and schedules them on a worker which
+        is about to exit with the real error, ending in an INTERNALERROR.
+        """
+        pytester.makepyfile("def test_func(): pass")
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_modifyitems(items, config):
+                raise pytest.UsageError("boom")
+            """
+        )
+        _items, hookrec = pytester.inline_genitems()
+        assert hookrec.ret == ExitCode.USAGE_ERROR
+        (call,) = hookrec.getcalls("pytest_collection_finish")
+        assert call.session.items == []
+
     def get_reported_items(self, hookrec: HookRecorder) -> list[Item]:
         """Return pytest.Item instances reported by the pytest_collectreport hook"""
         calls = hookrec.getcalls("pytest_collectreport")
