@@ -1,0 +1,1 @@
+Fixed a race condition during temporary directory cleanup across concurrent pytest sessions that could emit ``(rm_rf) error removing ... Directory not empty`` warnings.

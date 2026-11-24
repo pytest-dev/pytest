@@ -320,6 +320,54 @@ def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
     return register(cleanup_on_exit)
 
 
+def _unlink_entry(path: str, *, start_path: Path) -> None:
+    try:
+        os.unlink(path)
+    except OSError as exc:
+        on_rm_rf_error(os.unlink, path, exc, start_path=start_path)
+
+
+def _remove_dir_keeping_lock(garbage: Path) -> None:
+    """Remove all entries inside ``garbage``, unlinking ``.lock`` last.
+
+    Keeping ``.lock`` in place until every other entry is gone prevents
+    concurrent sessions from locking or deleting ``garbage`` mid-removal and
+    prevents delayed ``create_cleanup_lock`` calls on the pre-rename path
+    from creating a stray ``.lock`` via ``O_EXCL``.
+    """
+    has_lock = False
+    try:
+        try:
+            with os.scandir(str(garbage)) as it:
+                entries = list(it)
+        except PermissionError:
+            _chmod_rwx(str(garbage))
+            with os.scandir(str(garbage)) as it:
+                entries = list(it)
+
+        for entry in entries:
+            is_dir = entry.is_dir(follow_symlinks=False)
+            if entry.name == ".lock" and not is_dir:
+                has_lock = True
+                continue
+            if is_dir:
+                rm_rf(Path(entry.path))
+            else:
+                _unlink_entry(entry.path, start_path=garbage)
+    except FileNotFoundError:
+        return
+
+    if has_lock:
+        _unlink_entry(str(get_lock_path(garbage)), start_path=garbage)
+
+    try:
+        os.rmdir(str(garbage))
+    except FileNotFoundError:
+        pass
+    except OSError as exc:
+        on_rm_rf_error(os.rmdir, str(garbage), exc, start_path=garbage)
+
+
 def maybe_delete_a_numbered_dir(path: Path) -> None:
     """Remove a numbered directory if its lock can be obtained and it does
     not seem to be in use."""
@@ -331,7 +379,9 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
 
         garbage = parent.joinpath(f"garbage-{uuid.uuid4()}")
         path.rename(garbage)
-        rm_rf(garbage)
+        lock_path = get_lock_path(garbage)
+        _remove_dir_keeping_lock(garbage)
+        lock_path = None
     except OSError:
         #  known races:
         #  * other process did a cleanup at the same time
@@ -346,6 +396,18 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
                 lock_path.unlink()
             except OSError:
                 pass
+
+
+def maybe_delete_a_garbage_dir(path: Path) -> None:
+    """Remove an abandoned garbage directory without creating a lock in it."""
+    path = ensure_extended_length_path(path)
+    try:
+        garbage = path.parent.joinpath(f"garbage-{uuid.uuid4()}")
+        path.rename(garbage)
+        _remove_dir_keeping_lock(garbage)
+    except OSError:
+        # Another process took over or removed the directory first.
+        return
 
 
 def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) -> bool:
@@ -410,7 +472,8 @@ def cleanup_numbered_dir(
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
     for path in root.glob("garbage-*"):
-        try_cleanup(path, consider_lock_dead_if_created_before)
+        if ensure_deletable(path, consider_lock_dead_if_created_before):
+            maybe_delete_a_garbage_dir(path)
 
     cleanup_dead_symlinks(root)
 

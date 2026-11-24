@@ -642,6 +642,163 @@ class TestNumberedDir:
         maybe_delete_a_numbered_dir(dir)
         assert dir.is_dir()
 
+    def test_cleanup_keeps_lock_until_children_removed(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Keep ``.lock`` until all other entries in ``garbage-*`` are gone (#15435)."""
+        target = tmp_path / f"{self.PREFIX}0"
+        (target / "sub").mkdir(parents=True)
+        # Include names before and after ".lock" in lexicographical order, plus read-only.
+        (target / "000_before.txt").write_text("a", encoding="utf-8")
+        (target / "zzz_after.txt").write_text("b", encoding="utf-8")
+        ro = target / "readonly.txt"
+        ro.write_text("c", encoding="utf-8")
+        os.chmod(str(ro), os.stat(str(ro)).st_mode & ~stat.S_IWRITE)
+
+        observed_lock_while_deleting: list[bool] = []
+        observed_deletable_while_deleting: list[bool] = []
+        real_rm_rf = pathlib.rm_rf
+
+        def spy_rm_rf(p: Path) -> None:
+            if p.name == "sub" and p.parent.name.startswith("garbage-"):
+                observed_lock_while_deleting.append((p.parent / ".lock").is_file())
+                observed_deletable_while_deleting.append(
+                    pathlib.ensure_deletable(
+                        p.parent, consider_lock_dead_if_created_before=0
+                    )
+                )
+            real_rm_rf(p)
+
+        monkeypatch.setattr(pathlib, "rm_rf", spy_rm_rf)
+
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            maybe_delete_a_numbered_dir(target)
+
+        assert observed_lock_while_deleting == [True]
+        assert observed_deletable_while_deleting == [False]
+        assert not recorded
+        assert list(tmp_path.iterdir()) == []
+
+    def test_cleanup_concurrent_garbage_dir_before_rmdir(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Concurrent cleanup hitting an already-emptied ``garbage-*`` dir before rmdir
+        must not plant a new ``.lock`` or fail with Directory not empty (#15435)."""
+        for n in range(4):
+            (tmp_path / f"{self.PREFIX}{n}" / "test0").mkdir(parents=True)
+
+        real_rmdir = os.rmdir
+        real_rename = Path.rename
+        held: list[str] = []
+        outcome: list[OSError | None] = []
+
+        def interleaved_rmdir(
+            p: str | os.PathLike[str], *, dir_fd: int | None = None
+        ) -> None:
+            if (
+                dir_fd is None
+                and os.path.basename(os.fspath(p)).startswith("garbage-")
+                and not held
+            ):
+                held.append(os.fspath(p))
+                cleanup_numbered_dir(
+                    root=tmp_path,
+                    prefix=self.PREFIX,
+                    keep=3,
+                    consider_lock_dead_if_created_before=0,
+                )
+                if outcome and outcome[0] is not None:
+                    raise outcome[0]
+                return
+            if dir_fd is not None:
+                real_rmdir(p, dir_fd=dir_fd)
+            else:
+                real_rmdir(p)
+
+        def interleaved_rename(self_path: Path, target: str | os.PathLike[str]) -> Path:
+            if held and not outcome and self_path.name == os.path.basename(held[0]):
+                try:
+                    real_rmdir(held[0])
+                    outcome.append(None)
+                except OSError as exc:
+                    outcome.append(exc)
+            return real_rename(self_path, target)
+
+        monkeypatch.setattr(os, "rmdir", interleaved_rmdir)
+        monkeypatch.setattr(Path, "rename", interleaved_rename)
+
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            cleanup_numbered_dir(
+                root=tmp_path,
+                prefix=self.PREFIX,
+                keep=3,
+                consider_lock_dead_if_created_before=0,
+            )
+
+        assert held
+        assert outcome == [None]
+        assert not recorded
+        assert [p.name for p in tmp_path.glob("garbage-*")] == []
+        assert not (tmp_path / f"{self.PREFIX}0").exists()
+
+    def test_cleanup_concurrent_lock_on_renamed_numbered_dir(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A delayed ``O_CREAT | O_EXCL`` open for ``pytest-0/.lock`` landing after
+        ``pytest-0`` was renamed to ``garbage-*`` fails against our retained ``.lock``
+        instead of leaving a stray ``.lock`` behind (#15435)."""
+        target = tmp_path / f"{self.PREFIX}0"
+        (target / "sub").mkdir(parents=True)
+
+        real_open = os.open
+        real_rm_rf = pathlib.rm_rf
+        active_garbage: list[Path] = []
+        session_b_triggered = False
+
+        def forwarded_open(
+            file: str | os.PathLike[str],
+            flags: int,
+            mode: int = 0o777,
+            *,
+            dir_fd: int | None = None,
+        ) -> int:
+            path_str = os.fspath(file)
+            if (
+                dir_fd is None
+                and active_garbage
+                and os.path.basename(path_str) == ".lock"
+                and os.path.basename(os.path.dirname(path_str)) == target.name
+            ):
+                return real_open(str(active_garbage[0] / ".lock"), flags, mode)
+            if dir_fd is not None:
+                return real_open(file, flags, mode, dir_fd=dir_fd)
+            return real_open(file, flags, mode)
+
+        def triggered_rm_rf(p: Path) -> None:
+            nonlocal session_b_triggered
+            if (
+                p.name == "sub"
+                and p.parent.name.startswith("garbage-")
+                and not session_b_triggered
+            ):
+                session_b_triggered = True
+                active_garbage.append(p.parent)
+                maybe_delete_a_numbered_dir(target)
+            real_rm_rf(p)
+
+        monkeypatch.setattr(os, "open", forwarded_open)
+        monkeypatch.setattr(pathlib, "rm_rf", triggered_rm_rf)
+
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            maybe_delete_a_numbered_dir(target)
+
+        assert session_b_triggered
+        assert not recorded
+        assert list(tmp_path.iterdir()) == []
+
 
 def _raise_oserror(*args: object, **kwargs: object) -> None:
     raise OSError("simulated failure")
