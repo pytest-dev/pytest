@@ -1,0 +1,1 @@
+Fixed :meth:`monkeypatch.setenv(..., prepend=...) <pytest.MonkeyPatch.setenv>` adding a trailing separator when the environment variable is set but empty.
