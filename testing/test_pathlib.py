@@ -474,6 +474,24 @@ def test_access_denied_during_cleanup(tmp_path: Path, monkeypatch: MonkeyPatch) 
     assert not lock_path.is_file()
 
 
+def test_garbage_dir_access_denied_during_cleanup(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Ensure that deleting a garbage dir does not fail or leave a lock behind
+    because of OSErrors (#15435)."""
+    path = tmp_path / "garbage-1"
+    path.mkdir()
+
+    def renamed_failed(*args):
+        raise OSError("access denied")
+
+    monkeypatch.setattr(Path, "rename", renamed_failed)
+
+    cleanup_numbered_dir(tmp_path, "pytest-", 3, 0)
+    assert path.is_dir()
+    assert not get_lock_path(path).exists()
+
+
 def test_long_path_during_cleanup(tmp_path: Path) -> None:
     """Ensure that deleting long path works (particularly on Windows (#6775))."""
     path = (tmp_path / ("a" * 250)).resolve()
