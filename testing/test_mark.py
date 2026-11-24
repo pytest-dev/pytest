@@ -223,7 +223,11 @@ def test_strict_prohibits_unregistered_markers(pytester: Pytester, option: str) 
         result = pytester.runpytest()
     assert result.ret != 0
     result.stdout.fnmatch_lines(
-        ["'unregisteredmark' not found in `markers` configuration option"]
+        [
+            "Unknown pytest.mark.unregisteredmark - is this a typo?  You can register "
+            "custom marks to avoid this error - for details, see "
+            "https://docs.pytest.org/en/stable/how-to/mark.html"
+        ]
     )
 
 

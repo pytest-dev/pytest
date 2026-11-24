@@ -663,19 +663,16 @@ class MarkGenerator:
                 strict_markers = self._config.getini("strict_markers")
                 if strict_markers is None:
                     strict_markers = self._config.getini("strict")
-                if strict_markers:
-                    fail(
-                        f"{name!r} not found in `markers` configuration option",
-                        pytrace=False,
-                    )
-
-                warnings.warn(
+                kind = "error" if strict_markers else "warning"
+                msg = (
                     f"Unknown pytest.mark.{name} - is this a typo?  You can register "
-                    "custom marks to avoid this warning - for details, see "
-                    "https://docs.pytest.org/en/stable/how-to/mark.html",
-                    PytestUnknownMarkWarning,
-                    2,
+                    f"custom marks to avoid this {kind} - for details, see "
+                    "https://docs.pytest.org/en/stable/how-to/mark.html"
                 )
+                if strict_markers:
+                    fail(msg, pytrace=False)
+
+                warnings.warn(msg, PytestUnknownMarkWarning, 2)
 
         return MarkDecorator(Mark(name, (), {}, _ispytest=True), _ispytest=True)
 
