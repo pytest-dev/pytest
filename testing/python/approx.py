@@ -1640,6 +1640,29 @@ class TestApproxDatetime:
         with pytest.raises(AssertionError, match="comparison failed"):
             assert dt1 == approx(dt2, abs=timedelta(seconds=1))
 
+    @pytest.mark.parametrize("container", ["list", "dict"])
+    def test_datetime_container_failure_details(self, pytester: Pytester, container):
+        if container == "list":
+            actual = "[datetime(2024, 1, 1, 0, 2)]"
+            expected = "[datetime(2024, 1, 1)]"
+        else:
+            actual = "{'t': datetime(2024, 1, 1, 0, 2)}"
+            expected = "{'t': datetime(2024, 1, 1)}"
+
+        pytester.makepyfile(
+            f"""
+            from datetime import datetime, timedelta
+            from pytest import approx
+
+            def test_datetime_container():
+                assert {actual} == approx({expected}, abs=timedelta(seconds=1))
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(failed=1)
+        result.stdout.fnmatch_lines("*Max absolute difference: 0:02:00*")
+        assert "representation of details failed" not in result.stdout.str()
+
     def test_timedelta_zero(self):
         from datetime import timedelta
 

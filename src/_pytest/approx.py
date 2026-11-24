@@ -343,7 +343,7 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
                         )
                         if approx_value.expected == 0:
                             rel_diff_is_infinite = True
-                        else:
+                        elif not isinstance(approx_value.expected, datetime):
                             max_rel_diff = _max_diff(
                                 max_rel_diff,
                                 abs(
@@ -443,7 +443,10 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
                 except TypeError:
                     pass
                 else:
-                    if other_value == 0:
+                    if isinstance(approx_value.expected, datetime):
+                        # Datetimes have no meaningful relative difference.
+                        pass
+                    elif other_value == 0:
                         rel_diff_is_infinite = True
                     else:
                         max_rel_diff = _max_diff(
