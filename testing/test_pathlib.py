@@ -21,6 +21,7 @@ from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import _import_module_using_spec
 from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import cleanup_numbered_dir
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import compute_module_name
 from _pytest.pathlib import CouldNotResolvePathError
@@ -521,6 +522,44 @@ def test_suppress_error_removing_lock(tmp_path: Path) -> None:
     # check now that we can remove the lock file in normal circumstances
     assert ensure_deletable(path, consider_lock_dead_if_created_before=mtime + 30)
     assert not lock.is_file()
+
+
+def test_cleanup_garbage_dir_no_lock_race(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    """Ensure cleanup of garbage directories does not create locks, avoiding
+    'Directory not empty' races with concurrent deletions (#15435)."""
+    root = tmp_path / "root"
+    root.mkdir()
+    for n in range(4):
+        (root / f"pytest-{n}" / "test0").mkdir(parents=True)
+
+    real_rmdir, real_rename = os.rmdir, Path.rename
+    held: list[str] = []
+    outcome: list[OSError | None] = []
+
+    def rmdir(path, *, dir_fd=None):
+        if dir_fd is None and os.path.basename(path).startswith("garbage-") and not held:
+            held.append(path)
+            cleanup_numbered_dir(root, "pytest-", 3, 0)
+            if outcome and outcome[0] is not None:
+                raise outcome[0]
+            return
+        real_rmdir(path, dir_fd=dir_fd)
+
+    def rename(self, target):
+        if held and not outcome and os.path.basename(held[0]) == self.name:
+            try:
+                real_rmdir(held[0])
+                outcome.append(None)
+            except OSError as e:
+                outcome.append(e)
+        return real_rename(self, target)
+
+    monkeypatch.setattr(os, "rmdir", rmdir)
+    monkeypatch.setattr(Path, "rename", rename)
+
+    cleanup_numbered_dir(root, "pytest-", 3, 0)
+    assert outcome == [None]
+    assert sorted(p.name for p in root.iterdir()) == ["pytest-1", "pytest-2", "pytest-3"]
 
 
 def test_bestrelpath() -> None:

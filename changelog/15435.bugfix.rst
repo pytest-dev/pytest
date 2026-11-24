@@ -1,0 +1,1 @@
+Fix race condition where concurrent pytest sessions cleaning up old temporary directories could produce a ``Directory not empty`` warning on leftover ``garbage-*`` directories.

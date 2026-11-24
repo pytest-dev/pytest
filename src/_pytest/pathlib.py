@@ -348,6 +348,20 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
                 pass
 
 
+def maybe_delete_a_garbage_dir(path: Path) -> None:
+    """Remove a garbage directory by renaming it to a unique garbage path and deleting it."""
+    path = ensure_extended_length_path(path)
+    try:
+        garbage = path.parent.joinpath(f"garbage-{uuid.uuid4()}")
+        path.rename(garbage)
+        rm_rf(garbage)
+    except OSError:
+        #  known races:
+        #  * other process removed or took over the directory first
+        #  * process cwd (Windows)
+        return
+
+
 def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) -> bool:
     """Check if `path` is deletable based on whether the lock file is expired."""
     if path.is_symlink():
@@ -410,7 +424,8 @@ def cleanup_numbered_dir(
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
     for path in root.glob("garbage-*"):
-        try_cleanup(path, consider_lock_dead_if_created_before)
+        if ensure_deletable(path, consider_lock_dead_if_created_before):
+            maybe_delete_a_garbage_dir(path)
 
     cleanup_dead_symlinks(root)
 
