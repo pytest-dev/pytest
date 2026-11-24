@@ -141,6 +141,47 @@ class TestSetupState:
         assert isinstance(func.exceptions[0], TypeError)
         assert isinstance(func.exceptions[1], ValueError)
 
+    def test_teardown_base_exception_group_runs_remaining_finalizers(
+        self, pytester: Pytester
+    ) -> None:
+        """BaseExceptionGroup during teardown must not skip remaining finalizers (#15329)."""
+        pytester.makepyfile(
+            """
+            import asyncio
+            import pytest
+
+            events = []
+            allocations = 0
+
+            @pytest.fixture
+            def owner(request):
+                global allocations
+                allocations += 1
+                token = allocations
+                events.append(("allocate", request.node.name, token))
+                yield token
+                events.append(("release", request.node.name, token))
+
+            @pytest.fixture
+            def resource(owner, request):
+                yield owner
+                if request.node.name == "test_first":
+                    raise BaseExceptionGroup(
+                        "cleanup",
+                        [asyncio.CancelledError("cancel"), RuntimeError("ordinary")],
+                    )
+
+            def test_first(resource):
+                assert resource == 1
+
+            def test_next(resource):
+                assert resource == 2
+                assert ("release", "test_first", 1) in events
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, errors=1)
+
     def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
         """Regression test for #12204 (the "BTW" case)."""
         pytester.makepyfile(test="")
