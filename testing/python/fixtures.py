@@ -5753,6 +5753,38 @@ def test_fixture_invalidated_by_wider_scoped_param(pytester: Pytester) -> None:
     result.assert_outcomes(passed=3)
 
 
+@pytest.mark.parametrize("scope", ["module", "class"])
+def test_indirect_scope_override_finalized_by_parametrized_dependency(
+    pytester: Pytester, scope: str
+) -> None:
+    """A function-scoped fixture whose scope is widened by indirect
+    parametrization must be finalized when a parametrized fixture it
+    depends on changes its param (#15436)."""
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.fixture(scope="module", params=["first", "second"])
+        def parent(request):
+            resource = {{"name": request.param, "open": True}}
+            yield resource
+            resource["open"] = False
+
+        @pytest.fixture
+        def child(parent):
+            yield parent
+            assert parent["open"]
+
+        class TestIt:
+            @pytest.mark.parametrize("child", [None], indirect=True, scope="{scope}")
+            def test_current_parent(self, child, parent):
+                assert child is parent
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:
     """
     Make sure scope from parametrize does not affect fixture's ability to be

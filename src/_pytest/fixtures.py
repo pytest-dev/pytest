@@ -1286,7 +1286,9 @@ class FixtureDef(Generic[FixtureValue]):
         # of each test, before any higher-scoped fixture can be torn down or
         # invalidated, so registering with requested fixtures is not needed and
         # would only accumulate finalizers on them (#4871).
-        if self._scope is not Scope.Function:
+        # This does not hold when indirect parametrization widens the scope of
+        # the request (#15436), so the request scope has to be checked too.
+        if self._scope is not Scope.Function or request._scope is not Scope.Function:
             for parent_fixture in requested_fixtures_that_should_finalize_us:
                 parent_fixture.addfinalizer(finalizer)
 
