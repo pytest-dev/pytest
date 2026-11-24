@@ -524,7 +524,9 @@ def test_suppress_error_removing_lock(tmp_path: Path) -> None:
     assert not lock.is_file()
 
 
-def test_cleanup_garbage_dir_no_lock_race(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+def test_cleanup_garbage_dir_no_lock_race(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
     """Ensure cleanup of garbage directories does not create locks, avoiding
     'Directory not empty' races with concurrent deletions (#15435)."""
     root = tmp_path / "root"
@@ -537,7 +539,11 @@ def test_cleanup_garbage_dir_no_lock_race(tmp_path: Path, monkeypatch: MonkeyPat
     outcome: list[OSError | None] = []
 
     def rmdir(path, *, dir_fd=None):
-        if dir_fd is None and os.path.basename(path).startswith("garbage-") and not held:
+        if (
+            dir_fd is None
+            and os.path.basename(path).startswith("garbage-")
+            and not held
+        ):
             held.append(path)
             cleanup_numbered_dir(root, "pytest-", 3, 0)
             if outcome and outcome[0] is not None:
@@ -559,7 +565,11 @@ def test_cleanup_garbage_dir_no_lock_race(tmp_path: Path, monkeypatch: MonkeyPat
 
     cleanup_numbered_dir(root, "pytest-", 3, 0)
     assert outcome == [None]
-    assert sorted(p.name for p in root.iterdir()) == ["pytest-1", "pytest-2", "pytest-3"]
+    assert sorted(p.name for p in root.iterdir()) == [
+        "pytest-1",
+        "pytest-2",
+        "pytest-3",
+    ]
 
 
 def test_bestrelpath() -> None:
