@@ -638,7 +638,7 @@ class LogXML:
                     reporter.append_failure(report)
                 else:
                     reporter.append_error(report)
-            elif report.skipped:
+            else:
                 reporter.append_skipped(report)
             if self.report_duration in {"total", report.when}:
                 reporter.duration += getattr(report, "duration", 0.0)
