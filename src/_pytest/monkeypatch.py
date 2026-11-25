@@ -347,7 +347,7 @@ class MonkeyPatch:
                 stacklevel=2,
             )
             value = str(value)
-        if prepend and name in os.environ:
+        if prepend and os.environ.get(name):
             value = value + prepend + os.environ[name]
         self.setitem(os.environ, name, value)
 

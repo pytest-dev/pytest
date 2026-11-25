@@ -259,6 +259,14 @@ def test_setenv() -> None:
     assert "XYZ123" not in os.environ
 
 
+def test_setenv_prepend_empty(monkeypatch: MonkeyPatch) -> None:
+    import os
+
+    monkeypatch.setenv("XYZ123", "")
+    monkeypatch.setenv("XYZ123", "/opt/plugins", prepend=os.pathsep)
+    assert os.environ["XYZ123"] == "/opt/plugins"
+
+
 def test_delenv() -> None:
     name = "xyz1234"
     assert name not in os.environ
