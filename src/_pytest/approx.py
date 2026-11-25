@@ -12,7 +12,6 @@ from collections.abc import Sized
 from datetime import datetime
 from datetime import timedelta
 from decimal import Decimal
-from decimal import FloatOperation
 import math
 from numbers import Complex
 import pprint
@@ -622,21 +621,15 @@ class ApproxScalar(Approx[ExpectedT]):
         """The absolute difference to *actual*, or None for non-numbers (#13012)."""
         try:
             return abs(self.expected - actual)
-        # decimal.FloatOperation subclasses TypeError; a trapped Decimal/float
-        # mix must surface rather than be reported as a missing difference.
-        except FloatOperation:
-            raise
         except TypeError:
             return None
 
     def _rel_diff(self, abs_diff: Any, base: Any) -> Any:
         """*abs_diff* relative to *base*, the marker for a zero base, or None."""
+        if base == 0:
+            return _INFINITE
         try:
-            if base == 0:
-                return _INFINITE
             return abs_diff / abs(base)
-        except FloatOperation:
-            raise
         except TypeError:
             return None
 

@@ -1349,6 +1349,24 @@ class TestApprox:
         assert explanation[1 : 1 + len(wanted)] == wanted
         assert explanation[1 + len(wanted)].startswith("Index")
 
+    def test_repr_compare_undefined_differences(self) -> None:
+        """Values that cannot be subtracted or divided leave the line out."""
+
+        class Offset:
+            """Subtracts from a number, but has no abs()."""
+
+            def __rsub__(self, other: float) -> float:
+                return other - 1.0
+
+        explanation = approx([2.0])._repr_compare([Offset()])
+        assert explanation[1] == "Max absolute difference: 1.0"
+        assert explanation[2].startswith("Index")
+
+        explanation = approx(
+            [datetime.datetime(2024, 1, 1)], abs=datetime.timedelta(seconds=1)
+        )._repr_compare(["2024-01-01"])
+        assert explanation[1].startswith("Index")
+
     def test_repr_compare_numpy_datetime(self) -> None:
         """Numpy arrays of datetimes take the same path as lists (#15434)."""
         np = pytest.importorskip("numpy")
