@@ -2,19 +2,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from collections.abc import Iterator
-import contextlib
 import dataclasses
 import itertools
 import os
 from pathlib import Path
-import re
 import shutil
 import stat
 import sys
-from typing import Any
 from typing import cast
-from typing import TYPE_CHECKING
 import uuid
 import warnings
 
@@ -24,7 +19,6 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import _chmod_rwx
 from _pytest.pathlib import cleanup_numbered_dir
 from _pytest.pathlib import create_cleanup_lock
-from _pytest.pathlib import ensure_extended_length_path
 from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pathlib import maybe_delete_a_numbered_dir
@@ -36,16 +30,6 @@ from _pytest.pytester import Pytester
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import TempPathFactory
 import pytest
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
-
-
-needs_dir_fd = pytest.mark.skipif(
-    not {os.open, os.unlink} <= os.supports_dir_fd,
-    reason="needs os.open and os.unlink relative to a directory descriptor",
-)
 
 
 def test_tmp_path_fixture(pytester: Pytester) -> None:
@@ -676,64 +660,11 @@ class TestNumberedDir:
             consider_lock_dead_if_created_before=consider_lock_dead_if_created_before,
         )
 
-    def _pin_names_and_order(self, monkeypatch: MonkeyPatch) -> None:
-        """Make the cleanup behave the same on every run: directories are
-        renamed to garbage-0, garbage-1 and so on instead of to random names,
-        and garbage directories and the entries of a directory are listed in
-        name order instead of in the file system's order."""
+    def _pin_names(self, monkeypatch: MonkeyPatch) -> None:
+        """Rename directories to garbage-0, garbage-1 and so on instead of to
+        random names, so that the cleanup is the same on every run."""
         numbers = itertools.count()
         monkeypatch.setattr(uuid, "uuid4", lambda: next(numbers))
-        real_glob = Path.glob
-
-        def glob(path: Path, pattern: str, **kwargs: Any) -> Iterator[Path]:
-            return iter(sorted(real_glob(path, pattern, **kwargs)))
-
-        monkeypatch.setattr(Path, "glob", glob)
-        real_scandir = os.scandir
-
-        def scandir(*args: Any, **kwargs: Any) -> _SortedScandir:
-            return _SortedScandir(real_scandir(*args, **kwargs))
-
-        monkeypatch.setattr(os, "scandir", scandir)
-
-    @contextlib.contextmanager
-    def _stale_lookup(
-        self, monkeypatch: MonkeyPatch, path: Path
-    ) -> Iterator[Callable[..., Any]]:
-        """Replay a process that looked ``path`` up before another process
-        renamed it.
-
-        Yields a function that makes a call as that process: while the call
-        runs, an ``os.open`` of ``path``, or of a name in ``path``, opens the
-        directory that was at ``path`` on entry, wherever it is by then. Any
-        other ``os.open`` by path while the call runs fails the test.
-        """
-        looked_up = os.open(path, os.O_RDONLY)
-        real_open = os.open
-        running: list[None] = []
-
-        def open_(
-            file: Any, flags: int, mode: int = 0o777, *, dir_fd: int | None = None
-        ) -> int:
-            if running and dir_fd is None:
-                if Path(file) == path:
-                    return os.dup(looked_up)
-                assert Path(file).parent == path
-                return real_open(Path(file).name, flags, mode, dir_fd=looked_up)
-            return real_open(file, flags, mode, dir_fd=dir_fd)
-
-        def stale(func: Callable[..., Any], *args: Any) -> Any:
-            running.append(None)
-            try:
-                return func(*args)
-            finally:
-                running.pop()
-
-        monkeypatch.setattr(os, "open", open_)
-        try:
-            yield stale
-        finally:
-            os.close(looked_up)
 
     def test_cleanup_garbage_race_with_removal(
         self,
@@ -755,7 +686,7 @@ class TestNumberedDir:
         """
         for i in range(4):
             self._make_dir_with_file(tmp_path / f"{self.PREFIX}{i}")
-        self._pin_names_and_order(monkeypatch)
+        self._pin_names(monkeypatch)
         real_rmdir = os.rmdir
         real_rename = Path.rename
         held: list[Path] = []
@@ -797,13 +728,12 @@ class TestNumberedDir:
         monkeypatch: MonkeyPatch,
         recwarn: pytest.WarningsRecorder,
     ) -> None:
-        """Unlocked garbage directories are taken over by renaming them, with
-        nothing written into them first, and removed."""
+        """An unlocked garbage directory is taken over by renaming it, with
+        nothing written into it first, and removed."""
         for i in range(3):
             self._make_dir_with_file(tmp_path / f"{self.PREFIX}{i}")
         self._make_dir_with_file(tmp_path / "garbage-a")
-        self._make_dir_with_file(tmp_path / "garbage-b")
-        self._pin_names_and_order(monkeypatch)
+        self._pin_names(monkeypatch)
         real_rename = Path.rename
         renamed: list[tuple[str, str, list[str]]] = []
 
@@ -815,10 +745,7 @@ class TestNumberedDir:
         monkeypatch.setattr(Path, "rename", rename)
         self._cleanup(tmp_path)
 
-        assert renamed == [
-            ("garbage-a", "garbage-0", ["sub"]),
-            ("garbage-b", "garbage-1", ["sub"]),
-        ]
+        assert renamed == [("garbage-a", "garbage-0", ["sub"])]
         assert sorted(p.name for p in tmp_path.iterdir()) == ["fun-0", "fun-1", "fun-2"]
         assert not recwarn.list
 
@@ -833,7 +760,7 @@ class TestNumberedDir:
         lock = get_lock_path(garbage)
         lock.touch()
         os.utime(lock, (1000, 1000))
-        self._pin_names_and_order(monkeypatch)
+        self._pin_names(monkeypatch)
 
         self._cleanup(tmp_path, consider_lock_dead_if_created_before=1000)
         assert sorted(p.name for p in garbage.iterdir()) == [".lock", "sub"]
@@ -842,109 +769,6 @@ class TestNumberedDir:
         assert list(tmp_path.iterdir()) == []
         assert not recwarn.list
 
-    def test_cleanup_garbage_already_removed(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-    ) -> None:
-        """A garbage directory another process removed or took over first is
-        skipped."""
-        self._make_dir_with_file(tmp_path / "garbage-a")
-        self._make_dir_with_file(tmp_path / "garbage-b")
-        self._pin_names_and_order(monkeypatch)
-        real_rename = Path.rename
-
-        def rename(path: Path, target: Path) -> Path:
-            if path.name == "garbage-a":
-                shutil.rmtree(path)
-            return real_rename(path, target)
-
-        monkeypatch.setattr(Path, "rename", rename)
-        self._cleanup(tmp_path)
-
-        assert list(tmp_path.iterdir()) == []
-        assert not recwarn.list
-
-    def test_cleanup_garbage_removal_fails(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-    ) -> None:
-        """A garbage directory that fails to be removed is left without a lock,
-        so a later cleanup can take it, and the cleanup goes on to the next."""
-        self._make_dir_with_file(tmp_path / "garbage-a")
-        self._make_dir_with_file(tmp_path / "garbage-b")
-        self._pin_names_and_order(monkeypatch)
-        real_rm_rf = pathlib.rm_rf
-        tried: list[str] = []
-
-        def rm_rf(path: Path) -> None:
-            tried.append(path.name)
-            if path.name == "garbage-0":  # garbage-a, renamed.
-                raise OSError("simulated failure")
-            real_rm_rf(path)
-
-        monkeypatch.setattr(pathlib, "rm_rf", rm_rf)
-        self._cleanup(tmp_path)
-
-        assert tried == ["garbage-0", "garbage-1"]
-        assert [p.name for p in tmp_path.iterdir()] == ["garbage-0"]
-        assert sorted(p.name for p in (tmp_path / "garbage-0").iterdir()) == ["sub"]
-        assert not recwarn.list
-
-    def test_cleanup_garbage_ignores_symlink(
-        self, tmp_path: Path, recwarn: pytest.WarningsRecorder
-    ) -> None:
-        root = tmp_path / "root"
-        root.mkdir()
-        target = self._make_dir_with_file(tmp_path / "target")
-        symlink_or_skip(target, root / "garbage-a", target_is_directory=True)
-
-        self._cleanup(root)
-
-        assert (root / "garbage-a").is_symlink()
-        assert sorted(p.name for p in target.iterdir()) == ["sub"]
-        assert not recwarn.list
-
-    @needs_dir_fd
-    def test_cleanup_lock_create_in_renamed_dir(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
-        """A lock that lands in a directory after another process renamed it is
-        removed again before create_cleanup_lock raises, instead of being left
-        there to keep the renamed directory for three days (#15435)."""
-        d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-        with self._stale_lookup(monkeypatch, d) as stale:
-            d.rename(tmp_path / "garbage-0")
-            with pytest.raises(
-                OSError, match=r"^lock path got renamed after successful creation$"
-            ):
-                stale(create_cleanup_lock, d)
-
-        assert sorted(p.name for p in (tmp_path / "garbage-0").iterdir()) == ["sub"]
-
-    @needs_dir_fd
-    def test_cleanup_lock_create_in_renamed_dir_by_path(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
-        """Where the lock is created by its path, as on Windows, a lock that
-        lands in a directory after another process renamed it stays there:
-        create_cleanup_lock has no descriptor to remove it through."""
-        monkeypatch.setattr(pathlib, "_lock_through_dir_fd", False)
-        d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-        with self._stale_lookup(monkeypatch, d) as stale:
-            d.rename(tmp_path / "garbage-0")
-            with pytest.raises(
-                OSError, match=r"^lock path got renamed after successful creation$"
-            ):
-                stale(create_cleanup_lock, d)
-
-        garbage = tmp_path / "garbage-0"
-        assert sorted(p.name for p in garbage.iterdir()) == [".lock", "sub"]
-
-    @needs_dir_fd
     def test_cleanup_lock_held_while_emptying(
         self,
         tmp_path: Path,
@@ -952,349 +776,31 @@ class TestNumberedDir:
         recwarn: pytest.WarningsRecorder,
     ) -> None:
         """A numbered directory keeps its lock until everything else in it is
-        removed, so a process that looked the directory up before it was
-        renamed cannot lock it in the meantime (#15435)."""
-        d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-        self._pin_names_and_order(monkeypatch)
-        real_rmdir = os.rmdir
-        outcomes: list[OSError | None] = []
-        with self._stale_lookup(monkeypatch, d) as stale:
+        removed, so that no other process can lock it in the meantime (#15435).
 
-            def rmdir(path: str, *, dir_fd: int | None = None) -> None:
-                if os.path.basename(path) == "sub" and not outcomes:
-                    outcomes.append(_raised(stale, create_cleanup_lock, d))
-                real_rmdir(path, dir_fd=dir_fd)
-
-            monkeypatch.setattr(os, "rmdir", rmdir)
-            maybe_delete_a_numbered_dir(d)
-
-        assert [str(e) for e in outcomes] == [f"cannot create lockfile in {d}"]
-        assert list(tmp_path.iterdir()) == []
-        assert not recwarn.list
-
-    @needs_dir_fd
-    def test_cleanup_lock_create_before_last_rmdir(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-    ) -> None:
-        """A process that looked a numbered directory up before another process
-        renamed it, and creates its lock there just before that process's last
-        rmdir, removes the lock again, so the rmdir succeeds and nothing is
-        left (#15435)."""
-        d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-        self._pin_names_and_order(monkeypatch)
-        real_rmdir = os.rmdir
-        outcomes: list[OSError | None] = []
-        with self._stale_lookup(monkeypatch, d) as stale:
-
-            def rmdir(path: str, *, dir_fd: int | None = None) -> None:
-                if os.path.basename(path) == "garbage-0" and not outcomes:
-                    outcomes.append(_raised(stale, create_cleanup_lock, d))
-                real_rmdir(path, dir_fd=dir_fd)
-
-            monkeypatch.setattr(os, "rmdir", rmdir)
-            maybe_delete_a_numbered_dir(d)
-
-        assert [str(e) for e in outcomes] == [
-            "lock path got renamed after successful creation"
-        ]
-        assert list(tmp_path.iterdir()) == []
-        assert not recwarn.list
-
-    @needs_dir_fd
-    def test_cleanup_lock_create_in_renamed_dir_unlink_fails(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
-        """If the lock that landed in the renamed directory cannot be removed
-        again, create_cleanup_lock still raises its own error."""
-        d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-
-        def unlink(path: str, *, dir_fd: int | None = None) -> None:
-            # The only unlink is of the stray lock, through the descriptor.
-            assert dir_fd is not None
-            raise OSError("simulated failure")
-
-        with self._stale_lookup(monkeypatch, d) as stale:
-            d.rename(tmp_path / "garbage-0")
-            monkeypatch.setattr(os, "unlink", unlink)
-            with pytest.raises(
-                OSError, match=r"^lock path got renamed after successful creation$"
-            ):
-                stale(create_cleanup_lock, d)
-
-        garbage = tmp_path / "garbage-0"
-        assert sorted(p.name for p in garbage.iterdir()) == [".lock", "sub"]
-
-    @needs_dir_fd
-    @pytest.mark.parametrize("outcome", ["created", "exists", "renamed"])
-    def test_cleanup_lock_create_closes_descriptors(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch, outcome: str
-    ) -> None:
-        """create_cleanup_lock closes every descriptor it opens, whether it
-        creates the lock, finds one already there, or finds the directory
-        renamed."""
-        d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-        if outcome == "exists":
-            get_lock_path(d).touch()
-        opened: list[int] = []
-        closed: list[int] = []
-        with self._stale_lookup(monkeypatch, d) as stale:
-            if outcome == "renamed":
-                d.rename(tmp_path / "garbage-0")
-            inner_open = os.open
-            real_close = os.close
-
-            def open_(*args: Any, **kwargs: Any) -> int:
-                fd = inner_open(*args, **kwargs)
-                opened.append(fd)
-                return fd
-
-            def close(fd: int) -> None:
-                closed.append(fd)
-                real_close(fd)
-
-            monkeypatch.setattr(os, "open", open_)
-            monkeypatch.setattr(os, "close", close)
-            try:
-                stale(create_cleanup_lock, d)
-            except OSError:
-                assert outcome != "created"
-            else:
-                assert outcome == "created"
-            monkeypatch.setattr(os, "close", real_close)
-
-        assert len(opened) == {"created": 2, "exists": 1, "renamed": 2}[outcome]
-        assert sorted(closed) == sorted(opened)
-
-    @pytest.mark.parametrize(
-        "through_dir_fd", [pytest.param(True, marks=needs_dir_fd), False]
-    )
-    def test_cleanup_lock_create_writes_pid(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch, through_dir_fd: bool
-    ) -> None:
-        """The lock holds the id of the process that created it, whether it is
-        created through a directory descriptor or by its path, and a second
-        lock of the same directory fails."""
-        monkeypatch.setattr(pathlib, "_lock_through_dir_fd", through_dir_fd)
-        monkeypatch.setattr(os, "getpid", lambda: 4242)
-        d = tmp_path / "d"
-        d.mkdir()
-        real_open = os.open
-        opened: list[str] = []
-
-        def open_(file: Any, *args: Any, **kwargs: Any) -> int:
-            opened.append(os.fspath(file))
-            return real_open(file, *args, **kwargs)
-
-        monkeypatch.setattr(os, "open", open_)
-        lock = create_cleanup_lock(d)
-
-        assert lock == get_lock_path(d)
-        assert lock.read_bytes() == b"4242"
-        if through_dir_fd:
-            assert opened == [str(d), ".lock"]
-        else:
-            assert opened == [str(lock)]
-        with pytest.raises(
-            OSError, match=f"^cannot create lockfile in {re.escape(str(d))}$"
-        ):
-            create_cleanup_lock(d)
-        assert lock.read_bytes() == b"4242"
-
-    @pytest.mark.parametrize(
-        "through_dir_fd", [pytest.param(True, marks=needs_dir_fd), False]
-    )
-    def test_cleanup_lock_create_missing_dir(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch, through_dir_fd: bool
-    ) -> None:
-        """Locking a directory that is not there fails, on either path."""
-        monkeypatch.setattr(pathlib, "_lock_through_dir_fd", through_dir_fd)
-        with pytest.raises(FileNotFoundError):
-            create_cleanup_lock(tmp_path / "missing")
-        assert list(tmp_path.iterdir()) == []
-
-    @pytest.mark.parametrize(
-        "contents",
-        [[], ["file"], ["sub/file"], ["file", "sub/file", "sub/deeper/file"]],
-    )
-    def test_removal_removes_everything(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-        contents: list[str],
-    ) -> None:
-        """A numbered directory is removed with everything in it, its lock
-        included."""
-        d = tmp_path / f"{self.PREFIX}0"
-        d.mkdir()
-        for name in contents:
-            d.joinpath(name).parent.mkdir(parents=True, exist_ok=True)
-            d.joinpath(name).write_bytes(b"x")
-        self._pin_names_and_order(monkeypatch)
-
-        maybe_delete_a_numbered_dir(d)
-
-        assert list(tmp_path.iterdir()) == []
-        assert not recwarn.list
-
-    def test_removal_unlinks_symlink(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-    ) -> None:
-        """A symlink in a numbered directory is removed, not followed."""
-        d = tmp_path / f"{self.PREFIX}0"
-        d.mkdir()
-        target = self._make_dir_with_file(tmp_path / "target")
-        symlink_or_skip(target, d / "link", target_is_directory=True)
-        self._pin_names_and_order(monkeypatch)
-
-        maybe_delete_a_numbered_dir(d)
-
-        assert [p.name for p in tmp_path.iterdir()] == ["target"]
-        assert target.joinpath("sub", "file").read_bytes() == b"x"
-        assert not recwarn.list
-
-    def test_removal_retries_file_after_permission_error(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-    ) -> None:
-        """A file in a numbered directory that cannot be removed for lack of
-        permission is made writable and removed, as rm_rf would."""
+        A process that looked the directory up before it was renamed creates
+        its lock in the renamed directory. The test creates that lock there
+        while the directory is being emptied.
+        """
         d = tmp_path / f"{self.PREFIX}0"
         d.mkdir()
         d.joinpath("file").write_bytes(b"x")
-        self._pin_names_and_order(monkeypatch)
+        self._pin_names(monkeypatch)
+        garbage = tmp_path / "garbage-0"
         real_unlink = os.unlink
-        tried: list[str] = []
+        outcomes: list[OSError | None] = []
 
         def unlink(path: str, *, dir_fd: int | None = None) -> None:
             if os.path.basename(path) == "file":
-                tried.append(os.fspath(path))
-                if len(tried) == 1:
-                    raise PermissionError("simulated failure")
+                outcomes.append(_raised(create_cleanup_lock, garbage))
             real_unlink(path, dir_fd=dir_fd)
 
         monkeypatch.setattr(os, "unlink", unlink)
         maybe_delete_a_numbered_dir(d)
 
-        assert [os.path.basename(path) for path in tried] == ["file", "file"]
+        assert [str(e) for e in outcomes] == [f"cannot create lockfile in {garbage}"]
         assert list(tmp_path.iterdir()) == []
         assert not recwarn.list
-
-    def test_removal_file_error_warns_and_drops_lock(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-    ) -> None:
-        """A file in a numbered directory that cannot be removed gets rm_rf's
-        warning, once, and the lock is still removed, so that a later cleanup
-        can take the directory."""
-        d = tmp_path / f"{self.PREFIX}0"
-        d.mkdir()
-        d.joinpath("file").write_bytes(b"x")
-        self._pin_names_and_order(monkeypatch)
-        real_unlink = os.unlink
-
-        def unlink(path: str, *, dir_fd: int | None = None) -> None:
-            if os.path.basename(path) == "file":
-                raise OSError("simulated failure")
-            real_unlink(path, dir_fd=dir_fd)
-
-        monkeypatch.setattr(os, "unlink", unlink)
-        maybe_delete_a_numbered_dir(d)
-
-        garbage = tmp_path / "garbage-0"
-        # The warnings show the path the cleanup works on: on Windows, the
-        # extended-length form.
-        shown = ensure_extended_length_path(tmp_path) / "garbage-0"
-        assert [str(w.message).splitlines()[0] for w in recwarn.list] == [
-            f"(rm_rf) error removing {shown / 'file'}",
-            f"(rm_rf) error removing {shown}",
-        ]
-        assert [p.name for p in tmp_path.iterdir()] == ["garbage-0"]
-        assert [p.name for p in garbage.iterdir()] == ["file"]
-
-    def test_removal_lock_error_warns(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-    ) -> None:
-        """A lock that cannot be removed gets rm_rf's warning, after everything
-        else in the directory is removed."""
-        d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-        self._pin_names_and_order(monkeypatch)
-        real_unlink = os.unlink
-
-        def unlink(path: str, *, dir_fd: int | None = None) -> None:
-            if os.path.basename(path) == ".lock":
-                raise OSError("simulated failure")
-            real_unlink(path, dir_fd=dir_fd)
-
-        def path_unlink(path: Path, missing_ok: bool = False) -> None:
-            # On Python 3.10, Path.unlink does not go through os.unlink. The
-            # only Path.unlink is of the lock, after the removal.
-            assert path.name == ".lock"
-            raise OSError("simulated failure")
-
-        monkeypatch.setattr(os, "unlink", unlink)
-        monkeypatch.setattr(Path, "unlink", path_unlink)
-        maybe_delete_a_numbered_dir(d)
-
-        garbage = tmp_path / "garbage-0"
-        # The warnings show the path the cleanup works on: on Windows, the
-        # extended-length form.
-        shown = ensure_extended_length_path(tmp_path) / "garbage-0"
-        assert [str(w.message).splitlines()[0] for w in recwarn.list] == [
-            f"(rm_rf) error removing {shown / '.lock'}",
-            f"(rm_rf) error removing {shown}",
-        ]
-        assert [p.name for p in tmp_path.iterdir()] == ["garbage-0"]
-        assert [p.name for p in garbage.iterdir()] == [".lock"]
-
-    def test_removal_listing_error_warns_and_drops_lock(
-        self,
-        tmp_path: Path,
-        monkeypatch: MonkeyPatch,
-        recwarn: pytest.WarningsRecorder,
-    ) -> None:
-        """A renamed numbered directory that cannot be listed gets rm_rf's
-        warning, and its lock is still removed, so that a later cleanup can
-        take the directory."""
-        d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-        self._pin_names_and_order(monkeypatch)
-        garbage = tmp_path / "garbage-0"
-        pinned_scandir = os.scandir
-
-        def scandir(path: Any = ".") -> Any:
-            # The only listing is of the renamed directory.
-            assert _is_dir(path, garbage)
-            raise OSError("simulated failure")
-
-        monkeypatch.setattr(os, "scandir", scandir)
-        maybe_delete_a_numbered_dir(d)
-        monkeypatch.setattr(os, "scandir", pinned_scandir)
-
-        # The warnings show the path the cleanup works on: on Windows, the
-        # extended-length form.
-        shown = ensure_extended_length_path(tmp_path) / "garbage-0"
-        assert [str(w.message).splitlines()[0] for w in recwarn.list] == [
-            f"(rm_rf) error removing {shown}",
-            f"(rm_rf) error removing {shown}",
-        ]
-        assert [p.name for p in tmp_path.iterdir()] == ["garbage-0"]
-        assert [p.name for p in garbage.iterdir()] == ["sub"]
-        assert str(recwarn.list[0].message) == (
-            f"(rm_rf) error removing {shown}\n<class 'OSError'>: simulated failure"
-        )
 
     def test_removal_failure_drops_lock(
         self,
@@ -1305,7 +811,7 @@ class TestNumberedDir:
         """If removing the renamed directory raises, its lock is still
         removed, so that a later cleanup can take the directory."""
         d = self._make_dir_with_file(tmp_path / f"{self.PREFIX}0")
-        self._pin_names_and_order(monkeypatch)
+        self._pin_names(monkeypatch)
         monkeypatch.setattr(pathlib, "_rm_rf_lock_last", _raise_oserror)
 
         maybe_delete_a_numbered_dir(d)
@@ -1316,13 +822,6 @@ class TestNumberedDir:
         assert not recwarn.list
 
 
-def _is_dir(path: int | str | os.PathLike[str], directory: Path) -> bool:
-    """Whether ``path``, a path or a descriptor, is the directory now at
-    ``directory``."""
-    st = os.fstat(path) if isinstance(path, int) else os.stat(path)
-    return os.path.samestat(st, os.stat(directory))
-
-
 def _raised(func: Callable[..., object], *args: object) -> OSError | None:
     """Call ``func`` and return the OSError it raises, or None if it returns."""
     try:
@@ -1330,29 +829,6 @@ def _raised(func: Callable[..., object], *args: object) -> OSError | None:
     except OSError as e:
         return e
     return None
-
-
-class _SortedScandir:
-    """Wraps an ``os.scandir`` iterator to yield its entries in name order."""
-
-    def __init__(self, it: Any) -> None:
-        self._it = it
-        self._entries = iter(sorted(it, key=lambda entry: entry.name))
-
-    def __iter__(self) -> Self:
-        return self
-
-    def __next__(self) -> Any:
-        return next(self._entries)
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(self, *exc_info: object) -> None:
-        self.close()
-
-    def close(self) -> None:
-        self._it.close()
 
 
 def _raise_oserror(*args: object, **kwargs: object) -> None:

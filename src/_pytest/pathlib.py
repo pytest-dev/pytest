@@ -202,11 +202,15 @@ def get_extended_length_path_str(path: str) -> str:
     return long_path_prefix + path
 
 
-def rm_rf(path: Path) -> None:
+def rm_rf(path: Path, *, start_path: Path | None = None) -> None:
     """Remove the path contents recursively, even if some elements
-    are read-only."""
+    are read-only.
+
+    Parent directories are made writable up to ``start_path``, which defaults
+    to ``path``.
+    """
     path = ensure_extended_length_path(path)
-    onerror = partial(on_rm_rf_error, start_path=path)
+    onerror = partial(on_rm_rf_error, start_path=start_path or path)
     if sys.version_info >= (3, 12):
         shutil.rmtree(str(path), onexc=onerror)
     else:
@@ -286,44 +290,21 @@ def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
         )
 
 
-_lock_through_dir_fd = {os.open, os.unlink} <= os.supports_dir_fd
-
-
 def create_cleanup_lock(p: Path) -> Path:
-    """Create a lock to prevent premature directory cleanup.
-
-    Where the platform allows it, the lock is created through a descriptor of
-    the directory. Another process may rename the directory while this one
-    creates the lock, and the lock then lands in the renamed directory. It is
-    removed from there before raising, so that it cannot keep the other process
-    from removing the directory (#15435).
-    """
+    """Create a lock to prevent premature directory cleanup."""
     lock_path = get_lock_path(p)
-    dir_fd = None
-    name = str(lock_path)
-    if _lock_through_dir_fd:
-        dir_fd = os.open(p, os.O_RDONLY)
-        name = lock_path.name
     try:
-        try:
-            fd = os.open(
-                name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644, dir_fd=dir_fd
-            )
-        except FileExistsError as e:
-            raise OSError(f"cannot create lockfile in {p}") from e
+        fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    except FileExistsError as e:
+        raise OSError(f"cannot create lockfile in {p}") from e
+    else:
         pid = os.getpid()
         spid = str(pid).encode()
         os.write(fd, spid)
         os.close(fd)
         if not lock_path.is_file():
-            if dir_fd is not None:
-                with contextlib.suppress(OSError):
-                    os.unlink(name, dir_fd=dir_fd)
             raise OSError("lock path got renamed after successful creation")
         return lock_path
-    finally:
-        if dir_fd is not None:
-            os.close(dir_fd)
 
 
 def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
@@ -344,30 +325,23 @@ def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
 
 
 def _rm_rf_lock_last(path: Path) -> None:
-    """Remove a directory as rm_rf does, but remove its lock only after
-    everything else in it, just before the directory itself."""
-    onerror = partial(on_rm_rf_error, start_path=path)
+    """Remove a directory, but its lock only after everything else in it,
+    just before the directory itself.
 
-    def remove(func: Callable[[str], None], name: str) -> None:
-        try:
-            func(name)
-        except OSError as exc:
-            onerror(func, name, exc)
-
+    Subdirectories are removed with rm_rf. An error removing anything else is
+    raised: the caller removes the lock and leaves the directory to a later
+    cleanup.
+    """
     lock = get_lock_path(path)
-    entries: list[os.DirEntry[str]] = []
-    try:
-        with os.scandir(path) as it:
-            entries = [entry for entry in it if entry.name != lock.name]
-    except OSError as exc:
-        onerror(os.scandir, str(path), exc)
+    with os.scandir(path) as it:
+        entries = [entry for entry in it if entry.name != lock.name]
     for entry in entries:
         if entry.is_dir(follow_symlinks=False):
-            rm_rf(Path(entry.path))
+            rm_rf(Path(entry.path), start_path=path)
         else:
-            remove(os.unlink, entry.path)
-    remove(os.unlink, str(lock))
-    remove(os.rmdir, str(path))
+            os.unlink(entry.path)
+    os.unlink(lock)
+    os.rmdir(path)
 
 
 def maybe_delete_a_numbered_dir(path: Path) -> None:
