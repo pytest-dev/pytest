@@ -167,7 +167,7 @@ class _NodeReporter:
         attrs: dict[str, str] = {
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
-            "file": location[0],
+            "file": location[0].replace(os.sep, nodes.SEP),
         }
         if location[1] is not None:
             attrs["line"] = str(location[1])
