@@ -448,21 +448,74 @@ class Traceback(list[TracebackEntry]):
     def recursionindex(self) -> int | None:
         """Return the index of the frame/TracebackEntry where recursion originates if
         appropriate, None if no recursion occurred."""
-        cache: dict[tuple[Any, int, int], list[dict[str, Any]]] = {}
+        cache: dict[
+            tuple[Any, int, int],
+            tuple[
+                dict[frozenset[tuple[Any, Any]], list[dict[Any, Any]]],
+                frozenset[Any],
+                list[dict[Any, Any]] | None,
+            ],
+        ] = {}
         for i, entry in enumerate(self):
             # id for the code.raw is needed to work around
             # the strange metaprogramming in the decorator lib from pypi
             # which generates code objects that have hash/value equality
             # XXX needs a test
             key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
-            values = cache.setdefault(key, [])
             # Since Python 3.13 f_locals is a proxy, freeze it.
             loc = dict(entry.frame.f_locals)
-            if values:
-                for otherloc in values:
+            state = cache.get(key)
+            if state is not None and state[2] is not None:
+                fallback = state[2]
+                for otherloc in fallback:
                     if otherloc == loc:
                         return i
-            values.append(loc)
+                fallback.append(loc)
+                continue
+
+            try:
+                frozen = frozenset(loc.items())
+                unhashable: dict[Any, Any] = {}
+            except Exception:
+                hashable: set[tuple[Any, Any]] = set()
+                unhashable = {}
+                for k, v in loc.items():
+                    try:
+                        hashable.add((k, v))
+                    except Exception:
+                        unhashable[k] = v
+                frozen = frozenset(hashable)
+
+            unhashable_keys = frozenset(unhashable)
+            if state is None:
+                cache[key] = ({frozen: [unhashable]}, unhashable_keys, None)
+                continue
+
+            buckets, expected_unhashable_keys, _ = state
+            if unhashable_keys != expected_unhashable_keys:
+                # A local switched between hashable and unhashable (e.g. frozenset
+                # vs set or int vs unittest.mock.ANY); fall back to full equality.
+                fallback = [
+                    {**dict(fh), **uh} for fh, uhs in buckets.items() for uh in uhs
+                ]
+                buckets.clear()
+                for otherloc in fallback:
+                    if otherloc == loc:
+                        return i
+                fallback.append(loc)
+                cache[key] = (buckets, expected_unhashable_keys, fallback)
+                continue
+
+            bucket = buckets.get(frozen)
+            if bucket is not None:
+                if not unhashable:
+                    return i
+                for other_unhashable in bucket:
+                    if other_unhashable == unhashable:
+                        return i
+                bucket.append(unhashable)
+            else:
+                buckets[frozen] = [unhashable]
         return None
 
 

@@ -1,0 +1,1 @@
+Avoid quadratic comparison slowdown and hangs in :meth:`Traceback.recursionindex` when recursion involves :class:`unittest.mock.MagicMock` objects or deep unhashable structures.

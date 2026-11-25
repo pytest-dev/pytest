@@ -301,6 +301,41 @@ class TestTraceback_f_g_h:
             fail()
         assert excinfo.traceback.recursionindex() is None
 
+    def test_traceback_recursionindex_magicmock(self) -> None:
+        from unittest import mock
+
+        m = mock.MagicMock()
+
+        def f(n, obj):
+            if n < 10:
+                n += 1
+            f(n, obj)
+
+        with pytest.raises(RecursionError) as excinfo:
+            f(8, m)
+        assert excinfo.traceback.recursionindex() == 3
+
+    def test_traceback_recursionindex_magicmock_chain(self) -> None:
+        from unittest import mock
+
+        def f(obj):
+            f(obj.attr)
+
+        with pytest.raises(RecursionError) as excinfo:
+            f(mock.MagicMock())
+        assert excinfo.traceback.recursionindex() is None
+
+    def test_traceback_recursionindex_unhashable_and_fallback(self) -> None:
+        def f(n, val):
+            if n < 10:
+                n += 1
+                val = [1, 2]
+            f(n, val)
+
+        with pytest.raises(RecursionError) as excinfo:
+            f(8, 1)
+        assert excinfo.traceback.recursionindex() == 3
+
     def test_getreprcrash(self):
         def i():
             __tracebackhide__ = True
