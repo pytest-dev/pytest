@@ -648,6 +648,7 @@ class TestNumberedDir:
         """Keep ``.lock`` until all other entries in ``garbage-*`` are gone (#15435)."""
         target = tmp_path / f"{self.PREFIX}0"
         (target / "sub").mkdir(parents=True)
+        (target / "other").mkdir()
         # Include names before and after ".lock" in lexicographical order, plus read-only.
         (target / "000_before.txt").write_text("a", encoding="utf-8")
         (target / "zzz_after.txt").write_text("b", encoding="utf-8")
@@ -691,16 +692,10 @@ class TestNumberedDir:
         real_rmdir = os.rmdir
         real_rename = Path.rename
         held: list[str] = []
-        outcome: list[OSError | None] = []
+        raced = False
 
-        def interleaved_rmdir(
-            p: str | os.PathLike[str], *, dir_fd: int | None = None
-        ) -> None:
-            if (
-                dir_fd is None
-                and os.path.basename(os.fspath(p)).startswith("garbage-")
-                and not held
-            ):
+        def interleaved_rmdir(p: str | os.PathLike[str], **kwargs: object) -> None:
+            if os.path.basename(os.fspath(p)).startswith("garbage-") and not held:
                 held.append(os.fspath(p))
                 cleanup_numbered_dir(
                     root=tmp_path,
@@ -708,21 +703,14 @@ class TestNumberedDir:
                     keep=3,
                     consider_lock_dead_if_created_before=0,
                 )
-                if outcome and outcome[0] is not None:
-                    raise outcome[0]
                 return
-            if dir_fd is not None:
-                real_rmdir(p, dir_fd=dir_fd)
-            else:
-                real_rmdir(p)
+            real_rmdir(p, **kwargs)  # type: ignore[arg-type]
 
         def interleaved_rename(self_path: Path, target: str | os.PathLike[str]) -> Path:
-            if held and not outcome and self_path.name == os.path.basename(held[0]):
-                try:
-                    real_rmdir(held[0])
-                    outcome.append(None)
-                except OSError as exc:
-                    outcome.append(exc)
+            nonlocal raced
+            if held and not raced and self_path.name == os.path.basename(held[0]):
+                raced = True
+                real_rmdir(held[0])
             return real_rename(self_path, target)
 
         monkeypatch.setattr(os, "rmdir", interleaved_rmdir)
@@ -738,7 +726,7 @@ class TestNumberedDir:
             )
 
         assert held
-        assert outcome == [None]
+        assert raced
         assert not recorded
         assert [p.name for p in tmp_path.glob("garbage-*")] == []
         assert not (tmp_path / f"{self.PREFIX}0").exists()
@@ -751,6 +739,7 @@ class TestNumberedDir:
         instead of leaving a stray ``.lock`` behind (#15435)."""
         target = tmp_path / f"{self.PREFIX}0"
         (target / "sub").mkdir(parents=True)
+        (target / "other").mkdir()
 
         real_open = os.open
         real_rm_rf = pathlib.rm_rf
@@ -761,20 +750,16 @@ class TestNumberedDir:
             file: str | os.PathLike[str],
             flags: int,
             mode: int = 0o777,
-            *,
-            dir_fd: int | None = None,
+            **kwargs: object,
         ) -> int:
             path_str = os.fspath(file)
             if (
-                dir_fd is None
-                and active_garbage
+                active_garbage
                 and os.path.basename(path_str) == ".lock"
                 and os.path.basename(os.path.dirname(path_str)) == target.name
             ):
                 return real_open(str(active_garbage[0] / ".lock"), flags, mode)
-            if dir_fd is not None:
-                return real_open(file, flags, mode, dir_fd=dir_fd)
-            return real_open(file, flags, mode)
+            return real_open(file, flags, mode, **kwargs)  # type: ignore[arg-type]
 
         def triggered_rm_rf(p: Path) -> None:
             nonlocal session_b_triggered
@@ -798,6 +783,101 @@ class TestNumberedDir:
         assert session_b_triggered
         assert not recorded
         assert list(tmp_path.iterdir()) == []
+
+    def test_cleanup_abandoned_garbage_dirs_with_and_without_lock(
+        self, tmp_path: Path
+    ) -> None:
+        """Abandoned ``garbage-*`` dirs are removed only when deletable (#15435)."""
+        stale_lockless = tmp_path / "garbage-stale-lockless"
+        stale_lockless.mkdir()
+        (stale_lockless / "leftover.txt").write_text("x", encoding="utf-8")
+
+        active = tmp_path / "garbage-active"
+        active.mkdir()
+        create_cleanup_lock(active)
+        (active / "inuse.txt").write_text("y", encoding="utf-8")
+
+        cleanup_numbered_dir(
+            root=tmp_path,
+            prefix=self.PREFIX,
+            keep=3,
+            consider_lock_dead_if_created_before=0,
+        )
+
+        assert not stale_lockless.exists()
+        assert active.is_dir()
+        assert (active / "inuse.txt").is_file()
+
+    def test_remove_dir_keeping_lock_error_and_retry_paths(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Cover permission retry, missing-dir races, and error warnings (#15435)."""
+        # 1. os.scandir raises PermissionError once -> _chmod_rwx retries scan.
+        retry_dir = tmp_path / "garbage-retry"
+        retry_dir.mkdir()
+        (retry_dir / "file.txt").write_text("a", encoding="utf-8")
+        real_scandir = os.scandir
+        chmod_calls: list[str] = []
+        scandir_calls = 0
+
+        def scandir_perm_once(p: str) -> object:
+            nonlocal scandir_calls
+            scandir_calls += 1
+            if scandir_calls == 1:
+                raise PermissionError("denied")
+            return real_scandir(p)
+
+        def record_chmod(p: str) -> bool:
+            chmod_calls.append(p)
+            return True
+
+        monkeypatch.setattr(os, "scandir", scandir_perm_once)
+        monkeypatch.setattr(pathlib, "_chmod_rwx", record_chmod)
+        pathlib._remove_dir_keeping_lock(retry_dir)
+        assert chmod_calls == [str(retry_dir)]
+        assert not retry_dir.exists()
+
+        # 2. Directory vanishes before os.scandir / rename.
+        pathlib._remove_dir_keeping_lock(tmp_path / "garbage-vanished")
+        pathlib.maybe_delete_a_garbage_dir(tmp_path / "garbage-missing")
+
+        # 3. _unlink_entry catches OSError via on_rm_rf_error.
+        unlink_dir = tmp_path / "garbage-unlink-err"
+        unlink_dir.mkdir()
+        (unlink_dir / "bad.txt").write_text("x", encoding="utf-8")
+
+        def failing_unlink(p: object, **kwargs: object) -> None:
+            raise OSError("unlink failed")
+
+        with monkeypatch.context() as mp:
+            mp.setattr(os, "unlink", failing_unlink)
+            with pytest.warns(pytest.PytestWarning):
+                pathlib._remove_dir_keeping_lock(unlink_dir)
+
+        # 4. os.rmdir vanishes (FileNotFoundError) or fails (OSError -> warning).
+        missing_rmdir_dir = tmp_path / "garbage-rmdir-gone"
+        missing_rmdir_dir.mkdir()
+        real_rmdir = os.rmdir
+
+        def rmdir_missing(p: str | os.PathLike[str], **kwargs: object) -> None:
+            real_rmdir(p, **kwargs)  # type: ignore[arg-type]
+            raise FileNotFoundError("already removed")
+
+        with monkeypatch.context() as mp:
+            mp.setattr(os, "rmdir", rmdir_missing)
+            pathlib._remove_dir_keeping_lock(missing_rmdir_dir)
+        assert not missing_rmdir_dir.exists()
+
+        failing_rmdir_dir = tmp_path / "garbage-rmdir-err"
+        failing_rmdir_dir.mkdir()
+
+        def rmdir_error(p: object, **kwargs: object) -> None:
+            raise OSError("rmdir failed")
+
+        with monkeypatch.context() as mp:
+            mp.setattr(os, "rmdir", rmdir_error)
+            with pytest.warns(pytest.PytestWarning):
+                pathlib._remove_dir_keeping_lock(failing_rmdir_dir)
 
 
 def _raise_oserror(*args: object, **kwargs: object) -> None:
