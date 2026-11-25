@@ -1,0 +1,2 @@
+:func:`pytest.approx` failure details no longer crash for lists, dicts and numpy arrays of :class:`~datetime.datetime`, or for dicts and object arrays of non-numbers.
+Each element now reports only the differences defined for its type: a ``datetime`` has an absolute but no relative difference, a zero ``timedelta`` gives an infinite relative difference like ``0`` does, and the ``-inf`` placeholder lines are no longer printed.

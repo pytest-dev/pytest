@@ -46,20 +46,49 @@ def _max_diff(current: Any, candidate: Any) -> Any:
     return candidate if current is None else max(current, candidate)
 
 
-def _vetted_diffs(
-    max_abs_diff: Any, max_rel_diff: Any, rel_diff_is_infinite: bool
-) -> tuple[Any, Any]:
-    """Turn the accumulators into the values shown in the failure message.
+class _Infinite:
+    """Marks a relative difference against a zero base."""
 
-    ``-math.inf`` means "no difference could be computed at all", which happens
-    when every mismatched element is a non-number (#13012).
+
+_INFINITE = _Infinite()
+
+
+class _DiffTracker:
+    """Collect the largest differences among mismatched elements.
+
+    Each element knows what a difference means for its own type (a number, a
+    Decimal, a timedelta, a datetime, or none at all for non-numbers), so the
+    containers only aggregate what the elements report.
     """
-    if rel_diff_is_infinite:
-        max_rel_diff = math.inf
-    return (
-        -math.inf if max_abs_diff is None else max_abs_diff,
-        -math.inf if max_rel_diff is None else max_rel_diff,
-    )
+
+    def __init__(self) -> None:
+        self.max_abs: Any = None
+        self.max_rel: Any = None
+        self.rel_is_infinite = False
+
+    def add(
+        self, approx_value: ApproxScalar[Any] | ApproxTimedelta, actual: Any, base: Any
+    ) -> None:
+        abs_diff = approx_value._abs_diff(actual)
+        if abs_diff is None:
+            return
+        self.max_abs = _max_diff(self.max_abs, abs_diff)
+        rel_diff = approx_value._rel_diff(abs_diff, base)
+        if rel_diff is _INFINITE:
+            self.rel_is_infinite = True
+        elif rel_diff is not None:
+            self.max_rel = _max_diff(self.max_rel, rel_diff)
+
+    def lines(self) -> list[str]:
+        """Only report differences that are defined for the mismatched values."""
+        lines = []
+        if self.max_abs is not None:
+            lines.append(f"Max absolute difference: {self.max_abs}")
+        if self.rel_is_infinite:
+            lines.append(f"Max relative difference: {math.inf}")
+        elif self.max_rel is not None:
+            lines.append(f"Max relative difference: {self.max_rel}")
+        return lines
 
 
 def _compare_approx(
@@ -67,8 +96,7 @@ def _compare_approx(
     message_data: Sequence[tuple[str, str, str]],
     number_of_elements: int,
     different_ids: Sequence[object],
-    max_abs_diff: float,
-    max_rel_diff: float,
+    diffs: _DiffTracker,
 ) -> list[str]:
     message_list = list(message_data)
     message_list.insert(0, ("Index", "Obtained", "Expected"))
@@ -79,8 +107,7 @@ def _compare_approx(
         max_sizes[2] = max(max_sizes[2], len(expected))
     explanation = [
         f"comparison failed. Mismatched elements: {len(different_ids)} / {number_of_elements}:",
-        f"Max absolute difference: {max_abs_diff}",
-        f"Max relative difference: {max_rel_diff}",
+        *diffs.lines(),
     ] + [
         f"{indexes:<{max_sizes[0]}} | {obtained:<{max_sizes[1]}} | {expected:<{max_sizes[2]}}"
         for indexes, obtained, expected in message_list
@@ -214,25 +241,14 @@ class ApproxNumpy(Approx[ndarray]):
             ]
 
         number_of_elements = self.expected.size
-        max_abs_diff: Any = None
-        max_rel_diff: Any = None
-        rel_diff_is_infinite = False
+        diffs = _DiffTracker()
         different_ids = []
         for index in itertools.product(*(range(i) for i in np_array_shape)):
             approx_value = get_value_from_nested_list(approx_side_as_seq, index)
             other_value = get_value_from_nested_list(other_side_as_array, index)
             if approx_value != other_value:
-                abs_diff = abs(approx_value.expected - other_value)
-                max_abs_diff = _max_diff(max_abs_diff, abs_diff)
-                if other_value == 0:
-                    rel_diff_is_infinite = True
-                else:
-                    max_rel_diff = _max_diff(max_rel_diff, abs_diff / abs(other_value))
+                diffs.add(approx_value, other_value, base=other_value)
                 different_ids.append(index)
-
-        max_abs_diff, max_rel_diff = _vetted_diffs(
-            max_abs_diff, max_rel_diff, rel_diff_is_infinite
-        )
 
         message_data = [
             (
@@ -247,8 +263,7 @@ class ApproxNumpy(Approx[ndarray]):
             message_data,
             number_of_elements,
             different_ids,
-            max_abs_diff,
-            max_rel_diff,
+            diffs,
         )
 
     def __eq__(self, actual) -> bool:
@@ -327,38 +342,13 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         }
 
         number_of_elements = len(approx_side_as_map)
-        max_abs_diff: Any = None
-        max_rel_diff: Any = None
-        rel_diff_is_infinite = False
+        diffs = _DiffTracker()
         different_ids = []
         for approx_key, approx_value in approx_side_as_map.items():
             other_value = other_side[approx_key]
             if approx_value != other_value:
-                if approx_value.expected is not None and other_value is not None:
-                    try:
-                        max_abs_diff = _max_diff(
-                            max_abs_diff,
-                            # TODO: The type error here seems correct.
-                            abs(approx_value.expected - other_value),  # type: ignore[operator]
-                        )
-                        if approx_value.expected == 0:
-                            rel_diff_is_infinite = True
-                        else:
-                            max_rel_diff = _max_diff(
-                                max_rel_diff,
-                                abs(
-                                    # TODO: The type error here seems correct.
-                                    (approx_value.expected - other_value)  # type: ignore[operator]
-                                    / approx_value.expected
-                                ),
-                            )
-                    except ZeroDivisionError:
-                        pass
+                diffs.add(approx_value, other_value, base=approx_value.expected)
                 different_ids.append(approx_key)
-
-        max_abs_diff, max_rel_diff = _vetted_diffs(
-            max_abs_diff, max_rel_diff, rel_diff_is_infinite
-        )
 
         message_data = [
             (str(key), str(other_side[key]), str(approx_side_as_map[key]))
@@ -370,8 +360,7 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
             message_data,
             number_of_elements,
             different_ids,
-            max_abs_diff,
-            max_rel_diff,
+            diffs,
         )
 
     def __eq__(self, actual) -> bool:
@@ -424,36 +413,15 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         approx_side_as_map = _recursive_sequence_map(self._approx_scalar, self.expected)
 
         number_of_elements = len(approx_side_as_map)
-        max_abs_diff: Any = None
-        max_rel_diff: Any = None
-        rel_diff_is_infinite = False
+        diffs = _DiffTracker()
         different_ids = []
         for i, (approx_value, other_value) in enumerate(
             zip(approx_side_as_map, other_side, strict=True)
         ):
             if approx_value != other_value:
-                try:
-                    abs_diff = abs(approx_value.expected - other_value)
-                    max_abs_diff = _max_diff(max_abs_diff, abs_diff)
-                # decimal.FloatOperation subclasses TypeError, so it would be
-                # caught below and reported as a missing difference.
-                except FloatOperation:
-                    raise
-                # Ignore non-numbers for the diff calculations (#13012).
-                except TypeError:
-                    pass
-                else:
-                    if other_value == 0:
-                        rel_diff_is_infinite = True
-                    else:
-                        max_rel_diff = _max_diff(
-                            max_rel_diff, abs_diff / abs(other_value)
-                        )
+                diffs.add(approx_value, other_value, base=other_value)
                 different_ids.append(i)
 
-        max_abs_diff, max_rel_diff = _vetted_diffs(
-            max_abs_diff, max_rel_diff, rel_diff_is_infinite
-        )
         message_data = [
             (str(i), str(other_side[i]), str(approx_side_as_map[i]))
             for i in different_ids
@@ -464,8 +432,7 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
             message_data,
             number_of_elements,
             different_ids,
-            max_abs_diff,
-            max_rel_diff,
+            diffs,
         )
 
     def __eq__(self, actual) -> bool:
@@ -651,6 +618,28 @@ class ApproxScalar(Approx[ExpectedT]):
         # Return the larger of the relative and absolute tolerances.
         return max(relative_tolerance, absolute_tolerance)
 
+    def _abs_diff(self, actual: Any) -> Any:
+        """The absolute difference to *actual*, or None for non-numbers (#13012)."""
+        try:
+            return abs(self.expected - actual)
+        # decimal.FloatOperation subclasses TypeError; a trapped Decimal/float
+        # mix must surface rather than be reported as a missing difference.
+        except FloatOperation:
+            raise
+        except TypeError:
+            return None
+
+    def _rel_diff(self, abs_diff: Any, base: Any) -> Any:
+        """*abs_diff* relative to *base*, the marker for a zero base, or None."""
+        try:
+            if base == 0:
+                return _INFINITE
+            return abs_diff / abs(base)
+        except FloatOperation:
+            raise
+        except TypeError:
+            return None
+
 
 class ApproxDecimal(ApproxScalar[Decimal]):
     """Perform approximate comparisons where the expected value is a Decimal."""
@@ -756,6 +745,21 @@ class ApproxTimedelta(Approx[datetime | timedelta]):
 
     def _yield_comparisons(self, actual: object):
         yield actual, self.expected
+
+    def _abs_diff(self, actual: Any) -> Any:
+        try:
+            return builtins.abs(self.expected - actual)
+        except (TypeError, OverflowError):
+            return None
+
+    def _rel_diff(self, abs_diff: timedelta, base: Any) -> float | _Infinite | None:
+        # A datetime is a point in time with no natural origin, so a difference
+        # relative to it means nothing (the same reason rel= is rejected for it).
+        if isinstance(self.expected, datetime) or not isinstance(base, timedelta):
+            return None
+        if base == timedelta(0):
+            return _INFINITE
+        return abs_diff / builtins.abs(base)
 
     def _repr_compare(self, other_side: Any) -> list[str]:
         try:
