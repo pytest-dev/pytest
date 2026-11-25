@@ -303,13 +303,10 @@ class TestTraceback_f_g_h:
 
     def test_traceback_recursionindex_skips_eq_for_different_hashes(self) -> None:
         """Locals with different hashes are never compared with ``==`` (#8482)."""
-        eq_calls = 0
 
         class Obj:
-            def __eq__(self, other: object) -> bool:
-                nonlocal eq_calls
-                eq_calls += 1
-                return self is other
+            def __eq__(self, other: object) -> bool:  # pragma: no cover
+                raise AssertionError("locals with different hashes were compared")
 
             __hash__ = object.__hash__
 
@@ -319,7 +316,6 @@ class TestTraceback_f_g_h:
         with pytest.raises(RecursionError) as excinfo:
             f(Obj())
         assert excinfo.traceback.recursionindex() is None
-        assert eq_calls == 0
 
     def test_traceback_recursionindex_magicmock(self) -> None:
         from unittest import mock
