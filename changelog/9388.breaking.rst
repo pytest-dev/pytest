@@ -1,0 +1,1 @@
+The ``line`` attribute of ``<testcase>`` elements in JUnit XML reports (``junit_family=xunit1``/``legacy``) is now 1-based, like the line numbers shown in editors and tracebacks; it used to be 0-based.

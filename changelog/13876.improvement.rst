@@ -1,0 +1,1 @@
+Subtests are now reported as separate ``<testcase>`` elements in JUnit XML reports, named after the parent test with ``[subtest N]`` and the subtest description appended.
