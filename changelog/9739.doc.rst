@@ -1,0 +1,1 @@
+Explain how to load custom command-line options early when running a package's tests with :option:`--pyargs`.
