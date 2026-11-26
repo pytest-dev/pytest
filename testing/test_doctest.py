@@ -104,6 +104,37 @@ class TestDoctests:
             assert isinstance(items[0].parent, DoctestModule)
             assert items[0].parent is items[1].parent
 
+    def test_warning_redirected_to_stdout_matches_stdlib_doctest(
+        self, pytester: Pytester
+    ):
+        """A doctest that sends warnings to stdout sees them, as stdlib doctest does.
+
+        pytest records warnings, which used to swallow the text before it
+        reached the redirected stderr. See #4732.
+        """
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        p = pytester.maketxtfile(
+            test_doc="""
+            >>> import sys, warnings
+            >>> sys.stderr = sys.stdout
+            >>> class Foo:
+            ...     def __init__(self):
+            ...         warnings.warn("Testing", UserWarning)
+            ...
+            >>> foo = Foo()  # doctest: +ELLIPSIS
+            <...>:...: UserWarning: Testing
+              ...
+            """
+        )
+        reprec = pytester.inline_run(p, "-p", "no:cacheprovider")
+        reprec.assertoutcome(passed=1)
+
     def test_simple_doctestfile(self, pytester: Pytester):
         p = pytester.maketxtfile(
             test_doc="""

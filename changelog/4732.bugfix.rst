@@ -1,0 +1,4 @@
+Doctests that redirect ``sys.stderr`` to ``sys.stdout`` now see warning text, matching :mod:`doctest`.
+
+Pytest still records the warning.
+Previously the recorder replaced the display function, so the redirected text never reached the doctest.
