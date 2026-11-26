@@ -231,8 +231,10 @@ def single_kwarg(s: Scanner) -> ast.keyword:
         value: str | int | bool | None = value_token.value[1:-1]  # strip quotes
     else:
         value_token = s.accept(TokenType.IDENT, reject=True)
-        if (number := value_token.value).isdigit() or (
-            number.startswith("-") and number[1:].isdigit()
+        # isdecimal(), not isdigit(): isdigit() also accepts characters such
+        # as "²" which int() rejects.
+        if (number := value_token.value).isdecimal() or (
+            number.startswith("-") and number[1:].isdecimal()
         ):
             value = int(number)
         elif value_token.value in BUILTIN_MATCHERS:
