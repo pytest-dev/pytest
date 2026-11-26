@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import abc
+import codecs
 import collections
 from collections.abc import Generator
 from collections.abc import Iterable
@@ -212,7 +213,7 @@ class CaptureIO(io.TextIOWrapper):
 
     def getvalue(self) -> str:
         assert isinstance(self.buffer, io.BytesIO)
-        return self.buffer.getvalue().decode(self.encoding, "replace")
+        return _decode_capture(self.buffer.getvalue(), self.encoding, self.errors)
 
 
 class TeeCaptureIO(CaptureIO):
@@ -375,6 +376,59 @@ def _original_codec(stream: object) -> tuple[str, str]:
         encoding if isinstance(encoding, str) else "UTF-8",
         errors if isinstance(errors, str) else "strict",
     )
+
+
+_CAPTURE_REPLACE_ERRORS = "_pytest_capture_replace"
+_SURROGATEPASS_ENCODINGS = frozenset(
+    {
+        "utf-8",
+        "utf-8-sig",
+        "utf-16",
+        "utf-16-le",
+        "utf-16-be",
+        "utf-32",
+        "utf-32-le",
+        "utf-32-be",
+    }
+)
+
+
+def _supports_surrogatepass(encoding: str) -> bool:
+    try:
+        return codecs.lookup(encoding).name in _SURROGATEPASS_ENCODINGS
+    except LookupError:
+        return False
+
+
+def _capture_decode_error(exc: UnicodeError) -> tuple[str, int]:
+    """Recover surrogates that ``surrogatepass`` rejects on their own."""
+    assert isinstance(exc, UnicodeDecodeError)
+    limit = min(len(exc.object), exc.start + 8)
+    for end in range(limit, exc.start, -1):
+        try:
+            return (
+                exc.object[exc.start : end].decode(exc.encoding, "surrogatepass"),
+                end,
+            )
+        except UnicodeDecodeError:
+            continue
+    return "\ufffd", exc.end
+
+
+codecs.register_error(_CAPTURE_REPLACE_ERRORS, _capture_decode_error)
+
+
+def _decode_capture(data: bytes, encoding: str, errors: str) -> str:
+    """Decode captured bytes, preserving surrogates when the stream does."""
+    if errors not in ("surrogateescape", "surrogatepass"):
+        return data.decode(encoding, "replace")
+    try:
+        return data.decode(encoding, errors)
+    except UnicodeDecodeError:
+        pass
+    if errors == "surrogatepass" and _supports_surrogatepass(encoding):
+        return data.decode(encoding, _CAPTURE_REPLACE_ERRORS)
+    return data.decode(encoding, "replace")
 
 
 def _encode_for_replay(data: str, encoding: str, errors: str) -> bytes:
@@ -633,7 +687,8 @@ class FDCapture(FDCaptureBase[str]):
             return self.EMPTY_BUFFER
         self.tmpfile.seek(0)
         encoding = self.tmpfile.encoding or "UTF-8"
-        res = cast(bytes, self.tmpfile.buffer.read()).decode(encoding, "replace")
+        errors = self.tmpfile.errors or "strict"
+        res = _decode_capture(cast(bytes, self.tmpfile.buffer.read()), encoding, errors)
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
@@ -641,9 +696,20 @@ class FDCapture(FDCaptureBase[str]):
     def writeorg(self, data: str) -> None:
         """Write to original file descriptor."""
         self._assert_state("writeorg", ("started", "suspended"))
-        encoding = self.tmpfile.encoding or "UTF-8"
-        errors = self.tmpfile.errors or "strict"
-        os.write(self.targetfd_save, _encode_for_replay(data, encoding, errors))
+        if self.targetfd in (1, 2):
+            assert isinstance(self.syscapture, SysCapture)
+            restore = self._state == "started"
+            if restore:
+                os.dup2(self.targetfd_save, self.targetfd)
+            try:
+                self.syscapture.writeorg(data)
+            finally:
+                if restore:
+                    os.dup2(self.tmpfile.fileno(), self.targetfd)
+        else:
+            encoding = self.tmpfile.encoding or "UTF-8"
+            errors = self.tmpfile.errors or "strict"
+            os.write(self.targetfd_save, _encode_for_replay(data, encoding, errors))
 
 
 # MultiCapture

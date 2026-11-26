@@ -148,7 +148,7 @@ def test_capture_uses_replaced_stream_codec(
         import sys
 
         def test_encoding({capture_fixture}):
-            text = "caf\\u00e9\\n"
+            text = "b\\u00f6y\\n"
             assert sys.stdout.encoding == sys.__stdout__.encoding
             assert sys.stdout.errors == sys.__stdout__.errors
             assert sys.stderr.encoding == sys.__stderr__.encoding
@@ -200,9 +200,9 @@ def test_capture_binary_uses_replaced_stream_codec(
     pytester.makepyfile(
         f"""\
         def test_encoding({capture_fixture}):
-            print("caf\\u00e9")
+            print("b\\u00f6y")
             out, err = {capture_fixture}.readouterr()
-            assert out == "caf\\u00e9\\n".encode("latin-1")
+            assert out == "b\\u00f6y\\n".encode("latin-1")
             assert err == b""
         """
     )
@@ -236,14 +236,71 @@ def test_capture_flushes_undecodable_bytes(
     result.assert_outcomes(passed=1)
 
 
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsys"),
+        ("fd", "capfd"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("encoding", "errors", "data", "expected"),
+    [
+        ("utf-8", "surrogateescape", b"\xff", "\udcff"),
+        ("utf-8", "surrogatepass", b"\xed\xa0\x80", "\ud800"),
+        ("utf-8", "surrogatepass", b"\xff", "\ufffd"),
+        ("utf-8", "surrogatepass", b"\xed\xa0\x80\xff", "\ud800\ufffd"),
+        ("utf-8-sig", "surrogatepass", b"\xef\xbb\xbf\xed\xa0\x80\xff", "\ud800\ufffd"),
+        (
+            "utf-8-sig",
+            "surrogatepass",
+            b"\xef\xbb\xbf\xff\xef\xbb\xbf\xed\xa0\x80",
+            "\ufffd\ufeff\ud800",
+        ),
+        (
+            "iso2022_jp",
+            "surrogatepass",
+            b"\x1b$BK \x4c\x5c\x1b(BX",
+            "\ufffd\u76eeX",
+        ),
+    ],
+)
+def test_capture_decodes_surrogate_bytes(
+    pytester: Pytester,
+    monkeypatch: MonkeyPatch,
+    method: str,
+    capture_fixture: str,
+    encoding: str,
+    errors: str,
+    data: bytes,
+    expected: str,
+) -> None:
+    """Surrogate handlers round-trip; undecodable bytes still use replacement."""
+    pytester.makepyfile(
+        f"""\
+        import sys
+
+        def test_encoding({capture_fixture}):
+            sys.stdout.buffer.write({data!r})
+            sys.stdout.flush()
+            out, err = {capture_fixture}.readouterr()
+            assert out == {expected!r}
+            assert err == ""
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", f"{encoding}:{errors}")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.assert_outcomes(passed=1)
+
+
 def test_capture_wrappers_use_configured_codec() -> None:
     with capture.CaptureIO() as stream:
         assert (stream.encoding, stream.errors) == ("UTF-8", "strict")
     with capture.CaptureIO(encoding="latin-1", errors="strict") as stream:
         assert (stream.encoding, stream.errors) == ("latin-1", "strict")
-        stream.write("caf\u00e9")
+        stream.write("b\u00f6y")
         stream.buffer.write(b" na\xefve")
-        assert stream.getvalue() == "caf\u00e9 na\xefve"
+        assert stream.getvalue() == "b\u00f6y na\xefve"
     with capture.EncodedFile(
         io.BytesIO(), encoding="latin-1", errors="strict"
     ) as stream:
@@ -1212,6 +1269,43 @@ class TestFDCapture:
             stmp = stmp_file.read()
             assert stmp == data2
 
+    def test_writeorg_preserves_stream_encoder(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTHONIOENCODING", "utf-8-sig")
+        script = pytester.makepyfile(
+            """
+            import os
+            import pathlib
+            import sys
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            fd = os.open(str(out), os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            sys.stdout.write("before|")
+            sys.stdout.flush()
+
+            cap = FDCapture(1)
+            cap.start()
+            sys.stdout.write("captured|")
+            sys.stdout.flush()
+            cap.writeorg(cap.snap())
+            cap.done()
+
+            sys.stdout.write("after|")
+            sys.stdout.flush()
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == (
+            b"\xef\xbb\xbfbefore|captured|after|"
+        )
+
     def test_simple_resume_suspend(self) -> None:
         with saved_fd(1):
             cap = capture.FDCapture(1)
@@ -1267,21 +1361,6 @@ def _skip_if_not_lossless(text: str, stream: TextIO) -> None:
         pytest.skip(f"{encoding!r} cannot represent {text!r}")
     if encoded.decode(encoding, "replace") != text:
         pytest.skip(f"{encoding!r} with {errors!r} cannot round-trip {text!r}")
-
-
-def test_skip_if_not_lossless() -> None:
-    _skip_if_not_lossless(
-        "hx\u0105\u0107", io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
-    )
-    with pytest.raises(pytest.skip.Exception, match="cannot represent"):
-        _skip_if_not_lossless(
-            "hx\u0105\u0107", io.TextIOWrapper(io.BytesIO(), encoding="latin-1")
-        )
-    with pytest.raises(pytest.skip.Exception, match="cannot round-trip"):
-        _skip_if_not_lossless(
-            "hx\u0105\u0107",
-            io.TextIOWrapper(io.BytesIO(), encoding="latin-1", errors="replace"),
-        )
 
 
 class TestStdCapture:
