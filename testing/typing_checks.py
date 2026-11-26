@@ -78,3 +78,13 @@ def check_scope_typing() -> None:
 @pytest.mark.parametrize("x", [ImportError, AttributeError])
 def check_mypy_bug_with_argvalues(x) -> None:
     pass
+
+
+# importorskip as a context manager keeps type information.
+def check_importorskip_context_manager() -> None:
+    with pytest.importorskip():
+        import json
+        from os import path
+
+    assert_type(json.dumps(1), str)
+    assert_type(path.sep, str)

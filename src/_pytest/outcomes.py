@@ -3,11 +3,14 @@ functions creating them."""
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+import contextlib
 import importlib
 import sys
 from typing import Any
 from typing import ClassVar
 from typing import NoReturn
+from typing import overload
 
 
 class OutcomeException(BaseException):
@@ -195,8 +198,44 @@ class _XFail:
 xfail: _XFail = _XFail()
 
 
+@contextlib.contextmanager
+def _importorskip_context(
+    reason: str | None,
+    exc_type: type[ImportError] | None,
+) -> Iterator[None]:
+    __tracebackhide__ = True
+
+    if exc_type is None:
+        exc_type = ModuleNotFoundError
+
+    try:
+        yield
+    except exc_type as exc:
+        if reason is None:
+            reason = f"could not import: {exc}"
+        raise Skipped(reason, allow_module_level=True) from None
+
+
+@overload
 def importorskip(
     modname: str,
+    minversion: str | None = None,
+    reason: str | None = None,
+    *,
+    exc_type: type[ImportError] | None = None,
+) -> Any: ...
+
+
+@overload
+def importorskip(
+    *,
+    reason: str | None = None,
+    exc_type: type[ImportError] | None = None,
+) -> contextlib.AbstractContextManager[None]: ...
+
+
+def importorskip(
+    modname: str | None = None,
     minversion: str | None = None,
     reason: str | None = None,
     *,
@@ -204,6 +243,11 @@ def importorskip(
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
     current test if the module cannot be imported.
+
+    When called without ``modname``, returns a context manager instead. The
+    imports inside the ``with`` block are performed by the user, so type
+    checkers keep the full type information of the imported modules.
+    Only ``reason`` and ``exc_type`` are supported in this form.
 
     :param modname:
         The name of the module to import.
@@ -235,9 +279,23 @@ def importorskip(
 
         docutils = pytest.importorskip("docutils")
 
+    Context manager form, which keeps type information::
+
+        with pytest.importorskip():
+            import docutils
+            from docutils import nodes
+
+    Keep the body to import statements only, as any matching exception raised
+    in the body causes a skip.
+
     .. versionadded:: 8.2
 
         The ``exc_type`` parameter.
+
+    .. versionadded:: 9.3
+
+        The context manager form, used by calling ``importorskip`` without
+        ``modname``.
 
     .. versionchanged:: 9.1
 
@@ -246,6 +304,11 @@ def importorskip(
     import warnings
 
     __tracebackhide__ = True
+    if modname is None:
+        if minversion is not None:
+            raise TypeError("'minversion' requires 'modname' to be given")
+        return _importorskip_context(reason, exc_type)
+
     compile(modname, "", "eval")  # to catch syntaxerrors
 
     # Keep the public signature compatible while using the pytest 9.1 default behavior.

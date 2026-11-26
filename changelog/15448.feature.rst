@@ -1,0 +1,13 @@
+:func:`pytest.importorskip` can now be used as a context manager by calling it without a module name.
+
+The imports are written as normal ``import`` statements inside the ``with`` block, so type checkers see the real module types instead of ``Any``, and ``from`` imports are supported:
+
+.. code-block:: python
+
+    with pytest.importorskip():
+        import requests
+        from requests import RequestException
+
+The test or module is skipped if the imports fail. ``reason`` and ``exc_type`` are supported in this form, ``minversion`` is not.
+
+See :ref:`import-or-skip` for details.

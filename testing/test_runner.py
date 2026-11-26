@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from functools import partial
+import importlib
 import inspect
 import os
 from pathlib import Path
@@ -889,6 +890,112 @@ class TestImportOrSkipExcType:
         )
         pytester.makepyfile(
             warning_integration_module="""
+                raise ImportError("required library foobar not compiled properly")
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            ["*ImportError: required library foobar not compiled properly*"]
+        )
+        result.assert_outcomes(failed=1)
+
+
+class TestImportOrSkipContextManager:
+    """Tests for the ``with pytest.importorskip():`` form."""
+
+    def test_skips_when_module_missing(self) -> None:
+        with pytest.raises(pytest.skip.Exception) as excinfo:
+            with pytest.importorskip():
+                import TestImportOrSkipContextManager_missing  # noqa: F401
+        assert "TestImportOrSkipContextManager_missing" in str(excinfo.value)
+
+    def test_body_runs_when_module_present(self) -> None:
+        ran = False
+        with pytest.importorskip():
+            import json
+            from os import path
+
+            ran = True
+        assert ran
+        assert json.dumps(1) == "1"
+        assert path is os.path
+
+    def test_import_error_propagates_by_default(self, pytester: Pytester) -> None:
+        fn = pytester.makepyfile("raise ImportError('some specific problem')")
+        pytester.syspathinsert()
+
+        with pytest.raises(ImportError, match="some specific problem"):
+            with pytest.importorskip():
+                importlib.import_module(fn.stem)
+
+    def test_import_error_can_be_captured_explicitly(self, pytester: Pytester) -> None:
+        fn = pytester.makepyfile("raise ImportError('some specific problem')")
+        pytester.syspathinsert()
+
+        with pytest.raises(pytest.skip.Exception):
+            with pytest.importorskip(exc_type=ImportError):
+                importlib.import_module(fn.stem)
+
+    def test_unrelated_exception_is_not_swallowed(self) -> None:
+        with pytest.raises(ValueError, match="not an import problem"):
+            with pytest.importorskip():
+                raise ValueError("not an import problem")
+
+    def test_minversion_requires_modname(self) -> None:
+        with pytest.raises(TypeError, match="minversion"):
+            pytest.importorskip(minversion="1.0")  # type: ignore[call-overload]
+
+    def test_skip_is_not_chained(self) -> None:
+        with pytest.raises(pytest.skip.Exception) as excinfo:
+            with pytest.importorskip():
+                import TestImportOrSkipContextManager_chain  # noqa: F401
+        assert excinfo.value.__cause__ is None
+        assert excinfo.value.__suppress_context__
+
+    def test_module_level_skip(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            with pytest.importorskip():
+                import foobarbaz_cm
+
+            def test_foo():
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs")
+        result.stdout.fnmatch_lines(["*collected 0 items / 1 skipped*"])
+        result.stdout.fnmatch_lines(["*could not import*foobarbaz_cm*"])
+
+    def test_custom_reason(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            with pytest.importorskip(reason="just because"):
+                import foobarbaz_cm2
+
+            def test_foo():
+                pass
+            """
+        )
+        result = pytester.runpytest("-ra")
+        result.stdout.fnmatch_lines(["*just because*"])
+        result.stdout.fnmatch_lines(["*collected 0 items / 1 skipped*"])
+
+    def test_import_error_integration(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_foo():
+                with pytest.importorskip():
+                    import broken_integration_module
+            """
+        )
+        pytester.makepyfile(
+            broken_integration_module="""
                 raise ImportError("required library foobar not compiled properly")
             """
         )
