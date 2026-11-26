@@ -756,6 +756,35 @@ def test_pytest_exit_not_caught_by_except_exception(pytester: Pytester) -> None:
     assert result.ret == 99
 
 
+def test_pytest_exit_in_teardown(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """\
+        import pytest
+        @pytest.fixture
+        def failing():
+            yield
+            print("finalized")
+            raise ValueError
+        @pytest.fixture
+        def exiting():
+            yield
+            pytest.exit("bye", 99)
+        def test_foo(failing, exiting):
+            pass
+    """
+    )
+    result = pytester.runpytest("-s")
+    result.stdout.fnmatch_lines(["*finalized*", "*! *Exit: bye !*"])
+    assert result.ret == 99
+
+
+def test_pytest_exit_in_conftest(pytester: Pytester) -> None:
+    pytester.makeconftest("import pytest\npytest.exit('bye', 99)")
+    result = pytester.runpytest_subprocess()
+    result.stderr.fnmatch_lines(["Exit: bye"])
+    assert result.ret == 99
+
+
 def test_pytest_fail_notrace_runtest(pytester: Pytester) -> None:
     """Test pytest.fail(..., pytrace=False) does not show tracebacks during test run."""
     pytester.makepyfile(

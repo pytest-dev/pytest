@@ -72,6 +72,7 @@ from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
 from _pytest.nodeid import NodeId
+from _pytest.outcomes import Exit
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -269,6 +270,10 @@ def _main(
     except UsageError as e:
         print_usage_error(e, file=sys.stderr)
         return ExitCode.USAGE_ERROR
+    except Exit as e:
+        # pytest.exit() before the session started, e.g. in an initial conftest.
+        sys.stderr.write(f"{type(e).__name__}: {e.msg}\n")
+        return ExitCode.INTERRUPTED if e.returncode is None else e.returncode
     finally:
         if old_pytest_version is None:
             os.environ.pop("PYTEST_VERSION", None)

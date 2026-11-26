@@ -578,6 +578,7 @@ class SetupState:
         """
         needed_collectors = (nextitem and nextitem.listchain()) or []
         exceptions: list[BaseException] = []
+        exit_exc: Exit | None = None
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
@@ -589,6 +590,10 @@ class SetupState:
                     fin()
                 except TEST_OUTCOME as e:
                     these_exceptions.append(e)
+                except Exit as e:
+                    # Not collected with the others, because wrapped in an
+                    # exception group it would no longer stop the session.
+                    exit_exc = e
 
             if len(these_exceptions) == 1:
                 exceptions.extend(these_exceptions)
@@ -596,6 +601,8 @@ class SetupState:
                 msg = f"errors while tearing down {node!r}"
                 exceptions.append(BaseExceptionGroup(msg, these_exceptions[::-1]))
 
+        if exit_exc is not None:
+            raise exit_exc
         if len(exceptions) == 1:
             raise exceptions[0]
         elif exceptions:
