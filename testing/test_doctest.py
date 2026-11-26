@@ -20,6 +20,7 @@ from _pytest.doctest import DoctestTextfile
 from _pytest.pytester import Pytester
 from _pytest.warnings import _item_is_doctest
 from _pytest.warnings import _write_warning
+from _pytest.warnings import catch_warnings_for_item
 import pytest
 
 
@@ -133,11 +134,103 @@ class TestDoctests:
             ...
             >>> foo = Foo()  # doctest: +ELLIPSIS
             <...>:...: UserWarning: Testing
-              ...
+              warnings.warn("Testing", UserWarning)
             """
         )
         reprec = pytester.inline_run(p, "-p", "no:cacheprovider")
         reprec.assertoutcome(passed=1)
+        recorded = [
+            call.warning_message
+            for call in reprec.getcalls("pytest_warning_recorded")
+            if str(call.warning_message.message) == "Testing"
+        ]
+        assert recorded
+
+    def test_warning_with_source_includes_tracemalloc_line(self, pytester: Pytester):
+        """A doctest sees the same source note stdlib doctest prints."""
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                always::UserWarning
+            """
+        )
+        p = pytester.maketxtfile(
+            test_doc="""
+            >>> import sys, warnings
+            >>> sys.stderr = sys.stdout
+            >>> def boom():
+            ...     warnings.warn("Testing", UserWarning, source=object())
+            >>> boom()  # doctest: +ELLIPSIS
+            <...>:...: UserWarning: Testing
+              warnings.warn("Testing", UserWarning, source=object())
+            UserWarning: Enable tracemalloc to get the object allocation traceback
+            """
+        )
+        reprec = pytester.inline_run(p, "-p", "no:cacheprovider")
+        reprec.assertoutcome(passed=1)
+
+    def test_doctest_warning_hook_is_restored(self, monkeypatch):
+        """The display hook is removed even when catch_warnings does not restore it.
+
+        Python 3.14 context-aware warnings restore a contextvar on the way
+        out and leave warnings._showwarnmsg_impl as whatever was installed
+        inside the block.
+        """
+        class ContextAwareCatch(warnings.catch_warnings):
+            def __enter__(self):
+                log = super().__enter__()
+                # Undo the global swap. Context-aware builds never make it.
+                warnings._showwarnmsg_impl = self._showwarnmsg_impl  # type: ignore[attr-defined]
+                return log
+
+            def __exit__(self, *exc):
+                warnings.showwarning = self._showwarning  # type: ignore[attr-defined]
+                warnings.filters = self._filters  # type: ignore[attr-defined]
+                warnings._filters_mutated()  # type: ignore[attr-defined]
+                return False
+
+        monkeypatch.setattr(warnings, "catch_warnings", ContextAwareCatch)
+
+        def _print_warning(msg):
+            sys.stderr.write(warnings._formatwarnmsg(msg))  # type: ignore[attr-defined]
+
+        # Start from a display hook that actually writes. The surrounding
+        # pytest run has already replaced it with a recorder.
+        monkeypatch.setattr(warnings, "_showwarnmsg_impl", _print_warning)
+
+        class Config:
+            def _catch_configured_warnings(self, *, record=True):
+                return warnings.catch_warnings(record=record)
+
+        class Hook:
+            def call_historic(self, kwargs):
+                pass
+
+        class Hooks:
+            pytest_warning_recorded = Hook()
+
+        class Item:
+            nodeid = "t.txt"
+
+            def _iter_markers_with_node(self, name, order):
+                return []
+
+        monkeypatch.setattr("_pytest.warnings._item_is_doctest", lambda item: True)
+        stderr = io.StringIO()
+        monkeypatch.setattr(sys, "stderr", stderr)
+        with catch_warnings_for_item(
+            Config(),  # type: ignore[arg-type]
+            Hooks(),
+            "runtest",
+            Item(),  # type: ignore[arg-type]
+            record=True,
+        ):
+            warnings.simplefilter("always", UserWarning)
+            warnings.warn("inside", UserWarning)
+        warnings.simplefilter("always", UserWarning)
+        warnings.warn("after", UserWarning)
+        assert stderr.getvalue().count("UserWarning: after") == 1
 
     def test_write_warning_covers_closed_and_missing_streams(self, monkeypatch):
         """Every branch of the doctest warning writer has to stay covered."""

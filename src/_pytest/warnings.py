@@ -39,9 +39,13 @@ def catch_warnings_for_item(
     item, record the warning and also write it to ``sys.stderr``.
     """
     with config._catch_configured_warnings(record=record) as log:
+        # Private stdlib hook. catch_warnings installs it, and the
+        # public showwarning wrapper does not run while recording.
+        # On Python 3.14+ with context-aware warnings, catch_warnings
+        # restores a contextvar and leaves this global alone, so put it
+        # back ourselves or the wrapper keeps writing later warnings.
+        saved_showwarnmsg_impl = None
         if record and _item_is_doctest(item):
-            # Private stdlib hook. catch_warnings installs it, and the
-            # public showwarning wrapper does not run while recording.
             record_impl = warnings._showwarnmsg_impl  # type: ignore[attr-defined]
 
             def _record_and_emit(msg, _record=record_impl):
@@ -49,6 +53,7 @@ def catch_warnings_for_item(
                 _write_warning(msg)
 
             warnings._showwarnmsg_impl = _record_and_emit  # type: ignore[attr-defined]
+            saved_showwarnmsg_impl = record_impl
         # apply filters from "filterwarnings" marks
         nodeid = "" if item is None else item.nodeid
         if item is not None:
@@ -62,6 +67,8 @@ def catch_warnings_for_item(
         try:
             yield
         finally:
+            if saved_showwarnmsg_impl is not None:
+                warnings._showwarnmsg_impl = saved_showwarnmsg_impl  # type: ignore[attr-defined]
             if record:
                 # mypy can't infer that record=True means log is not None; help it.
                 assert log is not None
@@ -84,13 +91,10 @@ def _write_warning(msg: warnings.WarningMessage) -> None:
         file = sys.stderr
     if file is None:
         return
-    text = warnings.formatwarning(
-        msg.message,
-        msg.category,
-        msg.filename,
-        msg.lineno,
-        line=msg.line,
-    )
+    # formatwarning() builds a new WarningMessage and drops source, so the
+    # tracemalloc line stdlib doctest prints never appears. _formatwarnmsg
+    # formats the message the display hook actually received.
+    text = warnings._formatwarnmsg(msg)  # type: ignore[attr-defined]
     try:
         file.write(text)
     except OSError:
