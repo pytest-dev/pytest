@@ -49,7 +49,9 @@ these patches.
 
 4. Use ``monkeypatch.setenv("PATH", value, prepend=os.pathsep)`` to modify ``$PATH``, and
 :py:meth:`monkeypatch.chdir <MonkeyPatch.chdir>` to change the context of the current working directory
-during a test.
+during a test. If the variable is set but empty, this issues a warning, because an empty entry in ``$PATH``
+means the current directory; pass ``empty="keep"`` or ``empty="skip"`` to choose whether the separator
+stays and silence the warning.
 
 5. Use :py:meth:`monkeypatch.syspath_prepend <MonkeyPatch.syspath_prepend>` to modify ``sys.path`` which will also
 call ``pkg_resources.fixup_namespace_packages`` and :py:func:`importlib.invalidate_caches`.

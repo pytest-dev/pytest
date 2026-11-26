@@ -8,6 +8,7 @@ import re
 import sys
 import textwrap
 from types import MappingProxyType
+from typing import Literal
 import warnings
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -311,15 +312,52 @@ def test_setenv_prepend() -> None:
     assert "XYZ123" not in os.environ
 
 
-def test_setenv_prepend_empty_existing() -> None:
+def test_setenv_prepend_empty_existing_warns() -> None:
     import os
 
     monkeypatch = MonkeyPatch()
     monkeypatch.setenv("XYZ123", "")
-    monkeypatch.setenv("XYZ123", "2", prepend="-")
+    with pytest.warns(pytest.PytestWarning, match="XYZ123 is set but empty"):
+        monkeypatch.setenv("XYZ123", "2", prepend="-")
+    assert os.environ["XYZ123"] == "2-"
+    monkeypatch.undo()
+    assert "XYZ123" not in os.environ
+
+
+@pytest.mark.parametrize(("empty", "expected"), [("keep", "2-"), ("skip", "2")])
+def test_setenv_prepend_empty_existing_explicit(
+    empty: Literal["keep", "skip"], expected: str
+) -> None:
+    import os
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setenv("XYZ123", "")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        monkeypatch.setenv("XYZ123", "2", prepend="-", empty=empty)
+    assert os.environ["XYZ123"] == expected
+    monkeypatch.undo()
+    assert "XYZ123" not in os.environ
+
+
+@pytest.mark.parametrize("empty", [None, "keep", "skip"])
+def test_setenv_prepend_unset(empty: Literal["keep", "skip"] | None) -> None:
+    import os
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.delenv("XYZ123", raising=False)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        monkeypatch.setenv("XYZ123", "2", prepend="-", empty=empty)
     assert os.environ["XYZ123"] == "2"
     monkeypatch.undo()
     assert "XYZ123" not in os.environ
+
+
+def test_setenv_invalid_empty() -> None:
+    monkeypatch = MonkeyPatch()
+    with pytest.raises(ValueError, match="empty must be"):
+        monkeypatch.setenv("XYZ123", "2", prepend="-", empty="drop")  # type: ignore[arg-type]
 
 
 def test_monkeypatch_plugin(pytester: Pytester) -> None:

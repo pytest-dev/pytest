@@ -14,6 +14,7 @@ import re
 import sys
 from typing import Any
 from typing import final
+from typing import Literal
 from typing import overload
 from typing import TypeVar
 import warnings
@@ -331,13 +332,31 @@ class MonkeyPatch:
             del dic[name]  # type: ignore[attr-defined]
             self._setitem.append((dic, name, oldval))
 
-    def setenv(self, name: str, value: str, prepend: str | None = None) -> None:
+    def setenv(
+        self,
+        name: str,
+        value: str,
+        prepend: str | None = None,
+        *,
+        empty: Literal["keep", "skip"] | None = None,
+    ) -> None:
         """Set environment variable ``name`` to ``value``.
 
         If ``prepend`` is a character, read the current environment variable
         value and prepend the ``value`` adjoined with the ``prepend``
-        character. If the variable is unset or empty, ``value`` is used as is.
+        character.
+
+        An empty value is not the same as an unset one for every variable:
+        for example, an empty entry in ``PATH`` means the current directory,
+        while other variables treat an empty value as unset. So if the
+        variable is set but empty, ``empty`` controls the result of
+        ``prepend``: ``"keep"`` gives ``value + prepend``, and ``"skip"``
+        gives just ``value``. If ``empty`` is not given, the ``"keep"``
+        behavior is used and a :class:`pytest.PytestWarning` is issued.
+        ``empty`` is ignored when ``prepend`` is not given.
         """
+        if empty not in (None, "keep", "skip"):
+            raise ValueError(f"empty must be 'keep', 'skip' or None, got {empty!r}")
         if not isinstance(value, str):
             warnings.warn(  # type: ignore[unreachable]
                 PytestWarning(
@@ -347,8 +366,23 @@ class MonkeyPatch:
                 stacklevel=2,
             )
             value = str(value)
-        if prepend and os.environ.get(name):
-            value = value + prepend + os.environ[name]
+        if prepend and name in os.environ:
+            current = os.environ[name]
+            if current:
+                value = value + prepend + current
+            elif empty != "skip":
+                if empty is None:
+                    warnings.warn(
+                        PytestWarning(
+                            f"Environment variable {name} is set but empty, so prepending "
+                            f"gives {value + prepend!r}. An empty value means different "
+                            f"things for different variables (an empty entry in PATH is "
+                            f"the current directory). Pass empty='keep' to keep this "
+                            f"result or empty='skip' to set just {value!r}."
+                        ),
+                        stacklevel=2,
+                    )
+                value = value + prepend
         self.setitem(os.environ, name, value)
 
     def delenv(self, name: str, raising: bool = True) -> None:
