@@ -213,7 +213,9 @@ class CaptureIO(io.TextIOWrapper):
 
     def getvalue(self) -> str:
         assert isinstance(self.buffer, io.BytesIO)
-        return _decode_capture(self.buffer.getvalue(), self.encoding, self.errors)
+        return _decode_capture(
+            self.buffer.getvalue(), self.encoding, self.errors or "strict"
+        )
 
 
 class TeeCaptureIO(CaptureIO):
