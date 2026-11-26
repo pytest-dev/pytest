@@ -478,6 +478,9 @@ class TestPDB:
         child.expect("test_1")
         child.send("capsys.readouterr()\n")
         child.expect("hello1")
+        # Wait for the next prompt: an EOF sent while pdb is still busy can
+        # get lost, leaving the child waiting for input.
+        child.expect("Pdb")
         child.sendeof()
         child.read()
         self.flush(child)

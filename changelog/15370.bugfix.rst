@@ -1,0 +1,1 @@
+Fixed :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` ``ids`` being escaped again for every further test sharing the mark (for example on a class, or across repeated :func:`pytest.main` calls): the mark now stores the raw ids instead of the resolved ones.

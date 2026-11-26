@@ -140,6 +140,149 @@ class TestTerminal:
         combined = "\n".join(result.stdout.lines + result.stderr.lines)
         assert "INTERNALERROR" not in combined
 
+    def test_console_output_style_times_with_subtests(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                def test_subtests(subtests):
+                    for i in range(2):
+                        with subtests.test(i=i):
+                            pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-v",
+            "-o",
+            "console_output_style=times",
+            "-o",
+            "verbosity_subtests=1",
+        )
+
+        # Check that we got positive/non-zero timing info for subtests and the parent PASSED line.
+        # We check that it does not show "0.000us".
+        lines = result.stdout.lines
+        subpassed_lines = [
+            line_content for line_content in lines if "SUBPASSED" in line_content
+        ]
+        passed_lines = [
+            line_content
+            for line_content in lines
+            if "PASSED" in line_content and "SUBPASSED" not in line_content
+        ]
+        assert len(subpassed_lines) == 2
+        assert len(passed_lines) == 1
+        for line in subpassed_lines + passed_lines:
+            assert "0.000us" not in line
+
+    def test_console_output_style_times_with_subtests_xdist(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        pytester.makepyfile(
+            test_repro="""
+                def test_subtests(subtests):
+                    for i in range(2):
+                        with subtests.test(i=i):
+                            pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-n2",
+            "-v",
+            "-o",
+            "console_output_style=times",
+            "-o",
+            "verbosity_subtests=1",
+        )
+
+        lines = result.stdout.lines
+        subpassed_lines = [
+            line_content for line_content in lines if "SUBPASSED" in line_content
+        ]
+        passed_lines = [
+            line_content
+            for line_content in lines
+            if "PASSED" in line_content and "SUBPASSED" not in line_content
+        ]
+        assert len(subpassed_lines) == 2
+        assert len(passed_lines) == 1
+        for line in subpassed_lines + passed_lines:
+            assert "0.000us" not in line
+
+    def test_console_output_style_times_slow_teardown_does_not_leak(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                import time, pytest
+
+                @pytest.fixture
+                def slow_td():
+                    yield
+                    time.sleep(0.3)
+
+                def test_a1(slow_td):
+                    pass
+
+                def test_a2():
+                    pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-v",
+            "-o",
+            "console_output_style=times",
+        )
+        lines = result.stdout.lines
+        a2_lines = [line for line in lines if "test_a2 PASSED" in line]
+        assert len(a2_lines) == 1
+        # The teardown duration of test_a1 (300ms) should not leak into test_a2.
+        # A leak shows up as at least 0.3s; anything below that is test_a2's own
+        # time, which can reach ~0.25s on slow CI runners (Windows).
+        duration_str = a2_lines[0].split()[-1]
+        if duration_str.endswith("us"):
+            dur_seconds = float(duration_str[:-2]) / 1_000_000
+        elif duration_str.endswith("ms"):
+            dur_seconds = float(duration_str[:-2]) / 1_000
+        elif duration_str.endswith("s"):
+            dur_seconds = float(duration_str[:-1])
+        else:
+            dur_seconds = 0.0
+        assert dur_seconds < 0.3
+
+    def test_progress_information_message_no_current_report(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        item = pytester.getitem("def test_func(): pass")
+        tr = TerminalReporter(item.config)
+        monkeypatch.setattr(tr.config, "get_verbosity", lambda *args, **kwargs: 1)
+        tr._show_progress_info = "times"
+
+        class MockSession:
+            testscollected = 1
+            items = [item]
+
+        tr._session = MockSession()  # type: ignore[assignment]
+
+        from _pytest.reports import TestReport
+
+        rep = TestReport(
+            nodeid=item.nodeid,
+            location=item.location,
+            keywords={},
+            outcome="passed",
+            longrepr=None,
+            when="call",
+            duration=0.123,
+        )
+        tr.stats.setdefault("passed", []).append(rep)
+
+        msg = tr._get_progress_information_message()
+        assert msg == " 123.0ms"
+
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
@@ -385,7 +528,7 @@ class TestTerminal:
             """
             import pytest
 
-            @pytest.mark.skip(reason="123")
+            @pytest.mark.skip(reason="one two three")
             def test_1():
                 pass
 
@@ -436,7 +579,7 @@ class TestTerminal:
         )
 
         common_output = [
-            "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
+            "test_verbose_skip_reason.py::test_1 SKIPPED (one two three) *",
             "test_verbose_skip_reason.py::test_2 XPASS (456) *",
             "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
             "test_verbose_skip_reason.py::test_4 XFAIL  *",
@@ -1324,6 +1467,41 @@ def test_pass_output_reporting(pytester: Pytester) -> None:
             "*= 2 passed in *",
         ]
     )
+
+
+def test_pass_output_reporting_teardown_per_test(pytester: Pytester) -> None:
+    """Each test's captured teardown output is shown under that test (#15406)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(autouse=True)
+        def fix(request):
+            yield
+            print(f"teardown {request.node.name}")
+
+        def test_a():
+            print("call a")
+
+        def test_b():
+            print("call b")
+    """
+    )
+    result = pytester.runpytest("-rP")
+    result.stdout.fnmatch_lines(
+        [
+            "*_ test_a _*",
+            "call a",
+            "*- Captured stdout teardown -*",
+            "teardown test_a",
+            "*_ test_b _*",
+            "call b",
+            "*- Captured stdout teardown -*",
+            "teardown test_b",
+        ],
+        consecutive=False,
+    )
+    assert result.stdout.str().count("teardown test_") == 2
 
 
 def test_color_yes(pytester: Pytester, color_mapping) -> None:
@@ -2773,6 +2951,16 @@ def test_format_session_duration(seconds, expected):
         (0.0001236, " 123.6us"),
         (0.00001236, " 12.36us"),
         (0.000001236, " 1.236us"),
+        # Values that round up to the next unit.
+        (0.0000099996, " 10.00us"),
+        (0.000099996, " 100.0us"),
+        (0.00099996, " 1.000ms"),
+        (0.0099996, " 10.00ms"),
+        (0.099996, " 100.0ms"),
+        (0.99996, " 1.000s"),
+        (59.9996, " 1m 0s"),
+        (119.6, " 2m 0s"),
+        (3599.6, " 1h 0m"),
     ],
 )
 def test_format_node_duration(seconds: float, expected: str) -> None:
@@ -2857,22 +3045,44 @@ class TestCodeHighlight:
     def test_code_highlight_custom_theme(
         self, pytester: Pytester, color_mapping, monkeypatch: MonkeyPatch
     ) -> None:
+        """PYTEST_THEME is rendered with the 256-color formatter (#15410)."""
         pytester.makepyfile(
             """
             def test_foo():
                 assert 1 == 10
         """
         )
-        monkeypatch.setenv("PYTEST_THEME", "solarized-dark")
-        monkeypatch.setenv("PYTEST_THEME_MODE", "dark")
+        monkeypatch.delenv("COLORTERM", raising=False)
+        # The "bw" style only uses bold/italic, no colors.
+        monkeypatch.setenv("PYTEST_THEME", "bw")
         result = pytester.runpytest("--color=yes")
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {reset}{kw}def{hl-reset}{kwspace}{function}test_foo{hl-reset}():{endline}",
-                    ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
+                    "    {reset}\x1b[01mdef\x1b[00m test_foo():",
+                    ">       \x1b[01massert\x1b[00m 1 == 10",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
+            )
+        )
+
+    def test_code_highlight_custom_theme_truecolor(
+        self, pytester: Pytester, color_mapping, monkeypatch: MonkeyPatch
+    ) -> None:
+        """PYTEST_THEME uses true colors when the terminal advertises them (#15410)."""
+        pytester.makepyfile(
+            """
+            def test_foo():
+                assert 1 == 10
+        """
+        )
+        monkeypatch.setenv("COLORTERM", "truecolor")
+        monkeypatch.setenv("PYTEST_THEME", "solarized-dark")
+        result = pytester.runpytest("--color=yes")
+        # solarized-dark renders keywords as #859900.
+        result.stdout.fnmatch_lines(
+            color_mapping.format_for_fnmatch(
+                ["    {reset}\x1b[38;2;133;153;0mdef\x1b[39m*test_foo*"]
             )
         )
 

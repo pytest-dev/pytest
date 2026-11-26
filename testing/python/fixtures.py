@@ -69,6 +69,52 @@ def test_getfuncargnames_methods():
     assert getfuncargnames(A().k) == ("arg1", "arg2")
 
 
+def test_bound_method_fixtures_custom_collector(pytester: Pytester) -> None:
+    """Custom collectors can supply already-bound methods (#6750)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_pycollect_makeitem(collector, name, obj):
+            if isinstance(collector, pytest.Class) and name.startswith("test_"):
+                return pytest.Function.from_parent(
+                    collector,
+                    name=name,
+                    callobj=getattr(collector.newinstance(), name),
+                )
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def value():
+            return 42
+
+        class TestBound:
+            def test_instance(self, value):
+                assert value == 42
+
+            def test_positional_only_receiver(self, /, value):
+                assert value == 42
+
+            def test_keyword_only_fixture(self, *, value):
+                assert value == 42
+
+            @classmethod
+            def test_classmethod(cls, value):
+                assert value == 42
+
+            @staticmethod
+            def test_staticmethod(value):
+                assert value == 42
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=5)
+
+
 def test_getfuncargnames_staticmethod():
     """Test getfuncargnames for staticmethods"""
 
@@ -5640,6 +5686,103 @@ def test_subfixture_teardown_order(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_function_scoped_fixture_does_not_accumulate_finalizers(
+    pytester: Pytester,
+) -> None:
+    """
+    Function-scoped fixtures should not register their finalizer with the
+    higher-scoped fixtures they request, otherwise one finalizer accumulates
+    there for every test (#4871).
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="session")
+        def session_fixture():
+            ...
+
+        @pytest.fixture
+        def function_fixture(session_fixture):
+            ...
+
+        @pytest.mark.parametrize("i", range(5))
+        def test_it(i, function_fixture, request):
+            fixturedef = request._get_active_fixturedef("session_fixture")
+            # Only the pytest_fixture_post_finalizer registered by the
+            # session fixture itself.
+            assert len(fixturedef._finalizers) == 1
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=5)
+
+
+def test_fixture_invalidated_by_wider_scoped_param(pytester: Pytester) -> None:
+    """
+    A class-scoped fixture requesting a parametrized module-scoped fixture must
+    be torn down when the parameter changes, even though the class node is
+    still active (#4871).
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        values = []
+
+        @pytest.fixture(scope="module", params=["a", "b"])
+        def module_param(request):
+            return request.param
+
+        @pytest.fixture(scope="class")
+        def class_fixture(module_param):
+            values.append(module_param)
+            return module_param
+
+        class TestIt:
+            def test_it(self, module_param, class_fixture):
+                assert class_fixture == module_param
+
+        def test_values():
+            assert values == ["a", "b"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)
+
+
+@pytest.mark.parametrize("scope", ["module", "class"])
+def test_indirect_scope_override_finalized_by_parametrized_dependency(
+    pytester: Pytester, scope: str
+) -> None:
+    """A function-scoped fixture whose scope is widened by indirect
+    parametrization must be finalized when a parametrized fixture it
+    depends on changes its param (#15436)."""
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.fixture(scope="module", params=["first", "second"])
+        def parent(request):
+            resource = {{"name": request.param, "open": True}}
+            yield resource
+            resource["open"] = False
+
+        @pytest.fixture
+        def child(parent):
+            yield parent
+            assert parent["open"]
+
+        class TestIt:
+            @pytest.mark.parametrize("child", [None], indirect=True, scope="{scope}")
+            def test_current_parent(self, child, parent):
+                assert child is parent
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
 
 
 def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:

@@ -564,9 +564,18 @@ class FixtureRequest(abc.ABC):
         result.extend(set(self._fixture_defs).difference(result))
         return result
 
+    # The return type is intentionally ``Any``.
+    # The concrete node type depends on the request scope, so the only correct
+    # annotation would be a broad one (``Item | Collector``). That would force
+    # users to ``assert isinstance(...)`` or ``cast`` whenever they know the
+    # actual type (e.g. ``request.node.function`` in a function-scoped
+    # fixture), so we trade type safety for convenience here.
+    # It is spelled out explicitly because pyright in strict mode reports an
+    # unannotated return as ``Unknown`` rather than ``Any``.
+    # See https://github.com/pytest-dev/pytest/issues/13888#issuecomment-3511168937.
     @property
     @abc.abstractmethod
-    def node(self):
+    def node(self) -> Any:
         """Underlying collection node (depends on current request scope)."""
         raise NotImplementedError()
 
@@ -1132,7 +1141,7 @@ class FixtureDef(Generic[FixtureValue]):
         check_ispytest(_ispytest)
         # Emit deprecation warning if deprecated baseid string is used.
         if node is NOTSET:
-            warnings.warn(FIXTURE_BASEID_DEPRECATED, stacklevel=2)
+            warnings.warn(FIXTURE_BASEID_DEPRECATED.format(), stacklevel=2)
         if baseid is NOTSET:
             baseid = None
         # The node where this fixture was defined, if available.
@@ -1197,7 +1206,7 @@ class FixtureDef(Generic[FixtureValue]):
 
     @property
     def has_location(self) -> bool:
-        warnings.warn(FIXTUREDEF_HAS_LOCATION_DEPRECATED, stacklevel=2)
+        warnings.warn(FIXTUREDEF_HAS_LOCATION_DEPRECATED.format(), stacklevel=2)
         return self._has_location
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
@@ -1273,8 +1282,15 @@ class FixtureDef(Generic[FixtureValue]):
         # We make sure to do this after checking for cached value to avoid
         # adding our finalizer multiple times. (#12135)
         finalizer = functools.partial(self.finish, request=request)
-        for parent_fixture in requested_fixtures_that_should_finalize_us:
-            parent_fixture.addfinalizer(finalizer)
+        # Function-scoped fixtures are always torn down by SetupState at the end
+        # of each test, before any higher-scoped fixture can be torn down or
+        # invalidated, so registering with requested fixtures is not needed and
+        # would only accumulate finalizers on them (#4871).
+        # This does not hold when indirect parametrization widens the scope of
+        # the request (#15436), so the request scope has to be checked too.
+        if self._scope is not Scope.Function or request._scope is not Scope.Function:
+            for parent_fixture in requested_fixtures_that_should_finalize_us:
+                parent_fixture.addfinalizer(finalizer)
 
         # Register the pytest_fixture_post_finalizer as the first finalizer,
         # which is executed last.
@@ -1620,7 +1636,7 @@ def yield_fixture(
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    warnings.warn(YIELD_FIXTURE, stacklevel=2)
+    warnings.warn(YIELD_FIXTURE.format(), stacklevel=2)
     return fixture(
         fixture_function,
         *args,
@@ -1950,7 +1966,10 @@ class FixtureManager:
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures visible to node."""
-        for marker_node, mark in node.iter_markers_with_node(name="usefixtures"):
+        # A base class' usefixtures keep being requested before a subclass'.
+        for marker_node, mark in node._iter_markers_with_node(
+            name="usefixtures", order=nodes.MarkerOrder.STORED
+        ):
             if not mark.args:
                 marker_node.warn(
                     PytestWarning(
@@ -2091,7 +2110,7 @@ class FixtureManager:
         """
         # Emit deprecation warning if nodeid string.
         if nodeid is not NOTSET or node is NOTSET:
-            warnings.warn(FIXTURE_NODEID_DEPRECATED, stacklevel=2)
+            warnings.warn(FIXTURE_NODEID_DEPRECATED.format(), stacklevel=2)
         fixture_def = FixtureDef(
             config=self.config,
             baseid=nodeid,
@@ -2280,7 +2299,7 @@ class FixtureManager:
             raise TypeError("parsefactories() requires holder or node_or_obj")
         elif nodeid is not NOTSET:
             # Legacy: parsefactories(obj, nodeid) - string-based scoping only.
-            warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED, stacklevel=2)
+            warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED.format(), stacklevel=2)
             holderobj = node_or_obj
             effective_nodeid = nodeid
         else:

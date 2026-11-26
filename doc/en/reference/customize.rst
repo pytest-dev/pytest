@@ -297,4 +297,4 @@ Syntax highlighting theme customization
 The syntax highlighting themes used by pytest can be customized using two environment variables:
 
 - :envvar:`PYTEST_THEME` sets a `pygment style <https://pygments.org/docs/styles/>`_ to use.
-- :envvar:`PYTEST_THEME_MODE` sets this style to *light* or *dark*.
+- :envvar:`PYTEST_THEME_MODE` selects the *light* or *dark* variant of the default highlighting, used when :envvar:`PYTEST_THEME` is not set.

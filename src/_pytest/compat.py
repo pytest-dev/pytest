@@ -162,6 +162,7 @@ def getfuncargnames(
         # Not using `getattr` because we don't want to resolve the staticmethod.
         # Not using `cls.__dict__` because we want to check the entire MRO.
         cls
+        and not inspect.ismethod(function)
         and not isinstance(
             inspect.getattr_static(cls, name, default=None), staticmethod
         )
@@ -313,6 +314,17 @@ def running_on_ci() -> bool:
     # Note: review `regendoc` tox env in case this list is changed.
     env_vars = ["CI", "BUILD_NUMBER"]
     return any(os.environ.get(var) for var in env_vars)
+
+
+if sys.version_info >= (3, 12):
+    from typing import override as override
+else:
+    if TYPE_CHECKING:
+        from typing_extensions import override as override
+    else:
+
+        def override(func):
+            return func
 
 
 if sys.version_info >= (3, 13):  # pragma: no cover
