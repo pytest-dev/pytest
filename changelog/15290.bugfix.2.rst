@@ -1,0 +1,1 @@
+An invalid :confval:`tmp_path_retention_count` (a non-numeric string or a negative number) now raises a usage error naming the option, instead of an internal error traceback.
