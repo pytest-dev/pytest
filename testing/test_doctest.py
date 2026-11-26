@@ -147,7 +147,11 @@ class TestDoctests:
         assert recorded
 
     def test_warning_with_source_includes_tracemalloc_line(self, pytester: Pytester):
-        """A doctest sees the same source note stdlib doctest prints."""
+        """A doctest sees the same source note stdlib doctest prints.
+
+        CPython appends an allocation hint when ``source`` is set and
+        tracemalloc is off. Other interpreters, including PyPy, do not.
+        """
         pytester.makeini(
             """
             [pytest]
@@ -155,18 +159,23 @@ class TestDoctests:
                 always::UserWarning
             """
         )
-        p = pytester.maketxtfile(
-            test_doc="""
-            >>> import sys, warnings
-            >>> sys.stderr = sys.stdout
-            >>> def boom():
-            ...     warnings.warn("Testing", UserWarning, source=object())
-            >>> boom()  # doctest: +ELLIPSIS
-            <...>:...: UserWarning: Testing
-              warnings.warn("Testing", UserWarning, source=object())
-            UserWarning: Enable tracemalloc to get the object allocation traceback
-            """
-        )
+        # Match this interpreter. CPython adds the tracemalloc hint;
+        # PyPy's tracemalloc lookup fails and the hint is omitted.
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            warnings.warn("Testing", UserWarning, source=object())
+        formatted = warnings._formatwarnmsg(caught[-1])  # type: ignore[attr-defined]
+        lines = [
+            ">>> import sys, warnings",
+            ">>> sys.stderr = sys.stdout",
+            ">>> def boom():",
+            '...     warnings.warn("Testing", UserWarning, source=object())',
+            ">>> boom()  # doctest: +ELLIPSIS",
+            "<...>:...: UserWarning: Testing",
+            '  warnings.warn("Testing", UserWarning, source=object())',
+        ]
+        lines.extend(formatted.splitlines()[2:])
+        p = pytester.maketxtfile(test_doc="\n".join(lines) + "\n")
         reprec = pytester.inline_run(p, "-p", "no:cacheprovider")
         reprec.assertoutcome(passed=1)
 
