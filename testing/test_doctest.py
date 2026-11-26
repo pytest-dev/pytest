@@ -177,6 +177,7 @@ class TestDoctests:
         out and leave warnings._showwarnmsg_impl as whatever was installed
         inside the block.
         """
+
         class ContextAwareCatch(warnings.catch_warnings):
             def __enter__(self):
                 log = super().__enter__()
