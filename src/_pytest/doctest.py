@@ -651,17 +651,26 @@ def _init_checker_class() -> type[doctest.OutputChecker]:
                 elif super().check_output(want, number_got, optionflags):
                     return True
                 else:
-                    want = str(want.encode("ASCII", "backslashreplace"), "ASCII")
-                    got = str(got.encode("ASCII", "backslashreplace"), "ASCII")
-                    if not (optionflags & doctest.DONT_ACCEPT_BLANKLINE):
-                        want = re.sub(r"(?m)^<BLANKLINE>\s*?$", "", want)
-                        got = re.sub(r"(?m)^[^\S\n]+$", "", got)
-                    if optionflags & doctest.NORMALIZE_WHITESPACE:
-                        want = " ".join(want.split())
-                        got = " ".join(got.split())
+                    want, got = self._normalize_for_ellipsis(want, got, optionflags)
                     got = self._remove_unwanted_precision_with_ellipsis(want, got)
 
             return super().check_output(want, got, optionflags)
+
+        @staticmethod
+        def _normalize_for_ellipsis(
+            want: str, got: str, optionflags: int
+        ) -> tuple[str, str]:
+            # Mirror CPython's doctest.OutputChecker.check_output preprocessing
+            # before performing ellipsis-aware numeric alignment.
+            want = str(want.encode("ASCII", "backslashreplace"), "ASCII")
+            got = str(got.encode("ASCII", "backslashreplace"), "ASCII")
+            if not (optionflags & doctest.DONT_ACCEPT_BLANKLINE):
+                want = re.sub(r"(?m)^<BLANKLINE>\s*?$", "", want)
+                got = re.sub(r"(?m)^[^\S\n]+$", "", got)
+            if optionflags & doctest.NORMALIZE_WHITESPACE:
+                want = " ".join(want.split())
+                got = " ".join(got.split())
+            return want, got
 
         def _remove_unwanted_precision(self, want: str, got: str) -> str:
             wants = list(self._number_re.finditer(want))
