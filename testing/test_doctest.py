@@ -213,12 +213,11 @@ class TestDoctests:
             def _catch_configured_warnings(self, *, record=True):
                 return warnings.catch_warnings(record=record)
 
-        class Hook:
-            def call_historic(self, kwargs):
-                pass
-
         class Hooks:
-            pytest_warning_recorded = Hook()
+            # No warning is logged in this simulation, so the hook is never
+            # called. A lambda has no body for coverage to miss.
+            class pytest_warning_recorded:
+                call_historic = staticmethod(lambda kwargs: None)
 
         class Item:
             nodeid = "t.txt"
