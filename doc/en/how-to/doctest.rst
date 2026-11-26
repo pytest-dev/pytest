@@ -167,6 +167,9 @@ pytest also introduces new options:
   a string! This means that it may not be appropriate to enable globally in
   ``doctest_optionflags`` in your configuration file.
 
+  ``NUMBER`` can be combined with ``ELLIPSIS``. Additional numbers hidden by
+  an ellipsis do not interfere with precision matching.
+
   .. versionadded:: 5.1
 
 
