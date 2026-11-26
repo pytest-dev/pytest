@@ -39,7 +39,7 @@ Here are some guidelines on how to proceed, based on examples of a single PR com
    * ``Merge origin/main into PR branch``
    * ``Update tests/test_integration.py``
 
-   In this case, prefer to use the **Squash** merge strategy: the commit history is a bit messy (not in a derogatory way, often one just commits changes because they know the changes will eventually be squashed together), so squashing everything into a single commit is best. You must clean up the commit message, making sure it contains useful details.
+   In this case, prefer to use the **Squash** merge strategy: the commit history is a bit messy (not in a derogatory way, often one just commits changes because they know the changes will eventually be squashed together), so squashing everything into a single commit is best. You must clean up the commit message, making sure it contains useful details, and keep every ``Co-authored-by`` and ``Assisted-by`` trailer: they are how the AI policy's disclosure survives the squash.
 
 2. Separate commits related to the same topic:
 

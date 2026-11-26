@@ -2,5 +2,8 @@ The contribution documentation was reorganised: setup instructions now lead with
 the process the team follows after a contribution arrives moved into a separate maintenance
 guide, and the AI/LLM policy separates its requirements from its rationale.
 
+The AI/LLM policy is also stricter: disclosing AI use is now mandatory, for maintainers too,
+and hiding it gets the account banned.
+
 A new :file:`AGENTS.md` gives coding agents the project's setup, layout and conventions,
-along with the instruction to hand their work back to a human rather than open a pull request.
+along with the instruction to post nothing that a supervising human has not read and approved.

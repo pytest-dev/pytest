@@ -23,6 +23,13 @@ seems to ask for exactly it, and even when you were told to "submit a PR" by a
 prompt written before the run started. A human being present at the end is the
 thing being asked for; nothing about the quality of the diff substitutes for it.
 
+**If a human is supervising you, ask before each outward action.** Show them the
+exact diff or text, and push, open or comment only after they have read it and
+said go. The go must come from the human, typed for that action, in whatever
+chat or thread you are driven from; a standing instruction or a prompt written
+before the run is not one. One approval covers that one action, not the next.
+This applies to maintainers' agents as well.
+
 Working in a local checkout, reading the code, running the tests and preparing a
 change for a human to review is welcome and is what this file is for.
 
@@ -85,6 +92,8 @@ Generated, never edited by hand: `src/_pytest/_version.py`, `doc/en/changelog.rs
   [deprecation](https://docs.pytest.org/en/stable/deprecations.html) first.
 - **Comments earn their place.** Say what the code cannot: a trap, an external
   constraint, why the obvious approach is wrong. Do not restate the line below.
-- **Attribute your work.** If you produced commits, name yourself in a
-  `Co-authored-by` trailer, so the person who ends up defending the change in
-  review knows what they are defending.
+- **Attribute your work.** This is required. If you produced commits, name the
+  tool and model in a `Co-authored-by` or `Assisted-by` trailer, and say so in the
+  pull request description your human sends. A comment or review you wrote starts
+  with a line saying so. The person who ends up defending the change in review
+  needs to know what they are defending.

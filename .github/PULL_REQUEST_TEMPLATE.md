@@ -13,8 +13,8 @@ If this change fixes an issue, please:
 
 > [!IMPORTANT]
 > **Unsupervised agentic contributions are not accepted**. See our [AI/LLM-Assisted Contributions Policy](https://github.com/pytest-dev/pytest/blob/main/CONTRIBUTING.rst#aillm-assisted-contributions-policy), and [AGENTS.md](https://github.com/pytest-dev/pytest/blob/main/AGENTS.md) if you are configuring an agent to work on pytest.
->
-> If AI agents helped, crediting them in `Co-authored-by` commit trailers is appreciated, but not required.
+
+- [ ] AI use is disclosed: `Co-authored-by`/`Assisted-by` trailers and a note in this description.
 
 Unless your change is trivial or a small documentation fix (e.g., a typo or reword of a small section) please:
 
