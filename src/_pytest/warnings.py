@@ -40,13 +40,15 @@ def catch_warnings_for_item(
     """
     with config._catch_configured_warnings(record=record) as log:
         if record and _item_is_doctest(item):
-            record_impl = warnings._showwarnmsg_impl
+            # Private stdlib hook. catch_warnings installs it, and the
+            # public showwarning wrapper does not run while recording.
+            record_impl = warnings._showwarnmsg_impl  # type: ignore[attr-defined]
 
             def _record_and_emit(msg, _record=record_impl):
                 _record(msg)
                 _write_warning(msg)
 
-            warnings._showwarnmsg_impl = _record_and_emit
+            warnings._showwarnmsg_impl = _record_and_emit  # type: ignore[attr-defined]
         # apply filters from "filterwarnings" marks
         nodeid = "" if item is None else item.nodeid
         if item is not None:

@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import inspect
+import io
 from pathlib import Path
 import sys
 import textwrap
+import warnings
 
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
@@ -16,6 +18,8 @@ from _pytest.doctest import DoctestItem
 from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
 from _pytest.pytester import Pytester
+from _pytest.warnings import _item_is_doctest
+from _pytest.warnings import _write_warning
 import pytest
 
 
@@ -134,6 +138,38 @@ class TestDoctests:
         )
         reprec = pytester.inline_run(p, "-p", "no:cacheprovider")
         reprec.assertoutcome(passed=1)
+
+    def test_write_warning_covers_closed_and_missing_streams(self, monkeypatch):
+        """Every branch of the doctest warning writer has to stay covered."""
+        captured = io.StringIO()
+        _write_warning(
+            warnings.WarningMessage(
+                "hello", UserWarning, "f.py", 1, file=captured, line=None
+            )
+        )
+        assert "UserWarning: hello" in captured.getvalue()
+
+        stderr = io.StringIO()
+        monkeypatch.setattr(sys, "stderr", stderr)
+        missing_file = warnings.WarningMessage(
+            "there", UserWarning, "f.py", 2, file=None, line=None
+        )
+        _write_warning(missing_file)
+        assert "UserWarning: there" in stderr.getvalue()
+
+        monkeypatch.setattr(sys, "stderr", None)
+        _write_warning(missing_file)
+
+        class Closed:
+            def write(self, text):
+                raise OSError("closed")
+
+        _write_warning(
+            warnings.WarningMessage(
+                "gone", UserWarning, "f.py", 3, file=Closed(), line=None
+            )
+        )
+        assert _item_is_doctest(None) is False
 
     def test_simple_doctestfile(self, pytester: Pytester):
         p = pytester.maketxtfile(
