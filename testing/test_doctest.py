@@ -160,7 +160,7 @@ class TestDoctests:
         monkeypatch.setattr(sys, "stderr", None)
         _write_warning(missing_file)
 
-        class Closed:
+        class Closed(io.StringIO):
             def write(self, text):
                 raise OSError("closed")
 
