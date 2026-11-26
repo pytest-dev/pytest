@@ -1,0 +1,1 @@
+Fixed an internal error when a :option:`-m` expression uses a non-decimal digit such as ``²`` as a keyword argument value (for example ``-m "foo(a=²)"``); it is now reported as a usage error.
