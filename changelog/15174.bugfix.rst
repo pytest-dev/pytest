@@ -1,0 +1,1 @@
+Fixed a race as concurrent pytest sessions of the same user would fail at completion with ``FileNotFoundError`` while removing a dead ``pytest-current`` symlink.
