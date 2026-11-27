@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -702,6 +703,70 @@ def test_popen_default_stdin_stderr_and_stdin_None(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-p", "pytester", str(p1))
     assert result.ret == 0
+
+
+def test_popen_explicit_env(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    """Honor an explicit env mapping passed to pytester.popen() (#15471)."""
+    monkeypatch.setenv("PYTEST_POPEN_OUTER", "outer")
+    custom_env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in ("PYTEST_POPEN_OUTER", "PYTHONPATH")
+    }
+    custom_env["PYTEST_POPEN_EXPLICIT"] = "1"
+    env_snapshot = custom_env.copy()
+
+    proc = pytester.popen(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import json, os; "
+                "print(json.dumps(["
+                "os.environ.get('PYTEST_POPEN_EXPLICIT'), "
+                "os.environ.get('PYTEST_POPEN_OUTER'), "
+                "os.environ.get('PYTHONPATH')"
+                "]))"
+            ),
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=custom_env,
+    )
+    stdout, stderr = proc.communicate()
+    assert proc.returncode == 0
+    assert stderr == b""
+    assert json.loads(stdout.decode("utf8")) == ["1", None, None]
+    assert custom_env == env_snapshot
+
+
+def test_popen_env_none_uses_default(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """env=None falls back to the default os.environ copy with cwd on PYTHONPATH."""
+    monkeypatch.setenv("PYTEST_POPEN_OUTER", "outer")
+    proc = pytester.popen(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import json, os; "
+                "print(json.dumps(["
+                "os.environ.get('PYTEST_POPEN_OUTER'), "
+                "os.environ.get('PYTHONPATH', '')"
+                "]))"
+            ),
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=None,
+    )
+    stdout, stderr = proc.communicate()
+    assert proc.returncode == 0
+    assert stderr == b""
+    outer, pythonpath = json.loads(stdout.decode("utf8"))
+    assert outer == "outer"
+    assert os.getcwd() in pythonpath.split(os.pathsep)
 
 
 def test_run_utf8_output(pytester: Pytester) -> None:

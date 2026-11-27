@@ -1368,16 +1368,17 @@ class Pytester:
     ):
         """Invoke :py:class:`subprocess.Popen`.
 
-        Calls :py:class:`subprocess.Popen` making sure the current working
-        directory is in ``PYTHONPATH``.
+        Calls :py:class:`subprocess.Popen`, making sure the current working
+        directory is in ``PYTHONPATH`` when no explicit ``env`` is provided.
 
         You probably want to use :py:meth:`run` instead.
         """
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join(
-            filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
-        )
-        kw["env"] = env
+        if kw.get("env") is None:
+            env = os.environ.copy()
+            env["PYTHONPATH"] = os.pathsep.join(
+                filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
+            )
+            kw["env"] = env
 
         if stdin is self.CLOSE_STDIN:
             kw["stdin"] = subprocess.PIPE
