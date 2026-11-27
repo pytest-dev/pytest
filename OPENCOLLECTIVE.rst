@@ -5,8 +5,8 @@ OpenCollective
 pytest has a collective setup at `OpenCollective`_. This document describes how the core team manages
 OpenCollective-related activities.
 
-What is it
-==========
+What is OpenCollective?
+======================
 
 Open Collective is an online funding platform for open and transparent communities.
 It provides tools to raise money and share your finances in full transparency.
@@ -17,15 +17,15 @@ monthly donations directly to the project.
 Funds
 =====
 
-The OpenCollective funds donated to pytest will be used to fund overall maintenance,
-local sprints, merchandising (stickers to distribute in conferences for example), and future
+The funds donated to pytest through OpenCollective will be used to fund overall maintenance,
+local sprints, merchandising (stickers to distribute at conferences, for example), and future
 gatherings of pytest developers (sprints).
 
 `Core contributors`_ which are contributing on a continuous basis are free to submit invoices
 to bill maintenance hours using the platform. How much each contributor should request is still an
 open question, but we should use common sense and trust in the contributors, most of which know
-themselves in-person. A good rule of thumb is to bill the same amount as monthly payments
-contributors which participate in the `Tidelift`_ subscription. If in doubt, just ask.
+themselves in-person.A good rule of thumb is to bill the same amount as monthly-paying contributors who participate
+in the `Tidelift`_ subscription.
 
 Admins
 ======
@@ -35,8 +35,7 @@ are part of the `@pytest-dev/opencollective-admins`_ team.
 
 `Core contributors`_ interested in helping out with OpenCollective maintenance are welcome! We don't
 expect much work here other than the occasional approval of expenses from other core contributors.
-Just drop a line to one of the `@pytest-dev/opencollective-admins`_ or use the mailing list.
-
+Just contact one of the `@pytest-dev/opencollective-admins`_ or use the mailing list.
 
 .. _`OpenCollective`: https://opencollective.com/pytest
 .. _`Tidelift`: https://tidelift.com
