@@ -655,6 +655,15 @@ class TestNumberedDir:
         pathlib.cleanup_dead_symlinks(tmp_path)
         assert not the_symlink.is_symlink()
 
+    def test_cleanup_keeps_symlink_that_cannot_be_resolved(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        the_symlink = tmp_path / (self.PREFIX + "current")
+        attempt_symlink_to(the_symlink, tmp_path / (self.PREFIX + "5"))
+        monkeypatch.setattr(Path, "resolve", _raise_oserror)
+        pathlib.cleanup_dead_symlinks(tmp_path)
+        assert the_symlink.is_symlink()
+
     def test_removal_accepts_lock(self, tmp_path):
         dir = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
         create_cleanup_lock(dir)
