@@ -637,6 +637,38 @@ class TestMetafunc:
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
+    @pytest.mark.parametrize("source", ["value", "ids", "callable"])
+    def test_binary_ids_with_unicode_escaping_disabled(
+        self, pytester: Pytester, source: str
+    ) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
+            """
+        )
+        arguments = {
+            "value": r'[b"\xff", "café"]',
+            "ids": r'[0, 1], ids=[b"\xff", "café"]',
+            "callable": r'[b"\xff", "café"], ids=lambda value: value',
+        }
+        testfile = pytester.makepyfile(
+            f"""
+            import pytest
+
+            @pytest.mark.parametrize("value", {arguments[source]})
+            def test_binary_id(value):
+                pass
+            """
+        )
+
+        result = pytester.runpytest("--collect-only", "-q")
+        assert result.ret == 0
+        assert result.stdout.lines[:2] == [
+            rf"{testfile.name}::test_binary_id[\xff]",
+            f"{testfile.name}::test_binary_id[café]",
+        ]
+
     def test_idmaker_with_ids_and_config(self) -> None:
         """Unit test for expected behavior to create ids with ids and
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
