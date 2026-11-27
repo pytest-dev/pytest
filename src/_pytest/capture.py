@@ -202,6 +202,8 @@ class EncodedFile(io.TextIOWrapper):
 
 
 class CaptureIO(io.TextIOWrapper):
+    _original: TextIO | None = None
+
     def __init__(self, encoding: str = "UTF-8", errors: str = "strict") -> None:
         super().__init__(
             io.BytesIO(),
@@ -433,12 +435,15 @@ def _decode_capture(data: bytes, encoding: str, errors: str) -> str:
     return data.decode(encoding, "replace")
 
 
-def _encode_for_replay(data: str, encoding: str, errors: str) -> bytes:
-    """Encode captured text for replay without failing on replacement characters."""
+def _write_to_stream(stream: TextIO, data: str) -> None:
+    """Write replay text through a stream, replacing characters it rejects."""
     try:
-        return data.encode(encoding, errors)
+        stream.write(data)
     except UnicodeEncodeError:
-        return data.encode(encoding, "backslashreplace")
+        encoding, _ = _original_codec(stream)
+        text = data.encode(encoding, "backslashreplace").decode(encoding, "replace")
+        stream.write(text)
+    stream.flush()
 
 
 class SysCaptureBase(CaptureBase[AnyStr]):
@@ -457,6 +462,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
                     tmpfile = TeeCaptureIO(self._old, encoding=encoding, errors=errors)
                 else:
                     tmpfile = CaptureIO(encoding=encoding, errors=errors)
+                tmpfile._original = self._old
         self.tmpfile = tmpfile
         self._state = "initialized"
 
@@ -543,13 +549,7 @@ class SysCapture(SysCaptureBase[str]):
 
     def writeorg(self, data: str) -> None:
         self._assert_state("writeorg", ("started", "suspended"))
-        try:
-            self._old.write(data)
-        except UnicodeEncodeError:
-            encoding, _ = _original_codec(self._old)
-            text = data.encode(encoding, "backslashreplace").decode(encoding, "replace")
-            self._old.write(text)
-        self._old.flush()
+        _write_to_stream(self._old, data)
 
 
 class FDCaptureBase(CaptureBase[AnyStr]):
@@ -682,6 +682,48 @@ class FDCapture(FDCaptureBase[str]):
 
     EMPTY_BUFFER = ""
 
+    def __init__(self, targetfd: int) -> None:
+        super().__init__(targetfd)
+        self._replay_encoder: codecs.IncrementalEncoder | None = None
+
+    def _replay_starts_stream(self) -> bool:
+        """Whether the replay target is still at the start of its stream."""
+        try:
+            return os.lseek(self.targetfd_save, 0, os.SEEK_CUR) == 0
+        except OSError:
+            return True
+
+    def _replay_stream(self) -> tuple[TextIO, int] | None:
+        """Find the replaced text stream whose encoder state replay needs."""
+        if self.targetfd not in (1, 2) or not isinstance(self.syscapture, SysCapture):
+            return None
+        stream: TextIO | None = self.syscapture._old
+        seen: set[int] = set()
+        while stream is not None and id(stream) not in seen:
+            seen.add(id(stream))
+            try:
+                fd = stream.fileno()
+            except (AttributeError, OSError, ValueError):
+                pass
+            else:
+                return stream, fd
+            stream = stream._original if isinstance(stream, CaptureIO) else None
+        return None
+
+    def _encode_for_replay(self, data: str) -> bytes:
+        """Encode one replay segment, keeping stream state such as a written BOM."""
+        encoding = self.tmpfile.encoding or "UTF-8"
+        errors = self.tmpfile.errors or "strict"
+        try:
+            data.encode(encoding, errors)
+        except UnicodeEncodeError:
+            data = data.encode(encoding, "backslashreplace").decode(encoding, "replace")
+        if self._replay_encoder is None:
+            self._replay_encoder = codecs.getincrementalencoder(encoding)(errors)
+            if not self._replay_starts_stream():
+                self._replay_encoder.encode("", final=False)
+        return self._replay_encoder.encode(data, final=True)
+
     def snap(self) -> str:
         self._assert_state("snap", ("started", "suspended"))
         # Avoid seek/read/truncate in the common case of no output.
@@ -698,20 +740,32 @@ class FDCapture(FDCaptureBase[str]):
     def writeorg(self, data: str) -> None:
         """Write to original file descriptor."""
         self._assert_state("writeorg", ("started", "suspended"))
-        if self.targetfd in (1, 2):
-            assert isinstance(self.syscapture, SysCapture)
+        replay = self._replay_stream()
+        if replay is None:
+            os.write(self.targetfd_save, self._encode_for_replay(data))
+            return
+
+        stream, stream_fd = replay
+        if stream_fd == self.targetfd:
             restore = self._state == "started"
             if restore:
                 os.dup2(self.targetfd_save, self.targetfd)
             try:
-                self.syscapture.writeorg(data)
+                _write_to_stream(stream, data)
             finally:
                 if restore:
                     os.dup2(self.tmpfile.fileno(), self.targetfd)
         else:
-            encoding = self.tmpfile.encoding or "UTF-8"
-            errors = self.tmpfile.errors or "strict"
-            os.write(self.targetfd_save, _encode_for_replay(data, encoding, errors))
+            stream.flush()
+            saved_fd = os.dup(stream_fd)
+            try:
+                os.dup2(self.targetfd_save, stream_fd)
+                _write_to_stream(stream, data)
+            finally:
+                try:
+                    os.dup2(saved_fd, stream_fd)
+                finally:
+                    os.close(saved_fd)
 
 
 # MultiCapture

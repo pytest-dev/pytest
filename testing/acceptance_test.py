@@ -255,7 +255,7 @@ class TestGeneralUsage:
             """
             import sys
             print("should not be seen")
-            sys.stderr.write("stder42\\n")
+            sys.stderr.write("stderr42\\n")
         """
         )
         result = pytester.runpytest()
