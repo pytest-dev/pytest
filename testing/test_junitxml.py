@@ -1133,6 +1133,81 @@ class TestNonPython:
         assert "custom item runtest failed" in fnode.toxml()
 
 
+@pytest.mark.parametrize("log_passing_tests", [True, False])
+def test_skip_captures_output_once(
+    pytester: Pytester, run_and_parse: RunAndParse, log_passing_tests: bool
+) -> None:
+    pytester.makepyfile(
+        """
+        import sys
+        import pytest
+
+        @pytest.fixture
+        def cleanup():
+            yield
+            print("teardown output")
+            print("teardown error stream", file=sys.stderr)
+
+        def test_skip(cleanup):
+            print("call output")
+            print("call error stream", file=sys.stderr)
+            pytest.skip("skip reason")
+        """
+    )
+    result, dom = run_and_parse(
+        "-o",
+        "junit_logging=out-err",
+        "-o",
+        f"junit_log_passing_tests={log_passing_tests}",
+        family="xunit2",
+    )
+    result.assert_outcomes(skipped=1)
+    testcase = dom.get_first_by_tag("testcase")
+    (stdout,) = testcase.find_by_tag("system-out")
+    (stderr,) = testcase.find_by_tag("system-err")
+    assert stdout.toxml().count("call output") == 1
+    assert stdout.toxml().count("teardown output") == 1
+    assert stderr.toxml().count("call error stream") == 1
+    assert stderr.toxml().count("teardown error stream") == 1
+
+
+def test_capture_once_after_failure_and_teardown_skip(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import sys
+        import pytest
+
+        @pytest.fixture
+        def skip_teardown():
+            yield
+            print("before skip")
+            print("skip error stream", file=sys.stderr)
+            pytest.skip("skip at teardown")
+
+        def test_fail(skip_teardown):
+            print("before failure")
+            print("failure error stream", file=sys.stderr)
+            assert False
+        """
+    )
+    xml_path = pytester.path / "junit.xml"
+    result = pytester.runpytest(
+        f"--junitxml={xml_path}",
+        "-o",
+        "junit_logging=out-err",
+        "-o",
+        "junit_log_passing_tests=false",
+    )
+    result.assert_outcomes(failed=1, skipped=1)
+    testcase = DomDocument(minidom.parse(str(xml_path))).get_first_by_tag("testcase")
+    (stdout,) = testcase.find_by_tag("system-out")
+    (stderr,) = testcase.find_by_tag("system-err")
+    assert stdout.toxml().count("before failure") == 1
+    assert stdout.toxml().count("before skip") == 1
+    assert stderr.toxml().count("failure error stream") == 1
+    assert stderr.toxml().count("skip error stream") == 1
+
+
 @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
 def test_nullbyte(pytester: Pytester, junit_logging: _JunitLogging) -> None:
     # A null byte cannot occur in XML (see section 2.2 of the spec)

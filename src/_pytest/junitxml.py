@@ -202,7 +202,12 @@ class _NodeReporter:
         self.append(node)
 
     def write_captured_output(self, report: TestReport) -> None:
-        if not self.xml.log_passing_tests and report.passed:
+        # A passing teardown can still belong to a skipped test.
+        if (
+            not self.xml.log_passing_tests
+            and report.passed
+            and not any(node.get("type") == "pytest.skip" for node in self.nodes)
+        ):
             return
 
         content_out = report.capstdout
@@ -215,22 +220,25 @@ class _NodeReporter:
             content_all = self._prepare_content(content_log, " Captured Log ")
         if self.xml.logging in ["system-out", "out-err", "all"]:
             content_all += self._prepare_content(content_out, " Captured Out ")
-            self._write_content(report, content_all, "system-out")
+            self._write_content(content_all, "system-out")
             content_all = ""
         if self.xml.logging in ["system-err", "out-err", "all"]:
             content_all += self._prepare_content(content_err, " Captured Err ")
-            self._write_content(report, content_all, "system-err")
+            self._write_content(content_all, "system-err")
             content_all = ""
         if content_all:
-            self._write_content(report, content_all, "system-out")
+            self._write_content(content_all, "system-out")
 
     def _prepare_content(self, content: str, header: str) -> str:
         return "\n".join([header.center(80, "-"), content, ""])
 
-    def _write_content(self, report: TestReport, content: str, jheader: str) -> None:
-        tag = ET.Element(jheader)
+    def _write_content(self, content: str, tag_name: str) -> None:
+        # Teardown capture includes earlier phases of the same test.
+        tag = next((node for node in self.nodes if node.tag == tag_name), None)
+        if tag is None:
+            tag = ET.Element(tag_name)
+            self.append(tag)
         tag.text = bin_xml_escape(content)
-        self.append(tag)
 
     def append_pass(self, report: TestReport) -> None:
         self.add_stats("passed")
@@ -293,7 +301,6 @@ class _NodeReporter:
             )
             skipped.text = bin_xml_escape(details)
             self.append(skipped)
-            self.write_captured_output(report)
 
     def finalize(self) -> None:
         data = self.to_xml()
