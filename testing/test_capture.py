@@ -218,31 +218,6 @@ def test_capture_binary_uses_replaced_stream_codec(
         ("fd", "capfd"),
     ],
 )
-def test_capture_flushes_undecodable_bytes(
-    pytester: Pytester, monkeypatch: MonkeyPatch, method: str, capture_fixture: str
-) -> None:
-    """Raw bytes that decode with replacement do not break capture teardown."""
-    pytester.makepyfile(
-        f"""\
-        import sys
-
-        def test_encoding({capture_fixture}):
-            sys.stdout.buffer.write(b"\\xff")
-            sys.stdout.flush()
-        """
-    )
-    monkeypatch.setenv("PYTHONIOENCODING", "ascii")
-    result = pytester.runpytest_subprocess(f"--capture={method}")
-    result.assert_outcomes(passed=1)
-
-
-@pytest.mark.parametrize(
-    ("method", "capture_fixture"),
-    [
-        ("sys", "capsys"),
-        ("fd", "capfd"),
-    ],
-)
 @pytest.mark.parametrize(
     ("encoding", "errors", "data", "expected"),
     [
@@ -250,6 +225,7 @@ def test_capture_flushes_undecodable_bytes(
         ("utf-8", "surrogatepass", b"\xed\xa0\x80", "\ud800"),
         ("utf-8", "surrogatepass", b"\xff", "\ufffd"),
         ("utf-8", "surrogatepass", b"\xed\xa0\x80\xff", "\ud800\ufffd"),
+        ("ascii", "strict", b"\xff", "\ufffd"),
         ("utf-8-sig", "surrogatepass", b"\xef\xbb\xbf\xed\xa0\x80\xff", "\ud800\ufffd"),
         (
             "utf-8-sig",
