@@ -333,8 +333,7 @@ class TestPytestPluginManager:
     def test_consider_env_fails_to_import(
         self, monkeypatch: MonkeyPatch, pytestpm: PytestPluginManager
     ) -> None:
-        monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
-        monkeypatch.setenv("PYTEST_PLUGINS", "nonexisting", prepend=",")
+        monkeypatch.setenv("PYTEST_PLUGINS", "nonexisting", prepend=",", empty="skip")
         with pytest.raises(UsageError):
             pytestpm.consider_env()
 

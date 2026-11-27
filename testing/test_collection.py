@@ -1356,8 +1356,9 @@ def test_collect_pyargs_with_testpaths(
         ),
         encoding="utf-8",
     )
-    monkeypatch.delenv("PYTHONPATH", raising=False)
-    monkeypatch.setenv("PYTHONPATH", str(pytester.path), prepend=os.pathsep)
+    monkeypatch.setenv(
+        "PYTHONPATH", str(pytester.path), prepend=os.pathsep, empty="skip"
+    )
     with monkeypatch.context() as mp:
         mp.chdir(root)
         result = pytester.runpytest_subprocess()
