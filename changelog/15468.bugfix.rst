@@ -1,0 +1,1 @@
+Restore loggers' original disabled state after a run using :option:`--log-disable`, so subsequent calls to :func:`pytest.main` in the same process can capture logs normally.
