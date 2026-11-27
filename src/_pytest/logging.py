@@ -38,6 +38,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 
@@ -740,9 +741,10 @@ class LoggingPlugin:
         if not loggers_to_disable:
             return
 
+        monkeypatch = MonkeyPatch()
+        self._config.add_cleanup(monkeypatch.undo)
         for name in loggers_to_disable:
-            logger = logging.getLogger(name)
-            logger.disabled = True
+            monkeypatch.setattr(logging.getLogger(name), "disabled", True)
 
     def _create_formatter(self, log_format, log_date_format, auto_indent):
         # Color option doesn't exist if terminal plugin is disabled.
