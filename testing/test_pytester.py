@@ -704,6 +704,32 @@ def test_popen_default_stdin_stderr_and_stdin_None(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_popen_explicit_environment(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PYTESTER_ENV_VALUE", "parent")
+    monkeypatch.setenv("PYTESTER_ENV_INHERITED", "parent-only")
+    env = dict(os.environ, PYTESTER_ENV_VALUE="child")
+    del env["PYTESTER_ENV_INHERITED"]
+    original_env = env.copy()
+
+    with pytester.popen(
+        [
+            sys.executable,
+            "-c",
+            'import os; print(os.environ["PYTESTER_ENV_VALUE"]); '
+            'print(os.environ.get("PYTESTER_ENV_INHERITED"))',
+        ],
+        stdin=subprocess.DEVNULL,
+        env=env,
+    ) as proc:
+        stdout, stderr = proc.communicate(timeout=10)
+
+    assert proc.returncode == 0, stderr
+    assert stdout.splitlines() == [b"child", b"None"]
+    assert env == original_env
+
+
 def test_run_utf8_output(pytester: Pytester) -> None:
     """UTF-8 output from a command is decoded as UTF-8"""
     p1 = pytester.makepyfile(
