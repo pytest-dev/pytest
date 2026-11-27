@@ -1,0 +1,1 @@
+Require attribution of LLM-generated content with an Assisted-by commit trailer.

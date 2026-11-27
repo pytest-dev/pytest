@@ -11,7 +11,10 @@ from typing import Literal
 from typing import TextIO
 
 import pygments
+from pygments.formatter import Formatter
 from pygments.formatters.terminal import TerminalFormatter
+from pygments.formatters.terminal256 import Terminal256Formatter
+from pygments.formatters.terminal256 import TerminalTrueColorFormatter
 from pygments.lexer import Lexer
 from pygments.lexers.diff import DiffLexer
 from pygments.lexers.python import PythonLexer
@@ -213,14 +216,22 @@ class TerminalWriter:
         else:
             assert_never(lexer)
 
-    def _get_pygments_formatter(self) -> TerminalFormatter:
+    def _get_pygments_formatter(self) -> Formatter:
         from _pytest.config.exceptions import UsageError
 
         theme = os.getenv("PYTEST_THEME")
         theme_mode = os.getenv("PYTEST_THEME_MODE", "dark")
 
         try:
-            return TerminalFormatter(bg=theme_mode, style=theme)
+            if theme is None:
+                # The 16-color formatter maps tokens to the terminal's own
+                # palette; it has no notion of pygments styles.
+                return TerminalFormatter(bg=theme_mode)
+            # Pygments styles are RGB based, only the 256-color and true-color
+            # formatters render them (TerminalFormatter ignores ``style``).
+            if os.getenv("COLORTERM", "") in ("truecolor", "24bit"):
+                return TerminalTrueColorFormatter(style=theme)
+            return Terminal256Formatter(style=theme)
         except pygments.util.ClassNotFound as e:
             raise UsageError(
                 f"PYTEST_THEME environment variable has an invalid value: '{theme}'. "

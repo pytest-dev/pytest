@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -16,6 +17,7 @@ from textwrap import dedent
 from types import ModuleType
 from typing import Any
 import unittest.mock
+import uuid
 
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
@@ -33,6 +35,7 @@ from _pytest.pathlib import ImportMode
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import insert_missing_modules
 from _pytest.pathlib import is_importable
+from _pytest.pathlib import maybe_delete_a_garbage_dir
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
@@ -473,8 +476,15 @@ def test_access_denied_during_cleanup(tmp_path: Path, monkeypatch: MonkeyPatch) 
     assert not lock_path.is_file()
 
 
-def test_long_path_during_cleanup(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "maybe_delete", [maybe_delete_a_numbered_dir, maybe_delete_a_garbage_dir]
+)
+def test_long_path_during_cleanup(
+    tmp_path: Path, monkeypatch: MonkeyPatch, maybe_delete: Callable[[Path], None]
+) -> None:
     """Ensure that deleting long path works (particularly on Windows (#6775))."""
+    # Rename to garbage-0 on every run, not to a random name.
+    monkeypatch.setattr(uuid, "uuid4", lambda: 0)
     path = (tmp_path / ("a" * 250)).resolve()
     if sys.platform == "win32":
         # make sure that the full path is > 260 characters without any
@@ -485,8 +495,9 @@ def test_long_path_during_cleanup(tmp_path: Path) -> None:
         extended_path = str(path)
     os.mkdir(extended_path)
     assert os.path.isdir(extended_path)
-    maybe_delete_a_numbered_dir(path)
+    maybe_delete(path)
     assert not os.path.isdir(extended_path)
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_get_extended_length_path_str() -> None:

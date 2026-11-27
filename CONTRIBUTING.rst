@@ -232,10 +232,12 @@ coaxing a bot — we close and ban with prejudice. If you are a real person who 
 to trip a false positive, just talk to us; a human who understands their change is
 always welcome, and we would far rather talk to you than to a script.
 
-**Credit AI tools via attribution.** If AI agents helped produce your code or
-commits, consider adding ``Co-authored-by`` trailers to your commit messages to
-credit them. This is not required, but helps reviewers set expectations and is
-appreciated.
+**Credit AI tools via attribution.** If AI agents helped produce your code,
+commits, PR descriptions, comments, or other contributions, make sure to credit
+the tools you used. That helps reviewers set expectations and adapt their reviews
+to provide the kinds of feedback most useful for either manually written or
+LLM-generated content. In commit messages, use either a ``Co-authored-by`` or
+``Assisted-by:`` trailer which identifies the tool and model used.
 
 
 Context
