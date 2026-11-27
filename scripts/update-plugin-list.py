@@ -170,6 +170,7 @@ def iter_plugins() -> Iterator[PluginInfo]:
                 # Use a hard-coded pre-release version.
                 return packaging.version.Version("0.0.0alpha")
 
+        last_release = "N/A"
         releases = response.json()["releases"]
         for release in sorted(releases, key=version_sort_key, reverse=True):
             if releases[release]:
