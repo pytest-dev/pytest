@@ -18,6 +18,7 @@ import _pytest._code
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ExceptionInfoFormatter
+from _pytest._code.code import ReprEntry
 from _pytest._io import TerminalWriter
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
@@ -982,6 +983,40 @@ raise ValueError()
         lines = reprentry.lines
         assert lines[0] == "E   ValueError: hello"
         assert not lines[1:]
+
+    @pytest.mark.parametrize("style", ("line", "no"))
+    def test_repr_tracebackentry_compact_keeps_reprfileloc(
+        self, importasmod, tw_mock, style: TracebackStyle
+    ) -> None:
+        __tracebackhide__ = True
+        mod = importasmod(
+            """
+            def func1():
+                raise ValueError("hello")
+            def entry():
+                func1()
+        """
+        )
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
+        p = ExceptionInfoFormatter(style=style)
+        reprtb = p.repr_traceback(excinfo)
+        assert len(reprtb.reprentries) == 2
+
+        first, last = reprtb.reprentries
+        assert isinstance(first, ReprEntry)
+        assert isinstance(last, ReprEntry)
+        assert first.reprfileloc is not None
+        assert first.reprfileloc.path == mod.__file__
+        assert first.reprfileloc.lineno == 5
+        assert first.reprfileloc.message == "in entry"
+        assert last.reprfileloc is not None
+        assert last.reprfileloc.path == mod.__file__
+        assert last.reprfileloc.lineno == 3
+        assert last.reprfileloc.message == "in func1"
+
+        reprtb.toterminal(tw_mock)
+        assert tw_mock.lines == ["E   ValueError: hello"]
 
     def test_repr_traceback_tbfilter(self, importasmod):
         __tracebackhide__ = True
@@ -2296,3 +2331,50 @@ def test_check_error_notes_failure(
     with pytest.raises(AssertionError):
         with pytest.raises(type(error), match=match):
             raise error
+
+
+@pytest.mark.parametrize("tbstyle", ("line", "no"))
+def test_compact_tb_preserves_reprfileloc_for_plugins(
+    pytester: Pytester, tbstyle: str
+) -> None:
+    """Plugins inspecting report.longrepr still see frame locations under --tb=line/no (#14720)."""
+    pytester.makeconftest(
+        """
+        def pytest_runtest_logreport(report):
+            if report.when == "call" and report.failed:
+                entries = report.longrepr.reprtraceback.reprentries
+                locs = [
+                    (e.reprfileloc.path, e.reprfileloc.lineno, e.reprfileloc.message)
+                    for e in entries
+                    if e.reprfileloc is not None
+                ]
+                print(f"LOCS={locs}")
+                print(f"LONGREPR={str(report.longrepr)!r}")
+        """
+    )
+    p = pytester.makepyfile(
+        """
+        def inner():
+            raise ValueError("boom")
+        def middle():
+            inner()
+        def test_a():
+            middle()
+        """
+    )
+    result = pytester.runpytest("-s", f"--tb={tbstyle}")
+    assert result.ret == 1
+    expected_locs = [
+        (p.name, 6, "in test_a"),
+        (p.name, 4, "in middle"),
+        (p.name, 2, "in inner"),
+    ]
+    out = result.stdout.str()
+    assert f"LOCS={expected_locs}" in out
+    assert "LONGREPR='E   ValueError: boom'" in out
+    if tbstyle == "no":
+        result.stdout.no_fnmatch_line("*= FAILURES =*")
+    else:
+        result.stdout.no_fnmatch_line(f"*{p.name}:6:*")
+        result.stdout.no_fnmatch_line(f"*{p.name}:4:*")
+        result.stdout.fnmatch_lines([f"*{p.name}:2: ValueError: boom"])

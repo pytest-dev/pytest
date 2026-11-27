@@ -1,0 +1,1 @@
+``--tb=line`` and ``--tb=no`` now preserve ``reprfileloc`` on traceback entries (``ReprEntry``) so reporting plugins can inspect frame file locations without enabling verbose terminal traceback output.

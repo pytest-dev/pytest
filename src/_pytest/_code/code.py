@@ -1081,6 +1081,7 @@ class ExceptionInfoFormatter:
         excinfo: ExceptionInfo[BaseException] | None = None,
     ) -> ReprEntry:
         lines: list[str] = []
+        reprfileloc: ReprFileLocation | None
         style = (
             entry._repr_style
             if entry is not None and entry._repr_style is not None
@@ -1125,7 +1126,16 @@ class ExceptionInfoFormatter:
         else:
             if excinfo:
                 lines.extend(self.get_exconly(excinfo, indent=4))
-            return ReprEntry(lines, None, None, None, style)
+            reprfileloc = (
+                ReprFileLocation(
+                    self._makepath(entry.path),
+                    entry.lineno + 1,
+                    f"in {entry.name}",
+                )
+                if entry is not None and style in ("line", "no")
+                else None
+            )
+            return ReprEntry(lines, None, None, reprfileloc, style)
 
     def _makepath(self, path: Path | str) -> str:
         if not self.abspath and isinstance(path, Path):
@@ -1481,6 +1491,10 @@ class ReprEntry(TerminalRepr):
             self._write_entry_lines(tw)
             if self.reprlocals:
                 self.reprlocals.toterminal(tw, indent=" " * 8)
+            return
+
+        if self.style in ("line", "no"):
+            self._write_entry_lines(tw)
             return
 
         if self.reprfuncargs:
