@@ -1,0 +1,1 @@
+Added ``--capture=tee-fd`` capture mode and ``capteefd``/``capteefdbinary`` fixtures for FD-level capture with real-time terminal passthrough.

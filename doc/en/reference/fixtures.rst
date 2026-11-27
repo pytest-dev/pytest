@@ -39,6 +39,14 @@ Built-in fixtures
    :fixture:`capsysbinary`
         Capture, as bytes, output to ``sys.stdout`` and ``sys.stderr``.
 
+   :fixture:`capteefd`
+        Capture, as text, output to file descriptors 1 and 2, with real-time
+        pass-through.
+
+   :fixture:`capteefdbinary`
+        Capture, as bytes, output to file descriptors 1 and 2, with real-time
+        pass-through.
+
    :fixture:`cache`
         Store and retrieve values across pytest runs.
 
