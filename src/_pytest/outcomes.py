@@ -307,8 +307,6 @@ def importorskip(
 
     __tracebackhide__ = True
     if modname is None:
-        if minversion is not None:
-            raise TypeError("'minversion' requires 'modname' to be given")
         return _importorskip_context(reason, exc_type)
 
     compile(modname, "", "eval")  # to catch syntaxerrors
