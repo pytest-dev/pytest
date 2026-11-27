@@ -647,6 +647,27 @@ def test_run_stdin(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_run_with_unread_stdin(pytester: Pytester) -> None:
+    result = pytester.run(
+        sys.executable,
+        "-c",
+        "raise SystemExit(7)",
+        stdin=b"x" * (1024 * 1024),
+    )
+    assert result.ret == 7
+
+
+def test_run_timeout_with_unread_stdin(pytester: Pytester) -> None:
+    with pytest.raises(pytester.TimeoutExpired):
+        pytester.run(
+            sys.executable,
+            "-c",
+            "import time; time.sleep(1)",
+            stdin=b"x" * (1024 * 1024),
+            timeout=0.1,
+        )
+
+
 def test_popen_stdin_pipe(pytester: Pytester) -> None:
     proc = pytester.popen(
         [sys.executable, "-c", "import sys; print(sys.stdin.read())"],

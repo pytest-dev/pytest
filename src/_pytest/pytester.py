@@ -25,6 +25,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import traceback
 from typing import Any
 from typing import Final
@@ -1443,8 +1444,18 @@ class Pytester:
         print("running:", *cmdargs)
         print("     in:", Path.cwd())
 
-        with p1.open("w", encoding="utf8") as f1, p2.open("w", encoding="utf8") as f2:
+        with (
+            p1.open("w", encoding="utf8") as f1,
+            p2.open("w", encoding="utf8") as f2,
+            contextlib.ExitStack() as stack,
+        ):
             instant = timing.Instant()
+            if isinstance(stdin, bytes):
+                # Feeding a pipe here could block before we can enforce the timeout.
+                input_file = stack.enter_context(tempfile.TemporaryFile())
+                input_file.write(stdin)
+                input_file.seek(0)
+                stdin = input_file
             popen = self.popen(
                 cmdargs,
                 stdin=stdin,
