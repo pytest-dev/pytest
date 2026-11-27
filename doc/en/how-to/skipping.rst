@@ -193,44 +193,16 @@ the test. You can also skip based on the version number of a library:
 The version will be read from the specified
 module's ``__version__`` attribute.
 
-.. _import-or-skip:
-
-Skipping on a missing import while keeping type information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Since :func:`pytest.importorskip` returns the module as ``Any``, static type
-checkers cannot see the real type of the module.
-To keep full type information, call :func:`pytest.importorskip` without
-arguments and use it as a context manager, with normal ``import``
-statements in the body:
+To keep type information, which :func:`pytest.importorskip` loses by returning ``Any``,
+call it without arguments and use it as a context manager with regular imports:
 
 .. code-block:: python
 
     with pytest.importorskip():
         import docutils
-        from docutils import nodes
 
-If any of the imports in the ``with`` block fail, this will lead to a skip
-outcome of the test, or of the whole module if used at module level.
-
-Like the function form, only a missing module (:class:`ModuleNotFoundError`)
-causes a skip by default. Pass ``exc_type=ImportError`` to also skip when the
-import fails for other reasons, and ``reason`` to customize the skip message:
-
-.. code-block:: python
-
-    with pytest.importorskip(reason="needs docutils", exc_type=ImportError):
-        import docutils
-
-.. note::
-
-    Keep the body of the ``with`` block to import statements only: any
-    matching exception raised in the body causes a skip, which could hide
-    real errors.
-
-    The ``minversion`` parameter is not supported in this form, as the
-    module is not known to :func:`pytest.importorskip`. Check the version
-    yourself after the ``with`` block instead.
+``reason`` and ``exc_type`` are supported, ``minversion`` is not.
+Keep the body to imports only, as any matching exception raised there causes a skip.
 
 Summary
 ~~~~~~~

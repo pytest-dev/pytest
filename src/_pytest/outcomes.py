@@ -203,17 +203,28 @@ def _importorskip_context(
     reason: str | None,
     exc_type: type[ImportError] | None,
 ) -> Iterator[None]:
+    import warnings
+
     __tracebackhide__ = True
 
     if exc_type is None:
         exc_type = ModuleNotFoundError
 
-    try:
-        yield
-    except exc_type as exc:
-        if reason is None:
-            reason = f"could not import: {exc}"
-        raise Skipped(reason, allow_module_level=True) from None
+    skipped: Skipped | None = None
+
+    with warnings.catch_warnings():
+        # Same as the function form: ignore ImportWarnings.
+        warnings.simplefilter("ignore")
+
+        try:
+            yield
+        except exc_type as exc:
+            # Do not raise or issue warnings inside the catch_warnings() block.
+            if reason is None:
+                reason = f"could not import: {exc}"
+            skipped = Skipped(reason, allow_module_level=True)
+    if skipped:
+        raise skipped
 
 
 @overload
@@ -243,11 +254,6 @@ def importorskip(
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
     current test if the module cannot be imported.
-
-    When called without ``modname``, returns a context manager instead. The
-    imports inside the ``with`` block are performed by the user, so type
-    checkers keep the full type information of the imported modules.
-    Only ``reason`` and ``exc_type`` are supported in this form.
 
     :param modname:
         The name of the module to import.
@@ -279,23 +285,19 @@ def importorskip(
 
         docutils = pytest.importorskip("docutils")
 
-    Context manager form, which keeps type information::
+    Without ``modname``, it returns a context manager instead, which keeps the
+    type information of the imports (``minversion`` is not supported)::
 
         with pytest.importorskip():
             import docutils
-            from docutils import nodes
-
-    Keep the body to import statements only, as any matching exception raised
-    in the body causes a skip.
 
     .. versionadded:: 8.2
 
         The ``exc_type`` parameter.
 
-    .. versionadded:: 9.3
+    .. versionadded:: 10.0
 
-        The context manager form, used by calling ``importorskip`` without
-        ``modname``.
+        The context manager form.
 
     .. versionchanged:: 9.1
 
