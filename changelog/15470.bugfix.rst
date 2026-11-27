@@ -1,0 +1,3 @@
+Byte-valued parametrization IDs now work when string escaping is disabled.
+:meth:`pytest.Pytester.popen` honors an explicit environment, and :meth:`pytest.Pytester.run` preserves the child process's exit code and timeout behavior when the child leaves byte input unread.
+JUnit XML now includes teardown output for skipped tests and records each captured stream once.
