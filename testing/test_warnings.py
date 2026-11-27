@@ -425,6 +425,98 @@ def test_option_precedence_mark(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["* 1 failed in*"])
 
 
+def test_filterwarnings_subclass_mark_beats_base_class(pytester: Pytester) -> None:
+    """Closest-first marker lookup must not hand precedence to the base class.
+
+    The filter applied last wins, so ``filterwarnings`` keeps applying the MRO
+    base-first, as it did before #14329.
+    """
+    pytester.makepyfile(
+        """
+        import pytest, warnings
+
+        @pytest.mark.filterwarnings("error")
+        class TestBase:
+            pass
+
+        @pytest.mark.filterwarnings("ignore")
+        class TestChild(TestBase):
+            def test_it(self):
+                warnings.warn(UserWarning("boom"))
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_filterwarnings_closest_mark_wins(pytester: Pytester) -> None:
+    """A ``filterwarnings`` mark on a closer node beats one on a farther node:
+    parametrization over function over class over module (#10406).
+
+    The filter applied last wins, so marks used to be applied the wrong way
+    round, and the farthest mark won -- except where a Function stored its
+    parametrization marks after its decorator marks and the two inversions
+    cancelled out.
+    """
+    pytester.makepyfile(
+        """
+        import pytest, warnings
+
+        pytestmark = pytest.mark.filterwarnings("error")
+
+        def warn():
+            warnings.warn(UserWarning("boom"))
+
+        @pytest.mark.filterwarnings("ignore")
+        def test_function_beats_module():
+            warn()
+
+        @pytest.mark.filterwarnings("error")
+        class TestClassError:
+            @pytest.mark.filterwarnings("ignore")
+            def test_method_beats_class(self):
+                warn()
+
+            @pytest.mark.parametrize(
+                "_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))]
+            )
+            def test_param_beats_class(self, _):
+                warn()
+
+        @pytest.mark.filterwarnings("error")
+        @pytest.mark.parametrize(
+            "_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))]
+        )
+        def test_param_beats_function_decorated_above(_):
+            warn()
+
+        @pytest.mark.parametrize(
+            "_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))]
+        )
+        @pytest.mark.filterwarnings("error")
+        def test_param_beats_function_decorated_below(_):
+            warn()
+
+        @pytest.mark.filterwarnings("ignore")
+        class TestBase:
+            pass
+
+        @pytest.mark.filterwarnings("error")
+        class TestChild(TestBase):
+            def test_subclass_beats_base(self):
+                with pytest.raises(UserWarning):
+                    warn()
+
+        @pytest.mark.filterwarnings("ignore:boom")
+        @pytest.mark.filterwarnings("error")
+        def test_same_node_upper_decorator_still_wins():
+            warn()
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=7)
+
+
 def test_accept_unknown_category(pytester: Pytester) -> None:
     """Category types that can't be imported don't cause failure (#13732)."""
     pytester.makeini(

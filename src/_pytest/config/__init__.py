@@ -911,6 +911,18 @@ class PytestPluginManager(PluginManager):
         self, spec: types.ModuleType | str | Sequence[str] | None
     ) -> None:
         plugins = _get_plugin_specs_as_list(spec)
+        # Pre-mark plugins so side-effect imports are rewritten too (#2353).
+        # Skip blocked, registered or already imported ones. Their own import
+        # handles the warning.
+        self.rewrite_hook.mark_rewrite(
+            *(
+                _resolve_plugin_import_spec(plugin)
+                for plugin in plugins
+                if _resolve_plugin_import_spec(plugin) not in sys.modules
+                and not self.is_blocked(plugin)
+                and self.get_plugin(plugin) is None
+            )
+        )
         for import_spec in plugins:
             self.import_plugin(import_spec, consider_entry_points=True)
 
@@ -930,7 +942,7 @@ class PytestPluginManager(PluginManager):
         if self.is_blocked(modname) or self.get_plugin(modname) is not None:
             return
 
-        importspec = "_pytest." + modname if modname in builtin_plugins else modname
+        importspec = _resolve_plugin_import_spec(modname)
         self.rewrite_hook.mark_rewrite(importspec)
 
         if consider_entry_points:
@@ -1006,6 +1018,11 @@ def _get_plugin_specs_as_list(
     raise UsageError(
         f"Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: {specs!r}"
     )
+
+
+def _resolve_plugin_import_spec(modname: str) -> str:
+    """Resolve a plugin name to its import name (builtins live under ``_pytest``)."""
+    return "_pytest." + modname if modname in builtin_plugins else modname
 
 
 def _plugin_rewrite_name(module: str) -> str | None:

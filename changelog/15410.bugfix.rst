@@ -1,0 +1,5 @@
+:envvar:`PYTEST_THEME` now actually changes the code highlighting colors.
+
+Previously the style was validated but ignored, because pygments' 16-color ``TerminalFormatter`` does not support styles.
+When :envvar:`PYTEST_THEME` is set, pytest now uses the 256-color formatter, or the true-color formatter when ``COLORTERM`` is ``truecolor`` or ``24bit``.
+:envvar:`PYTEST_THEME_MODE` only applies when no theme is set.

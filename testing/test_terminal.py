@@ -1469,6 +1469,41 @@ def test_pass_output_reporting(pytester: Pytester) -> None:
     )
 
 
+def test_pass_output_reporting_teardown_per_test(pytester: Pytester) -> None:
+    """Each test's captured teardown output is shown under that test (#15406)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(autouse=True)
+        def fix(request):
+            yield
+            print(f"teardown {request.node.name}")
+
+        def test_a():
+            print("call a")
+
+        def test_b():
+            print("call b")
+    """
+    )
+    result = pytester.runpytest("-rP")
+    result.stdout.fnmatch_lines(
+        [
+            "*_ test_a _*",
+            "call a",
+            "*- Captured stdout teardown -*",
+            "teardown test_a",
+            "*_ test_b _*",
+            "call b",
+            "*- Captured stdout teardown -*",
+            "teardown test_b",
+        ],
+        consecutive=False,
+    )
+    assert result.stdout.str().count("teardown test_") == 2
+
+
 def test_color_yes(pytester: Pytester, color_mapping) -> None:
     p1 = pytester.makepyfile(
         """
@@ -3010,22 +3045,44 @@ class TestCodeHighlight:
     def test_code_highlight_custom_theme(
         self, pytester: Pytester, color_mapping, monkeypatch: MonkeyPatch
     ) -> None:
+        """PYTEST_THEME is rendered with the 256-color formatter (#15410)."""
         pytester.makepyfile(
             """
             def test_foo():
                 assert 1 == 10
         """
         )
-        monkeypatch.setenv("PYTEST_THEME", "solarized-dark")
-        monkeypatch.setenv("PYTEST_THEME_MODE", "dark")
+        monkeypatch.delenv("COLORTERM", raising=False)
+        # The "bw" style only uses bold/italic, no colors.
+        monkeypatch.setenv("PYTEST_THEME", "bw")
         result = pytester.runpytest("--color=yes")
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {reset}{kw}def{hl-reset}{kwspace}{function}test_foo{hl-reset}():{endline}",
-                    ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
+                    "    {reset}\x1b[01mdef\x1b[00m test_foo():",
+                    ">       \x1b[01massert\x1b[00m 1 == 10",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
+            )
+        )
+
+    def test_code_highlight_custom_theme_truecolor(
+        self, pytester: Pytester, color_mapping, monkeypatch: MonkeyPatch
+    ) -> None:
+        """PYTEST_THEME uses true colors when the terminal advertises them (#15410)."""
+        pytester.makepyfile(
+            """
+            def test_foo():
+                assert 1 == 10
+        """
+        )
+        monkeypatch.setenv("COLORTERM", "truecolor")
+        monkeypatch.setenv("PYTEST_THEME", "solarized-dark")
+        result = pytester.runpytest("--color=yes")
+        # solarized-dark renders keywords as #859900.
+        result.stdout.fnmatch_lines(
+            color_mapping.format_for_fnmatch(
+                ["    {reset}\x1b[38;2;133;153;0mdef\x1b[39m*test_foo*"]
             )
         )
 

@@ -1255,9 +1255,14 @@ Environment variables that can be used to change pytest's behavior.
 
    Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
 
+   When set, code is highlighted with 256 colors, or with true colors if the
+   ``COLORTERM`` environment variable is ``truecolor`` or ``24bit``.
+   When unset, pytest uses the terminal's own 16-color palette.
+
 .. envvar:: PYTEST_THEME_MODE
 
-   Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
+   Selects the *dark* (default) or *light* variant of the default 16-color highlighting.
+   Has no effect when :envvar:`PYTEST_THEME` is set.
 
 .. envvar:: PY_COLORS
 

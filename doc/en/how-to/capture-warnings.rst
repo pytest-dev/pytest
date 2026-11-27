@@ -178,6 +178,10 @@ You can also pass multiple filters to a single mark by providing multiple argume
     This means in practice that filters from earlier :ref:`@pytest.mark.filterwarnings <pytest.mark.filterwarnings ref>` decorators
     take precedence over filters from later decorators, as illustrated in the example above.
 
+Across levels, the closest mark takes precedence: a mark from :ref:`parametrization <pytest.mark.parametrize ref>`
+over one on the test function, the function over its class, a class over its base classes,
+and a class over the module.
+
 
 Filters applied using a mark take precedence over filters passed on the command line or configured
 by the :confval:`filterwarnings` configuration option.
