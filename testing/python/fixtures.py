@@ -4201,7 +4201,7 @@ class TestShowFixtures:
         self, pytester: Pytester
     ) -> None:
         """--fixtures must not crash when the same fixture function is
-        registered under two nodes (#15378)."""
+        registered under two nodes, and must list it only once (#15378)."""
         pytester.syspathinsert()
         pytester.makefile(
             ".py",
@@ -4225,7 +4225,12 @@ class TestShowFixtures:
             )
         result = pytester.runpytest("--fixtures")
         assert result.ret == 0
-        result.stdout.fnmatch_lines(["*foo -- shared.py:*"])
+        foo_lines = [
+            line
+            for line in result.stdout.lines
+            if line.strip().startswith("foo -- shared.py:")
+        ]
+        assert len(foo_lines) == 1
 
 
 class TestContextManagerFixtureFuncs:

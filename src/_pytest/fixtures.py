@@ -2522,7 +2522,12 @@ def _showfixtures_main(config: Config, session: Session) -> None:
 
     fm = session._fixturemanager
     available = []
+    seen: set[tuple[str, str]] = set()
     for fixturedef in fm._get_all_fixture_defs():
+        loc = getlocation(fixturedef.func, invocation_dir)
+        if (fixturedef.argname, loc) in seen:
+            continue
+        seen.add((fixturedef.argname, loc))
         available.append(
             (
                 len(fixturedef.baseid),
