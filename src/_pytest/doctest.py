@@ -486,7 +486,7 @@ def _patch_unwrap_mock_aware() -> Generator[None]:
             if stop is None or stop is _is_mocked:
                 return real_unwrap(func, stop=_is_mocked)
             _stop = stop
-            return real_unwrap(func, stop=lambda obj: _is_mocked(obj) or _stop(func))
+            return real_unwrap(func, stop=lambda obj: _is_mocked(obj) or _stop(obj))
         except Exception as e:
             warnings.warn(
                 f"Got {e!r} when unwrapping {func!r}.  This is usually caused "

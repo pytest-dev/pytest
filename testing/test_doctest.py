@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from functools import wraps
 import inspect
 from pathlib import Path
 import sys
 import textwrap
+from unittest.mock import Mock
 
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
@@ -1810,6 +1812,80 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, pytester: Py
     )
     result = pytester.runpytest("--doctest-modules")
     result.stdout.fnmatch_lines(["* 1 passed *"])
+
+
+@pytest.mark.parametrize("stop_at", ["outer", "middle", "inner", None])
+def test_unwrap_respects_stop(stop_at):
+    """The stop predicate must see each wrapper, as with inspect.unwrap (#9778)."""
+
+    def inner():
+        pass
+
+    @wraps(inner)
+    def middle():
+        pass
+
+    @wraps(middle)
+    def outer():
+        pass
+
+    stop_target = {"outer": outer, "middle": middle, "inner": inner}.get(stop_at)
+    seen = []
+
+    def stop(obj):
+        seen.append(obj)
+        return obj is stop_target
+
+    expected = inspect.unwrap(outer, stop=stop)
+    expected_seen = seen.copy()
+    seen.clear()
+    real_unwrap = inspect.unwrap
+    with _patch_unwrap_mock_aware():
+        assert inspect.unwrap(outer, stop=stop) is expected
+        assert seen == expected_seen
+    assert inspect.unwrap is real_unwrap
+
+
+def test_unwrap_preserves_inner_signature():
+    """inspect.signature must stop at an inner wrapper's custom signature (#9778)."""
+
+    def inner(value):
+        return value
+
+    @wraps(inner)
+    def middle(value):
+        return inner(value)
+
+    expected = inspect.Signature(
+        [inspect.Parameter("custom", inspect.Parameter.KEYWORD_ONLY)]
+    )
+    setattr(middle, "__signature__", expected)
+
+    @wraps(middle, updated=())
+    def outer(value):
+        return middle(value)
+
+    assert inspect.signature(outer) == expected
+    with _patch_unwrap_mock_aware():
+        assert inspect.signature(outer) == expected
+
+
+@pytest.mark.parametrize("wrapped", [False, True])
+@pytest.mark.parametrize("stop_kind", ["default", "is_mocked", "custom"])
+def test_unwrap_stops_at_mock(wrapped, stop_kind):
+    mocked = Mock()
+
+    @wraps(mocked, assigned=(), updated=())
+    def wrapper():
+        pass
+
+    def custom_stop(obj):
+        assert obj is not mocked
+        return False
+
+    stop = {"default": None, "is_mocked": _is_mocked, "custom": custom_stop}[stop_kind]
+    with _patch_unwrap_mock_aware():
+        assert inspect.unwrap(wrapper if wrapped else mocked, stop=stop) is mocked
 
 
 class Broken:

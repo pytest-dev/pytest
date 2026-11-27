@@ -1,0 +1,2 @@
+Fixed doctest's mock-aware ``inspect.unwrap`` wrapper to pass each wrapped object to custom ``stop`` predicates, matching the standard-library behavior.
+This also preserves custom signatures defined on inner wrappers.
