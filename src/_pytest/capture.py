@@ -398,10 +398,7 @@ _SURROGATEPASS_ENCODINGS = frozenset(
 
 
 def _supports_surrogatepass(encoding: str) -> bool:
-    try:
-        return codecs.lookup(encoding).name in _SURROGATEPASS_ENCODINGS
-    except LookupError:
-        return False
+    return codecs.lookup(encoding).name in _SURROGATEPASS_ENCODINGS
 
 
 def _capture_decode_error(exc: UnicodeError) -> tuple[str, int]:
