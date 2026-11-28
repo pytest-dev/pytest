@@ -4,11 +4,8 @@
 from __future__ import annotations
 
 import bdb
-from collections.abc import Callable
-from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Sequence
-from contextlib import contextmanager
 import functools
 import inspect
 import os
@@ -20,7 +17,6 @@ import traceback
 import types
 from typing import Any
 from typing import TYPE_CHECKING
-import warnings
 
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
@@ -40,7 +36,6 @@ from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
 from _pytest.python import Module
-from _pytest.warning_types import PytestWarning
 
 
 if TYPE_CHECKING:
@@ -464,36 +459,6 @@ def _check_all_skipped(test: doctest.DocTest) -> None:
         skip("all tests skipped by +SKIP option")
 
 
-@contextmanager
-def _patch_unwrap_mock_aware() -> Generator[None]:
-    """Context manager which replaces ``inspect.unwrap`` with a version
-    that's aware of mock objects and doesn't recurse into them."""
-    real_unwrap = inspect.unwrap
-
-    def _mock_aware_unwrap(
-        func: Callable[..., Any], *, stop: Callable[[Any], Any] | None = None
-    ) -> Any:
-        try:
-            if stop is None or stop is _is_mocked:
-                return real_unwrap(func, stop=_is_mocked)
-            _stop = stop
-            return real_unwrap(func, stop=lambda obj: _is_mocked(obj) or _stop(func))
-        except Exception as e:
-            warnings.warn(
-                f"Got {e!r} when unwrapping {func!r}.  This is usually caused "
-                "by a violation of Python's object protocol; see e.g. "
-                "https://github.com/pytest-dev/pytest/issues/5080",
-                PytestWarning,
-            )
-            raise
-
-    inspect.unwrap = _mock_aware_unwrap
-    try:
-        yield
-    finally:
-        inspect.unwrap = real_unwrap
-
-
 class DoctestModule(Module):
     def collect(self) -> Iterable[DoctestItem]:
         import doctest
@@ -503,9 +468,11 @@ class DoctestModule(Module):
                 """Stop unwrapping at mock objects: ``mock.call.__wrapped__``
                 is always a new object, so the stdlib unwraps it up to
                 ``sys.getrecursionlimit()`` (#15333)."""
-                with _patch_unwrap_mock_aware():
-                    # Type ignored because this is a private function.
-                    return super()._is_routine(obj)  # type:ignore[misc,no-any-return]
+                try:
+                    obj = inspect.unwrap(obj, stop=_is_mocked)  # type: ignore[arg-type]
+                except ValueError:
+                    pass
+                return inspect.isroutine(obj)
 
             py_ver_info_minor = sys.version_info[:2]
             is_find_lineno_broken = (

@@ -1,17 +1,13 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-from collections.abc import Callable
-import inspect
 from pathlib import Path
 import sys
 import textwrap
 
-from _pytest.compat import _is_mocked
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
 from _pytest.doctest import _is_setup_py
-from _pytest.doctest import _patch_unwrap_mock_aware
 from _pytest.doctest import DoctestItem
 from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
@@ -1836,36 +1832,6 @@ def test_doctest_mock_objects_unwrap_stops_early(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("--doctest-modules")
     result.stdout.fnmatch_lines(["* 1 passed *"])
-
-
-class Broken:
-    def __getattr__(self, _):
-        raise KeyError("This should be an AttributeError")
-
-
-@pytest.mark.parametrize(  # pragma: no branch (lambdas are not called)
-    "stop",
-    [
-        None,
-        pytest.param(_is_mocked, id="is_mocked"),
-        pytest.param(lambda f: None, id="lambda_none"),
-        pytest.param(lambda f: False, id="lambda_false"),
-        pytest.param(lambda f: True, id="lambda_true"),
-    ],
-)
-def test_warning_on_unwrap_of_broken_object(
-    stop: Callable[[object], object] | None,
-) -> None:
-    bad_instance = Broken()
-    assert inspect.unwrap.__module__ == "inspect"
-    with _patch_unwrap_mock_aware():
-        assert inspect.unwrap.__module__ != "inspect"
-        with pytest.warns(
-            pytest.PytestWarning, match="^Got KeyError.* when unwrapping"
-        ):
-            with pytest.raises(KeyError):
-                inspect.unwrap(bad_instance, stop=stop)  # type: ignore[arg-type]
-    assert inspect.unwrap.__module__ == "inspect"
 
 
 def test_is_setup_py_not_named_setup_py(tmp_path: Path) -> None:
