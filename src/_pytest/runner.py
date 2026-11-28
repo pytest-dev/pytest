@@ -128,6 +128,28 @@ def runtestprotocol(
         # This only happens if the item is re-run, as is done by
         # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
+    saved_exceptions: list[
+        tuple[
+            BaseException,
+            types.TracebackType | None,
+            BaseException | None,
+            BaseException | None,
+            bool,
+        ]
+    ] = []
+    callspec = getattr(item, "callspec", None)
+    if callspec is not None:
+        for val in callspec.params.values():
+            if isinstance(val, BaseException):
+                saved_exceptions.append(
+                    (
+                        val,
+                        val.__traceback__,
+                        val.__context__,
+                        val.__cause__,
+                        val.__suppress_context__,
+                    )
+                )
     try:
         rep = call_and_report(item, "setup", log)
         reports = [rep]
@@ -148,6 +170,11 @@ def runtestprotocol(
         if hasrequest:
             item._request = False  # type: ignore[attr-defined]
             item.funcargs = None  # type: ignore[attr-defined]
+        for exc, tb, ctx, cause, suppress in saved_exceptions:
+            exc.__traceback__ = tb
+            exc.__context__ = ctx
+            exc.__cause__ = cause
+            exc.__suppress_context__ = suppress
     return reports
 
 
