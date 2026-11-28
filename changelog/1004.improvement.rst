@@ -1,0 +1,1 @@
+Errors in the short test summary (``-rE``) now mention the phase they occurred in, for example ``ERROR at teardown of test_foo.py::test_foo``, matching how ``XFAIL`` entries are already displayed.
