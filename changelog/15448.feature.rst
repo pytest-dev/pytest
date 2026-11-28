@@ -1,0 +1,2 @@
+:func:`pytest.importorskip` can now be used as a context manager by calling it without a module name, for example ``with pytest.importorskip(): import requests``.
+Since the imports are regular ``import`` statements, type checkers see the real module types instead of ``Any``.

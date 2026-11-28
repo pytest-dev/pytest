@@ -193,6 +193,17 @@ the test. You can also skip based on the version number of a library:
 The version will be read from the specified
 module's ``__version__`` attribute.
 
+To keep type information, which :func:`pytest.importorskip` loses by returning ``Any``,
+call it without arguments and use it as a context manager with regular imports:
+
+.. code-block:: python
+
+    with pytest.importorskip():
+        import docutils
+
+``reason`` and ``exc_type`` are supported, ``minversion`` is not.
+Keep the body to imports only, as any matching exception raised there causes a skip.
+
 Summary
 ~~~~~~~
 

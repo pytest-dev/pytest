@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from functools import partial
+import importlib
 import inspect
 import os
 from pathlib import Path
@@ -897,6 +898,52 @@ class TestImportOrSkipExcType:
             ["*ImportError: required library foobar not compiled properly*"]
         )
         result.assert_outcomes(failed=1)
+
+
+class TestImportOrSkipContextManager:
+    """Tests for the ``with pytest.importorskip():`` form."""
+
+    def test_skips_when_module_missing(self) -> None:
+        with pytest.raises(pytest.skip.Exception):
+            with pytest.importorskip():
+                import TestImportOrSkipContextManager_missing  # noqa: F401
+
+    def test_body_runs_when_module_present(self) -> None:
+        ran = False
+        with pytest.importorskip():
+            import json
+
+            ran = True
+        assert ran
+        assert json.dumps(1) == "1"
+
+    def test_import_error_handling(self, pytester: Pytester) -> None:
+        fn = pytester.makepyfile("raise ImportError('some specific problem')")
+        pytester.syspathinsert()
+
+        with pytest.raises(ImportError, match="some specific problem"):
+            with pytest.importorskip():
+                importlib.import_module(fn.stem)
+
+        with pytest.raises(pytest.skip.Exception):
+            with pytest.importorskip(exc_type=ImportError):
+                importlib.import_module(fn.stem)
+
+    def test_module_level_skip_with_reason(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            with pytest.importorskip(reason="just because"):
+                import foobarbaz_cm
+
+            def test_foo():
+                pass
+            """
+        )
+        result = pytester.runpytest("-ra")
+        result.stdout.fnmatch_lines(["*just because*"])
+        result.stdout.fnmatch_lines(["*collected 0 items / 1 skipped*"])
 
 
 def test_importorskip_dev_module(monkeypatch) -> None:

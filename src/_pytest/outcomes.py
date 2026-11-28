@@ -3,11 +3,14 @@ functions creating them."""
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+import contextlib
 import importlib
 import sys
 from typing import Any
 from typing import ClassVar
 from typing import NoReturn
+from typing import overload
 
 
 class OutcomeException(BaseException):
@@ -195,8 +198,55 @@ class _XFail:
 xfail: _XFail = _XFail()
 
 
+@contextlib.contextmanager
+def _importorskip_context(
+    reason: str | None,
+    exc_type: type[ImportError] | None,
+) -> Iterator[None]:
+    import warnings
+
+    __tracebackhide__ = True
+
+    if exc_type is None:
+        exc_type = ModuleNotFoundError
+
+    skipped: Skipped | None = None
+
+    with warnings.catch_warnings():
+        # Same as the function form: ignore ImportWarnings.
+        warnings.simplefilter("ignore")
+
+        try:
+            yield
+        except exc_type as exc:
+            # Do not raise or issue warnings inside the catch_warnings() block.
+            if reason is None:
+                reason = f"could not import: {exc}"
+            skipped = Skipped(reason, allow_module_level=True)
+    if skipped:
+        raise skipped
+
+
+@overload
 def importorskip(
     modname: str,
+    minversion: str | None = None,
+    reason: str | None = None,
+    *,
+    exc_type: type[ImportError] | None = None,
+) -> Any: ...
+
+
+@overload
+def importorskip(
+    *,
+    reason: str | None = None,
+    exc_type: type[ImportError] | None = None,
+) -> contextlib.AbstractContextManager[None]: ...
+
+
+def importorskip(
+    modname: str | None = None,
     minversion: str | None = None,
     reason: str | None = None,
     *,
@@ -235,9 +285,19 @@ def importorskip(
 
         docutils = pytest.importorskip("docutils")
 
+    Without ``modname``, it returns a context manager instead, which keeps the
+    type information of the imports (``minversion`` is not supported)::
+
+        with pytest.importorskip():
+            import docutils
+
     .. versionadded:: 8.2
 
         The ``exc_type`` parameter.
+
+    .. versionadded:: 10.0
+
+        The context manager form.
 
     .. versionchanged:: 9.1
 
@@ -246,6 +306,9 @@ def importorskip(
     import warnings
 
     __tracebackhide__ = True
+    if modname is None:
+        return _importorskip_context(reason, exc_type)
+
     compile(modname, "", "eval")  # to catch syntaxerrors
 
     # Keep the public signature compatible while using the pytest 9.1 default behavior.
