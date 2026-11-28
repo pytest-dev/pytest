@@ -1,17 +1,13 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-from collections.abc import Callable
-import inspect
 from pathlib import Path
 import sys
 import textwrap
 
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
-from _pytest.doctest import _is_mocked
 from _pytest.doctest import _is_setup_py
-from _pytest.doctest import _patch_unwrap_mock_aware
 from _pytest.doctest import DoctestItem
 from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
@@ -1812,34 +1808,51 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, pytester: Py
     result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
-class Broken:
-    def __getattr__(self, _):
-        raise KeyError("This should be an AttributeError")
+def test_doctest_mock_objects_unwrap_stops_early(pytester: Pytester) -> None:
+    """Collection must not follow mock-like ``__wrapped__`` chains up to the
+    recursion limit (#15333)."""
+    pytester.makepyfile(
+        """
+        '''
+        >>> Probe.hits < 5
+        True
+        '''
+
+        class Probe:
+            # Like mock.call: every attribute exists, __wrapped__ is a new object.
+            hits = 0
+
+            def __getattr__(self, name):
+                if name == "__wrapped__":
+                    type(self).hits += 1
+                return Probe()
+
+        probe = Probe()
+        """
+    )
+    result = pytester.runpytest("--doctest-modules")
+    result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
-@pytest.mark.parametrize(  # pragma: no branch (lambdas are not called)
-    "stop",
-    [
-        None,
-        pytest.param(_is_mocked, id="is_mocked"),
-        pytest.param(lambda f: None, id="lambda_none"),
-        pytest.param(lambda f: False, id="lambda_false"),
-        pytest.param(lambda f: True, id="lambda_true"),
-    ],
-)
-def test_warning_on_unwrap_of_broken_object(
-    stop: Callable[[object], object] | None,
-) -> None:
-    bad_instance = Broken()
-    assert inspect.unwrap.__module__ == "inspect"
-    with _patch_unwrap_mock_aware():
-        assert inspect.unwrap.__module__ != "inspect"
-        with pytest.warns(
-            pytest.PytestWarning, match="^Got KeyError.* when unwrapping"
-        ):
-            with pytest.raises(KeyError):
-                inspect.unwrap(bad_instance, stop=stop)  # type: ignore[arg-type]
-    assert inspect.unwrap.__module__ == "inspect"
+def test_doctest_wrapped_cycle_is_not_a_routine(pytester: Pytester) -> None:
+    """A ``__wrapped__`` cycle makes ``inspect.unwrap`` raise ValueError;
+    collection must treat the object as a non-routine, like the stdlib."""
+    pytester.makepyfile(
+        """
+        '''
+        >>> 1 + 1
+        2
+        '''
+
+        class Loop:
+            pass
+
+        loop = Loop()
+        loop.__wrapped__ = loop
+        """
+    )
+    result = pytester.runpytest("--doctest-modules")
+    result.assert_outcomes(passed=1)
 
 
 def test_is_setup_py_not_named_setup_py(tmp_path: Path) -> None:
