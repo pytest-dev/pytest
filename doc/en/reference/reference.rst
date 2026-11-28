@@ -1391,6 +1391,10 @@ passed multiple times. The expected format is ``name=value``. For example::
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
+   The directory must resolve strictly inside the rootdir. One outside it is
+   :ref:`deprecated <cache-dir-outside-rootdir>`, and one that a symlink takes
+   outside the rootdir is an error.
+
 .. confval:: collect_imported_tests
    :type: ``bool``
    :default: ``true``

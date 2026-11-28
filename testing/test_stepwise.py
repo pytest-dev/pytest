@@ -295,7 +295,7 @@ def test_sw_skip_help(pytester: Pytester) -> None:
 def test_stepwise_xdist_dont_store_lastfailed(pytester: Pytester) -> None:
     pytester.makefile(
         ext=".ini",
-        pytest=f"[pytest]\ncache_dir = {pytester.path}\n",
+        pytest=f"[pytest]\ncache_dir = {pytester.path / 'cache'}\n",
     )
 
     pytester.makepyfile(
@@ -317,7 +317,7 @@ def test_one():
     assert result.ret == pytest.ExitCode.INTERRUPTED
 
     stepwise_cache_file = (
-        pytester.path / Cache._CACHE_PREFIX_VALUES / STEPWISE_CACHE_DIR
+        pytester.path / "cache" / Cache._CACHE_PREFIX_VALUES / STEPWISE_CACHE_DIR
     )
     assert not Path(stepwise_cache_file).exists()
 
@@ -325,16 +325,18 @@ def test_one():
 def test_disabled_stepwise_xdist_dont_clear_cache(pytester: Pytester) -> None:
     pytester.makefile(
         ext=".ini",
-        pytest=f"[pytest]\ncache_dir = {pytester.path}\n",
+        pytest=f"[pytest]\ncache_dir = {pytester.path / 'cache'}\n",
     )
 
     stepwise_cache_file = (
-        pytester.path / Cache._CACHE_PREFIX_VALUES / STEPWISE_CACHE_DIR
+        pytester.path / "cache" / Cache._CACHE_PREFIX_VALUES / STEPWISE_CACHE_DIR
     )
     stepwise_cache_dir = stepwise_cache_file.parent
     stepwise_cache_dir.mkdir(exist_ok=True, parents=True)
 
-    stepwise_cache_file_relative = f"{Cache._CACHE_PREFIX_VALUES}/{STEPWISE_CACHE_DIR}"
+    stepwise_cache_file_relative = (
+        f"cache/{Cache._CACHE_PREFIX_VALUES}/{STEPWISE_CACHE_DIR}"
+    )
 
     expected_value = '"test_one.py::test_one"'
     content = {f"{stepwise_cache_file_relative}": expected_value}
