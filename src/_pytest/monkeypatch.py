@@ -257,7 +257,17 @@ class MonkeyPatch:
 
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
-            oldval = target.__dict__.get(name, NOTSET)
+            if name == "__annotations__":
+                # Python 3.14+ (PEP 649/749) computes __annotations__
+                # instead of storing it in the class __dict__, so read the
+                # old value via getattr: undo() must setattr() it back,
+                # not delete it (see #15286).
+                try:
+                    oldval = getattr(target, name)
+                except AttributeError:
+                    oldval = NOTSET
+            else:
+                oldval = target.__dict__.get(name, NOTSET)
         elif not _is_data_descriptor(type(target), name):
             # With no data descriptor in the way, the `setattr()` below writes
             # into the instance `__dict__`, so `undo()` has to restore that
