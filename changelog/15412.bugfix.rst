@@ -1,0 +1,1 @@
+Fixed a regression in pytest 9.2.0 where :func:`pytest.approx` raised :class:`TypeError` for a non-numeric expected value, such as ``None`` in a list, when ``rel`` was passed explicitly. Non-numeric values are compared by equality again, as with the default tolerance.
