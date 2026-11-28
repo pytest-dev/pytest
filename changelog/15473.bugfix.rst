@@ -1,0 +1,1 @@
+Parametrized bytes values and IDs no longer raise :class:`TypeError` during collection when :confval:`disable_test_id_escaping_and_forfeit_all_rights_to_community_support` is enabled, and non-printable characters in strings and :class:`re.Pattern` values are now safely escaped.

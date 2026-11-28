@@ -437,6 +437,56 @@ class TestMetafunc:
                 IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
+    def test_bytes_idval_with_config(self) -> None:
+        """Unit test for bytes values when disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+        is configured (#15473). Bytes should always remain escaped."""
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+        values = [
+            (b"", r""),
+            (b"\xc3\xb4\xff\xe4", r"\xc3\xb4\xff\xe4"),
+            (b"ascii", r"ascii"),
+            ("αρά".encode(), r"\xce\xb1\xcf\x81\xce\xac"),
+        ]
+        for config_val in (True, False):
+            config = _IdMakerConfig({option: config_val})
+            for val, expected in values:
+                assert (
+                    IdMaker([], [], None, None, config, None)._idval(val, "a", 6)
+                    == expected
+                )
+
+    def test_unprintable_str_idval_with_config(self) -> None:
+        """Unit test for unprintable strings when
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support is True."""
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+        config = _IdMakerConfig({option: True})
+        assert (
+            IdMaker([], [], None, None, config, None)._idval("hello\nworld\x00", "a", 0)
+            == r"hello\nworld\x00"
+        )
+
+    def test_regex_idval_with_config(self) -> None:
+        """Unit test for re.Pattern when
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support is configured (#15473)."""
+        import re
+
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+        maker_enabled = IdMaker(
+            [], [], None, None, _IdMakerConfig({option: True}), None
+        )
+        maker_disabled = IdMaker(
+            [], [], None, None, _IdMakerConfig({option: False}), None
+        )
+
+        assert maker_enabled._idval(re.compile("ação"), "a", 0) == "ação"
+        assert maker_disabled._idval(re.compile("ação"), "a", 0) == r"a\xe7\xe3o"
+
+        assert maker_enabled._idval(re.compile(b"\xff"), "a", 0) == r"\xff"
+        assert maker_disabled._idval(re.compile(b"\xff"), "a", 0) == r"\xff"
+
+        assert maker_enabled._idval(re.compile("a\nb"), "a", 0) == r"a\nb"
+        assert maker_disabled._idval(re.compile("a\nb"), "a", 0) == r"a\nb"
+
     def test_class_or_function_idval(self) -> None:
         """Unit test for the expected behavior to obtain ids for parametrized
         values that are classes or functions: their __name__."""
@@ -2531,4 +2581,51 @@ class TestHiddenParam:
             "test_func[a-y]",
             "test_func[x]",
             "test_func[y]",
+        ]
+
+    def test_parametrize_ids_with_disabled_escaping_functional(
+        self, pytester: Pytester
+    ) -> None:
+        """Functional regression test for #15473 with disabled test ID escaping."""
+        pytester.makeini(
+            """
+            [pytest]
+            disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
+            """
+        )
+        items = pytester.getitems(
+            """
+            import re
+            import pytest
+
+            @pytest.mark.parametrize("v", [b"\\xff"])
+            def test_bytes(v):
+                pass
+
+            @pytest.mark.parametrize("v", [1], ids=[b"raw_bytes"])
+            def test_ids_bytes(v):
+                pass
+
+            @pytest.mark.parametrize("v", [1], ids=lambda _: b"idfn_bytes")
+            def test_idfn_bytes(v):
+                pass
+
+            @pytest.mark.parametrize("v", ["ação", "hello\\nworld\\x00"])
+            def test_str(v):
+                pass
+
+            @pytest.mark.parametrize("v", [re.compile("ação"), re.compile(b"\\xff")])
+            def test_regex(v):
+                pass
+            """
+        )
+        names = [item.name for item in items]
+        assert names == [
+            r"test_bytes[\xff]",
+            "test_ids_bytes[raw_bytes]",
+            "test_idfn_bytes[idfn_bytes]",
+            "test_str[ação]",
+            r"test_str[hello\nworld\x00]",
+            "test_regex[ação]",
+            r"test_regex[\xff]",
         ]
