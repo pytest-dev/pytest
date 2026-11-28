@@ -1,0 +1,1 @@
+:hook:`pytest_runtest_logfinish` is now called even when a test is interrupted by :func:`pytest.exit` or :class:`KeyboardInterrupt`, so it is always paired with :hook:`pytest_runtest_logstart`.
