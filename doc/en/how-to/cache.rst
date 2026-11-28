@@ -332,6 +332,158 @@ servers where isolation and correctness is more important
 than speed.
 
 
+.. _cache_scopes:
+
+Cache scopes
+------------
+
+.. versionadded:: 9.2
+
+Not everything in the cache is equally portable. Which tests exist, and which are skipped, depends on the
+interpreter running them, so the state behind :option:`--lf`, :option:`--nf` and :option:`--sw <--sw>` is
+only meaningful for the environment that recorded it.
+
+pytest keeps such values apart *within* a single cache directory, rather than needing one cache directory
+per environment. Every cached value has a :class:`~pytest.CacheScope`:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Scope
+     - Valid for
+   * - :attr:`CacheScope.SHARED <pytest.CacheScope.SHARED>`
+     - the project, whatever runs it. The default.
+   * - :attr:`CacheScope.PYTHON <pytest.CacheScope.PYTHON>`
+     - one Python implementation and ``major.minor`` version
+   * - :attr:`CacheScope.ENV <pytest.CacheScope.ENV>`
+     - one environment, i.e. one :data:`sys.prefix`
+
+``--lf``, ``--nf`` and ``--sw`` use ``ENV``. Running a project under a tox or nox matrix, or simply under
+two virtualenvs, therefore no longer has each run overwrite the previous one's last-failed set.
+
+Plugins can do the same:
+
+.. code-block:: python
+
+    def pytest_configure(config):
+        # Valid anywhere the project is.
+        config.cache.set("myplugin/schema-version", 3)
+
+        # Only valid for the environment that collected it.
+        config.cache.set("myplugin/collected", ids, scope=pytest.CacheScope.ENV)
+
+Reads must use the same scope they were written with. ``SHARED`` is the default, so existing plugins keep
+working and keep their existing on-disk location.
+
+
+.. _cache_location:
+
+Where the cache is stored
+-------------------------
+
+.. versionadded:: 9.2
+
+By default the cache lives in ``.pytest_cache`` inside the :ref:`rootdir <rootdir>`. The
+:confval:`cache_policy` option chooses somewhere else by name:
+
+.. code-block:: ini
+
+    [pytest]
+    cache_policy = user
+
+``local``
+    ``<rootdir>/.pytest_cache``. The default.
+
+``user``
+    A directory keyed by project inside the platform's user cache directory - ``$XDG_CACHE_HOME/pytest``
+    or ``~/.cache/pytest`` on Linux, ``~/Library/Caches/pytest`` on macOS, ``%LOCALAPPDATA%\pytest\Cache``
+    on Windows. Nothing at all is written into the project.
+
+    This requires the ``xdg`` extra::
+
+        pip install pytest[xdg]
+
+:confval:`cache_dir` remains available and always wins: it is an explicit path, while ``cache_policy``
+only chooses a location when ``cache_dir`` is unset. Use it for anywhere the two policies do not name -
+it expands environment variables, so a cache inside the current virtualenv is:
+
+.. code-block:: ini
+
+    [pytest]
+    cache_dir = $VIRTUAL_ENV/.pytest_cache
+
+To opt in for a whole machine without editing every project, set the environment variable instead:
+
+.. code-block:: bash
+
+    export PYTEST_CACHE_POLICY=user
+
+An explicit ``cache_policy`` in a config file still wins over it.
+
+Under the ``user`` policy the directory is named after the project and a digest of its path, so it stays
+recognisable::
+
+    ~/.cache/pytest/myproject-1a2b3c4d5e6f7a8b/
+
+The key is the rootdir alone - not the interpreter, which is handled by :ref:`cache scopes <cache_scopes>`
+instead. One project therefore gets one cache directory however many environments run it. A *new*
+directory only appears if the project itself moves.
+
+
+.. _cache_pruning:
+
+Listing and pruning caches
+--------------------------
+
+.. versionadded:: 9.2
+
+A cache stored inside the project is deleted along with the project. One stored under the ``user`` policy
+is not, so pytest can tell you what has accumulated:
+
+.. code-block:: bash
+
+    pytest --cache-list
+
+.. code-block:: text
+
+    user cache directory: /home/ronny/.cache/pytest
+
+      DIRECTORY               SIZE      LAST USED  STATUS    ORIGIN
+      myproject-1a2b3c4d5e6f  12.4 MiB  2 days     ok        /home/ronny/src/myproject
+        env-venv-9f8e7d6c      1.1 MiB  2 days     ok        /home/ronny/src/myproject/.venv
+        env-py312-0a1b2c3d   840.1 KiB  94 days    stale     /home/ronny/src/myproject/.tox/py312
+      oldthing-9f8e7d6c5b4a  840.0 KiB  31 days    orphaned  /home/ronny/src/oldthing
+
+    2 directories, 3 scopes, 13.2 MiB total
+
+``orphaned`` means the origin project no longer exists, and ``stale`` means the environment a scope holds
+state for no longer exists. In terminals which support it, the directory and origin columns are clickable
+links.
+
+Nothing is ever removed automatically. To remove things, say which:
+
+.. code-block:: bash
+
+    pytest --cache-prune=stale       # state for environments that are gone
+    pytest --cache-prune=orphaned    # caches for projects that are gone
+    pytest --cache-prune='oldthing-*'  # by name, or by origin path
+    pytest --cache-prune=all
+
+``--cache-prune`` requires a selector, so a bare invocation cannot delete anything, and it does not ask
+for confirmation once given one - use ``--cache-list`` as the preview. ``all`` never removes the cache
+directory of the project you run it from.
+
+.. note::
+
+    A project on an unmounted network or removable volume looks ``orphaned``, and a virtualenv on one
+    looks ``stale``. This is the main reason pruning is never automatic.
+
+.. note::
+
+    ``--cache-list`` and ``--cache-prune`` only see the user-level cache root. Caches placed somewhere
+    else with :confval:`cache_dir` are not tracked, since pytest has no way to know where they all are.
+
+
 .. _cache stepwise:
 
 Stepwise

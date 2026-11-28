@@ -1,0 +1,1 @@
+A :confval:`cache_dir` that resolves outside the rootdir, or to the rootdir itself or one of its parents, is deprecated and will be rejected in pytest 10. See :ref:`cache-dir-outside-rootdir`.
