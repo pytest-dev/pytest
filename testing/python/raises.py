@@ -659,3 +659,25 @@ def test_raises_copy_and_pickle_after_use() -> None:
         for var in contextvars.copy_context()
         if var.name.startswith("pytest-raises-")
     ]
+
+
+def test_raises_exit_in_other_context() -> None:
+    import contextvars
+
+    # Entered in this context, exited in a copy of it.
+    cm = pytest.raises(ValueError)
+    excinfo = cm.__enter__()
+    try:
+        raise ValueError("x")
+    except ValueError as e:
+        exc = e
+    assert contextvars.copy_context().run(
+        cm.__exit__, ValueError, exc, exc.__traceback__
+    )
+    assert excinfo.value is exc
+
+    # Entered in a context this one cannot see.
+    cm = pytest.raises(ValueError)
+    contextvars.copy_context().run(cm.__enter__)
+    with pytest.raises(AssertionError, match="without a matching __enter__"):
+        cm.__exit__(ValueError, exc, exc.__traceback__)
