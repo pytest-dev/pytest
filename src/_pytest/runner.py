@@ -129,14 +129,20 @@ def runtestprotocol(
         # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
     try:
-        rep = call_and_report(item, "setup", log)
-        reports = [rep]
-        if rep.passed:
-            setup_only = item.config.getoption("setuponly", False)
-            if item.config.getoption("setupshow", False):
-                show_test_item(item, add_space=not setup_only)
-            if not setup_only:
-                reports.append(call_and_report(item, "call", log))
+        try:
+            rep = call_and_report(item, "setup", log)
+            reports = [rep]
+            if rep.passed:
+                setup_only = item.config.getoption("setuponly", False)
+                if item.config.getoption("setupshow", False):
+                    show_test_item(item, add_space=not setup_only)
+                if not setup_only:
+                    reports.append(call_and_report(item, "call", log))
+        except (Exit, KeyboardInterrupt):
+            # Report teardown failures before the interrupted session writes its
+            # reports, and release fixtures of every scope before reraising.
+            call_and_report(item, "teardown", log, nextitem=None)
+            raise
         # If the session is about to fail or stop, teardown everything - this is
         # necessary to correctly report fixture teardown errors (see #11706)
         if item.session.shouldfail or item.session.shouldstop:

@@ -1,0 +1,3 @@
+Fixture teardown failures after :func:`pytest.exit` or a keyboard interrupt during
+setup or test execution are reported before the session finishes, preserving the
+requested exit code and including the teardown error in JUnit XML.
