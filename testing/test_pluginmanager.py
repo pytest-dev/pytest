@@ -137,12 +137,11 @@ class TestPytestPluginInteractions:
             rootpath=pytester.path,
             consider_namespace_packages=False,
         )
-        plugin_uppercase = config.pluginmanager.get_plugin(str(conftest_upper_case))
-        assert plugin_uppercase is mod_uppercase
-
-        # No str(conftestpath) normalization so conftest should be imported
-        # twice and modules should be different objects
-        assert mod is not mod_uppercase
+        # The paths refer to the same file on a case-insensitive file system,
+        # so the conftest is not imported a second time (#13296); it stays
+        # registered under the name it was first imported with.
+        assert mod_uppercase is mod
+        assert config.pluginmanager.get_plugin(str(conftest)) is mod
 
     def test_hook_tracing(self, _config_for_test: Config) -> None:
         pytestpm = _config_for_test.pluginmanager  # fully initialized with plugins

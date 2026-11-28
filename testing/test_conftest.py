@@ -406,6 +406,27 @@ def test_conftest_badcase(pytester: Pytester) -> None:
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
+@pytest.mark.skipif(
+    os.path.normcase("x") != os.path.normcase("X"),
+    reason="only relevant for case-insensitive file systems",
+)
+def test_conftest_badcase_argument_loaded_once(pytester: Pytester) -> None:
+    """A conftest.py is imported only once when the command-line argument
+    pointing to its directory has a different casing than on disk (#13296)."""
+    pytester.makepyfile(
+        **{
+            "reproducer/conftest.py": """
+                def pytest_addoption(parser):
+                    parser.addoption("--dummy-option", action="store_true")
+                """,
+            "reproducer/sub/test_foo.py": "def test_foo(): pass",
+        }
+    )
+    result = pytester.runpytest("Reproducer")
+    result.stdout.no_fnmatch_line("*already added*")
+    result.assert_outcomes(passed=1)
+
+
 def test_conftest_uppercase(pytester: Pytester) -> None:
     """Check conftest.py whose qualified name contains uppercase characters (#5819)"""
     source = {"__init__.py": "", "Foo/conftest.py": "", "Foo/__init__.py": ""}
