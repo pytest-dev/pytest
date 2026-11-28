@@ -1,0 +1,1 @@
+A log record from a logger that was non-propagating when capture started, but propagates by the time it is emitted, is now captured once instead of twice -- in :fixture:`caplog`, the report sections, live logging and the log file.
