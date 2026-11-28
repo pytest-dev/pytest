@@ -1,0 +1,2 @@
+Added ``--lf-keep`` for use with :option:`--lf` to rerun repaired tests alongside
+unresolved failures until the whole retained group completes in one successful run.

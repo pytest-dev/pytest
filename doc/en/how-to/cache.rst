@@ -192,6 +192,36 @@ Example:
     pytest --last-failed --last-failed-no-failures all    # runs the full test suite (default behavior)
     pytest --last-failed --last-failed-no-failures none   # runs no tests and exits successfully
 
+Keep rerunning the last-failed group
+------------------------------------
+
+Use ``pytest --lf --lf-keep`` during red-green refactoring when several tests
+fail and you fix them one at a time. A repaired test stays in the group while
+other members are unresolved, so a later edit that breaks it again is
+caught on the next rerun. :option:`--lf-keep` requires :option:`--lf`.
+
+The group expires when all its tests complete successfully in the same
+successful session. Explicit test skips and expected failures count as
+completed outcomes when teardown succeeds or skips. Unexpected passes count
+as passing unless the xfail is strict. Tests omitted by path, keyword, or
+marker selection still need a result in the same session as the other group
+members. In serial runs, successful collection replaces a repaired collector
+with its children, including children omitted by explicit node selection.
+Nested collectors are resolved as they are collected. An empty collector
+leaves the group while any separately retained tests under it stay in the
+group. Renamed or deleted test IDs can keep a group open. Use
+:option:`--cache-clear` to reset the saved group and ordinary failure history.
+
+Ordinary :option:`--lf` and :option:`--ff` runs use their usual failure
+history and leave the saved group intact. After the retained group expires,
+:option:`--lfnf` controls what a retained rerun does when there are no known
+failures. The default runs all selected tests, and ``--lfnf=none`` runs none.
+If a saved group still exists but none of the selected tests match it, pytest
+runs the selected tests.
+
+With pytest-xdist, a previously failing collector can remain in the retained
+group after repair even when every selected descendant passes.
+
 The new config.cache object
 --------------------------------
 
