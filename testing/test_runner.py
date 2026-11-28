@@ -23,6 +23,7 @@ import pytest
 
 
 if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
 
 
@@ -140,6 +141,25 @@ class TestSetupState:
         assert isinstance(mod, KeyError)
         assert isinstance(func.exceptions[0], TypeError)
         assert isinstance(func.exceptions[1], ValueError)
+
+    def test_teardown_continues_after_base_exception_group(self, pytester) -> None:
+        finalized = []
+
+        def raise_base_exception_group():
+            raise BaseExceptionGroup("cancelled", [GeneratorExit()])
+
+        item = pytester.getitem("def test_func(): pass")
+        mod = item.listchain()[-2]
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.addfinalizer(lambda: finalized.append("module"), mod)
+        ss.addfinalizer(raise_base_exception_group, item)
+        ss.addfinalizer(lambda: finalized.append("item"), item)
+
+        with pytest.raises(BaseExceptionGroup, match="cancelled"):
+            ss.teardown_exact(None)
+
+        assert finalized == ["item", "module"]
 
     def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
         """Regression test for #12204 (the "BTW" case)."""

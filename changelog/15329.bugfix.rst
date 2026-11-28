@@ -1,0 +1,1 @@
+Continue running fixture finalizers after a ``BaseExceptionGroup`` is raised during teardown.
