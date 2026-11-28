@@ -1010,6 +1010,78 @@ FixtureDef
     :members:
     :show-inheritance:
 
+FixtureGraph
+~~~~~~~~~~~~
+
+.. autoclass:: pytest.FixtureGraph()
+    :members:
+
+.. autoclass:: pytest.FixtureGraphEdge()
+    :members:
+
+.. autoclass:: pytest.FixtureGraphParameter()
+    :members:
+
+Inspecting fixture dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`pytest.Metafunc.fixture_graph` inspects dependencies during
+:hook:`pytest_generate_tests`. :meth:`pytest.Item.fixture_graph` inspects
+the collected item's dependencies. Neither query executes fixtures.
+For example, a plugin can inspect each reached fixture's defining function
+and declared scope without selecting a definition from a private override chain::
+
+    def pytest_collection_modifyitems(items):
+        for item in items:
+            graph = item.fixture_graph()
+            for definition in graph.declared_fixturedefs:
+                inspect_fixture(definition.func, definition.scope)
+
+Each graph is a structural snapshot. Later parametrization or edits to
+``fixturenames`` do not change an existing graph; call the method again to
+inspect the new state. The referenced :class:`pytest.FixtureDef` objects remain live.
+Queries on items without fixture information return an empty graph.
+
+``roots`` contains edges whose requester is ``None``, representing the test.
+``dependencies(node)`` returns outgoing edges, and ``dependents(node)`` returns
+incoming edges. A direct parameter has an identity-bearing
+:class:`pytest.FixtureGraphParameter` node shared by its incoming edges within that
+snapshot. It does not expose pytest's internal parameter fixture or its stub
+function. Parameter identities are not shared between snapshots.
+
+Every edge records its requester, requested name, resolved target, kind and origin.
+The origins distinguish three sources:
+
+* ``declared``: function arguments, autouse and ``usefixtures`` roots, or a
+  fixture's declared arguments.
+* ``dynamic``: a possible same-name base request from an overriding fixture
+  which accepts ``request``. This conservatively includes the next overridden
+  definition and its dependencies, even if the fixture never makes that call.
+* ``closure``: an extra root added to the runtime ``fixturenames`` list.
+  Reporting such mutations does not endorse appending as a supported plugin API.
+
+``fixturedefs`` includes all reached definitions. ``declared_fixturedefs`` records
+an ordinary walk of declared roots with dynamic expansion disabled and closure
+roots excluded. This is computed separately: the full graph combines resolutions
+from different possible override contexts, so following only locally declared
+edges in that combined graph can otherwise imply a path that is not declared.
+Definitions with the same name remain distinct nodes. Missing definitions,
+exhausted override chains and the special ``request`` argument are represented
+by their edge kinds; graph inspection does not replace runtime lookup errors.
+
+At generation time, the initial decorator parametrization and completed ``parametrize()``
+calls are reflected. Markers added during a generation hook appear only after pytest
+processes them. Names which are about to be pruned by direct parametrization
+are not reintroduced as closure roots. Item queries use the completed mappings;
+adding a parametrization marker after collection does not retroactively change
+the graph.
+
+The graph does not infer arbitrary other-name ``request.getfixturevalue()``
+lookups and cannot prove that an unlisted fixture will never run. A definition's
+``scope`` is its declared fixture scope, not the effective invocation scope
+overridden by ``parametrize(scope=...)``. It is not an execution schedule.
+
+
 MarkDecorator
 ~~~~~~~~~~~~~
 

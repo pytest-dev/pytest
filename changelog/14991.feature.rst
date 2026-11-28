@@ -1,0 +1,1 @@
+Added :meth:`pytest.Metafunc.fixture_graph` and :meth:`pytest.Item.fixture_graph` to inspect resolved fixture dependencies, with separate origins for declared requests, possible same-name dynamic requests, and names added to the runtime closure.
