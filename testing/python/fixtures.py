@@ -5581,6 +5581,49 @@ def test_scoped_fixture_caching_exception(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_fixture_setup_failure_clears_finalizers(pytester: Pytester) -> None:
+    """A failed parametrized fixture setup must not poison later parameters.
+
+    A hook can resolve a fixture during ``pytest_fixture_setup`` and the
+    resolved fixture can fail.  The failed setup still registers finalizers;
+    those finalizers must be drained before the next parameter is executed.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_fixture_setup(fixturedef, request):
+            param = getattr(request, "param", None)
+            if isinstance(param, str) and param.startswith("fixture:"):
+                request.param = request.getfixturevalue(param[len("fixture:"):])
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+
+        @pytest.fixture
+        def skipping_base():
+            pytest.skip("backend unavailable")
+
+
+        @pytest.fixture
+        def derived(skipping_base):
+            return "derived"
+
+
+        @pytest.mark.parametrize("value", ["fixture:derived", "plain-1", "plain-2"])
+        def test_value(value):
+            assert isinstance(value, str)
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2, skipped=1)
+
+
 def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:
     """
     Make sure teardowns happen in reverse order of setup with scoped fixtures, when
