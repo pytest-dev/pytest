@@ -1,0 +1,1 @@
+Fixed an internal ``AssertionError`` in fixture setup: when a fixture's setup failed before its result was cached -- for example a class-scoped fixture defined as an instance method, with the deprecation warning turned into an error via ``-W error`` -- subsequent tests requesting the same fixture now report the original setup error instead of an ``AssertionError``.
