@@ -720,6 +720,18 @@ def test_run_utf8_output(pytester: Pytester) -> None:
     assert result.stderr.lines == ["wörld"]
 
 
+def test_runpython_c_with_utf8_mode(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+    monkeypatch.setenv("PYTHONUTF8", "1")
+
+    result = pytester.runpython_c(r"print('\u2713')")
+
+    assert result.ret == 0
+    assert result.stdout.lines == ["✓"]
+
+
 def test_run_undecodable_output(pytester: Pytester) -> None:
     """Output which is not valid UTF-8 is escaped instead of raising (#7623)"""
     p1 = pytester.makepyfile(

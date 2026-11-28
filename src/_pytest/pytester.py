@@ -1502,7 +1502,14 @@ class Pytester:
         return self.run(sys.executable, script)
 
     def runpython_c(self, command: str) -> RunResult:
-        """Run ``python -c "command"``."""
+        """Run ``python -c "command"``.
+
+        The child interpreter chooses its standard stream encoding from its
+        environment and platform defaults. Output is decoded as UTF-8 by
+        :meth:`run`. To enable UTF-8 mode in the child for a test, call
+        ``monkeypatch.setenv("PYTHONUTF8", "1")`` before launching it.
+        An explicit ``PYTHONIOENCODING`` takes precedence for standard streams.
+        """
         return self.run(sys.executable, "-c", command)
 
     def runpytest_subprocess(
