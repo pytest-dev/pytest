@@ -415,9 +415,10 @@ class TestMetafunc:
         option (#5294)."""
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
-        values: list[tuple[str, Any, str]] = [
+        values: list[tuple[str | bytes, Any, str]] = [
             ("ação", _IdMakerConfig({option: True}), "ação"),
             ("ação", _IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
+            (b"\xff", _IdMakerConfig({option: True}), r"\xff"),
         ]
         for val, config, expected in values:
             actual = IdMaker([], [], None, None, config, None)._idval(val, "a", 6)

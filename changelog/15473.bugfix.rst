@@ -1,0 +1,1 @@
+Fixed a collection error for parametrized tests with bytes values when test ID escaping is disabled.
