@@ -117,7 +117,18 @@ class Cache:
         check_ispytest(_ispytest)
         cachedir = cls.cache_dir_from_config(config, _ispytest=True)
         if config.getoption("cacheclear") and cachedir.is_dir():
-            cls.clear_cache(cachedir, _ispytest=True)
+            if cachedir.joinpath("CACHEDIR.TAG").is_file():
+                cls.clear_cache(cachedir, _ispytest=True)
+            else:
+                from _pytest.warning_types import PytestCacheWarning
+
+                config.issue_config_time_warning(
+                    PytestCacheWarning(
+                        f"--cache-clear: {cachedir} was not created by pytest "
+                        "(it has no CACHEDIR.TAG), not deleting anything from it"
+                    ),
+                    stacklevel=2,
+                )
         return cls(cachedir, config, _ispytest=True)
 
     @classmethod
@@ -139,7 +150,9 @@ class Cache:
         :meta private:
         """
         check_ispytest(_ispytest)
-        return resolve_from_str(config.getini("cache_dir"), config.rootpath)
+        # resolve(), not normpath(): the key containment check in _join_within
+        # needs a canonical base, and on POSIX normpath gets "symlink/.." wrong.
+        return resolve_from_str(config.getini("cache_dir"), config.rootpath).resolve()
 
     def warn(self, fmt: str, *, _ispytest: bool = False, **args: object) -> None:
         """Issue a cache warning.
@@ -599,7 +612,7 @@ def pytest_report_header(config: Config) -> str | None:
         # starting with .., ../.. if sensible
 
         try:
-            displaypath = cachedir.relative_to(config.rootpath)
+            displaypath = cachedir.relative_to(config.rootpath.resolve())
         except ValueError:
             displaypath = cachedir
         return f"cachedir: {displaypath}"
