@@ -177,6 +177,14 @@ TERMINAL_WRITE_LINE_BYTES = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-write-line-bytes",
 )
 
+RAISES_EXCINFO_ATTRIBUTE = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "The excinfo attribute of pytest.raises(), pytest.RaisesExc and pytest.RaisesGroup "
+    "context managers is deprecated and will be removed in pytest 10.\n"
+    "Use the ExceptionInfo returned by `with pytest.raises(...) as excinfo:` instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#raises-excinfo-attribute",
+)
+
 
 def check_ispytest(ispytest: bool) -> None:
     if not ispytest:

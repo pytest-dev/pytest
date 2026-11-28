@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from contextvars import ContextVar
+from contextvars import Token
 import re
 from re import Pattern
 import sys
@@ -19,6 +21,7 @@ import warnings
 
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import stringify_exception
+from _pytest.deprecated import RAISES_EXCINFO_ATTRIBUTE
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestWarning
 
@@ -355,6 +358,48 @@ def unescape(s: str) -> str:
     return re.sub(r"\\([{}()+-.*?^$\[\]\s\\|])", r"\1", s)
 
 
+_ACTIVE_BLOCK_VAR_NAME = "pytest.raises active block"
+
+
+def _user_stacklevel() -> int:
+    """Stacklevel for warnings.warn() that points at the first frame outside
+    this module (the ``with`` / ``async with`` statement)."""
+    frame = sys._getframe(1)
+    level = 1
+    while frame is not None and frame.f_code.co_filename == __file__:
+        frame = frame.f_back  # type: ignore[assignment]
+        level += 1
+    return level
+
+
+def _context_switch_error(name: str, open_blocks: int) -> str:
+    if open_blocks == 0:
+        return f"{name}.__exit__() was called without a matching __enter__()."
+    return (
+        f"{name}.__exit__() was called in a thread or asyncio task that did not "
+        f"enter it, while {open_blocks} blocks of this object are open in other "
+        "tasks, so it cannot tell which block is exiting. Enter and exit a "
+        "pytest.raises() block in the same task."
+    )
+
+
+class _ActiveBlock:
+    """A ``with`` block of a raises object.
+
+    ``excinfo`` is None once the block has exited. Copied contexts (e.g. a task
+    created inside the block) can keep the block object alive after that, so it
+    must not keep the ExceptionInfo.
+    """
+
+    __slots__ = ("excinfo", "outer", "token")
+
+    def __init__(self, excinfo: ExceptionInfo[Any], outer: _ActiveBlock | None) -> None:
+        self.excinfo: ExceptionInfo[Any] | None = excinfo
+        # The enclosing block of the same object in the same context, if any.
+        self.outer = outer
+        self.token: Token[_ActiveBlock | None] | None = None
+
+
 # These classes conceptually differ from ExceptionInfo in that ExceptionInfo is tied, and
 # constructed from, a particular exception - whereas these are constructed with expected
 # exceptions, and later allow matching towards particular exceptions.
@@ -363,6 +408,108 @@ def unescape(s: str) -> str:
 # The interaction between these classes should perhaps be improved.
 class AbstractRaises(ABC, Generic[BaseExcT_co]):
     """ABC with common functionality shared between RaisesExc and RaisesGroup"""
+
+    # The ExceptionInfo of the most recently exited ``with`` block, only kept
+    # for the deprecated ``excinfo`` attribute. Dropped after the test's
+    # teardown when this object is a parametrize value (#13410).
+    _last_excinfo: ExceptionInfo[Any] | None = None
+
+    # The innermost active block of this object in the current context. Each
+    # raises object gets its own variable (created on first ``__enter__``), so
+    # nested, recursive and concurrent (threads, asyncio tasks) use of one
+    # object each fill the ExceptionInfo their own ``__enter__`` returned, and
+    # the object itself holds no reference to an in-flight ExceptionInfo.
+    _active_block: ContextVar[_ActiveBlock | None] | None = None
+    # All blocks of this object that have been entered and not exited, in any
+    # context. Only used to recover from an exit in another context; an open
+    # block's ExceptionInfo is still unfilled, so this pins no traceback.
+    _open_blocks: list[_ActiveBlock] | None = None
+
+    def _push_excinfo(self, excinfo: ExceptionInfo[Any]) -> None:
+        var = self._active_block
+        if var is None:
+            var = self._active_block = ContextVar(_ACTIVE_BLOCK_VAR_NAME, default=None)
+        if self._open_blocks is None:
+            self._open_blocks = []
+        block = _ActiveBlock(excinfo, var.get())
+        block.token = var.set(block)
+        self._open_blocks.append(block)
+
+    def _open_block(self) -> _ActiveBlock | None:
+        block = self._active_block.get() if self._active_block is not None else None
+        # Skip blocks that were exited from another context.
+        while block is not None and block.excinfo is None:
+            block = block.outer
+        return block
+
+    def _pop_excinfo(self) -> ExceptionInfo[Any]:
+        var = self._active_block
+        open_blocks = self._open_blocks or []
+        block = self._open_block()
+        switched = False
+        if block is None:
+            # Not entered in this context (or a parent of it): the block was
+            # entered in another thread or asyncio task. Recover only when
+            # that is unambiguous.
+            if len(open_blocks) != 1:
+                raise RuntimeError(
+                    _context_switch_error(type(self).__name__, len(open_blocks))
+                )
+            block = open_blocks[0]
+            switched = True
+        assert var is not None
+        assert block.token is not None
+        excinfo = block.excinfo
+        assert excinfo is not None
+        block.excinfo = None
+        open_blocks.remove(block)
+        if not switched:
+            try:
+                # Removes the variable from the context again after the
+                # outermost block, so contexts do not collect one entry per
+                # raises object.
+                var.reset(block.token)
+            except ValueError:
+                # Entered in a parent of this context, e.g. exited in a task
+                # created inside the block.
+                var.set(block.outer)
+                switched = True
+        if switched:
+            warnings.warn(
+                PytestWarning(
+                    f"{type(self).__name__} block was exited in a different thread "
+                    "or asyncio task than it was entered in. Enter and exit a "
+                    "pytest.raises() block in the same task."
+                ),
+                stacklevel=_user_stacklevel(),
+            )
+        self._last_excinfo = excinfo
+        return excinfo
+
+    def __getstate__(self) -> dict[str, Any]:
+        # ContextVar can be neither copied nor pickled, and active blocks
+        # belong to this object only.
+        state = self.__dict__.copy()
+        state.pop("_active_block", None)
+        state.pop("_open_blocks", None)
+        state.pop("_last_excinfo", None)
+        return state
+
+    @property
+    def excinfo(self) -> ExceptionInfo[Any]:
+        """Deprecated, use the object returned by ``__enter__`` instead."""
+        warnings.warn(RAISES_EXCINFO_ATTRIBUTE.format(), stacklevel=2)
+        block = self._open_block()
+        if block is not None and block.excinfo is not None:
+            return block.excinfo
+        if self._last_excinfo is None:
+            raise AttributeError(
+                f"{type(self).__name__!r} object has no attribute 'excinfo'"
+            )
+        return self._last_excinfo
+
+    def _clear_last_excinfo(self) -> None:
+        self._last_excinfo = None
 
     def __init__(
         self,
@@ -681,8 +828,9 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         return self._fail_reason is None
 
     def __enter__(self) -> ExceptionInfo[BaseExcT_co_default]:
-        self.excinfo: ExceptionInfo[BaseExcT_co_default] = ExceptionInfo.for_later()
-        return self.excinfo
+        excinfo: ExceptionInfo[BaseExcT_co_default] = ExceptionInfo.for_later()
+        self._push_excinfo(excinfo)
+        return excinfo
 
     # TODO: move common code into superclass
     def __exit__(
@@ -692,6 +840,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         exc_tb: types.TracebackType | None,
     ) -> bool:
         __tracebackhide__ = True
+        excinfo: ExceptionInfo[BaseExcT_co_default] = self._pop_excinfo()
         if exc_type is None:
             if not self.expected_exceptions:
                 fail("DID NOT RAISE any exception")
@@ -700,10 +849,6 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             else:
                 names = ", ".join(x.__name__ for x in self.expected_exceptions)
                 fail(f"DID NOT RAISE any of ({names})")
-
-        assert self.excinfo is not None, (
-            "Internal error - should have been constructed in __enter__"
-        )
 
         if not self.matches(exc_val):
             if self._just_propagate:
@@ -716,8 +861,22 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             "tuple[type[BaseExcT_co_default], BaseExcT_co_default, types.TracebackType]",
             (exc_type, exc_val, exc_tb),
         )
-        self.excinfo.fill_unfilled(exc_info)
+        excinfo.fill_unfilled(exc_info)
         return True
+
+    async def __aenter__(self) -> ExceptionInfo[BaseExcT_co_default]:
+        """Same as ``__enter__``, for use with ``async with``."""
+        return self.__enter__()
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool:
+        """Same as ``__exit__``, for use with ``async with``."""
+        __tracebackhide__ = True
+        return self.__exit__(exc_type, exc_val, exc_tb)
 
 
 @final
@@ -1043,10 +1202,11 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     ) -> ExceptionInfo[BaseExceptionGroup[BaseExcT_1]]: ...
 
     def __enter__(self) -> ExceptionInfo[BaseExceptionGroup[BaseException]]:
-        self.excinfo: ExceptionInfo[BaseExceptionGroup[BaseExcT_co]] = (
+        excinfo: ExceptionInfo[BaseExceptionGroup[BaseExcT_co]] = (
             ExceptionInfo.for_later()
         )
-        return self.excinfo
+        self._push_excinfo(excinfo)
+        return excinfo
 
     def __repr__(self) -> str:
         reqs = [
@@ -1402,12 +1562,9 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         exc_tb: types.TracebackType | None,
     ) -> bool:
         __tracebackhide__ = True
+        excinfo: ExceptionInfo[BaseExceptionGroup[BaseExcT_co]] = self._pop_excinfo()
         if exc_type is None:
             fail(f"DID NOT RAISE any exception, expected `{self.expected_type()}`")
-
-        assert self.excinfo is not None, (
-            "Internal error - should have been constructed in __enter__"
-        )
 
         # group_str is the only thing that differs between RaisesExc and RaisesGroup...
         # I might just scrap it? Or make it part of fail_reason
@@ -1426,8 +1583,31 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             "tuple[type[BaseExceptionGroup[BaseExcT_co]], BaseExceptionGroup[BaseExcT_co], types.TracebackType]",
             (exc_type, exc_val, exc_tb),
         )
-        self.excinfo.fill_unfilled(exc_info)
+        excinfo.fill_unfilled(exc_info)
         return True
+
+    @overload
+    async def __aenter__(
+        self: RaisesGroup[ExcT_1],
+    ) -> ExceptionInfo[ExceptionGroup[ExcT_1]]: ...
+    @overload
+    async def __aenter__(
+        self: RaisesGroup[BaseExcT_1],
+    ) -> ExceptionInfo[BaseExceptionGroup[BaseExcT_1]]: ...
+
+    async def __aenter__(self) -> ExceptionInfo[BaseExceptionGroup[BaseException]]:
+        """Same as ``__enter__``, for use with ``async with``."""
+        return self.__enter__()
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool:
+        """Same as ``__exit__``, for use with ``async with``."""
+        __tracebackhide__ = True
+        return self.__exit__(exc_type, exc_val, exc_tb)
 
     def expected_type(self) -> str:
         subexcs = []

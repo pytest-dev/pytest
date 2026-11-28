@@ -414,3 +414,27 @@ def test_terminal_write_line_bytes_deprecated(pytester: Pytester) -> None:
         reporter.write_line(b"hello")
 
     assert "hello" in output.getvalue()
+
+
+@pytest.mark.parametrize(
+    "make_cm",
+    [
+        lambda: pytest.raises(ValueError),
+        lambda: pytest.RaisesExc(ValueError),
+        lambda: pytest.RaisesGroup(ValueError, allow_unwrapped=True),
+    ],
+    ids=["raises", "RaisesExc", "RaisesGroup"],
+)
+def test_raises_excinfo_attribute_deprecated(make_cm) -> None:
+    cm = make_cm()
+    with pytest.raises(AttributeError, match="excinfo"):
+        with pytest.warns(PytestRemovedIn10Warning, match="excinfo attribute"):
+            cm.excinfo  # noqa: B018
+
+    with cm as excinfo:
+        with pytest.warns(PytestRemovedIn10Warning, match="excinfo attribute"):
+            assert cm.excinfo is excinfo
+        int("x")
+
+    with pytest.warns(PytestRemovedIn10Warning, match="excinfo attribute"):
+        assert cm.excinfo is excinfo

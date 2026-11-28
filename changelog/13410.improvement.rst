@@ -1,0 +1,1 @@
+:func:`pytest.raises`, :class:`pytest.RaisesExc` and :class:`pytest.RaisesGroup` now also work as asynchronous context managers (``async with``).

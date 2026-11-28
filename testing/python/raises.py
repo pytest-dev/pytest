@@ -11,6 +11,10 @@ from _pytest.warning_types import PytestWarning
 import pytest
 
 
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
+
+
 def wrap_escape(s: str) -> str:
     return "^" + re.escape(s) + "$"
 
@@ -513,3 +517,319 @@ class TestRaises:
         # With -v: should NOT show "Skipping" — full diff shown
         result_v = pytester.runpytest("-v")
         assert "Skipping" not in result_v.stdout.str()
+
+
+class TestReusedContextManager:
+    """A single raises object used for several ``with`` blocks at once (#13410).
+
+    Each block must fill the ExceptionInfo returned by its own ``__enter__``.
+    """
+
+    def test_nested(self) -> None:
+        cm = pytest.raises(BaseException)
+        with cm as outer:
+            with cm as inner:
+                pass  # inner block fails with "DID NOT RAISE", outer catches it
+        assert outer.type is Failed
+        assert "DID NOT RAISE" in str(outer.value)
+        with pytest.raises(AssertionError, match="can only be used after"):
+            inner.type  # noqa: B018
+
+    def test_nested_group(self) -> None:
+        cm = pytest.RaisesGroup(ValueError)
+        # The inner "DID NOT RAISE" reaches the outer block, which rejects it.
+        with pytest.raises(Failed, match="is not an exception group"):
+            with cm as outer:
+                with cm:
+                    pass
+        with pytest.raises(AssertionError, match="can only be used after"):
+            outer.type  # noqa: B018
+
+    def test_recursive(self) -> None:
+        cm = pytest.raises(ValueError)
+
+        def helper(n: int) -> pytest.ExceptionInfo[ValueError]:
+            with cm as excinfo:
+                if n:
+                    assert str(helper(n - 1).value) == str(n - 1)
+                raise ValueError(n)
+            return excinfo
+
+        assert str(helper(2).value) == "2"
+
+    def test_interleaved_asyncio_tasks(self) -> None:
+        import asyncio
+
+        cm = pytest.raises(ValueError)
+        results: dict[str, str] = {}
+
+        async def task(name: str, delay: float) -> None:
+            with cm as excinfo:
+                await asyncio.sleep(delay)
+                raise ValueError(name)
+            results[name] = str(excinfo.value)
+
+        async def main() -> None:
+            # "first" enters first and also exits first: not LIFO.
+            await asyncio.gather(task("first", 0.01), task("second", 0.05))
+
+        asyncio.run(main())
+        assert results == {"first": "first", "second": "second"}
+
+    def test_threads(self) -> None:
+        import threading
+
+        cm = pytest.raises(ValueError)
+        barrier = threading.Barrier(2)
+        results: dict[int, str] = {}
+
+        def worker(n: int) -> None:
+            with cm as excinfo:
+                barrier.wait()
+                raise ValueError(n)
+            results[n] = str(excinfo.value)
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert results == {0: "0", 1: "1"}
+
+
+@pytest.mark.parametrize(
+    "expectation",
+    [
+        "pytest.raises(ZeroDivisionError)",
+        "pytest.RaisesExc(ZeroDivisionError)",
+        "pytest.RaisesGroup(ZeroDivisionError, allow_unwrapped=True)",
+    ],
+)
+def test_parametrized_raises_released_after_teardown(
+    pytester: Pytester, expectation: str
+) -> None:
+    """A raises object passed as a parameter must not keep the test frame
+    alive after the test (#13410)."""
+    pytester.makeconftest(
+        """
+        import gc
+
+        REFS = []
+
+        def pytest_sessionfinish(session):
+            gc.collect()
+            alive = [r for r in REFS if r() is not None]
+            print(f"ALIVE: {len(alive)}/{len(REFS)}")
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import weakref
+        import pytest
+        from conftest import REFS
+
+        class Big:
+            pass
+
+        @pytest.mark.parametrize("n", [1, 2])
+        @pytest.mark.parametrize("expectation", [{expectation}])
+        def test_it(n, expectation):
+            big = Big()
+            REFS.append(weakref.ref(big))
+            with expectation:
+                1 / 0
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=2)
+    result.stdout.fnmatch_lines(["*ALIVE: 0/2"])
+
+
+def test_raises_copy_and_pickle_after_use() -> None:
+    import contextvars
+    import copy
+    import pickle
+
+    cm = pytest.raises(ValueError, match="x")
+    with cm:
+        int("x")
+    for clone in (copy.copy(cm), copy.deepcopy(cm), pickle.loads(pickle.dumps(cm))):
+        with clone as excinfo:
+            int("x")
+        assert excinfo.type is ValueError
+    # Exiting the outermost block removes the object's variable from the context.
+    assert not [
+        var
+        for var in contextvars.copy_context()
+        if var.name == "pytest.raises active block"
+    ]
+
+
+def test_raises_exit_in_other_context() -> None:
+    import contextvars
+
+    def raised() -> ValueError:
+        try:
+            raise ValueError("x")
+        except ValueError as e:
+            return e
+
+    exc = raised()
+
+    # Entered in this context, exited in a copy of it: recovered, with a warning.
+    cm = pytest.raises(ValueError)
+    excinfo = cm.__enter__()
+    with pytest.warns(PytestWarning, match="different thread or asyncio task"):
+        assert contextvars.copy_context().run(
+            cm.__exit__, ValueError, exc, exc.__traceback__
+        )
+    assert excinfo.value is exc
+    # This context still sees the exited block; it holds nothing and is skipped.
+    with pytest.warns(pytest.PytestRemovedIn10Warning):
+        assert cm.excinfo is excinfo
+    with cm as again:
+        int("x")
+    assert again.type is ValueError
+
+    # Entered in a context this one cannot see: the only open block is used.
+    cm = pytest.raises(ValueError)
+    excinfo = contextvars.copy_context().run(cm.__enter__)
+    with pytest.warns(PytestWarning, match="different thread or asyncio task"):
+        assert cm.__exit__(ValueError, exc, exc.__traceback__)
+    assert excinfo.value is exc
+
+    # Ambiguous: two blocks open in other contexts.
+    cm = pytest.raises(ValueError)
+    contextvars.copy_context().run(cm.__enter__)
+    contextvars.copy_context().run(cm.__enter__)
+    with pytest.raises(RuntimeError, match="2 blocks of this object are open"):
+        cm.__exit__(ValueError, exc, exc.__traceback__)
+
+    # Never entered.
+    with pytest.raises(RuntimeError, match="without a matching __enter__"):
+        pytest.raises(ValueError).__exit__(ValueError, exc, exc.__traceback__)
+
+
+def test_raises_async_generator_teardown_in_other_task() -> None:
+    """An async generator (e.g. an async fixture) whose setup and teardown run
+    in different tasks moves the block to another context."""
+    import asyncio
+
+    results = []
+
+    async def fixture_like():
+        async with pytest.raises(ValueError) as excinfo:
+            yield
+            raise ValueError("teardown")
+        results.append(excinfo.type)
+
+    gen = fixture_like()
+
+    async def setup() -> None:
+        await gen.__anext__()
+
+    async def teardown() -> None:
+        with pytest.raises(StopAsyncIteration):
+            await gen.__anext__()
+
+    loop = asyncio.new_event_loop()
+    try:
+        loop.run_until_complete(setup())
+        with pytest.warns(
+            PytestWarning, match="different thread or asyncio task"
+        ) as rec:
+            loop.run_until_complete(teardown())
+    finally:
+        loop.close()
+    assert results == [ValueError]
+    # The warning points at the ``async with`` line, not at pytest internals.
+    assert rec[0].filename == __file__
+
+
+class TestAsyncWith:
+    def test_raises(self) -> None:
+        import asyncio
+
+        async def main() -> pytest.ExceptionInfo[ValueError]:
+            async with pytest.raises(ValueError, match="x") as excinfo:
+                await asyncio.sleep(0)
+                raise ValueError("x")
+            return excinfo
+
+        assert asyncio.run(main()).type is ValueError
+
+    def test_group(self) -> None:
+        import asyncio
+
+        async def main() -> pytest.ExceptionInfo[ExceptionGroup[ValueError]]:
+            async with pytest.RaisesGroup(ValueError) as excinfo:
+                await asyncio.sleep(0)
+                raise ExceptionGroup("g", [ValueError()])
+            return excinfo
+
+        assert asyncio.run(main()).group_contains(ValueError)
+
+    def test_failures_propagate(self) -> None:
+        import asyncio
+
+        async def no_raise() -> None:
+            async with pytest.raises(ValueError):
+                await asyncio.sleep(0)
+
+        async def wrong_type() -> None:
+            async with pytest.RaisesExc(ValueError):
+                raise TypeError
+
+        with pytest.raises(Failed, match="DID NOT RAISE"):
+            asyncio.run(no_raise())
+        # Like ``with``, a non-matching exception propagates unchanged.
+        with pytest.raises(TypeError):
+            asyncio.run(wrong_type())
+
+    def test_reused_across_tasks(self) -> None:
+        import asyncio
+
+        cm = pytest.raises(ValueError)
+        results: dict[str, str] = {}
+
+        async def task(name: str, delay: float) -> None:
+            async with cm as excinfo:
+                await asyncio.sleep(delay)
+                raise ValueError(name)
+            results[name] = str(excinfo.value)
+
+        async def main() -> None:
+            await asyncio.gather(task("first", 0.01), task("second", 0.05))
+
+        asyncio.run(main())
+        assert results == {"first": "first", "second": "second"}
+
+
+def test_raises_block_kept_by_child_task_holds_no_excinfo() -> None:
+    import asyncio
+    import gc
+    import weakref
+
+    class Local:
+        pass
+
+    async def main() -> None:
+        cm = pytest.raises(ValueError)
+        refs = []
+
+        def block() -> asyncio.Task[None]:
+            local = Local()
+            refs.append(weakref.ref(local))
+            with cm:
+                # The task's context is a copy taken inside the block.
+                task = asyncio.create_task(asyncio.sleep(0.05))
+                raise ValueError
+            return task
+
+        task = block()
+        cm._clear_last_excinfo()
+        gc.collect()
+        assert refs[0]() is None
+        await task
+
+    asyncio.run(main())

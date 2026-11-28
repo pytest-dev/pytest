@@ -1,0 +1,3 @@
+A :func:`pytest.raises`, :class:`pytest.RaisesExc` or :class:`pytest.RaisesGroup` object passed as a parametrize value, as in :ref:`parametrizing_conditional_raising`, no longer keeps the caught exception, its traceback and the test's local variables alive after the test's teardown.
+
+Using the same object for nested, recursive or concurrent (threads, asyncio tasks) ``with`` blocks now fills the :class:`~pytest.ExceptionInfo` each block's ``__enter__`` returned, instead of failing with an internal error or leaving it unfilled.

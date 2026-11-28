@@ -79,6 +79,7 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import scandir
+from _pytest.raises import AbstractRaises
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
@@ -202,6 +203,22 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
             )
         )
     return True
+
+
+@hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_teardown(item: nodes.Item) -> Generator[None]:
+    try:
+        return (yield)
+    finally:
+        # Parametrize values live as long as the test module (they are held by
+        # the mark), so a pytest.raises() passed as a parameter would otherwise
+        # keep the last caught exception, its traceback and the test frame's
+        # locals alive for the rest of the session (#13410).
+        callspec = getattr(item, "callspec", None)
+        if callspec is not None:
+            for value in callspec.params.values():
+                if isinstance(value, AbstractRaises):
+                    value._clear_last_excinfo()
 
 
 def pytest_collect_directory(
