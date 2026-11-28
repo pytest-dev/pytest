@@ -704,6 +704,42 @@ def test_popen_default_stdin_stderr_and_stdin_None(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_run_stdin_bytes_child_exits_without_reading(pytester: Pytester) -> None:
+    result = pytester.run(
+        sys.executable,
+        "-c",
+        "raise SystemExit(7)",
+        stdin=b"x" * 2**20,
+    )
+    assert result.ret == 7
+
+
+def test_run_stdin_bytes_timeout_when_child_does_not_read(
+    pytester: Pytester,
+) -> None:
+    with pytest.raises(pytester.TimeoutExpired):
+        pytester.run(
+            sys.executable,
+            "-c",
+            "import time; time.sleep(10)",
+            stdin=b"x" * 2**20,
+            timeout=0.5,
+        )
+
+
+def test_popen_stdin_bytes_child_exits_without_reading(pytester: Pytester) -> None:
+    proc = pytester.popen(
+        [sys.executable, "-c", "raise SystemExit(7)"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=b"x" * 2**20,
+    )
+    stdout, stderr = proc.communicate(timeout=10)
+    assert stdout == b""
+    assert stderr == b""
+    assert proc.returncode == 7
+
+
 def test_run_utf8_output(pytester: Pytester) -> None:
     """UTF-8 output from a command is decoded as UTF-8"""
     p1 = pytester.makepyfile(
