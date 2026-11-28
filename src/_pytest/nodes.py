@@ -490,7 +490,17 @@ class Node(abc.ABC, metaclass=NodeMeta):
         return None
 
     def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
-        return excinfo.traceback
+        traceback = excinfo.traceback
+        # Start at the node's own method (runtest, setup, collect, ...), like
+        # Function starts at the test function; otherwise drop the leading
+        # pytest/pluggy entries.
+        for i, entry in enumerate(traceback):
+            if entry.frame.f_locals.get("self") is self:
+                traceback = traceback[i:]
+                break
+        else:
+            traceback = traceback.cut_internal()
+        return traceback.filter(excinfo)
 
     def _repr_failure_py(
         self,
@@ -626,7 +636,7 @@ class Collector(Node, abc.ABC):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
             return ntraceback.filter(excinfo)
-        return excinfo.traceback
+        return super()._traceback_filter(excinfo)
 
 
 @lru_cache(maxsize=1000)

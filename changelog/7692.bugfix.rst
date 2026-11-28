@@ -1,0 +1,1 @@
+Failures in custom :class:`~pytest.Item` subclasses no longer show the pytest and pluggy frames above the item, nor frames marked with ``__tracebackhide__``, like Python test functions; ``--full-trace`` still shows everything.

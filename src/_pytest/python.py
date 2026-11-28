@@ -1889,9 +1889,7 @@ class Function(PyobjMixin, nodes.Item):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    ntraceback = ntraceback.filter(filter_traceback)
-                    if not ntraceback:
-                        ntraceback = traceback
+                    ntraceback = traceback.cut_internal()
             ntraceback = ntraceback.filter(excinfo)
 
             # issue364: mark all but first and last frames to
@@ -1907,7 +1905,7 @@ class Function(PyobjMixin, nodes.Item):
                     )
 
             return ntraceback
-        return excinfo.traceback
+        return super()._traceback_filter(excinfo)
 
     # TODO: Type ignored -- breaks Liskov Substitution.
     def repr_failure(  # type: ignore[override]

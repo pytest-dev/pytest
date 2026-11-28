@@ -191,6 +191,22 @@ class TestTraceback_f_g_h:
             assert basedir not in x.path.parents
         assert newtraceback[-1].frame.code.path == p
 
+    def test_traceback_cut_internal(self) -> None:
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            pytest.fail("x")
+        traceback = excinfo.traceback
+        assert [entry.isinternal() for entry in traceback] == [False, True]
+        assert traceback.cut_internal() == traceback
+        # All entries internal: nothing is cut.
+        assert traceback[1:].cut_internal() == traceback[1:]
+
+    def test_traceback_entry_isgenerated(self) -> None:
+        namespace: dict[str, Any] = {}
+        exec(compile("def gen(): raise ValueError", "<gen>", "exec"), namespace)
+        with pytest.raises(ValueError) as excinfo:
+            namespace["gen"]()
+        assert [entry.isgenerated() for entry in excinfo.traceback] == [False, True]
+
     def test_traceback_filter(self):
         traceback = self.excinfo.traceback
         ntraceback = traceback.filter(self.excinfo)
