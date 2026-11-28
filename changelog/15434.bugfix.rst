@@ -1,2 +1,3 @@
 :func:`pytest.approx` failure details no longer crash for lists, dicts and numpy arrays of :class:`~datetime.datetime`.
 Each element now reports only the differences defined for its type: a ``datetime`` has an absolute but no relative difference, a zero ``timedelta`` gives an infinite relative difference like ``0`` does, and the ``-inf`` placeholder lines are no longer printed.
+The relative difference is now measured against the expected value for lists and numpy arrays too, as it already was for dicts and as ``rel`` is applied, so ``[1.0] == approx([2.0])`` reports ``0.5`` instead of ``1.0``.

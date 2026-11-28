@@ -46,7 +46,7 @@ def _max_diff(current: Any, candidate: Any) -> Any:
 
 
 class _Infinite:
-    """Marks a relative difference against a zero base."""
+    """Marks a relative difference against a zero expected value."""
 
 
 _INFINITE = _Infinite()
@@ -66,13 +66,13 @@ class _DiffTracker:
         self.rel_is_infinite = False
 
     def add(
-        self, approx_value: ApproxScalar[Any] | ApproxTimedelta, actual: Any, base: Any
+        self, approx_value: ApproxScalar[Any] | ApproxTimedelta, actual: Any
     ) -> None:
         abs_diff = approx_value._abs_diff(actual)
         if abs_diff is None:
             return
         self.max_abs = _max_diff(self.max_abs, abs_diff)
-        rel_diff = approx_value._rel_diff(abs_diff, base)
+        rel_diff = approx_value._rel_diff(abs_diff)
         if rel_diff is _INFINITE:
             self.rel_is_infinite = True
         elif rel_diff is not None:
@@ -246,7 +246,7 @@ class ApproxNumpy(Approx[ndarray]):
             approx_value = get_value_from_nested_list(approx_side_as_seq, index)
             other_value = get_value_from_nested_list(other_side_as_array, index)
             if approx_value != other_value:
-                diffs.add(approx_value, other_value, base=other_value)
+                diffs.add(approx_value, other_value)
                 different_ids.append(index)
 
         message_data = [
@@ -346,7 +346,7 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         for approx_key, approx_value in approx_side_as_map.items():
             other_value = other_side[approx_key]
             if approx_value != other_value:
-                diffs.add(approx_value, other_value, base=approx_value.expected)
+                diffs.add(approx_value, other_value)
                 different_ids.append(approx_key)
 
         message_data = [
@@ -418,7 +418,7 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
             zip(approx_side_as_map, other_side, strict=True)
         ):
             if approx_value != other_value:
-                diffs.add(approx_value, other_value, base=other_value)
+                diffs.add(approx_value, other_value)
                 different_ids.append(i)
 
         message_data = [
@@ -631,12 +631,15 @@ class ApproxScalar(Approx[ExpectedT]):
         except TypeError:
             return None
 
-    def _rel_diff(self, abs_diff: Any, base: Any) -> Any:
-        """*abs_diff* relative to *base*, the marker for a zero base, or None."""
-        if base == 0:
+    def _rel_diff(self, abs_diff: Any) -> Any:
+        """*abs_diff* relative to the expected value, which is what ``rel`` scales.
+
+        Returns the marker for a zero expected value, or None if undefined.
+        """
+        if self.expected == 0:
             return _INFINITE
         try:
-            return abs_diff / abs(base)
+            return abs_diff / abs(self.expected)  # type: ignore[arg-type]
         except TypeError:
             return None
 
@@ -752,14 +755,14 @@ class ApproxTimedelta(Approx[datetime | timedelta]):
         except (TypeError, OverflowError):
             return None
 
-    def _rel_diff(self, abs_diff: timedelta, base: Any) -> float | _Infinite | None:
+    def _rel_diff(self, abs_diff: timedelta) -> float | _Infinite | None:
         # A datetime is a point in time with no natural origin, so a difference
         # relative to it means nothing (the same reason rel= is rejected for it).
-        if isinstance(self.expected, datetime) or not isinstance(base, timedelta):
+        if isinstance(self.expected, datetime):
             return None
-        if base == timedelta(0):
+        if self.expected == timedelta(0):
             return _INFINITE
-        return abs_diff / builtins.abs(base)
+        return abs_diff / builtins.abs(self.expected)
 
     def _repr_compare(self, other_side: Any) -> list[str]:
         try:

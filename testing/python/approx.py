@@ -185,10 +185,10 @@ class TestApprox:
             ],
         )
 
-        # Specific test for comparison with 0.0 (relative diff will be 'inf')
+        # Specific test for an expected 0.0 (relative diff will be 'inf')
         assert_approx_raises_regex(
-            [0.0],
             [1.0],
+            [0.0],
             [
                 r"",
                 r"  comparison failed. Mismatched elements: 1 / 1:",
@@ -243,10 +243,10 @@ class TestApprox:
             ],
         )
 
-        # Specific test for comparison with 0.0 (relative diff will be 'inf')
+        # Specific test for an expected 0.0 (relative diff will be 'inf')
         assert_approx_raises_regex(
-            np.array([0.0]),
             np.array([1.0]),
+            np.array([0.0]),
             [
                 r"",
                 r"  comparison failed. Mismatched elements: 1 / 1:",
@@ -1245,13 +1245,13 @@ class TestApprox:
         (
             pytest.param(
                 [Decimal(1), Decimal(2)],
-                [Decimal(1), Decimal(9)],
-                ["Max absolute difference: 7", "Max relative difference: 3.5"],
+                [Decimal(1), Decimal(8)],
+                ["Max absolute difference: 6", "Max relative difference: 0.75"],
                 id="sequence",
             ),
             pytest.param(
-                [Decimal(0)],
                 [Decimal(1)],
+                [Decimal(0)],
                 ["Max absolute difference: 1", "Max relative difference: inf"],
                 id="sequence-divide-by-zero",
             ),
@@ -1302,10 +1302,10 @@ class TestApprox:
             ),
             pytest.param(
                 [datetime.timedelta(seconds=1)],
-                [datetime.timedelta(seconds=3)],
+                [datetime.timedelta(seconds=2)],
                 [
-                    "Max absolute difference: 0:00:02",
-                    "Max relative difference: 2.0",
+                    "Max absolute difference: 0:00:01",
+                    "Max relative difference: 0.5",
                 ],
                 id="sequence-timedelta",
             ),
@@ -1319,8 +1319,8 @@ class TestApprox:
                 id="mapping-zero-timedelta",
             ),
             pytest.param(
-                [datetime.timedelta(0)],
                 [datetime.timedelta(seconds=1)],
+                [datetime.timedelta(0)],
                 [
                     "Max absolute difference: 0:00:01",
                     "Max relative difference: inf",
@@ -1352,14 +1352,21 @@ class TestApprox:
     def test_repr_compare_undefined_differences(self) -> None:
         """Values that cannot be subtracted or divided leave the line out."""
 
-        class Offset:
-            """Subtracts from a number, but has no abs()."""
+        class Gap:
+            """A difference that has abs() but cannot be divided."""
 
-            def __rsub__(self, other: float) -> float:
-                return other - 1.0
+            def __abs__(self) -> Gap:
+                return self
+
+            def __str__(self) -> str:
+                return "gap"
+
+        class Offset:
+            def __rsub__(self, other: float) -> Gap:
+                return Gap()
 
         explanation = approx([2.0])._repr_compare([Offset()])
-        assert explanation[1] == "Max absolute difference: 1.0"
+        assert explanation[1] == "Max absolute difference: gap"
         assert explanation[2].startswith("Index")
 
         explanation = approx(
