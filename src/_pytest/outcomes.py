@@ -62,7 +62,7 @@ class Failed(OutcomeException):
     __module__ = "builtins"
 
 
-class Exit(Exception):
+class Exit(BaseException):
     """Raised for immediate program exits (no tracebacks/summaries)."""
 
     def __init__(

@@ -1,0 +1,1 @@
+The exception raised by :func:`pytest.exit` (``pytest.exit.Exception``) now derives from :class:`BaseException` instead of :class:`Exception`, like the other outcome exceptions. So code catching ``Exception``, in a test or fixture for example, no longer swallows it.
