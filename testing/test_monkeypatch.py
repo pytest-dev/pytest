@@ -525,6 +525,45 @@ def test_undo_inherited_non_data_descriptor_on_instance() -> None:
     assert third != fourth
 
 
+def test_undo_attribute_stored_outside_instance_dict() -> None:
+    """Undo must restore an attribute which the object stores outside its ``__dict__``.
+
+    A class with a custom ``__setattr__`` can keep the value anywhere, so the
+    old value has to be read with ``getattr()`` and written back through the
+    same hook.
+
+    See #15099.
+    """
+
+    class Config:
+        _data: dict[str, object]
+
+        def __init__(self) -> None:
+            object.__setattr__(self, "_data", {"debug": False})
+
+        def __getattr__(self, name: str) -> object:
+            try:
+                return self._data[name]
+            except KeyError:
+                raise AttributeError(name) from None
+
+        def __setattr__(self, name: str, value: object) -> None:
+            self._data[name] = value
+
+    config = Config()
+    monkeypatch = MonkeyPatch()
+
+    with pytest.raises(AttributeError):
+        config.missing  # noqa: B018
+
+    monkeypatch.setattr(config, "debug", True)
+    assert config.debug is True
+    assert "debug" not in vars(config)
+
+    monkeypatch.undo()
+    assert config.debug is False
+
+
 def test_undo_inherited_method_on_instance() -> None:
     """Patching a method on an instance must not leave a bound method behind."""
 
