@@ -65,7 +65,12 @@ def _diff_text(
             if left[i] != right[i]:
                 break
         if i > 42:
-            i -= 10  # Provide some context
+            # Prefer complete lines so trimming does not turn a removed line
+            # into a replacement. Keep the context bounded for long lines.
+            line_start = (
+                max(left.rfind("\n", i - 42, i), left.rfind("\r", i - 42, i)) + 1
+            )
+            i = line_start if line_start else i - 10
             yield f"Skipping {i} identical leading characters in diff, use -v to show"
             left = left[i:]
             right = right[i:]
