@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
 from collections.abc import Sequence
+import contextlib
 import dataclasses
 import os
 import re
@@ -138,6 +141,10 @@ class Parser:
         self._groups = [self._anonymous]
         # Maps option strings -> dest, e.g. "-V" and "--version" to "version".
         self._opt2dest: dict[str, str] = {}
+        # Maps option strings -> name of the plugin that registered them, None if unknown.
+        self._opt2plugin: dict[str, str | None] = {}
+        # Name of the plugin whose options are being registered, None if unknown.
+        self._current_plugin: str | None = None
         file_or_dir_arg = self.optparser.add_argument(FILE_OR_DIR, nargs="*")
         file_or_dir_arg.completer = filescompleter  # type: ignore
 
@@ -157,6 +164,37 @@ class Parser:
         if self._processopt:
             if option.dest:
                 self._processopt(option)
+
+    @contextlib.contextmanager
+    def _plugin_scope(self, plugin_name: str | None) -> Iterator[None]:
+        """Attribute the options added within the block to ``plugin_name``."""
+        previous, self._current_plugin = self._current_plugin, plugin_name
+        try:
+            yield
+        finally:
+            self._current_plugin = previous
+
+    def _conflict_origin(
+        self, opts: Iterable[str], *, identified_only: bool = False
+    ) -> str | None:
+        """Describe who registered ``opts`` and the plugin now conflicting with them.
+
+        Returns None if none of ``opts`` is known to this parser, or, with
+        ``identified_only``, if no plugin name is known.
+        """
+        wanted = set(opts)
+        # Dict order is registration order.
+        owners = [plugin for opt, plugin in self._opt2plugin.items() if opt in wanted]
+        if not owners:
+            return None
+        current = self._current_plugin
+        names = list(dict.fromkeys(n for n in (*owners, current) if n is not None))
+        if not names:
+            return None if identified_only else "by an unidentified source"
+        origin = f"by plugins: {names}"
+        if None in owners or current is None:
+            origin += " and an unidentified source"
+        return origin
 
     def getgroup(
         self, name: str, description: str = "", after: str | None = None
@@ -455,18 +493,24 @@ class OptionGroup:
             name for opt in self.options for name in opt.names()
         )
         if conflict:
-            raise ValueError(f"option names {conflict} already added")
+            origin = self.parser._conflict_origin(conflict) if self.parser else None
+            suffix = f" {origin}" if origin else ""
+            raise ValueError(f"option names {conflict} already added{suffix}")
 
         if self.parser and "dest" not in attrs:
             dest = _get_argparse_dest(opts)
             for group in self.parser._groups:
                 for option in group.options:
                     if option.dest == dest:
+                        origin = self.parser._conflict_origin(
+                            option.names(), identified_only=True
+                        )
+                        suffix = f" (registered {origin})" if origin else ""
                         raise ValueError(
                             f"option dest {dest!r} already used by "
                             f"{option.names()!r} (this is the option that maps to "
                             f"dest {dest!r}); pass dest={dest!r} explicitly "
-                            "to share the destination"
+                            f"to share the destination{suffix}"
                         )
         self._addoption_inner(opts, attrs, allow_reserved=False)
 
@@ -483,12 +527,20 @@ class OptionGroup:
                 if len(opt) >= 2 and opt[0] == "-" and opt[1].islower():
                     raise ValueError("lowercase short options are reserved")
 
-        action = self._arggroup.add_argument(*opts, **attrs)
+        try:
+            action = self._arggroup.add_argument(*opts, **attrs)
+        except argparse.ArgumentError as exc:
+            origin = self.parser._conflict_origin(opts) if self.parser else None
+            if origin is not None:
+                # Keep the original exception (type, argument_name) and extend it.
+                exc.message = f"{exc.message} added {origin}"
+            raise
         option = Argument(action)
         self.options.append(option)
         if self.parser:
             for name in option.names():
                 self.parser._opt2dest[name] = option.dest
+                self.parser._opt2plugin[name] = self.parser._current_plugin
             self.parser.processoption(option)
 
 
