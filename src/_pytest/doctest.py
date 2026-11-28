@@ -28,7 +28,7 @@ from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.approx import approx
-from _pytest.compat import safe_getattr
+from _pytest.compat import _is_mocked
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import fixture
@@ -462,15 +462,6 @@ def _check_all_skipped(test: doctest.DocTest) -> None:
     all_skipped = all(x.options.get(doctest.SKIP, False) for x in test.examples)
     if all_skipped:
         skip("all tests skipped by +SKIP option")
-
-
-def _is_mocked(obj: object) -> bool:
-    """Return if an object is possibly a mock object by checking the
-    existence of a highly improbable attribute."""
-    return (
-        safe_getattr(obj, "pytest_mock_example_attribute_that_shouldnt_exist", None)
-        is not None
-    )
 
 
 @contextmanager
