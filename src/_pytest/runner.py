@@ -15,6 +15,7 @@ from typing import Generic
 from typing import Literal
 from typing import TYPE_CHECKING
 from typing import TypeVar
+import warnings
 
 from .config import Config
 from .reports import BaseReport
@@ -27,6 +28,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import SKIP_DURING_TEARDOWN
 from _pytest.nodes import Collector
 from _pytest.nodes import Directory
 from _pytest.nodes import Item
@@ -35,6 +37,7 @@ from _pytest.outcomes import Exit
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
+from _pytest.warning_types import PytestRemovedIn10Warning
 
 
 if sys.version_info < (3, 11):
@@ -196,8 +199,35 @@ def pytest_runtest_call(item: Item) -> None:
 
 def pytest_runtest_teardown(item: Item, nextitem: Item | None) -> None:
     _update_current_test_var(item, "teardown")
-    item.session._setupstate.teardown_exact(nextitem)
+    try:
+        item.session._setupstate.teardown_exact(nextitem)
+    except (Skipped, BaseExceptionGroup) as e:
+        if isinstance(e, Skipped) or e.split(Skipped)[1] is None:
+            try:
+                _warn_skip_during_teardown(e)
+            except PytestRemovedIn10Warning as w:
+                # The warning was turned into an error by a warnings filter:
+                # report it where the skip was raised, instead of the skip.
+                raise w.with_traceback(e.__traceback__) from None
+        raise
     _update_current_test_var(item, None)
+
+
+def _warn_skip_during_teardown(exc: BaseException) -> None:
+    """Warn about a skip raised during teardown, pointing at the skip call."""
+    while isinstance(exc, BaseExceptionGroup):
+        exc = exc.exceptions[0]
+    warning = SKIP_DURING_TEARDOWN.format()
+    crash = ExceptionInfo.from_exception(exc)._getreprcrash()
+    if crash is None:
+        warnings.warn(warning, stacklevel=2)
+    else:
+        warnings.warn_explicit(
+            warning,
+            category=type(warning),
+            filename=crash.path,
+            lineno=crash.lineno,
+        )
 
 
 def _update_current_test_var(
