@@ -750,8 +750,12 @@ class Pytester:
         #
         # Preserve readline due to https://bugs.python.org/issue41033.
         # pexpect issues a SIGWINCH.
+        # Preserve google.protobuf / google._upb to avoid descriptor pool
+        # TypeError ("A Message class can only inherit from Message") on re-import.
         def preserve_module(name):
-            return name.startswith(("zope", "readline"))
+            return name.startswith(
+                ("zope", "readline", "google.protobuf", "google._upb")
+            )
 
         return SysModulesSnapshot(preserve=preserve_module)
 
