@@ -838,6 +838,17 @@ class TestPDB:
             ["E   NameError: *xxx*", "*! *Exit: Quitting debugger !*"]  # due to EOF
         )
 
+    def test_pdb_not_entered_on_syntax_error(self, pytester: Pytester) -> None:
+        """The debugger is not entered for a syntax error (see #3649).
+
+        The traceback of a syntax error is still reported, entering the
+        debugger would only show where the error is re-raised.
+        """
+        p1 = pytester.makepyfile("syntax error")
+        result = pytester.runpytest_subprocess("--pdb", p1)
+        result.stdout.fnmatch_lines(["E   SyntaxError: invalid syntax"])
+        result.stdout.no_fnmatch_line("*entering PDB*")
+
     @pytest.mark.parametrize("post_mortem", (False, True))
     def test_enter_leave_pdb_hooks_are_called(
         self, post_mortem, pytester: Pytester
