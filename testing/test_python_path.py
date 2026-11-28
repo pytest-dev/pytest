@@ -86,7 +86,7 @@ def test_module_not_found(pytester: Pytester, file_structure) -> None:
     """Without the pythonpath setting, the module should not be found."""
     pytester.makefile(".ini", pytest="[pytest]\n")
     result = pytester.runpytest("test_foo.py")
-    assert result.ret == pytest.ExitCode.INTERRUPTED
+    assert result.ret == pytest.ExitCode.COLLECTION_ERROR
     result.assert_outcomes(errors=1)
     expected_error = "E   ModuleNotFoundError: No module named 'foo'"
     result.stdout.fnmatch_lines([expected_error])
@@ -95,7 +95,7 @@ def test_module_not_found(pytester: Pytester, file_structure) -> None:
 def test_no_config_file(pytester: Pytester, file_structure) -> None:
     """If no configuration file, test should error."""
     result = pytester.runpytest("test_foo.py")
-    assert result.ret == pytest.ExitCode.INTERRUPTED
+    assert result.ret == pytest.ExitCode.COLLECTION_ERROR
     result.assert_outcomes(errors=1)
     expected_error = "E   ModuleNotFoundError: No module named 'foo'"
     result.stdout.fnmatch_lines([expected_error])

@@ -1,0 +1,1 @@
+Collection errors such as syntax or import errors now exit with the new ``ExitCode.COLLECTION_ERROR`` (7) instead of the misleading ``ExitCode.INTERRUPTED`` (2).
