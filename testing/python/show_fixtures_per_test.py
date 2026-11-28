@@ -38,6 +38,35 @@ def test_fixtures_in_module(pytester: Pytester) -> None:
     result.stdout.no_fnmatch_line("*_arg0*")
 
 
+def test_fixtures_return_annotation(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        '''
+        import pytest
+        @pytest.fixture
+        def arg1() -> int:
+            """arg1 docstring"""
+        @pytest.fixture
+        def arg2():
+            """arg2 docstring"""
+        def test_args(arg1, arg2):
+            pass
+    '''
+    )
+
+    result = pytester.runpytest("--fixtures-per-test", p)
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines(
+        [
+            "*fixtures used by test_args*",
+            "arg1 -> int -- test_fixtures_return_annotation.py:2",
+            "    arg1 docstring",
+            "arg2 -- test_fixtures_return_annotation.py:5",
+            "    arg2 docstring",
+        ]
+    )
+
+
 def test_fixtures_in_conftest(pytester: Pytester) -> None:
     pytester.makeconftest(
         '''
