@@ -2962,6 +2962,12 @@ Test Execution Control
     If no tests failed (or no cached data exists), all tests are run.
     See also :confval:`cache_dir` and :ref:`cache`.
 
+.. option:: --lf-keep
+
+    With :option:`--lf`, keep rerunning the last-failed group until all its
+    tests complete successfully in the same session.
+    See :ref:`cache`.
+
 .. option:: --failed-first, --ff
 
     Run all tests, but run the last failures first.

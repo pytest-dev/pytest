@@ -848,6 +848,498 @@ class TestLastFailed:
         result.stdout.fnmatch_lines(["*4 passed*"])
         assert self.get_cached_last_failed(pytester) == []
 
+    def test_lastfailed_keep_group_until_all_pass(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_a="""
+                from pathlib import Path
+
+                def test_repaired_then_regresses():
+                    assert Path("fixed-a").is_file()
+            """,
+            test_b="""
+                from pathlib import Path
+
+                def test_repaired_last():
+                    assert Path("fixed-b").is_file()
+
+                def test_unrelated_passes():
+                    pass
+            """,
+        )
+        pytester.makeconftest(
+            """
+            from pathlib import Path
+
+            def pytest_runtest_logreport(report):
+                if report.when == "call":
+                    with Path("outcomes").open("a", encoding="utf-8") as stream:
+                        print(report.nodeid, report.outcome, file=stream)
+            """
+        )
+
+        outcomes = pytester.path / "outcomes"
+
+        def run(exit_code: ExitCode, expected: list[str], *args: str) -> None:
+            outcomes.write_text("", encoding="utf-8")
+            result = pytester.runpytest_subprocess(*args)
+            assert result.ret == exit_code
+            assert sorted(outcomes.read_text(encoding="utf-8").splitlines()) == sorted(
+                expected
+            )
+
+        test_a = "test_a.py::test_repaired_then_regresses"
+        test_b = "test_b.py::test_repaired_last"
+        test_c = "test_b.py::test_unrelated_passes"
+        fixed_a = pytester.path / "fixed-a"
+        fixed_b = pytester.path / "fixed-b"
+        keep = ("--lf", "--lf-keep")
+
+        run(
+            ExitCode.TESTS_FAILED,
+            [f"{test_a} failed", f"{test_b} failed", f"{test_c} passed"],
+        )
+        assert self.get_cached_last_failed(pytester) == [test_a, test_b]
+
+        fixed_a.touch()
+        run(ExitCode.TESTS_FAILED, [f"{test_a} passed", f"{test_b} failed"], *keep)
+        assert self.get_cached_last_failed(pytester) == [test_b]
+
+        fixed_a.unlink()
+        run(ExitCode.TESTS_FAILED, [f"{test_a} failed", f"{test_b} failed"], *keep)
+
+        fixed_a.touch()
+        fixed_b.touch()
+        run(ExitCode.OK, [f"{test_a} passed", f"{test_b} passed"], *keep)
+
+        run(ExitCode.NO_TESTS_COLLECTED, [], *keep, "--lfnf=none")
+        run(
+            ExitCode.OK,
+            [f"{test_a} passed", f"{test_b} passed", f"{test_c} passed"],
+            *keep,
+            "--lfnf=all",
+        )
+
+    def get_cached_last_failed_group(self, pytester: Pytester) -> list[str]:
+        config = pytester.parseconfigure()
+        assert config.cache is not None
+        group = config.cache.get("cache/lastfailed_group", [])
+        assert isinstance(group, list)
+        assert all(isinstance(nodeid, str) for nodeid in group)
+        return group
+
+    def test_lastfailed_keep_partial_and_ordinary_modes(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_a="""
+                from pathlib import Path
+
+                def test_a():
+                    assert Path("fixed-a").exists()
+            """,
+            test_b="""
+                from pathlib import Path
+
+                def test_b():
+                    assert Path("fixed-b").exists()
+
+                def test_control():
+                    pass
+            """,
+        )
+        a = "test_a.py::test_a"
+        b = "test_b.py::test_b"
+        control = "test_b.py::test_control"
+        keep = ("--lf", "--lf-keep")
+
+        def run(
+            code: ExitCode,
+            failures: list[str],
+            group: list[str],
+            outcomes: list[str],
+            *args: str,
+        ) -> None:
+            result = pytester.runpytest("-v", *args)
+            assert result.ret == code
+            assert [
+                line.split()[:2]
+                for line in result.stdout.lines
+                if line.startswith(("test_a.py::", "test_b.py::"))
+            ] == [outcome.split() for outcome in outcomes]
+            assert self.get_cached_last_failed(pytester) == failures
+            assert self.get_cached_last_failed_group(pytester) == group
+
+        run(
+            ExitCode.TESTS_FAILED,
+            [a, b],
+            [],
+            [f"{a} FAILED", f"{b} FAILED", f"{control} PASSED"],
+        )
+        (pytester.path / "fixed-a").touch()
+        run(ExitCode.OK, [b], [a, b], [f"{a} PASSED"], *keep, a)
+        run(ExitCode.TESTS_FAILED, [b], [a, b], [f"{b} FAILED"], "--lf")
+        run(
+            ExitCode.TESTS_FAILED,
+            [b],
+            [a, b],
+            [f"{b} FAILED", f"{a} PASSED", f"{control} PASSED"],
+            "--ff",
+        )
+        (pytester.path / "fixed-b").touch()
+        run(ExitCode.OK, [], [a, b], [f"{b} PASSED"], *keep, "test_b.py")
+        run(ExitCode.OK, [], [], [f"{a} PASSED", f"{b} PASSED"], *keep)
+
+    @pytest.mark.parametrize(
+        "variant, outcomes, resolved",
+        [
+            ("setup", {"errors": 1}, False),
+            ("teardown", {"passed": 1, "errors": 1}, False),
+            ("skip", {"skipped": 1}, True),
+            ("xfail", {"xfailed": 1}, True),
+            ("xpass", {"xpassed": 1}, True),
+            ("strict_xpass", {"failed": 1}, False),
+        ],
+    )
+    def test_lastfailed_keep_phase_completion(
+        self, pytester: Pytester, variant: str, outcomes: dict[str, int], resolved: bool
+    ) -> None:
+        pytester.makepyfile(test_phase="def test_member(): assert False")
+        pytester.runpytest().assert_outcomes(failed=1)
+        source = {
+            "setup": "def setup_function(): assert False",
+            "teardown": "def teardown_function(): assert False",
+            "skip": "@pytest.mark.skip",
+            "xfail": "@pytest.mark.xfail",
+            "xpass": "@pytest.mark.xfail(strict=False)",
+            "strict_xpass": "@pytest.mark.xfail(strict=True)",
+        }
+        body = "assert False" if variant == "xfail" else "pass"
+        pytester.makepyfile(
+            test_phase=f"import pytest\n{source[variant]}\n"
+            f"def test_member(): {body}\n"
+            "def test_control(): pass"
+        )
+        keep = ("--lf", "--lf-keep")
+        result = pytester.runpytest(*keep)
+        result.assert_outcomes(**outcomes)
+        assert result.ret == (ExitCode.OK if resolved else ExitCode.TESTS_FAILED)
+        remaining = [] if resolved else ["test_phase.py::test_member"]
+        assert self.get_cached_last_failed(pytester) == remaining
+        assert self.get_cached_last_failed_group(pytester) == remaining
+        if not resolved:
+            pytester.makepyfile(
+                test_phase="def test_member(): pass\ndef test_control(): pass"
+            )
+            pytester.runpytest(*keep).assert_outcomes(passed=1)
+            assert self.get_cached_last_failed(pytester) == []
+            assert self.get_cached_last_failed_group(pytester) == []
+
+    @pytest.mark.parametrize("discover_in_retained_mode", [False, True])
+    def test_lastfailed_keep_adds_new_failure(
+        self, pytester: Pytester, discover_in_retained_mode: bool
+    ) -> None:
+        pytester.makepyfile(
+            test_new="""
+                from pathlib import Path
+
+                def test_a():
+                    assert Path("fixed-a").exists()
+
+                def test_b():
+                    assert Path("fixed-b").exists()
+
+                def test_c():
+                    assert not Path("break-c").exists()
+            """
+        )
+        a, b, c = [f"test_new.py::test_{name}" for name in "abc"]
+        keep = ("--lf", "--lf-keep")
+        pytester.runpytest().assert_outcomes(failed=2, passed=1)
+        (pytester.path / "fixed-a").touch()
+        pytester.runpytest(*keep).assert_outcomes(failed=1, passed=1)
+        assert self.get_cached_last_failed(pytester) == [b]
+        assert self.get_cached_last_failed_group(pytester) == [a, b]
+
+        (pytester.path / "break-c").touch()
+        if discover_in_retained_mode:
+            pytester.runpytest(*keep, "test_new.py::test_c").assert_outcomes(failed=1)
+            assert self.get_cached_last_failed_group(pytester) == [a, b, c]
+        else:
+            pytester.runpytest().assert_outcomes(failed=2, passed=1)
+            assert self.get_cached_last_failed_group(pytester) == [a, b]
+        assert self.get_cached_last_failed(pytester) == [b, c]
+        pytester.runpytest(*keep).assert_outcomes(failed=2, passed=1)
+        assert self.get_cached_last_failed_group(pytester) == [a, b, c]
+
+        result = pytester.runpytest(*keep, "--cache-clear", "--lfnf=none")
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
+        assert self.get_cached_last_failed(pytester) == []
+        assert self.get_cached_last_failed_group(pytester) == []
+
+    @pytest.mark.parametrize("invalid_group", [None, {"unexpected": True}, [42]])
+    def test_lastfailed_keep_loads_legacy_cache(
+        self, pytester: Pytester, invalid_group: object
+    ) -> None:
+        pytester.makepyfile(
+            test_legacy="def test_bad(): assert False\ndef test_control(): pass"
+        )
+        pytester.runpytest().assert_outcomes(failed=1, passed=1)
+        config = pytester.parseconfigure()
+        assert config.cache is not None
+        if invalid_group is not None:
+            config.cache.set("cache/lastfailed_group", invalid_group)
+        pytester.runpytest("--lf", "--lf-keep").assert_outcomes(failed=1)
+        assert self.get_cached_last_failed(pytester) == ["test_legacy.py::test_bad"]
+        assert self.get_cached_last_failed_group(pytester) == [
+            "test_legacy.py::test_bad"
+        ]
+
+    def test_lastfailed_keep_recovers_collector_after_early_filter(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_a="def test_a(): assert False",
+            test_b="raise RuntimeError('broken import')",
+        )
+        pytester.runpytest("--continue-on-collection-errors").assert_outcomes(
+            failed=1, errors=1
+        )
+        assert self.get_cached_last_failed(pytester) == [
+            "test_a.py::test_a",
+            "test_b.py",
+        ]
+        pytester.makepyfile(
+            test_a="def test_a(): pass",
+            test_b="def test_b(): assert False\ndef test_other_child(): pass",
+            test_unrelated="raise RuntimeError('unrelated import must be skipped')",
+        )
+        keep = ("--lf", "--lf-keep")
+        result = pytester.runpytest("-v", *keep)
+        result.assert_outcomes(failed=1, passed=2)
+        a = "test_a.py::test_a"
+        b = "test_b.py::test_b"
+        child = "test_b.py::test_other_child"
+        result.stdout.fnmatch_lines(
+            [f"{a} PASSED*", f"{b} FAILED*", f"{child} PASSED*"]
+        )
+        assert self.get_cached_last_failed(pytester) == [b]
+        assert self.get_cached_last_failed_group(pytester) == [a, b, child]
+        pytester.makepyfile(test_b="def test_b(): pass\ndef test_other_child(): pass")
+        pytester.runpytest(*keep).assert_outcomes(passed=3)
+        assert self.get_cached_last_failed(pytester) == []
+        assert self.get_cached_last_failed_group(pytester) == []
+
+    def test_lastfailed_keep_recovers_nested_collector(
+        self, pytester: Pytester
+    ) -> None:
+        keep = ("--lf", "--lf-keep")
+        a = "test_a.py::test_a"
+        b = "test_b.py::TestB::test_b"
+        sibling = "test_b.py::TestB::test_sibling"
+        pytester.makepyfile(
+            test_a="def test_a(): assert False",
+            test_b="raise RuntimeError('broken import')",
+        )
+        seed = pytester.runpytest(*keep, "--continue-on-collection-errors")
+        assert seed.ret == ExitCode.TESTS_FAILED
+        seed.assert_outcomes(failed=1, errors=1)
+        assert self.get_cached_last_failed_group(pytester) == [a, "test_b.py"]
+
+        pytester.makepyfile(
+            test_a="def test_a(): pass",
+            test_b="""
+                from pathlib import Path
+
+                class TestB:
+                    def test_b(self):
+                        assert Path("fixed-b").exists()
+
+                    def test_sibling(self):
+                        pass
+            """,
+        )
+        for _ in range(2):
+            result = pytester.runpytest(*keep, "-v")
+            assert result.ret == ExitCode.TESTS_FAILED
+            result.assert_outcomes(passed=2, failed=1)
+            for nodeid, outcome in [(a, "PASSED"), (b, "FAILED"), (sibling, "PASSED")]:
+                result.stdout.fnmatch_lines([f"{nodeid} {outcome}*"])
+            assert self.get_cached_last_failed_group(pytester) == [a, b, sibling]
+
+        (pytester.path / "fixed-b").touch()
+        result = pytester.runpytest(*keep, "-v")
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=3)
+        for nodeid in (a, b, sibling):
+            result.stdout.fnmatch_lines([f"{nodeid} PASSED*"])
+        assert self.get_cached_last_failed_group(pytester) == []
+
+    def test_lastfailed_keep_recovers_explicit_children(
+        self, pytester: Pytester
+    ) -> None:
+        keep = ("--lf", "--lf-keep")
+        a = "test_a.py::test_a"
+        b = "test_b.py::test_b"
+        sibling = "test_b.py::TestMore::test_sibling"
+        pytester.makepyfile(
+            test_a="def test_a(): assert False",
+            test_b="raise RuntimeError('broken import')",
+            test_c="def test_c(): assert False",
+        )
+        c = "test_c.py::test_c"
+        seed = pytester.runpytest(*keep, "--continue-on-collection-errors")
+        assert seed.ret == ExitCode.TESTS_FAILED
+        seed.assert_outcomes(failed=2, errors=1)
+        assert self.get_cached_last_failed_group(pytester) == [a, "test_b.py", c]
+
+        pytester.makepyfile(
+            test_a="def test_a(): pass",
+            test_b="""
+                def test_b():
+                    pass
+
+                class TestMore:
+                    def test_sibling(self):
+                        pass
+            """,
+            test_c="def test_c(): pass",
+        )
+        result = pytester.runpytest(*keep, "-v", "test_a.py", b)
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=2)
+        for nodeid in (a, b):
+            result.stdout.fnmatch_lines([f"{nodeid} PASSED*"])
+        assert self.get_cached_last_failed_group(pytester) == [
+            a,
+            "test_b.py::TestMore",
+            b,
+            c,
+        ]
+
+        result = pytester.runpytest(*keep, "-v", "test_a.py", b, c)
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=3)
+        assert self.get_cached_last_failed_group(pytester) == [
+            a,
+            "test_b.py::TestMore",
+            b,
+            c,
+        ]
+
+        result = pytester.runpytest(*keep, "-v")
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=4)
+        for nodeid in (a, b, sibling, c):
+            result.stdout.fnmatch_lines([f"{nodeid} PASSED*"])
+        assert self.get_cached_last_failed_group(pytester) == []
+
+    @pytest.mark.parametrize("extra_args", [(), ("--ff",)])
+    def test_lastfailed_keep_requires_last_failed(
+        self, pytester: Pytester, extra_args: tuple[str, ...]
+    ) -> None:
+        pytester.makepyfile("def test_bad(): assert False")
+        pytester.runpytest("--last-failed", "--lf-keep").assert_outcomes(failed=1)
+        cache = pytester.path / ".pytest_cache" / "v" / "cache"
+        failure_files = [cache / "lastfailed", cache / "lastfailed_group"]
+        before = [path.read_bytes() for path in failure_files]
+
+        result = pytester.runpytest("--lf-keep", *extra_args, "--cache-clear")
+
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(["ERROR: --lf-keep requires --lf*"])
+        assert [path.read_bytes() for path in failure_files] == before
+
+    @pytest.mark.parametrize("retain_descendant", [False, True])
+    def test_lastfailed_keep_recovers_empty_collector(
+        self, pytester: Pytester, retain_descendant: bool
+    ) -> None:
+        keep = ("--lf", "--lf-keep")
+        a = "test_a.py::test_a"
+        collector = "test_b.py"
+        descendant = "test_b.py::test_b"
+        pytester.makepyfile(test_a="def test_a(): assert False")
+        if retain_descendant:
+            pytester.makepyfile(test_b="def test_b(): assert False")
+            pytester.runpytest(*keep).assert_outcomes(failed=2)
+        pytester.makepyfile(test_b="raise RuntimeError('broken import')")
+        pytester.runpytest(*keep, "--continue-on-collection-errors").assert_outcomes(
+            failed=1, errors=1
+        )
+        members = [a, collector, descendant] if retain_descendant else [a, collector]
+        assert self.get_cached_last_failed_group(pytester) == members
+
+        pytester.makepyfile(test_a="def test_a(): pass")
+        pytester.runpytest(*keep, "test_a.py").assert_outcomes(passed=1)
+        assert self.get_cached_last_failed_group(pytester) == members
+
+        pytester.makepyfile(
+            test_b="import pytest; pytest.skip('unavailable', allow_module_level=True)"
+        )
+        pytester.runpytest(*keep).assert_outcomes(passed=1, skipped=1)
+        assert self.get_cached_last_failed_group(pytester) == members
+
+        pytester.makepyfile(test_b="# Repaired module with no tests.")
+        pytester.runpytest(*keep).assert_outcomes(passed=1)
+        assert self.get_cached_last_failed_group(pytester) == (
+            [a, descendant] if retain_descendant else []
+        )
+
+    @pytest.mark.parametrize("interrupt", [False, True])
+    def test_lastfailed_keep_incomplete_run(
+        self, pytester: Pytester, interrupt: bool
+    ) -> None:
+        pytester.makepyfile(
+            test_stop="def test_a(): assert False\ndef test_b(): assert False"
+        )
+        pytester.runpytest().assert_outcomes(failed=2)
+        members = ["test_stop.py::test_a", "test_stop.py::test_b"]
+        action = "raise KeyboardInterrupt" if interrupt else "assert False"
+        pytester.makepyfile(
+            test_stop=f"def test_a(): {action}\n"
+            "def test_b(): raise AssertionError('B should never start')"
+        )
+        keep = ("--lf", "--lf-keep")
+        result = pytester.runpytest_subprocess(*keep, "-x", "-v")
+        assert result.ret == (
+            ExitCode.INTERRUPTED if interrupt else ExitCode.TESTS_FAILED
+        )
+        result.stdout.fnmatch_lines(["*test_stop.py::test_a*"])
+        result.stdout.no_fnmatch_line("*B should never start*")
+        result.stdout.no_fnmatch_line("*test_stop.py::test_b*")
+        assert self.get_cached_last_failed(pytester) == members
+        assert self.get_cached_last_failed_group(pytester) == members
+        pytester.makepyfile(test_stop="def test_a(): pass\ndef test_b(): pass")
+        pytester.runpytest(*keep).assert_outcomes(passed=2)
+        assert self.get_cached_last_failed(pytester) == []
+        assert self.get_cached_last_failed_group(pytester) == []
+
+    def test_lastfailed_keep_observation(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_view="def test_a(): assert False\ndef test_b(): assert False"
+        )
+        pytester.runpytest().assert_outcomes(failed=2)
+        pytester.makepyfile(test_view="def test_a(): pass\ndef test_b(): assert False")
+        keep = ("--lf", "--lf-keep")
+        pytester.runpytest(*keep).assert_outcomes(failed=1, passed=1)
+
+        def check_cache() -> None:
+            assert self.get_cached_last_failed(pytester) == ["test_view.py::test_b"]
+            assert self.get_cached_last_failed_group(pytester) == [
+                "test_view.py::test_a",
+                "test_view.py::test_b",
+            ]
+
+        result = pytester.runpytest(*keep, "--collect-only", "-q")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["test_view.py::test_a", "test_view.py::test_b"])
+        check_cache()
+        result = pytester.runpytest("--cache-show", "cache/lastfailed*")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(
+            ["cache/lastfailed contains:*", "cache/lastfailed_group contains:*"]
+        )
+        check_cache()
+
     def test_lastfailed_no_failures_behavior_all_passed(
         self, pytester: Pytester
     ) -> None:

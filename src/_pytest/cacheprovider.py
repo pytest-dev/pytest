@@ -5,6 +5,7 @@
 # pytest-cache version.
 from __future__ import annotations
 
+from collections.abc import Collection
 from collections.abc import Generator
 from collections.abc import Iterable
 import dataclasses
@@ -24,6 +25,7 @@ from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
@@ -33,6 +35,7 @@ from _pytest.nodeid import NodeId
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
+from _pytest.subtests import SubtestReport
 
 
 CACHEDIR_FILES: dict[str, bytes] = {
@@ -253,6 +256,9 @@ class Cache:
             _make_cachedir(self._cachedir)
 
 
+_LASTFAILED_GROUP_KEY = "cache/lastfailed_group"
+
+
 class LFPluginCollWrapper:
     def __init__(self, lfplugin: LFPlugin) -> None:
         self.lfplugin = lfplugin
@@ -263,6 +269,22 @@ class LFPluginCollWrapper:
         self, collector: nodes.Collector
     ) -> Generator[None, CollectReport, CollectReport]:
         res = yield
+        lfplugin = self.lfplugin
+        recovered = (
+            lfplugin._keep_group
+            and res.passed
+            and res.id in lfplugin._group
+            and not getattr(res, "_lf_file_skipped", False)
+        )
+        if recovered:
+            # Resolve the collector before traversal or explicit node matching.
+            # Unselected children still need to complete before the group expires.
+            lfplugin._group.remove(res.id)
+            if res.result:
+                lfplugin._group.update(node.id for node in res.result)
+                # Recovered directories can introduce previously unknown paths.
+                lfplugin._last_failed_paths = lfplugin.get_last_failed_paths()
+
         if isinstance(collector, Session | Directory):
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
@@ -278,9 +300,11 @@ class LFPluginCollWrapper:
             )
 
         elif isinstance(collector, File):
+            if recovered:
+                return res
+            lastfailed = lfplugin._selection_ids
             if collector.path in self.lfplugin._last_failed_paths:
                 result = res.result
-                lastfailed = self.lfplugin.lastfailed
 
                 # Only filter with known failures.
                 if not self._collected_at_least_one_failure:
@@ -317,7 +341,13 @@ class LFPluginCollSkipfiles:
             if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 
-                return CollectReport(collector.id, "passed", longrepr=None, result=[])
+                return CollectReport(
+                    collector.id,
+                    "passed",
+                    longrepr=None,
+                    result=[],
+                    _lf_file_skipped=True,
+                )
         return None
 
 
@@ -333,6 +363,17 @@ class LFPlugin:
             NodeId.parse(k): v
             for k, v in config.cache.get("cache/lastfailed", {}).items()
         }
+        self._keep_group: bool = config.option.lf_keep
+        self._group: set[NodeId] = set()
+        self._group_reports: dict[NodeId, dict[str, str]] = {}
+        self._group_can_expire = True
+        if self._keep_group:
+            saved_group = config.cache.get(_LASTFAILED_GROUP_KEY, [])
+            if isinstance(saved_group, list) and all(
+                isinstance(nodeid, str) for nodeid in saved_group
+            ):
+                self._group.update(NodeId.parse(nodeid) for nodeid in saved_group)
+            self._group.update(self.lastfailed)
         self._previously_failed_count: int | None = None
         self._report_status: str | None = None
         self._skipped_files = 0  # count skipped files during collection due to --lf
@@ -343,12 +384,17 @@ class LFPlugin:
                 LFPluginCollWrapper(self), "lfplugin-collwrapper"
             )
 
+    @property
+    def _selection_ids(self) -> Collection[NodeId]:
+        # The retained group starts with the ordinary failures and tracks new ones.
+        return self._group if self._keep_group else self.lastfailed.keys()
+
     def get_last_failed_paths(self) -> set[Path]:
         """Return a set with all Paths of the previously failed nodeids and
         their parents."""
         rootpath = self.config.rootpath
         result = set()
-        for nodeid in self.lastfailed:
+        for nodeid in self._selection_ids:
             path = rootpath / nodeid.path
             result.add(path)
             result.update(path.parents)
@@ -365,6 +411,22 @@ class LFPlugin:
         elif report.failed:
             self.lastfailed[report.id] = True
 
+        if not self._keep_group:
+            return
+        if report.failed:
+            self._group.add(report.id)
+            self._group_can_expire = False
+        elif report.id in self._group and not isinstance(report, SubtestReport):
+            if report.when == "setup":
+                self._group_reports[report.id] = {"setup": report.outcome}
+            else:
+                self._group_reports.setdefault(report.id, {})[report.when] = (
+                    report.outcome
+                )
+
+    def pytest_keyboard_interrupt(self) -> None:
+        self._group_can_expire = False
+
     def pytest_collectreport(self, report: CollectReport) -> None:
         passed = report.outcome in ("passed", "skipped")
         if passed:
@@ -375,6 +437,12 @@ class LFPlugin:
         else:
             self.lastfailed[report.id] = True
 
+        if not self._keep_group:
+            return
+        if report.failed:
+            self._group.add(report.id)
+            self._group_can_expire = False
+
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
         self, config: Config, items: list[nodes.Item]
@@ -384,11 +452,12 @@ class LFPlugin:
         if not self.active:
             return res
 
-        if self.lastfailed:
+        selection_ids = self._selection_ids
+        if selection_ids:
             previously_failed = []
             previously_passed = []
             for item in items:
-                if item.id in self.lastfailed:
+                if item.id in selection_ids:
                     previously_failed.append(item)
                 else:
                     previously_passed.append(item)
@@ -397,8 +466,11 @@ class LFPlugin:
             if not previously_failed:
                 # Running a subset of all tests with recorded failures
                 # only outside of it.
+                label = (
+                    "retained group members" if self._keep_group else "known failures"
+                )
                 self._report_status = (
-                    f"{len(self.lastfailed)} known failures not in selected tests"
+                    f"{len(selection_ids)} {label} not in selected tests"
                 )
             else:
                 if self.config.getoption("lf"):
@@ -407,11 +479,20 @@ class LFPlugin:
                 else:  # --failedfirst
                     items[:] = previously_failed + previously_passed
 
-                noun = "failure" if self._previously_failed_count == 1 else "failures"
-                suffix = " first" if self.config.getoption("failedfirst") else ""
-                self._report_status = (
-                    f"rerun previous {self._previously_failed_count} {noun}{suffix}"
-                )
+                if self._keep_group:
+                    noun = "test" if self._previously_failed_count == 1 else "tests"
+                    self._report_status = (
+                        f"rerun {self._previously_failed_count} {noun} "
+                        "from the retained group"
+                    )
+                else:
+                    noun = (
+                        "failure" if self._previously_failed_count == 1 else "failures"
+                    )
+                    suffix = " first" if self.config.getoption("failedfirst") else ""
+                    self._report_status = (
+                        f"rerun previous {self._previously_failed_count} {noun}{suffix}"
+                    )
 
             if self._skipped_files > 0:
                 files_noun = "file" if self._skipped_files == 1 else "files"
@@ -437,6 +518,28 @@ class LFPlugin:
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
         if saved_lastfailed != current_lastfailed:
             config.cache.set("cache/lastfailed", current_lastfailed)
+
+        if not self._keep_group or config.getoption("collectonly"):
+            return
+
+        if (
+            session.exitstatus == ExitCode.OK
+            and self._group_can_expire
+            and all(self._group_member_completed(nodeid) for nodeid in self._group)
+        ):
+            self._group.clear()
+        saved_group = config.cache.get(_LASTFAILED_GROUP_KEY, [])
+        current_group = sorted(str(nodeid) for nodeid in self._group)
+        if saved_group != current_group:
+            config.cache.set(_LASTFAILED_GROUP_KEY, current_group)
+
+    def _group_member_completed(self, nodeid: NodeId) -> bool:
+        phases = self._group_reports.get(nodeid, {})
+        setup = phases.get("setup")
+        return phases.get("teardown") in ("passed", "skipped") and (
+            setup == "skipped"
+            or (setup == "passed" and phases.get("call") in ("passed", "skipped"))
+        )
 
 
 class NFPlugin:
@@ -499,6 +602,11 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="lf",
         help="Rerun only the tests that failed at the last run (or all if none failed)",
+    )
+    group.addoption(
+        "--lf-keep",
+        action="store_true",
+        help="With --lf, retain the failure group until all its tests succeed in one run",
     )
     group.addoption(
         "--ff",
@@ -569,6 +677,9 @@ def pytest_configure(config: Config) -> None:
 
     :param config: pytest configuration object.
     """
+    if config.option.lf_keep and not config.option.lf:
+        raise UsageError("--lf-keep requires --lf (or --last-failed).")
+
     config.cache = Cache.for_config(config, _ispytest=True)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
