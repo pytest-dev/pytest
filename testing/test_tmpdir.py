@@ -249,6 +249,19 @@ class TestConfigTmpPath:
             ["*PytestRemovedIn10Warning: tmp_path_retention_count = '2' in TOML*"]
         )
 
+    @pytest.mark.parametrize(
+        ("toml_value", "match"),
+        [('"banana"', "expects an int, got 'banana'"), ("-1", "must be >= 0, got -1")],
+    )
+    def test_retention_count_invalid(
+        self, pytester: Pytester, toml_value: str, match: str
+    ) -> None:
+        pytester.maketoml(f"[pytest]\ntmp_path_retention_count = {toml_value}\n")
+        pytester.makepyfile("def test_1(tmp_path): pass")
+        result = pytester.runpytest()
+        assert result.ret == pytest.ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines([f"*tmp_path_retention_count*{match}*"])
+
     @pytest.mark.parametrize("policy", ['"failed"', '"all"'])
     @pytest.mark.parametrize("count", [0, 1, 3])
     def test_retention_count(self, pytester: Pytester, policy, count) -> None:
