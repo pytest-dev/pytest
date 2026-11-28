@@ -158,9 +158,9 @@ def on_rm_rf_error(
         return False
 
     # Chmod + retry.
-    # For files, we need to recursively go upwards in the directories to
-    # ensure they all are also accessible and writable.
-    if p.is_file():
+    # Removing a file or an empty directory requires write access to its
+    # parent, which may also be inaccessible through its own parents.
+    if p.is_file() or func is os.rmdir:
         for parent in p.parents:  # pragma: no branch
             _chmod_rwx(str(parent))
             # Stop when we reach the original path passed to rm_rf.

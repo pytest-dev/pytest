@@ -1,0 +1,1 @@
+Temporary directory cleanup now removes empty directories beneath read-only parents instead of leaving the session's temporary files behind.
