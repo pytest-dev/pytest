@@ -265,8 +265,16 @@ class MonkeyPatch:
             # instance would instead leave behind a new entry shadowing the
             # class attribute, which permanently freezes descriptors that
             # resolve dynamically (#10644).
+            # But only consult the instance `__dict__` when the attribute is
+            # really there (or inherited from the class): dynamic attributes
+            # (mock children, `__getattr__` containers) must keep the value
+            # seen via `getattr` above, or `undo()` would wrongly delete them
+            # (see #15287).
             target_dict = getattr(target, "__dict__", None)
-            if isinstance(target_dict, Mapping):
+            if isinstance(target_dict, Mapping) and (
+                name in target_dict
+                or any(name in vars(base) for base in type(target).__mro__)
+            ):
                 oldval = target_dict.get(name, NOTSET)
         setattr(target, name, value)
         self._setattr.append((target, name, oldval))
