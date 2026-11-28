@@ -552,6 +552,17 @@ class TestPython:
         tnode = node.get_first_by_tag("testcase")
         tnode.assert_attr(classname="sub.test_hello", name="test_func")
 
+    def test_file_uses_forward_slashes(
+        self, pytester: Pytester, run_and_parse: RunAndParse
+    ) -> None:
+        """The file attribute uses "/" as separator on all platforms (#15453)."""
+        p = pytester.mkdir("sub").joinpath("test_hello.py")
+        p.write_text("def test_func(): pass", encoding="utf-8")
+        result, dom = run_and_parse(family="xunit1")
+        assert result.ret == 0
+        tnode = dom.get_first_by_tag("testcase")
+        tnode.assert_attr(file="sub/test_hello.py")
+
     @parametrize_families
     def test_internal_error(
         self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily
