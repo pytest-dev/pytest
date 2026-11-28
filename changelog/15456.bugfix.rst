@@ -1,0 +1,1 @@
+JUnit XML reports now decide what to write per test item instead of per phase: captured output is no longer written twice for skipped tests or dropped for setup errors with ``junit_log_passing_tests=False``, a skip during teardown is no longer counted twice in ``tests``, and property and attribute names are escaped like their values.

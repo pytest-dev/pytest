@@ -33,6 +33,7 @@ from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
+from _pytest.subtests import SubtestReport
 from _pytest.terminal import TerminalReporter
 import pytest
 
@@ -142,10 +143,10 @@ class _NodeReporter:
         self.nodes.append(node)
 
     def add_property(self, name: str, value: object) -> None:
-        self.properties.append((str(name), bin_xml_escape(value)))
+        self.properties.append((bin_xml_escape(name), bin_xml_escape(value)))
 
     def add_attribute(self, name: str, value: object) -> None:
-        self.attrs[str(name)] = bin_xml_escape(value)
+        self.attrs[bin_xml_escape(name)] = bin_xml_escape(value)
 
     def make_properties_node(self) -> ET.Element | None:
         """Return a Junit node containing custom properties, if any."""
@@ -164,13 +165,18 @@ class _NodeReporter:
             classnames.insert(0, self.xml.prefix)
         location = testreport.location
         assert location is not None
+        # The collected file, like the nodeid and classname; for an inherited
+        # test location[0] is the module defining the function (#9388).
+        collected = NodeId.parse(testreport.nodeid).path or location[0]
         attrs: dict[str, str] = {
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
-            "file": location[0],
+            "file": collected.replace(os.sep, nodes.SEP),
         }
-        if location[1] is not None:
-            attrs["line"] = str(location[1])
+        defined = location[0].replace(os.sep, nodes.SEP)
+        if location[1] is not None and defined == attrs["file"]:
+            # location line numbers are 0-based.
+            attrs["line"] = str(location[1] + 1)
         if hasattr(testreport, "url"):
             attrs["url"] = testreport.url
         self.attrs = attrs
@@ -202,9 +208,6 @@ class _NodeReporter:
         self.append(node)
 
     def write_captured_output(self, report: TestReport) -> None:
-        if not self.xml.log_passing_tests and report.passed:
-            return
-
         content_out = report.capstdout
         content_log = report.caplog
         content_err = report.capstderr
@@ -293,7 +296,6 @@ class _NodeReporter:
             )
             skipped.text = bin_xml_escape(details)
             self.append(skipped)
-            self.write_captured_output(report)
 
     def finalize(self) -> None:
         data = self.to_xml()
@@ -529,25 +531,12 @@ class LogXML:
         self.node_reporters_ordered: list[_NodeReporter] = []
         self.global_properties: list[tuple[str, str]] = []
 
-        # List of reports that failed on call but teardown is pending.
-        self.open_reports: list[TestReport] = []
-        self.cnt_double_fail_tests = 0
+        # Reports of items whose teardown report has not arrived yet.
+        self.pending_reports: dict[tuple[NodeId, object], list[TestReport]] = {}
 
         # Replaces convenience family with real family.
         if self.family == "legacy":
             self.family = "xunit1"
-
-    def finalize(self, report: TestReport) -> None:
-        node_id = report.id
-        # Local hack to handle xdist report order.
-        workernode = getattr(report, "node", None)
-        reporter = self.node_reporters.pop((node_id, workernode))
-
-        for propname, propvalue in report.user_properties:
-            reporter.add_property(propname, str(propvalue))
-
-        if reporter is not None:
-            reporter.finalize()
 
     def node_reporter(self, report: BaseReport | NodeId | str) -> _NodeReporter:
         match report:
@@ -585,106 +574,85 @@ class LogXML:
         return reporter
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
-        """Handle a setup/call/teardown report, generating the appropriate
-        XML tags as necessary.
+        """Collect the setup/call/teardown reports of one item and write its
+        testcase element(s) once the teardown report arrives.
 
-        Note: due to plugins like xdist, this hook may be called in interlaced
-        order with reports from other nodes. For example:
-
-        Usual call order:
-            -> setup node1
-            -> call node1
-            -> teardown node1
-            -> setup node2
-            -> call node2
-            -> teardown node2
-
-        Possible call order in xdist:
-            -> setup node1
-            -> call node1
-            -> setup node2
-            -> call node2
-            -> teardown node2
-            -> teardown node1
+        Reports of different items may be interlaced (pytest-xdist), so they
+        are buffered per (nodeid, worker node).  Deciding on the complete set
+        of reports means the outcome of the whole item is known when choosing
+        what to write, instead of deciding per phase.
         """
-        close_report = None
-        if report.passed:
-            if report.when == "call":  # ignore setup/teardown
-                reporter = self._opentestcase(report)
-                reporter.append_pass(report)
-        elif report.failed:
-            if report.when == "teardown":
-                # The following vars are needed when xdist plugin is used.
-                report_wid = getattr(report, "worker_id", None)
-                report_ii = getattr(report, "item_index", None)
-                close_report = next(
-                    (
-                        rep
-                        for rep in self.open_reports
-                        if (
-                            rep.id == report.id
-                            and getattr(rep, "item_index", None) == report_ii
-                            and getattr(rep, "worker_id", None) == report_wid
-                        )
-                    ),
-                    None,
-                )
-                if close_report:
-                    # We need to open new testcase in case we have failure in
-                    # call and error in teardown in order to follow junit
-                    # schema.
-                    self.finalize(close_report)
-                else:
-                    # A passing call with a teardown error creates separate
-                    # terminal reports, but JUnit XML keeps one testcase
-                    # element for that item (#3850).
-                    self.cnt_double_fail_tests += int(
-                        (
-                            report.id,
-                            getattr(report, "node", None),
-                        )
-                        in self.node_reporters
-                    )
-            reporter = self._opentestcase(report)
-            if report.when == "call":
-                reporter.append_failure(report)
-                self.open_reports.append(report)
-                if not self.log_passing_tests:
-                    reporter.write_captured_output(report)
-            else:
-                reporter.append_error(report)
-        elif report.skipped:
-            reporter = self._opentestcase(report)
-            reporter.append_skipped(report)
-        self.update_testcase_duration(report)
+        key = report.id, getattr(report, "node", None)
+        self.pending_reports.setdefault(key, []).append(report)
         if report.when == "teardown":
-            reporter = self._opentestcase(report)
-            reporter.write_captured_output(report)
+            self._write_item(key, self.pending_reports.pop(key))
 
-            self.finalize(report)
-            report_wid = getattr(report, "worker_id", None)
-            report_ii = getattr(report, "item_index", None)
-            close_report = next(
-                (
-                    rep
-                    for rep in self.open_reports
-                    if (
-                        rep.id == report.id
-                        and getattr(rep, "item_index", None) == report_ii
-                        and getattr(rep, "worker_id", None) == report_wid
+    def _write_item(
+        self, key: tuple[NodeId, object], reports: list[TestReport]
+    ) -> None:
+        subtests = [r for r in reports if isinstance(r, SubtestReport)]
+        reports = [r for r in reports if not isinstance(r, SubtestReport)]
+        teardown = reports[-1]
+        call_failed = any(r.when == "call" and r.failed for r in reports)
+        if call_failed and teardown.failed:
+            # A call failure and a teardown error cannot be expressed in a
+            # single schema-valid testcase, so they become two elements.
+            groups = [reports[:-1], [teardown]]
+        else:
+            groups = [reports]
+        for index, group in enumerate(groups):
+            if index == 0:
+                # May already exist, e.g. from record_xml_attribute.
+                reporter = self.node_reporters.pop(key, None)
+                if reporter is None:
+                    reporter = _NodeReporter(teardown.id, self)
+                    self.node_reporters_ordered.append(reporter)
+            else:
+                reporter = _NodeReporter(teardown.id, self)
+                self.node_reporters_ordered.append(reporter)
+            self._fill_testcase(reporter, group)
+            if index == 0:
+                # Each subtest is its own testcase, right after its parent.
+                for number, subtest in enumerate(subtests, 1):
+                    sub_reporter = _NodeReporter(subtest.id, self)
+                    self.node_reporters_ordered.append(sub_reporter)
+                    self._fill_testcase(
+                        sub_reporter,
+                        [subtest],
+                        name_suffix=f" [subtest {number}] "
+                        f"{subtest._sub_test_description()}",
                     )
-                ),
-                None,
-            )
-            if close_report:
-                self.open_reports.remove(close_report)
 
-    def update_testcase_duration(self, report: TestReport) -> None:
-        """Accumulate total duration for nodeid from given report and update
-        the Junit.testcase with the new total if already created."""
-        if self.report_duration in {"total", report.when}:
-            reporter = self.node_reporter(report)
-            reporter.duration += getattr(report, "duration", 0.0)
+    def _fill_testcase(
+        self,
+        reporter: _NodeReporter,
+        reports: list[TestReport],
+        name_suffix: str = "",
+    ) -> None:
+        for report in reports:
+            if report.passed:
+                if report.when == "call":
+                    reporter.append_pass(report)
+            elif report.failed:
+                if report.when == "call":
+                    reporter.append_failure(report)
+                else:
+                    reporter.append_error(report)
+            else:
+                reporter.append_skipped(report)
+            if self.report_duration in {"total", report.when}:
+                reporter.duration += getattr(report, "duration", 0.0)
+        last = reports[-1]
+        reporter.record_testreport(last)
+        if name_suffix:
+            reporter.attrs["name"] += bin_xml_escape(name_suffix)
+        # The last report carries the captured sections of all earlier phases,
+        # so output is written exactly once per testcase element.
+        if self.log_passing_tests or not all(r.passed for r in reports):
+            reporter.write_captured_output(last)
+        for propname, propvalue in last.user_properties:
+            reporter.add_property(propname, str(propvalue))
+        reporter.finalize()
 
     def pytest_collectreport(self, report: CollectReport) -> None:
         if not report.passed:
@@ -710,13 +678,9 @@ class LogXML:
         with open(self.logfile, "w", encoding="utf-8") as logfile:
             duration = self.suite_start.elapsed()
 
-            numtests = (
-                self.stats["passed"]
-                + self.stats["failure"]
-                + self.stats["skipped"]
-                + self.stats["error"]
-                - self.cnt_double_fail_tests
-            )
+            # One per testcase element: an item with a passing call and a
+            # teardown error adds two stats but only one element (#3850).
+            numtests = len(self.node_reporters_ordered)
             logfile.write('<?xml version="1.0" encoding="utf-8"?>')
 
             suite_node = ET.Element(
@@ -749,7 +713,7 @@ class LogXML:
     def add_global_property(self, name: str, value: object) -> None:
         __tracebackhide__ = True
         _check_record_param_type("name", name)
-        self.global_properties.append((name, bin_xml_escape(value)))
+        self.global_properties.append((bin_xml_escape(name), bin_xml_escape(value)))
 
     def _get_global_properties_node(self) -> ET.Element | None:
         """Return a Junit node containing custom properties, if any."""

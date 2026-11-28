@@ -327,15 +327,14 @@ class TestPython:
         duration_report: _JunitDurationReport,
         run_and_parse: RunAndParse,
     ) -> None:
-        # mock LogXML.node_reporter so it always sets a known duration to each test report object
-        original_node_reporter = LogXML.node_reporter
+        # Give every setup/call/teardown report a known duration.
+        original_logreport = LogXML.pytest_runtest_logreport
 
-        def node_reporter_wrapper(s: Any, report: TestReport) -> Any:
+        def logreport_wrapper(s: Any, report: TestReport) -> None:
             report.duration = 1.0
-            reporter = original_node_reporter(s, report)
-            return reporter
+            original_logreport(s, report)
 
-        monkeypatch.setattr(LogXML, "node_reporter", node_reporter_wrapper)
+        monkeypatch.setattr(LogXML, "pytest_runtest_logreport", logreport_wrapper)
 
         pytester.makepyfile(
             """
@@ -551,6 +550,17 @@ class TestPython:
         node.assert_attr(failures=1)
         tnode = node.get_first_by_tag("testcase")
         tnode.assert_attr(classname="sub.test_hello", name="test_func")
+
+    def test_file_uses_forward_slashes(
+        self, pytester: Pytester, run_and_parse: RunAndParse
+    ) -> None:
+        """The file attribute uses "/" as separator on all platforms (#15453)."""
+        p = pytester.mkdir("sub").joinpath("test_hello.py")
+        p.write_text("def test_func(): pass", encoding="utf-8")
+        result, dom = run_and_parse(family="xunit1")
+        assert result.ret == 0
+        tnode = dom.get_first_by_tag("testcase")
+        tnode.assert_attr(file="sub/test_hello.py")
 
     @parametrize_families
     def test_internal_error(
@@ -1966,3 +1976,137 @@ def test_shorten_message_before_escaping() -> None:
     """Shortening happens on the raw text, so escapes are never split."""
     escaped = bin_xml_escape(shorten_message("\x1b" * 20, budget=5))
     assert escaped == "#x1B" * 5 + "...\n[truncated; full report in element text]"
+
+
+def test_testcase_line_is_one_based(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    pytester.makepyfile("import os\n\n\ndef test_func():\n    pass\n")
+    _result, dom = run_and_parse(family="xunit1")
+    dom.get_first_by_tag("testcase").assert_attr(
+        file="test_testcase_line_is_one_based.py", line=4
+    )
+
+
+@pytest.mark.parametrize("base", ["object", "unittest.TestCase"])
+def test_inherited_test_reports_collected_file(
+    pytester: Pytester, run_and_parse: RunAndParse, base: str
+) -> None:
+    """``file`` is the collected module, not the module defining the
+    inherited test function, and ``line`` is left out (#9388)."""
+    pkg = pytester.mkpydir("pkg")
+    pkg.joinpath("base.py").write_text(
+        "class Base:\n    def test_inherited(self):\n        pass\n",
+        encoding="utf-8",
+    )
+    pkg.joinpath("test_child.py").write_text(
+        f"import unittest\nfrom .base import Base\n\nclass TestChild(Base, {base}):\n    pass\n",
+        encoding="utf-8",
+    )
+    _result, dom = run_and_parse(family="xunit1")
+    tnode = dom.get_first_by_tag("testcase")
+    tnode.assert_attr(
+        classname="pkg.test_child.TestChild",
+        name="test_inherited",
+        file="pkg/test_child.py",
+    )
+    with pytest.raises(KeyError):
+        tnode["line"]
+
+
+@parametrize_families
+@pytest.mark.parametrize("when", ["call", "teardown"])
+def test_skip_writes_captured_output_once(
+    pytester: Pytester,
+    run_and_parse: RunAndParse,
+    xunit_family: _JunitFamily,
+    when: str,
+) -> None:
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.fixture
+        def fix():
+            yield
+            if {when == "teardown"!r}:
+                pytest.skip("skip in teardown")
+
+        def test_func(fix):
+            print("hello-output")
+            if {when == "call"!r}:
+                pytest.skip("skip in call")
+        """
+    )
+    _result, dom = run_and_parse("-o", "junit_logging=system-out", family=xunit_family)
+    tnode = dom.get_first_by_tag("testcase")
+    assert len(tnode.find_by_tag("skipped")) == 1
+    (system_out,) = tnode.find_by_tag("system-out")
+    assert system_out.text.count("hello-output") == 1
+
+
+@parametrize_families
+def test_setup_error_keeps_output_without_passing_logs(
+    pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily
+) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def fix():
+            print("setup-output")
+            raise RuntimeError("setup failed")
+
+        def test_func(fix):
+            pass
+        """
+    )
+    _result, dom = run_and_parse(
+        "-o",
+        "junit_logging=system-out",
+        "-o",
+        "junit_log_passing_tests=False",
+        family=xunit_family,
+    )
+    tnode = dom.get_first_by_tag("testcase")
+    tnode.find_first_by_tag("error")
+    assert "setup-output" in tnode.get_first_by_tag("system-out").text
+
+
+def test_property_names_are_escaped(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    pytester.makepyfile(
+        """
+        def test_func(record_property, record_testsuite_property):
+            record_property("na\\x00me", "v")
+            record_testsuite_property("su\\x00ite", "v")
+        """
+    )
+    _result, dom = run_and_parse(family="xunit1")
+    names = {p["name"] for p in dom.find_by_tag("property")}
+    assert names == {"na#x00me", "su#x00ite"}
+
+
+@parametrize_families
+def test_subtests_are_separate_testcases(
+    pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily
+) -> None:
+    pytester.makepyfile(
+        """
+        def test_func(subtests):
+            for i in range(3):
+                with subtests.test(msg="check", i=i):
+                    assert i != 1
+        """
+    )
+    _result, dom = run_and_parse(family=xunit_family)
+    testcases = dom.find_by_tag("testcase")
+    assert [t["name"] for t in testcases] == [
+        "test_func",
+        "test_func [subtest 1] [check] (i=0)",
+        "test_func [subtest 2] [check] (i=1)",
+        "test_func [subtest 3] [check] (i=2)",
+    ]
+    assert [len(t.find_by_tag("failure")) for t in testcases] == [1, 0, 1, 0]
