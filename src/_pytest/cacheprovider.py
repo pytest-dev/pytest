@@ -33,6 +33,7 @@ from _pytest.nodeid import NodeId
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
+from _pytest.subtests import SubtestReport
 
 
 CACHEDIR_FILES: dict[str, bytes] = {
@@ -336,6 +337,7 @@ class LFPlugin:
         self._previously_failed_count: int | None = None
         self._report_status: str | None = None
         self._skipped_files = 0  # count skipped files during collection due to --lf
+        self._failed_subtests: set[NodeId] = set()
 
         if config.getoption("lf"):
             self._last_failed_paths = self.get_last_failed_paths()
@@ -360,6 +362,17 @@ class LFPlugin:
         return None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
+        if isinstance(report, SubtestReport):
+            if report.failed:
+                self.lastfailed[report.id] = True
+                self._failed_subtests.add(report.id)
+            return
+
+        if report.when == "call" and report.id in self._failed_subtests:
+            # A passing parent report must not erase its failed subtests.
+            self._failed_subtests.remove(report.id)
+            return
+
         if (report.when == "call" and report.passed) or report.skipped:
             self.lastfailed.pop(report.id, None)
         elif report.failed:
