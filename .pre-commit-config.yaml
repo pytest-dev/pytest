@@ -91,7 +91,7 @@ repos:
         entry: pylint
         language: unsupported
         types: [python]
-        args: ["-rn", "-sn", "--fail-on=I", "--enable-all-extentions"]
+        args: ["-rn", "-sn", "--fail-on=I", "--enable-all-extensions"]
         require_serial: true
         stages: [manual]
     -   id: rst
