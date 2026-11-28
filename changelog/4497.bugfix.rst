@@ -1,0 +1,1 @@
+Fixed crash when running an empty ``xfail``-marked parameter set with ``--runxfail``; it now fails with a clear message.
