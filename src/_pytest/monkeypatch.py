@@ -258,13 +258,17 @@ class MonkeyPatch:
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, NOTSET)
-        elif not _is_data_descriptor(type(target), name):
-            # With no data descriptor in the way, the `setattr()` below writes
-            # into the instance `__dict__`, so `undo()` has to restore that
-            # `__dict__` entry. Assigning an inherited `oldval` back onto the
-            # instance would instead leave behind a new entry shadowing the
-            # class attribute, which permanently freezes descriptors that
-            # resolve dynamically (#10644).
+        elif type(target).__setattr__ is object.__setattr__ and not _is_data_descriptor(
+            type(target), name
+        ):
+            # With no data descriptor in the way and default `object.__setattr__`,
+            # the `setattr()` below writes into the instance `__dict__`, so
+            # `undo()` has to restore that `__dict__` entry. Assigning an
+            # inherited `oldval` back onto the instance would instead leave behind
+            # a new entry shadowing the class attribute, which permanently freezes
+            # descriptors that resolve dynamically (#10644).
+            # When `__setattr__` is overridden, attribute setting is routed through
+            # custom machinery which may store values elsewhere (#15099).
             target_dict = getattr(target, "__dict__", None)
             if isinstance(target_dict, Mapping):
                 oldval = target_dict.get(name, NOTSET)
@@ -434,7 +438,10 @@ class MonkeyPatch:
             if value is not NOTSET:
                 setattr(obj, name, value)
             else:
-                delattr(obj, name)
+                try:
+                    delattr(obj, name)
+                except AttributeError:
+                    pass
         self._setattr[:] = []
         for dictionary, key, value in reversed(self._setitem):
             if value is NOTSET:
