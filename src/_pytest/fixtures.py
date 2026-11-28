@@ -2470,7 +2470,8 @@ def _get_fixtures_per_test(test: nodes.Item) -> Iterator[FixtureDef[object]]:
 def _show_fixtures_per_test(config: Config, session: Session) -> None:
     import _pytest.config
 
-    session.perform_collect()
+    config.hook.pytest_collection(session=session)
+
     invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.get_verbosity()
@@ -2525,7 +2526,8 @@ def showfixtures(config: Config) -> int | ExitCode:
 def _showfixtures_main(config: Config, session: Session) -> None:
     import _pytest.config
 
-    session.perform_collect()
+    config.hook.pytest_collection(session=session)
+
     invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.get_verbosity()
