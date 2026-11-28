@@ -672,6 +672,11 @@ raise exceptions but that should result in some value. The value is given as the
 ``enter_result`` parameter, which will be available as the ``with`` statement’s
 target (``e`` in the example below).
 
+Parametrize with factories so that each test creates its own context manager.
+If a ``pytest.raises()`` context manager is stored directly in a parameter, it
+can keep the exception traceback and its frame's local variables alive until
+the test session ends.
+
 For example:
 
 .. code-block:: python
@@ -684,15 +689,15 @@ For example:
     @pytest.mark.parametrize(
         "example_input,expectation",
         [
-            (3, nullcontext(2)),
-            (2, nullcontext(3)),
-            (1, nullcontext(6)),
-            (0, pytest.raises(ZeroDivisionError)),
+            (3, lambda: nullcontext(2)),
+            (2, lambda: nullcontext(3)),
+            (1, lambda: nullcontext(6)),
+            (0, lambda: pytest.raises(ZeroDivisionError)),
         ],
     )
     def test_division(example_input, expectation):
         """Test how much I know division."""
-        with expectation as e:
+        with expectation() as e:
             assert (6 / example_input) == e
 
 In the example above, the first three test cases should run without any
