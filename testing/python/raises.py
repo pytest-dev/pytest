@@ -11,6 +11,10 @@ from _pytest.warning_types import PytestWarning
 import pytest
 
 
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
+
+
 def wrap_escape(s: str) -> str:
     return "^" + re.escape(s) + "$"
 
@@ -681,3 +685,62 @@ def test_raises_exit_in_other_context() -> None:
     contextvars.copy_context().run(cm.__enter__)
     with pytest.raises(AssertionError, match="without a matching __enter__"):
         cm.__exit__(ValueError, exc, exc.__traceback__)
+
+
+class TestAsyncWith:
+    def test_raises(self) -> None:
+        import asyncio
+
+        async def main() -> pytest.ExceptionInfo[ValueError]:
+            async with pytest.raises(ValueError, match="x") as excinfo:
+                await asyncio.sleep(0)
+                raise ValueError("x")
+            return excinfo
+
+        assert asyncio.run(main()).type is ValueError
+
+    def test_group(self) -> None:
+        import asyncio
+
+        async def main() -> pytest.ExceptionInfo[ExceptionGroup[ValueError]]:
+            async with pytest.RaisesGroup(ValueError) as excinfo:
+                await asyncio.sleep(0)
+                raise ExceptionGroup("g", [ValueError()])
+            return excinfo
+
+        assert asyncio.run(main()).group_contains(ValueError)
+
+    def test_failures_propagate(self) -> None:
+        import asyncio
+
+        async def no_raise() -> None:
+            async with pytest.raises(ValueError):
+                await asyncio.sleep(0)
+
+        async def wrong_type() -> None:
+            async with pytest.RaisesExc(ValueError):
+                raise TypeError
+
+        with pytest.raises(Failed, match="DID NOT RAISE"):
+            asyncio.run(no_raise())
+        # Like ``with``, a non-matching exception propagates unchanged.
+        with pytest.raises(TypeError):
+            asyncio.run(wrong_type())
+
+    def test_reused_across_tasks(self) -> None:
+        import asyncio
+
+        cm = pytest.raises(ValueError)
+        results: dict[str, str] = {}
+
+        async def task(name: str, delay: float) -> None:
+            async with cm as excinfo:
+                await asyncio.sleep(delay)
+                raise ValueError(name)
+            results[name] = str(excinfo.value)
+
+        async def main() -> None:
+            await asyncio.gather(task("first", 0.01), task("second", 0.05))
+
+        asyncio.run(main())
+        assert results == {"first": "first", "second": "second"}

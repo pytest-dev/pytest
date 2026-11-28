@@ -796,6 +796,20 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         excinfo.fill_unfilled(exc_info)
         return True
 
+    async def __aenter__(self) -> ExceptionInfo[BaseExcT_co_default]:
+        """Same as ``__enter__``, for use with ``async with``."""
+        return self.__enter__()
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool:
+        """Same as ``__exit__``, for use with ``async with``."""
+        __tracebackhide__ = True
+        return self.__exit__(exc_type, exc_val, exc_tb)
+
 
 @final
 class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
@@ -1503,6 +1517,29 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         )
         excinfo.fill_unfilled(exc_info)
         return True
+
+    @overload
+    async def __aenter__(
+        self: RaisesGroup[ExcT_1],
+    ) -> ExceptionInfo[ExceptionGroup[ExcT_1]]: ...
+    @overload
+    async def __aenter__(
+        self: RaisesGroup[BaseExcT_1],
+    ) -> ExceptionInfo[BaseExceptionGroup[BaseExcT_1]]: ...
+
+    async def __aenter__(self) -> ExceptionInfo[BaseExceptionGroup[BaseException]]:
+        """Same as ``__enter__``, for use with ``async with``."""
+        return self.__enter__()
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool:
+        """Same as ``__exit__``, for use with ``async with``."""
+        __tracebackhide__ = True
+        return self.__exit__(exc_type, exc_val, exc_tb)
 
     def expected_type(self) -> str:
         subexcs = []
