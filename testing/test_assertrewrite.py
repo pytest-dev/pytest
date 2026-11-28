@@ -2475,3 +2475,101 @@ def test_assertion_failure_when_terminalreporter_is_disabled(
     )
     reprec = pytester.inline_run("-p", "no:terminalreporter")
     reprec.assertoutcome(passed=1)
+
+
+class TestIssue9582:
+    """Do not rewrite assert statements inside class bodies (#9582)."""
+
+    def test_class_body_assert_ast_preserved(self) -> None:
+        src = textwrap.dedent(
+            """\
+            class Outer:
+                assert 1 == 1
+                if True:
+                    assert 2 == 2
+                try:
+                    assert 3 == 3
+                finally:
+                    assert 4 == 4
+
+                class Inner:
+                    assert 5 == 5
+
+                def method(self):
+                    class Local:
+                        assert 6 == 6
+                    assert 7 == 7
+
+                async def async_method(self):
+                    assert 8 == 8
+
+            assert 9 == 9
+            """
+        )
+        mod = rewrite(src)
+        # Module-level assert was rewritten (original Assert replaced).
+        assert not any(isinstance(stmt, ast.Assert) for stmt in mod.body)
+
+        outer = next(s for s in mod.body if isinstance(s, ast.ClassDef))
+        assert isinstance(outer.body[0], ast.Assert)
+
+        if_stmt = outer.body[1]
+        assert isinstance(if_stmt, ast.If)
+        assert isinstance(if_stmt.body[0], ast.Assert)
+
+        try_stmt = outer.body[2]
+        assert isinstance(try_stmt, ast.Try)
+        assert isinstance(try_stmt.body[0], ast.Assert)
+        assert isinstance(try_stmt.finalbody[0], ast.Assert)
+
+        inner = outer.body[3]
+        assert isinstance(inner, ast.ClassDef)
+        assert isinstance(inner.body[0], ast.Assert)
+
+        method = outer.body[4]
+        assert isinstance(method, ast.FunctionDef)
+        local_cls = method.body[0]
+        assert isinstance(local_cls, ast.ClassDef)
+        assert isinstance(local_cls.body[0], ast.Assert)
+        assert not any(isinstance(s, ast.Assert) for s in method.body[1:])
+
+        async_method = outer.body[5]
+        assert isinstance(async_method, ast.AsyncFunctionDef)
+        assert not any(isinstance(s, ast.Assert) for s in async_method.body)
+
+    def test_enum_class_body_assert(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            from enum import Enum
+
+            STEP = 100
+
+            class SomeEnum(Enum):
+                FIRST = 100
+                SECOND = FIRST + STEP
+                THIRD = SECOND + STEP
+
+                assert THIRD == 300
+                if THIRD > 0:
+                    assert FIRST == 100
+
+                @classmethod
+                def fail_in_method(cls):
+                    val = 1 + 1
+                    assert cls.FIRST.value == val
+
+            class PlainClass:
+                x = 1
+                assert x == 1
+
+            def test_enum_passed():
+                assert SomeEnum.THIRD.value == 300
+                assert not any(k.startswith("@py_") for k in PlainClass.__dict__)
+
+            def test_method_still_rewritten():
+                SomeEnum.fail_in_method()
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, failed=1)
+        result.stdout.fnmatch_lines(["*E*assert 100 == 2*"])

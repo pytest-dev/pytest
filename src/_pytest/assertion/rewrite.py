@@ -746,21 +746,27 @@ class AssertionRewriter(ast.NodeVisitor):
         mod.body[pos:pos] = imports
 
         # Collect asserts.
-        nodes: list[ast.AST] = [mod]
+        # Skip rewriting asserts in class bodies since class namespaces (such as
+        # enum._EnumDict) may forbid reusing keys or assign special semantics to
+        # class-level bindings (#9582).
+        nodes: list[tuple[ast.AST, bool]] = [(mod, False)]
         while nodes:
-            node = nodes.pop()
-            assert isinstance(node, ast.AST)
+            node, in_class = nodes.pop()
+            if isinstance(node, ast.ClassDef):
+                in_class = True
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                in_class = False
             for name, field in ast.iter_fields(node):
                 if isinstance(field, list):
                     new: list[ast.AST] = []
-                    for i, child in enumerate(field):
-                        if isinstance(child, ast.Assert):
+                    for child in field:
+                        if isinstance(child, ast.Assert) and not in_class:
                             # Transform assert.
                             new.extend(self.visit(child))
                         else:
                             new.append(child)
                             if isinstance(child, ast.AST):
-                                nodes.append(child)
+                                nodes.append((child, in_class))
                     setattr(node, name, new)
                 elif (
                     isinstance(field, ast.AST)
@@ -768,7 +774,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     # asserts.
                     and not isinstance(field, ast.expr)
                 ):
-                    nodes.append(field)
+                    nodes.append((field, in_class))
 
     @staticmethod
     def is_rewrite_disabled(docstring: str) -> bool:
