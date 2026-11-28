@@ -101,6 +101,18 @@ For more information see :ref:`marks <mark>`.
 
 This will import ``pkg.testing`` and use its filesystem location to find and run tests from.
 
+When using :option:`--pyargs`, pytest can discover a package's ``conftest.py`` during collection,
+after parsing command-line options. An option registered there with :hook:`pytest_addoption`
+may then be reported as an unrecognized argument. To make the option available early,
+move the hook to an importable plugin module such as ``pkg.pytest_plugin`` and load it with
+:option:`-p`.
+
+.. code-block:: bash
+
+    pytest -p pkg.pytest_plugin --pyargs pkg.testing --run-integration
+
+See :ref:`pluginorder` for when pytest loads each kind of plugin.
+
 .. _args-from-file:
 
 **Read arguments from file**
