@@ -1597,7 +1597,7 @@ def _get_line_with_reprcrash_message(
         pass
     else:
         if (
-            running_on_ci() or config.option.verbose >= 2
+            running_on_ci() or config.get_verbosity(Config.VERBOSITY_ASSERTIONS) >= 2
         ) and not config.option.force_short_summary:
             msg = f" - {msg}"
         else:

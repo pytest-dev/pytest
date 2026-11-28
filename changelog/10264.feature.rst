@@ -1,0 +1,1 @@
+Messages in the short test summary are no longer truncated on CI or when assertion verbosity is 2 or higher. The ``--force-short-summary`` option continues to force truncated output.
