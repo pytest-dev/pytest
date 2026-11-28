@@ -1,0 +1,1 @@
+Exceptions passed as ``@pytest.mark.parametrize`` values now have their ``__traceback__``, ``__context__``, ``__cause__``, and ``__suppress_context__`` attributes restored after test teardown, preventing them from keeping test frames alive for the rest of the session.
