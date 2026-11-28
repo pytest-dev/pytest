@@ -105,3 +105,43 @@ interesting to look at the collection tree:
         <YamlItem ok>
 
     ======================== 2 tests collected in 0.12s ========================
+
+
+Customizing tracebacks
+----------------------
+
+To filter the traceback of a custom :class:`pytest.Item` while keeping pytest's
+standard failure formatting, override
+:meth:`~_pytest.nodes.Node.traceback_filter` instead of ``repr_failure``.
+For example, an item which executes tests through a helper module can keep only
+frames from its own file:
+
+.. code-block:: python
+
+    import pytest
+
+
+    class CustomItem(pytest.Item):
+        def traceback_filter(
+            self, excinfo: pytest.ExceptionInfo[BaseException]
+        ) -> pytest.Traceback:
+            def keep(entry: pytest.TracebackEntry) -> bool:
+                return entry.path == self.path
+
+            return excinfo.traceback.filter(keep)
+
+Adapt the predicate to your test format; the example assumes that executing the
+test produces Python frames whose paths match the item's path.
+The predicate returns ``True`` for frames to keep. You can also start from
+``super().traceback_filter(excinfo)`` to extend the inherited filtering.
+The default filtering is unchanged: the base ``Item`` returns the original
+traceback, while other node classes, such as ``Function``, provide their own
+filtering.
+
+The standard formatter continues to handle pytest's special exceptions and
+traceback styles (``--tb``). With ``--full-trace``, filtering is bypassed.
+An item that overrides ``repr_failure`` must use the inherited implementation
+for this filtering to take effect.
+
+Existing ``_traceback_filter`` overrides continue to work. If an item overrides
+both names, ``traceback_filter`` takes precedence.

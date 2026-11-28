@@ -6,6 +6,8 @@ from __future__ import annotations
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
+from _pytest._code import Traceback
+from _pytest._code import TracebackEntry
 from _pytest.approx import Approx
 from _pytest.approx import approx
 from _pytest.assertion import register_assert_rewrite
@@ -165,6 +167,8 @@ __all__ = [
     "TestReport",
     "TestShortLogReport",
     "Testdir",
+    "Traceback",
+    "TracebackEntry",
     "UsageError",
     "WarningsRecorder",
     "__version__",

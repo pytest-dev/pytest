@@ -996,6 +996,24 @@ ExceptionInfo
     :members:
 
 
+Traceback
+~~~~~~~~~
+
+.. versionadded:: 10.0
+
+.. autoclass:: pytest.Traceback()
+    :members:
+
+
+TracebackEntry
+~~~~~~~~~~~~~~
+
+.. versionadded:: 10.0
+
+.. autoclass:: pytest.TracebackEntry()
+    :members:
+
+
 ExitCode
 ~~~~~~~~
 

@@ -12,6 +12,144 @@ from _pytest.warning_types import PytestWarning
 import pytest
 
 
+@pytest.mark.parametrize("method", ["traceback_filter", "_traceback_filter", "both"])
+@pytest.mark.parametrize("tbstyle", ["auto", "long", "short", "native"])
+@pytest.mark.parametrize("fulltrace", [False, True])
+@pytest.mark.parametrize("item_type", ["custom", "python"])
+def test_custom_item_traceback_filter(
+    pytester: Pytester, method: str, tbstyle: str, fulltrace: bool, item_type: str
+) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_pycollect_makeitem(collector, name, obj):
+            if name == "test_failure":
+                return CustomItem.from_parent(collector, name=name)
+
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == ".custom":
+                return CustomFile.from_parent(parent, path=file_path)
+
+        class CustomFile(pytest.File):
+            def collect(self):
+                yield CustomItem.from_parent(self, name="custom")
+
+        def leaf():
+            raise ValueError("leaf failure")
+
+        class CustomItem(BASE):
+            def runtest(self):
+                leaf()
+
+            def filter_failure(self, excinfo):
+                assert not self.config.getoption("fulltrace")
+                return excinfo.traceback.filter(lambda entry: entry.name == "leaf")
+        """.replace(
+            "BASE", "pytest.Function" if item_type == "python" else "pytest.Item"
+        )
+    )
+    with (pytester.path / "conftest.py").open("a", encoding="utf-8") as f:
+        if method == "both":
+            f.write(
+                "\n    traceback_filter = filter_failure\n"
+                "    def _traceback_filter(self, excinfo):\n"
+                "        raise AssertionError('private override must not run')\n"
+            )
+        else:
+            f.write(f"\n    {method} = filter_failure\n")
+    if item_type == "custom":
+        pytester.makefile(".custom", test_failure="")
+    else:
+        pytester.makepyfile("def test_failure(): pass")
+    args = [f"--tb={tbstyle}"]
+    if fulltrace:
+        args.append("--full-trace")
+    result = pytester.runpytest(*args)
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(["*ValueError: leaf failure*"])
+    unfiltered = fulltrace or (item_type == "python" and tbstyle == "native")
+    assert (
+        any(re.fullmatch(r"\s*>?\s*leaf\(\)\s*", line) for line in result.stdout.lines)
+        == unfiltered
+    )
+
+
+def test_public_traceback_types() -> None:
+    with pytest.raises(ValueError, match="failure") as excinfo:
+        raise ValueError("failure")
+    assert isinstance(excinfo.traceback, pytest.Traceback)
+    assert isinstance(excinfo.traceback[-1], pytest.TracebackEntry)
+
+
+def test_traceback_filter_special_failures(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_pycollect_makeitem(collector, name, obj):
+            if name.startswith("test_"):
+                return CustomFunction.from_parent(collector, name=name)
+
+        class CustomFunction(pytest.Function):
+            def traceback_filter(self, excinfo):
+                assert not isinstance(excinfo.value, pytest.FixtureLookupError)
+                return super().traceback_filter(excinfo)[-1:]
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test_missing_fixture(missing_fixture):
+            pass
+
+        def test_no_traceback():
+            pytest.fail("message only", pytrace=False)
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, errors=1)
+    result.stdout.fnmatch_lines(
+        ["*fixture 'missing_fixture' not found*", "message only"]
+    )
+    result.stdout.no_fnmatch_line("*pytest.fail(*")
+
+
+@pytest.mark.parametrize("fulltrace", [False, True])
+def test_custom_collector_traceback_filter(pytester: Pytester, fulltrace: bool) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == ".custom":
+                return CustomFile.from_parent(parent, path=file_path)
+
+        def leaf():
+            raise ValueError("collection failure")
+
+        class CustomFile(pytest.File):
+            def collect(self):
+                leaf()
+
+            def traceback_filter(self, excinfo):
+                assert not self.config.getoption("fulltrace")
+                return super().traceback_filter(excinfo).filter(
+                    lambda entry: entry.name == "leaf"
+                )
+        """
+    )
+    pytester.makefile(".custom", test_failure="")
+    result = pytester.runpytest("--full-trace") if fulltrace else pytester.runpytest()
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(["*ValueError: collection failure*"])
+    assert (
+        any(re.fullmatch(r"\s*>?\s*leaf\(\)\s*", line) for line in result.stdout.lines)
+        == fulltrace
+    )
+
+
 def test_node_from_parent_disallowed_arguments() -> None:
     with pytest.raises(TypeError, match="session is"):
         nodes.Node.from_parent(None, session=None)  # type: ignore[arg-type]
