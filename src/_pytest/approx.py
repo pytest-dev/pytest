@@ -19,7 +19,6 @@ import pprint
 import sys
 from typing import Any
 from typing import Generic
-from typing import SupportsAbs
 from typing import TYPE_CHECKING
 from typing import TypeGuard
 from typing import TypeVar
@@ -504,11 +503,6 @@ class ApproxScalar(Approx[ExpectedT]):
                     f"relative tolerance for a scalar value must be an int, float or Decimal, "
                     f"got {type(rel).__name__}"
                 )
-            if not isinstance(expected, SupportsAbs):
-                raise TypeError(
-                    f"expected value must support abs(...) when relative tolerance is used, "
-                    f"got {type(expected).__name__}"
-                )
         if abs is not None and not isinstance(abs, (int, float, Decimal)):
             raise TypeError(
                 f"absolute tolerance for a scalar value must be an int, float or Decimal, "
@@ -636,7 +630,8 @@ class ApproxScalar(Approx[ExpectedT]):
         # because we don't want to raise errors about the relative tolerance if
         # we aren't even going to use it.
         rel = self.rel if self.rel is not None else self.DEFAULT_RELATIVE_TOLERANCE
-        # expected is SupportAbs, checked in __init__.
+        # Only reached for numeric expected values: __eq__ returns early
+        # for anything else, so no relative tolerance is computed for it.
         # The typing here is not exact...
         abs_expected: ExpectedT = abs(self.expected)  # type: ignore[arg-type]
         relative_tolerance: float | Decimal = rel * abs_expected  # type: ignore[operator]

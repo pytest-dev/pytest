@@ -1044,8 +1044,25 @@ class TestApprox:
             pytest.param({"key": b"bytes"}, id="dict-with-bytes"),
         ],
     )
-    def test_nonnumeric_okay_if_equal(self, x):
-        assert x == approx(x)
+    @pytest.mark.parametrize(
+        "tolerance",
+        [{}, {"rel": 1e-6}, {"abs": 1e-12}, {"rel": 1e-6, "abs": 1e-12}],
+        ids=["default", "rel", "abs", "rel-abs"],
+    )
+    def test_nonnumeric_okay_if_equal(self, x, tolerance) -> None:
+        """An explicit tolerance does not apply to non-numeric values (#15412)."""
+        assert x == approx(x, **tolerance)
+
+    def test_mixed_nonnumeric_with_explicit_rel(self) -> None:
+        """Numbers next to non-numbers still honor an explicit rel (#15412)."""
+        expected = approx([1.0, None], rel=1e-6)
+        assert [1.0, None] == expected
+        assert [1.0000005, None] == expected
+        assert [1.00001, None] != expected
+        assert [1.0, 0] != expected
+        expected_map = approx({"a": 1.0, "b": "x"}, rel=1e-6)
+        assert {"a": 1.0000005, "b": "x"} == expected_map
+        assert {"a": 1.00001, "b": "x"} != expected_map
 
     @pytest.mark.parametrize(
         "x",
@@ -1418,13 +1435,6 @@ class TestApprox:
             TypeError, match=r"relative tolerance for a scalar value must"
         ):
             pytest.approx(0, rel=datetime.timedelta(1))
-
-    def test_scalar_rel_abs_expected_validation(self) -> None:
-        with pytest.raises(
-            TypeError,
-            match=re.escape("expected value must support abs(...) when relative"),
-        ):
-            pytest.approx(object(), rel=1)
 
     def test_scalar_abs_type_validation(self) -> None:
         with pytest.raises(
