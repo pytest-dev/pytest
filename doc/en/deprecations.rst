@@ -14,6 +14,33 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+.. _skip-during-teardown:
+
+Skipping a test during teardown
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.3
+
+Calling :func:`pytest.skip` during teardown, for example after the ``yield``
+of a fixture or in ``teardown_function``, is deprecated.
+
+By the time teardown runs, the test has already been executed, so a skip
+there does not mean the test was skipped: the test is reported as both passed
+and skipped. In a future version, a skip during teardown will be reported as
+an error.
+
+.. code-block:: python
+
+    @pytest.fixture
+    def resource():
+        yield
+        # Deprecated
+        pytest.skip("resource not available")
+
+Skip during setup (before the ``yield``) or in the test itself instead, where
+the skip prevents the test from running.
+
+
 .. _toml-numeric-strings:
 
 Numeric strings for integer options in TOML

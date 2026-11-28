@@ -1,0 +1,1 @@
+Calling :func:`pytest.skip` during teardown, for example after the ``yield`` of a fixture, is deprecated: the test has already run, so it was reported as both passed and skipped -- see :ref:`skip-during-teardown`.

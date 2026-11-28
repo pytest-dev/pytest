@@ -99,6 +99,15 @@ FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#dynamic-fixture-request-during-teardown",
 )
 
+SKIP_DURING_TEARDOWN = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "Skipping a test during teardown is deprecated.\n"
+    "The test has already run, so reporting it as skipped is misleading; "
+    "in a future version this will be reported as an error.\n"
+    "Skip during setup or in the test itself instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#skip-during-teardown",
+)
+
 PASTEBIN = UnformattedWarning(
     PytestRemovedIn10Warning,
     "The --pastebin option is deprecated. "

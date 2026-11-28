@@ -414,3 +414,158 @@ def test_terminal_write_line_bytes_deprecated(pytester: Pytester) -> None:
         reporter.write_line(b"hello")
 
     assert "hello" in output.getvalue()
+
+
+class TestSkipDuringTeardownDeprecated:
+    """Skipping during teardown is deprecated (#15289)."""
+
+    def test_fixture_teardown_skip_warns(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixt():
+                yield
+                pytest.skip("in teardown")
+
+            def test_fixt(fixt):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, skipped=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*test_fixture_teardown_skip_warns.py:6: PytestRemovedIn10Warning: "
+                "Skipping a test during teardown is deprecated.",
+                '*pytest.skip("in teardown")',
+            ]
+        )
+
+    def test_hidden_fixture_teardown_skip_warns(self, pytester: Pytester) -> None:
+        """A fixture hiding its frame still warns, at the nearest visible frame."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixt():
+                __tracebackhide__ = True
+                yield
+                pytest.skip("in teardown")
+
+            def test_fixt(fixt):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, skipped=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn10Warning: Skipping a test during teardown is deprecated."
+            ]
+        )
+
+    def test_teardown_function_skip_warns(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def teardown_function(function):
+                pytest.skip("in teardown")
+
+            def test_it():
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, skipped=1, warnings=1)
+
+    def test_teardown_skip_exception_group_warns_once(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def first():
+                yield
+                pytest.skip("first")
+
+            @pytest.fixture
+            def second():
+                yield
+                pytest.skip("second")
+
+            def test_both(first, second):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, skipped=1, warnings=1)
+
+    def test_teardown_skip_as_error(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixt():
+                yield
+                pytest.skip("in teardown")
+
+            def test_fixt(fixt):
+                pass
+            """
+        )
+        result = pytester.runpytest("-W", "error::pytest.PytestRemovedIn10Warning")
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                '>*pytest.skip("in teardown")',
+                "E*PytestRemovedIn10Warning: Skipping a test during teardown is deprecated.",
+            ]
+        )
+
+    def test_skip_during_setup_and_call_do_not_warn(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def skipping_setup():
+                pytest.skip("in setup")
+                yield
+
+            def test_setup(skipping_setup):
+                pass
+
+            def test_call():
+                pytest.skip("in call")
+            """
+        )
+        result = pytester.runpytest("-W", "error::pytest.PytestRemovedIn10Warning")
+        result.assert_outcomes(skipped=2)
+
+    def test_teardown_failure_with_skip_does_not_warn(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def skipping():
+                yield
+                pytest.skip("skip")
+
+            @pytest.fixture
+            def failing():
+                yield
+                raise RuntimeError("boom")
+
+            def test_both(skipping, failing):
+                pass
+            """
+        )
+        result = pytester.runpytest("-W", "error::pytest.PytestRemovedIn10Warning")
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.no_fnmatch_line("*PytestRemovedIn10Warning*")
