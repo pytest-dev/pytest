@@ -483,6 +483,14 @@ class OptionGroup:
                 if len(opt) >= 2 and opt[0] == "-" and opt[1].islower():
                     raise ValueError("lowercase short options are reserved")
 
+        for opt in opts:
+            if not opt.startswith("-"):
+                raise ValueError(
+                    f"invalid option string {opt!r}: "
+                    "options must start with '-' "
+                    f"(did you mean '--{opt}'?)"
+                )
+
         action = self._arggroup.add_argument(*opts, **attrs)
         option = Argument(action)
         self.options.append(option)
