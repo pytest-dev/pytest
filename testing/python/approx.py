@@ -152,8 +152,6 @@ class TestApprox:
             [
                 r"",
                 r"  comparison failed. Mismatched elements: 2 / 3:",
-                r"  Max absolute difference: -inf",
-                r"  Max relative difference: -inf",
                 r"  Index \| Obtained\s+\| Expected\s+",
                 rf"  a     \| {SOME_FLOAT} \| None",
                 rf"  b     \| None\s+\| {SOME_FLOAT} ± {SOME_FLOAT}",
@@ -187,10 +185,10 @@ class TestApprox:
             ],
         )
 
-        # Specific test for comparison with 0.0 (relative diff will be 'inf')
+        # Specific test for an expected 0.0 (relative diff will be 'inf')
         assert_approx_raises_regex(
-            [0.0],
             [1.0],
+            [0.0],
             [
                 r"",
                 r"  comparison failed. Mismatched elements: 1 / 1:",
@@ -245,10 +243,10 @@ class TestApprox:
             ],
         )
 
-        # Specific test for comparison with 0.0 (relative diff will be 'inf')
+        # Specific test for an expected 0.0 (relative diff will be 'inf')
         assert_approx_raises_regex(
-            np.array([0.0]),
             np.array([1.0]),
+            np.array([0.0]),
             [
                 r"",
                 r"  comparison failed. Mismatched elements: 1 / 1:",
@@ -1247,13 +1245,13 @@ class TestApprox:
         (
             pytest.param(
                 [Decimal(1), Decimal(2)],
-                [Decimal(1), Decimal(9)],
-                ["Max absolute difference: 7", "Max relative difference: 3.5"],
+                [Decimal(1), Decimal(8)],
+                ["Max absolute difference: 6", "Max relative difference: 0.75"],
                 id="sequence",
             ),
             pytest.param(
-                [Decimal(0)],
                 [Decimal(1)],
+                [Decimal(0)],
                 ["Max absolute difference: 1", "Max relative difference: inf"],
                 id="sequence-divide-by-zero",
             ),
@@ -1287,19 +1285,105 @@ class TestApprox:
         explanation = approx(expected)._repr_compare(other)
         assert explanation[1:3] == wanted
 
-    def test_mapping_relative_diff_undefined(self) -> None:
-        """A zero expected value that does not compare equal to 0.
+    @pytest.mark.parametrize(
+        ("other", "expected", "wanted"),
+        (
+            pytest.param(
+                [datetime.datetime(2024, 1, 1)],
+                [datetime.datetime(2024, 1, 1, 0, 1)],
+                ["Max absolute difference: 0:01:00"],
+                id="sequence-datetime",
+            ),
+            pytest.param(
+                {"t": datetime.datetime(2024, 1, 1)},
+                {"t": datetime.datetime(2024, 1, 1, 0, 1)},
+                ["Max absolute difference: 0:01:00"],
+                id="mapping-datetime",
+            ),
+            pytest.param(
+                [datetime.timedelta(seconds=1)],
+                [datetime.timedelta(seconds=2)],
+                [
+                    "Max absolute difference: 0:00:01",
+                    "Max relative difference: 0.5",
+                ],
+                id="sequence-timedelta",
+            ),
+            pytest.param(
+                {"a": datetime.timedelta(seconds=1)},
+                {"a": datetime.timedelta(0)},
+                [
+                    "Max absolute difference: 0:00:01",
+                    "Max relative difference: inf",
+                ],
+                id="mapping-zero-timedelta",
+            ),
+            pytest.param(
+                [datetime.timedelta(seconds=1)],
+                [datetime.timedelta(0)],
+                [
+                    "Max absolute difference: 0:00:01",
+                    "Max relative difference: inf",
+                ],
+                id="sequence-zero-timedelta",
+            ),
+            pytest.param(
+                {"a": "x"},
+                {"a": "y"},
+                [],
+                id="mapping-non-numbers",
+            ),
+        ),
+    )
+    def test_repr_compare_time_values(self, other, expected, wanted) -> None:
+        """Each element decides which differences are defined for its type.
 
-        timedelta(0) != 0, so the divide-by-zero guard does not catch it and
-        the relative difference stays unknown.
+        A datetime has no origin, so it has an absolute but no relative
+        difference (#15434); a zero timedelta gives an infinite one, like 0.
         """
-        explanation = approx({"a": datetime.timedelta(0)}, rel=0.01)._repr_compare(
-            {"a": datetime.timedelta(seconds=1)}
+        tolerance = None if wanted == [] else datetime.timedelta(milliseconds=1)
+        explanation = approx(expected, abs=tolerance)._repr_compare(other)
+        assert explanation[0].startswith(
+            "comparison failed. Mismatched elements: 1 / 1"
         )
-        assert explanation[1:3] == [
-            "Max absolute difference: 0:00:01",
-            "Max relative difference: -inf",
-        ]
+        assert explanation[1 : 1 + len(wanted)] == wanted
+        assert explanation[1 + len(wanted)].startswith("Index")
+
+    def test_repr_compare_undefined_differences(self) -> None:
+        """Values that cannot be subtracted or divided leave the line out."""
+
+        class Gap:
+            """A difference that has abs() but cannot be divided."""
+
+            def __abs__(self) -> Gap:
+                return self
+
+            def __str__(self) -> str:
+                return "gap"
+
+        class Offset:
+            def __rsub__(self, other: float) -> Gap:
+                return Gap()
+
+        explanation = approx([2.0])._repr_compare([Offset()])
+        assert explanation[1] == "Max absolute difference: gap"
+        assert explanation[2].startswith("Index")
+
+        explanation = approx(
+            [datetime.datetime(2024, 1, 1)], abs=datetime.timedelta(seconds=1)
+        )._repr_compare(["2024-01-01"])
+        assert explanation[1].startswith("Index")
+
+    def test_repr_compare_numpy_datetime(self) -> None:
+        """Numpy arrays of datetimes take the same path as lists (#15434)."""
+        np = pytest.importorskip("numpy")
+        expected = np.array(["2024-01-01T00:01"], dtype="datetime64[s]")
+        actual = np.array(["2024-01-01T00:00"], dtype="datetime64[s]")
+        explanation = approx(expected, abs=datetime.timedelta(seconds=1))._repr_compare(
+            actual
+        )
+        assert explanation[1] == "Max absolute difference: 0:01:00"
+        assert explanation[2].startswith("Index")
 
     def test_mixed_decimal_and_float_sequence_does_not_hide_float_operation(
         self, monkeypatch
@@ -1329,6 +1413,31 @@ class TestApprox:
         assert isinstance(nan_rel, ApproxScalar)
         with pytest.raises(ValueError, match="relative tolerance can't be NaN"):
             _ = nan_rel.tolerance
+
+    @pytest.mark.parametrize(
+        "expected",
+        [Decimal(1), 1, 1.0, [Decimal(1)], {"a": Decimal(1)}],
+        ids=["decimal", "int", "float", "list", "dict"],
+    )
+    @pytest.mark.parametrize("nan_ok", [False, True])
+    def test_decimal_nan_actual_is_unequal(self, expected, nan_ok) -> None:
+        """A Decimal NaN actual compares unequal instead of raising (#15335)."""
+        nan = Decimal("NaN")
+        actual = (
+            [nan]
+            if isinstance(expected, list)
+            else {"a": nan}
+            if isinstance(expected, dict)
+            else nan
+        )
+        assert actual != approx(expected, nan_ok=nan_ok)
+
+    def test_decimal_nan_actual_failure_details(self) -> None:
+        """The failure details for a Decimal NaN actual don't crash either."""
+        lines = approx([Decimal(1), Decimal(2)])._repr_compare(
+            [Decimal("NaN"), Decimal(2)]
+        )
+        assert "Mismatched elements: 1 / 2:" in lines[0]
 
     def test_allow_ordered_sequences_only(self) -> None:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""

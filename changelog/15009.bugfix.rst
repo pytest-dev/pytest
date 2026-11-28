@@ -1,0 +1,1 @@
+:func:`pytest.approx` failure details no longer crash for dicts and object numpy arrays whose values are not numbers, matching lists.

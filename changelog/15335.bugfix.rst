@@ -1,0 +1,1 @@
+Fixed :func:`pytest.approx` raising :exc:`decimal.InvalidOperation` when the actual value is a quiet ``Decimal("NaN")`` and the expected value is finite; it now compares unequal, like a float NaN.
