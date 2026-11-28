@@ -1,0 +1,1 @@
+Fixed pytest hanging while reporting a :class:`RecursionError` whose frames hold many distinct objects with an expensive ``==``, such as :class:`unittest.mock.MagicMock`.

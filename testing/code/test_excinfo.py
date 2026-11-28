@@ -301,6 +301,42 @@ class TestTraceback_f_g_h:
             fail()
         assert excinfo.traceback.recursionindex() is None
 
+    def test_traceback_recursionindex_skips_eq_for_different_hashes(self) -> None:
+        """Locals with different hashes are never compared with ``==`` (#8482)."""
+
+        class Obj:
+            def __eq__(self, other: object) -> bool:  # pragma: no cover
+                raise AssertionError("locals with different hashes were compared")
+
+            __hash__ = object.__hash__
+
+        def f(obj: Obj) -> None:
+            f(Obj())
+
+        with pytest.raises(RecursionError) as excinfo:
+            f(Obj())
+        assert excinfo.traceback.recursionindex() is None
+
+    def test_traceback_recursionindex_magicmock(self) -> None:
+        from unittest import mock
+
+        def f(obj: mock.MagicMock) -> None:
+            f(obj.attr)
+
+        with pytest.raises(RecursionError) as excinfo:
+            f(mock.MagicMock())
+        assert excinfo.traceback.recursionindex() is None
+
+    def test_traceback_recursionindex_unhashable_locals(self) -> None:
+        def f(n: int, val: list[int]) -> None:
+            if n < 10:
+                n += 1
+            f(n, [1, 2])
+
+        with pytest.raises(RecursionError) as excinfo:
+            f(8, [1, 2])
+        assert excinfo.traceback.recursionindex() == 3
+
     def test_getreprcrash(self):
         def i():
             __tracebackhide__ = True

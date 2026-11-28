@@ -448,21 +448,31 @@ class Traceback(list[TracebackEntry]):
     def recursionindex(self) -> int | None:
         """Return the index of the frame/TracebackEntry where recursion originates if
         appropriate, None if no recursion occurred."""
-        cache: dict[tuple[Any, int, int], list[dict[str, Any]]] = {}
+        cache: dict[tuple[Any, int, int, Any], list[dict[str, Any]]] = {}
         for i, entry in enumerate(self):
             # id for the code.raw is needed to work around
             # the strange metaprogramming in the decorator lib from pypi
             # which generates code objects that have hash/value equality
             # XXX needs a test
-            key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
-            values = cache.setdefault(key, [])
             # Since Python 3.13 f_locals is a proxy, freeze it.
             loc = dict(entry.frame.f_locals)
+            # Bucket by value hashes so frames with clearly different locals
+            # are never compared with ==, which can be slow (#8482).
+            sig = tuple((k, _hash_or_none(v)) for k, v in loc.items())
+            key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno, sig
+            values = cache.setdefault(key, [])
             if values:
                 for otherloc in values:
                     if otherloc == loc:
                         return i
             values.append(loc)
+        return None
+
+
+def _hash_or_none(value: object) -> int | None:
+    try:
+        return hash(value)
+    except Exception:
         return None
 
 
