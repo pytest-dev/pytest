@@ -1,0 +1,1 @@
+:fixture:`pytester` now preserves ``google.protobuf`` and ``google._upb`` in ``sys.modules`` across ``SysModulesSnapshot`` restoration, fixing ``TypeError: A Message class can only inherit from Message`` on subsequent imports.
