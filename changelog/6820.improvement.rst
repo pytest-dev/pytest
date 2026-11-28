@@ -1,0 +1,1 @@
+Add support for asserting complete output with :class:`~pytest.LineMatcher`'s :func:`~pytest.LineMatcher.fnmatch_lines` and :func:`~pytest.LineMatcher.re_match_lines` via a new ``complete`` option.

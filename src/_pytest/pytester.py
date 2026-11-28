@@ -1658,7 +1658,11 @@ class LineMatcher:
         return "\n".join(self._log_output)
 
     def fnmatch_lines(
-        self, lines2: Sequence[str], *, consecutive: bool = False
+        self,
+        lines2: Sequence[str],
+        *,
+        consecutive: bool = False,
+        complete: bool = False,
     ) -> None:
         """Check lines exist in the output (using :func:`python:fnmatch.fnmatch`).
 
@@ -1668,12 +1672,19 @@ class LineMatcher:
 
         :param lines2: String patterns to match.
         :param consecutive: Match lines consecutively?
+        :param complete: Fail if the output contains lines which were not asserted?
         """
         __tracebackhide__ = True
-        self._match_lines(lines2, fnmatch, "fnmatch", consecutive=consecutive)
+        self._match_lines(
+            lines2, fnmatch, "fnmatch", consecutive=consecutive, complete=complete
+        )
 
     def re_match_lines(
-        self, lines2: Sequence[str], *, consecutive: bool = False
+        self,
+        lines2: Sequence[str],
+        *,
+        consecutive: bool = False,
+        complete: bool = False,
     ) -> None:
         """Check lines exist in the output (using :func:`python:re.match`).
 
@@ -1684,6 +1695,7 @@ class LineMatcher:
 
         :param lines2: string patterns to match.
         :param consecutive: match lines consecutively?
+        :param complete: Fail if the output contains lines which were not asserted?
         """
         __tracebackhide__ = True
         self._match_lines(
@@ -1691,6 +1703,7 @@ class LineMatcher:
             lambda name, pat: bool(re.match(pat, name)),
             "re.match",
             consecutive=consecutive,
+            complete=complete,
         )
 
     def _match_lines(
@@ -1700,6 +1713,7 @@ class LineMatcher:
         match_nickname: str,
         *,
         consecutive: bool = False,
+        complete: bool = False,
     ) -> None:
         """Underlying implementation of ``fnmatch_lines`` and ``re_match_lines``.
 
@@ -1715,6 +1729,8 @@ class LineMatcher:
             when a match occurs.
         :param consecutive:
             Match lines consecutively?
+        :param complete:
+            Fail if the output contains lines which were not asserted?
         """
         if not isinstance(lines2, collections.abc.Sequence):
             raise TypeError(f"invalid type for lines2: {type(lines2).__name__}")
@@ -1756,6 +1772,12 @@ class LineMatcher:
                 extralines.append(nextline)
             else:
                 msg = f"remains unmatched: {line!r}"
+                self._log(msg)
+                self._fail(msg)
+        if complete:
+            unasserted = extralines + lines1
+            if unasserted:
+                msg = f"output has unasserted lines: {unasserted!r}"
                 self._log(msg)
                 self._fail(msg)
         self._log_output = []
