@@ -1,0 +1,2 @@
+Defining :globalvar:`pytest_plugins` in a test module is now deprecated and emits a :class:`~pytest.PytestDeprecationWarning` when more than one test file is collected, since the plugins affect the entire test suite rather than only that module.
+See :ref:`pytest-plugins-in-test-modules` for details.
