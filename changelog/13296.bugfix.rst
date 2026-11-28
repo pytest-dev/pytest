@@ -1,0 +1,1 @@
+Fixed ``conftest.py`` files being imported twice on Windows (causing errors such as ``ValueError: option names {...} already added``) when a command-line path argument used a different casing than the directory on disk.

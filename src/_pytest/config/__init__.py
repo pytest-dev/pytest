@@ -512,6 +512,11 @@ class PytestPluginManager(PluginManager):
         # This includes the directory's own conftest modules as well
         # as those of its parent directories.
         self._dirpath2confmods: dict[pathlib.Path, list[types.ModuleType]] = {}
+        # The conftest module of a conftest path.
+        # Keyed by Path rather than by str so that on case-insensitive
+        # platforms (Windows) the same conftest reached through paths that
+        # differ only in casing is not imported twice (#13296).
+        self._conftestpath2mod: dict[pathlib.Path, types.ModuleType] = {}
         # Cutoff directory above which conftests are no longer discovered.
         self._confcutdir: pathlib.Path | None = None
         # If set, conftest loading is skipped.
@@ -772,6 +777,9 @@ class PytestPluginManager(PluginManager):
         existing = self.get_plugin(conftestpath_plugin_name)
         if existing is not None:
             return cast(types.ModuleType, existing)
+        existing_mod = self._conftestpath2mod.get(conftestpath)
+        if existing_mod is not None:
+            return existing_mod
 
         # conftest.py files there are not in a Python package all have module
         # name "conftest", and thus conflict with each other. Clear the existing
@@ -798,6 +806,7 @@ class PytestPluginManager(PluginManager):
         self._check_non_top_pytest_plugins(mod, conftestpath)
 
         self._conftest_plugins.add(mod)
+        self._conftestpath2mod[conftestpath] = mod
         dirpath = conftestpath.parent
         if dirpath in self._dirpath2confmods:
             for path, mods in self._dirpath2confmods.items():
