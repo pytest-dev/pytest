@@ -1,0 +1,1 @@
+Fixed :option:`--fixtures` and :option:`--fixtures-per-test` exiting with status 0 even when collection had errors.
