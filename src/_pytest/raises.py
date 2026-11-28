@@ -361,6 +361,28 @@ def unescape(s: str) -> str:
 _ACTIVE_BLOCK_VAR_NAME = "pytest.raises active block"
 
 
+def _user_stacklevel() -> int:
+    """Stacklevel for warnings.warn() that points at the first frame outside
+    this module (the ``with`` / ``async with`` statement)."""
+    frame = sys._getframe(1)
+    level = 1
+    while frame is not None and frame.f_code.co_filename == __file__:
+        frame = frame.f_back  # type: ignore[assignment]
+        level += 1
+    return level
+
+
+def _context_switch_error(name: str, open_blocks: int) -> str:
+    if open_blocks == 0:
+        return f"{name}.__exit__() was called without a matching __enter__()."
+    return (
+        f"{name}.__exit__() was called in a thread or asyncio task that did not "
+        f"enter it, while {open_blocks} blocks of this object are open in other "
+        "tasks, so it cannot tell which block is exiting. Enter and exit a "
+        "pytest.raises() block in the same task."
+    )
+
+
 class _ActiveBlock:
     """A ``with`` block of a raises object.
 
@@ -398,13 +420,20 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
     # object each fill the ExceptionInfo their own ``__enter__`` returned, and
     # the object itself holds no reference to an in-flight ExceptionInfo.
     _active_block: ContextVar[_ActiveBlock | None] | None = None
+    # All blocks of this object that have been entered and not exited, in any
+    # context. Only used to recover from an exit in another context; an open
+    # block's ExceptionInfo is still unfilled, so this pins no traceback.
+    _open_blocks: list[_ActiveBlock] | None = None
 
     def _push_excinfo(self, excinfo: ExceptionInfo[Any]) -> None:
         var = self._active_block
         if var is None:
             var = self._active_block = ContextVar(_ACTIVE_BLOCK_VAR_NAME, default=None)
+        if self._open_blocks is None:
+            self._open_blocks = []
         block = _ActiveBlock(excinfo, var.get())
         block.token = var.set(block)
+        self._open_blocks.append(block)
 
     def _open_block(self) -> _ActiveBlock | None:
         block = self._active_block.get() if self._active_block is not None else None
@@ -415,22 +444,45 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
 
     def _pop_excinfo(self) -> ExceptionInfo[Any]:
         var = self._active_block
+        open_blocks = self._open_blocks or []
         block = self._open_block()
-        if var is None or block is None or block.excinfo is None:
-            raise AssertionError(
-                "Internal error - __exit__ called without a matching __enter__ "
-                "in the same context"
-            )
+        switched = False
+        if block is None:
+            # Not entered in this context (or a parent of it): the block was
+            # entered in another thread or asyncio task. Recover only when
+            # that is unambiguous.
+            if len(open_blocks) != 1:
+                raise RuntimeError(
+                    _context_switch_error(type(self).__name__, len(open_blocks))
+                )
+            block = open_blocks[0]
+            switched = True
+        assert var is not None
         assert block.token is not None
         excinfo = block.excinfo
+        assert excinfo is not None
         block.excinfo = None
-        try:
-            # Removes the variable from the context again after the outermost
-            # block, so contexts do not collect one entry per raises object.
-            var.reset(block.token)
-        except ValueError:
-            # Entered in another (parent) context, e.g. a copied context.
-            var.set(block.outer)
+        open_blocks.remove(block)
+        if not switched:
+            try:
+                # Removes the variable from the context again after the
+                # outermost block, so contexts do not collect one entry per
+                # raises object.
+                var.reset(block.token)
+            except ValueError:
+                # Entered in a parent of this context, e.g. exited in a task
+                # created inside the block.
+                var.set(block.outer)
+                switched = True
+        if switched:
+            warnings.warn(
+                PytestWarning(
+                    f"{type(self).__name__} block was exited in a different thread "
+                    "or asyncio task than it was entered in. Enter and exit a "
+                    "pytest.raises() block in the same task."
+                ),
+                stacklevel=_user_stacklevel(),
+            )
         self._last_excinfo = excinfo
         return excinfo
 
@@ -439,6 +491,7 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
         # belong to this object only.
         state = self.__dict__.copy()
         state.pop("_active_block", None)
+        state.pop("_open_blocks", None)
         state.pop("_last_excinfo", None)
         return state
 

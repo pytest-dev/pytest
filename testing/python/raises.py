@@ -668,16 +668,21 @@ def test_raises_copy_and_pickle_after_use() -> None:
 def test_raises_exit_in_other_context() -> None:
     import contextvars
 
-    # Entered in this context, exited in a copy of it.
+    def raised() -> ValueError:
+        try:
+            raise ValueError("x")
+        except ValueError as e:
+            return e
+
+    exc = raised()
+
+    # Entered in this context, exited in a copy of it: recovered, with a warning.
     cm = pytest.raises(ValueError)
     excinfo = cm.__enter__()
-    try:
-        raise ValueError("x")
-    except ValueError as e:
-        exc = e
-    assert contextvars.copy_context().run(
-        cm.__exit__, ValueError, exc, exc.__traceback__
-    )
+    with pytest.warns(PytestWarning, match="different thread or asyncio task"):
+        assert contextvars.copy_context().run(
+            cm.__exit__, ValueError, exc, exc.__traceback__
+        )
     assert excinfo.value is exc
     # This context still sees the exited block; it holds nothing and is skipped.
     with pytest.warns(pytest.PytestRemovedIn10Warning):
@@ -686,11 +691,59 @@ def test_raises_exit_in_other_context() -> None:
         int("x")
     assert again.type is ValueError
 
-    # Entered in a context this one cannot see.
+    # Entered in a context this one cannot see: the only open block is used.
+    cm = pytest.raises(ValueError)
+    excinfo = contextvars.copy_context().run(cm.__enter__)
+    with pytest.warns(PytestWarning, match="different thread or asyncio task"):
+        assert cm.__exit__(ValueError, exc, exc.__traceback__)
+    assert excinfo.value is exc
+
+    # Ambiguous: two blocks open in other contexts.
     cm = pytest.raises(ValueError)
     contextvars.copy_context().run(cm.__enter__)
-    with pytest.raises(AssertionError, match="without a matching __enter__"):
+    contextvars.copy_context().run(cm.__enter__)
+    with pytest.raises(RuntimeError, match="2 blocks of this object are open"):
         cm.__exit__(ValueError, exc, exc.__traceback__)
+
+    # Never entered.
+    with pytest.raises(RuntimeError, match="without a matching __enter__"):
+        pytest.raises(ValueError).__exit__(ValueError, exc, exc.__traceback__)
+
+
+def test_raises_async_generator_teardown_in_other_task() -> None:
+    """An async generator (e.g. an async fixture) whose setup and teardown run
+    in different tasks moves the block to another context."""
+    import asyncio
+
+    results = []
+
+    async def fixture_like():
+        async with pytest.raises(ValueError) as excinfo:
+            yield
+            raise ValueError("teardown")
+        results.append(excinfo.type)
+
+    gen = fixture_like()
+
+    async def setup() -> None:
+        await gen.__anext__()
+
+    async def teardown() -> None:
+        with pytest.raises(StopAsyncIteration):
+            await gen.__anext__()
+
+    loop = asyncio.new_event_loop()
+    try:
+        loop.run_until_complete(setup())
+        with pytest.warns(
+            PytestWarning, match="different thread or asyncio task"
+        ) as rec:
+            loop.run_until_complete(teardown())
+    finally:
+        loop.close()
+    assert results == [ValueError]
+    # The warning points at the ``async with`` line, not at pytest internals.
+    assert rec[0].filename == __file__
 
 
 class TestAsyncWith:
