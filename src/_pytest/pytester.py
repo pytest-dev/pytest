@@ -25,6 +25,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import traceback
 from typing import Any
 from typing import Final
@@ -1358,6 +1359,18 @@ class Pytester:
                 return colitem
         return None
 
+    @staticmethod
+    def _write_stdin_bytes(stdin_file: IO[bytes], input_bytes: bytes) -> None:
+        try:
+            stdin_file.write(input_bytes)
+        except OSError:
+            # Child exited without reading stdin (BrokenPipeError /
+            # ConnectionResetError on Windows).
+            pass
+        finally:
+            with contextlib.suppress(OSError):
+                stdin_file.close()
+
     def popen(
         self,
         cmdargs: Sequence[str | os.PathLike[str]],
@@ -1392,7 +1405,16 @@ class Pytester:
             popen.stdin.close()
         elif isinstance(stdin, bytes):
             assert popen.stdin is not None
-            popen.stdin.write(stdin)
+            stdin_file = popen.stdin
+            # Prevent communicate() from racing with the background writer.
+            popen.stdin = None
+            t = threading.Thread(
+                target=self._write_stdin_bytes,
+                args=(stdin_file, stdin),
+                daemon=True,
+            )
+            popen._pytester_stdin_writer = t  # type: ignore[attr-defined]
+            t.start()
 
         return popen
 
@@ -1445,11 +1467,23 @@ class Pytester:
             instant = timing.Instant()
             popen = self.popen(
                 cmdargs,
-                stdin=stdin,
+                stdin=subprocess.PIPE if isinstance(stdin, bytes) else stdin,
                 stdout=f1,
                 stderr=f2,
             )
-            if popen.stdin is not None:
+            stdin_writer: threading.Thread | None = None
+            if isinstance(stdin, bytes):
+                assert popen.stdin is not None
+                stdin_file = popen.stdin
+                # Prevent accidental writes/closes from racing with the writer.
+                popen.stdin = None
+                stdin_writer = threading.Thread(
+                    target=self._write_stdin_bytes,
+                    args=(stdin_file, stdin),
+                    daemon=True,
+                )
+                stdin_writer.start()
+            elif popen.stdin is not None:
                 popen.stdin.close()
 
             def handle_timeout() -> None:
@@ -1459,15 +1493,21 @@ class Pytester:
 
                 popen.kill()
                 popen.wait()
+                if stdin_writer is not None:
+                    stdin_writer.join(timeout=1)
                 raise self.TimeoutExpired(timeout_message)
 
-            if timeout is None:
-                ret = popen.wait()
-            else:
-                try:
-                    ret = popen.wait(timeout)
-                except subprocess.TimeoutExpired:
-                    handle_timeout()
+            try:
+                if timeout is None:
+                    ret = popen.wait()
+                else:
+                    try:
+                        ret = popen.wait(timeout)
+                    except subprocess.TimeoutExpired:
+                        handle_timeout()
+            finally:
+                if stdin_writer is not None:
+                    stdin_writer.join(timeout=1)
             f1.flush()
             f2.flush()
 

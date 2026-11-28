@@ -1,0 +1,1 @@
+:meth:pytest.Pytester.run and :meth:pytest.Pytester.popen no longer raise :exc:BrokenPipeError or block when `stdin` bytes are provided and the child process exits without reading them or when the input exceeds the pipe buffer.
