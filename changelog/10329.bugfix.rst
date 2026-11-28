@@ -1,0 +1,1 @@
+Collection arguments whose path contains ``[``, such as ``"dir[1]/test_file.py::test"`` or an absolute path below such a directory, are now accepted; previously they failed with ``path cannot contain [] parametrization``.

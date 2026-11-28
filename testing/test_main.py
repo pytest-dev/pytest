@@ -128,6 +128,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name=None,
             original_index=0,
+            original_arg="src/pkg/test.py",
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::", 10
@@ -137,6 +138,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name=None,
             original_index=10,
+            original_arg="src/pkg/test.py::",
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::foo::bar", 20
@@ -146,6 +148,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name=None,
             original_index=20,
+            original_arg="src/pkg/test.py::foo::bar",
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::foo::bar::", 30
@@ -155,6 +158,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name=None,
             original_index=30,
+            original_arg="src/pkg/test.py::foo::bar::",
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::foo::bar[a,b,c]", 40
@@ -164,6 +168,7 @@ class TestResolveCollectionArgument:
             parametrization="[a,b,c]",
             module_name=None,
             original_index=40,
+            original_arg="src/pkg/test.py::foo::bar[a,b,c]",
         )
 
     def test_dir(self, invocation_path: Path) -> None:
@@ -176,6 +181,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name=None,
             original_index=0,
+            original_arg="src/pkg",
         )
 
         with pytest.raises(
@@ -203,6 +209,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name="pkg.test",
             original_index=0,
+            original_arg="pkg.test",
         )
         assert resolve_collection_argument(
             invocation_path, "pkg.test::foo::bar", 0, as_pypath=True
@@ -212,6 +219,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name="pkg.test",
             original_index=0,
+            original_arg="pkg.test::foo::bar",
         )
         assert resolve_collection_argument(
             invocation_path,
@@ -225,6 +233,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name="pkg",
             original_index=0,
+            original_arg="pkg",
         )
 
         with pytest.raises(
@@ -247,6 +256,7 @@ class TestResolveCollectionArgument:
             parametrization="[a::b]",
             module_name=None,
             original_index=0,
+            original_arg="src/pkg/test.py::test[a::b]",
         )
 
     @pytest.mark.parametrize(
@@ -259,6 +269,26 @@ class TestResolveCollectionArgument:
             UsageError, match=r"path cannot contain \[\] parametrization"
         ):
             resolve_collection_argument(invocation_path, arg, 0)
+
+    def test_path_with_brackets(self, invocation_path: Path) -> None:
+        """A "[" in the path is not a parametrization (#10329)."""
+        d = invocation_path / "src/d[1]"
+        d.mkdir()
+        d.joinpath("test.py").touch()
+        assert resolve_collection_argument(
+            invocation_path, "src/d[1]/test.py::foo[a::b]", 0
+        ) == CollectionArgument(
+            path=d / "test.py",
+            parts=["foo"],
+            parametrization="[a::b]",
+            module_name=None,
+            original_index=0,
+            original_arg="src/d[1]/test.py::foo[a::b]",
+        )
+        with pytest.raises(
+            UsageError, match=re.escape("file or directory not found: src/d[2]/test.py")
+        ):
+            resolve_collection_argument(invocation_path, "src/d[2]/test.py", 0)
 
     def test_does_not_exist(self, invocation_path: Path) -> None:
         """Given a file/module that does not exist raises UsageError."""
@@ -286,6 +316,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name=None,
             original_index=0,
+            original_arg=full_path,
         )
 
         # ensure full paths given in the command-line without the drive letter resolve
@@ -299,6 +330,7 @@ class TestResolveCollectionArgument:
             parametrization=None,
             module_name=None,
             original_index=0,
+            original_arg=full_path_without_drive,
         )
 
 

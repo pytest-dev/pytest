@@ -1042,8 +1042,9 @@ class Session(nodes.Collector):
                     notfound_collectors.append(matchnode)
 
             if not any_matched_in_initial_part:
-                report_arg = "::".join((str(argpath), *names))
-                self._notfound.append((report_arg, notfound_collectors))
+                self._notfound.append(
+                    (collection_argument.original_arg, notfound_collectors)
+                )
 
             self.trace.root.indent -= 1
 
@@ -1109,6 +1110,8 @@ class CollectionArgument:
     parametrization: str | None
     module_name: str | None
     original_index: int
+    #: The argument as given, for error messages.
+    original_arg: str
 
 
 def resolve_collection_argument(
@@ -1152,10 +1155,12 @@ def resolve_collection_argument(
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
     """
-    base, squacket, rest = arg.partition("[")
-    strpath, *parts = base.split("::")
-    if squacket and not parts:
-        raise UsageError(f"path cannot contain [] parametrization: {arg}")
+    # The path ends at the first "::"; only the selection parts after it may
+    # carry a "[...]" parametrization, which can itself contain "::" (#9302).
+    # Splitting this way keeps paths containing "[" usable (#10329).
+    strpath, sep, selection = arg.partition("::")
+    names, squacket, rest = selection.partition("[")
+    parts = names.split("::") if sep else []
     parametrization = f"{squacket}{rest}" if squacket else None
     module_name = None
     if as_pypath:
@@ -1168,6 +1173,10 @@ def resolve_collection_argument(
     fspath = invocation_path / strpath
     fspath = absolutepath(fspath)
     if not safe_exists(fspath):
+        if "[" in Path(strpath).name:
+            # Most likely a parametrization attached to the path itself, e.g.
+            # `test_file.py[x]` (#10273).
+            raise UsageError(f"path cannot contain [] parametrization: {arg}")
         msg = (
             "module or package not found: {arg} (missing __init__.py?)"
             if as_pypath
@@ -1187,6 +1196,7 @@ def resolve_collection_argument(
         parametrization=parametrization,
         module_name=module_name,
         original_index=arg_index,
+        original_arg=arg,
     )
 
 
