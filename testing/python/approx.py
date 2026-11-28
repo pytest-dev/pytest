@@ -1407,6 +1407,31 @@ class TestApprox:
         with pytest.raises(ValueError, match="relative tolerance can't be NaN"):
             _ = nan_rel.tolerance
 
+    @pytest.mark.parametrize(
+        "expected",
+        [Decimal(1), 1, 1.0, [Decimal(1)], {"a": Decimal(1)}],
+        ids=["decimal", "int", "float", "list", "dict"],
+    )
+    @pytest.mark.parametrize("nan_ok", [False, True])
+    def test_decimal_nan_actual_is_unequal(self, expected, nan_ok) -> None:
+        """A Decimal NaN actual compares unequal instead of raising (#15335)."""
+        nan = Decimal("NaN")
+        actual = (
+            [nan]
+            if isinstance(expected, list)
+            else {"a": nan}
+            if isinstance(expected, dict)
+            else nan
+        )
+        assert actual != approx(expected, nan_ok=nan_ok)
+
+    def test_decimal_nan_actual_failure_details(self) -> None:
+        """The failure details for a Decimal NaN actual don't crash either."""
+        lines = approx([Decimal(1), Decimal(2)])._repr_compare(
+            [Decimal("NaN"), Decimal(2)]
+        )
+        assert "Mismatched elements: 1 / 2:" in lines[0]
+
     def test_allow_ordered_sequences_only(self) -> None:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""
         with pytest.raises(TypeError, match="only supports ordered sequences"):
