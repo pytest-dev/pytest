@@ -19,7 +19,7 @@ Below is a complete list of all pytest features which are considered deprecated.
 Skipping a test during teardown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 10.0
+.. deprecated:: 9.3
 
 Calling :func:`pytest.skip` during teardown, for example after the ``yield``
 of a fixture or in ``teardown_function``, is deprecated.

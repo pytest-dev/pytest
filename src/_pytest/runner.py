@@ -219,15 +219,14 @@ def _warn_skip_during_teardown(exc: BaseException) -> None:
         exc = exc.exceptions[0]
     warning = SKIP_DURING_TEARDOWN.format()
     crash = ExceptionInfo.from_exception(exc)._getreprcrash()
-    if crash is None:
-        warnings.warn(warning, stacklevel=2)
-    else:
-        warnings.warn_explicit(
-            warning,
-            category=type(warning),
-            filename=crash.path,
-            lineno=crash.lineno,
-        )
+    # The traceback starts at pytest_runtest_teardown, which is never hidden.
+    assert crash is not None, "A skip raised during teardown always has a location."
+    warnings.warn_explicit(
+        warning,
+        category=type(warning),
+        filename=crash.path,
+        lineno=crash.lineno,
+    )
 
 
 def _update_current_test_var(

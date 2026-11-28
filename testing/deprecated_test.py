@@ -443,6 +443,30 @@ class TestSkipDuringTeardownDeprecated:
             ]
         )
 
+    def test_hidden_fixture_teardown_skip_warns(self, pytester: Pytester) -> None:
+        """A fixture hiding its frame still warns, at the nearest visible frame."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixt():
+                __tracebackhide__ = True
+                yield
+                pytest.skip("in teardown")
+
+            def test_fixt(fixt):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, skipped=1, warnings=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn10Warning: Skipping a test during teardown is deprecated."
+            ]
+        )
+
     def test_teardown_function_skip_warns(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
