@@ -311,6 +311,17 @@ def test_setenv_prepend() -> None:
     assert "XYZ123" not in os.environ
 
 
+def test_setenv_prepend_to_empty_variable() -> None:
+    import os
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setenv("XYZ123", "")
+    monkeypatch.setenv("XYZ123", "/opt/plugins", prepend=os.pathsep)
+    assert os.environ["XYZ123"] == "/opt/plugins"
+    monkeypatch.undo()
+    assert "XYZ123" not in os.environ
+
+
 def test_monkeypatch_plugin(pytester: Pytester) -> None:
     reprec = pytester.inline_runsource(
         """

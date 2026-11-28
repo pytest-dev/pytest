@@ -1,0 +1,1 @@
+Fixed ``monkeypatch.setenv(..., prepend=...)`` adding a trailing separator to the value when the target environment variable was already set but empty.
