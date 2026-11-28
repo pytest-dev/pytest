@@ -1298,3 +1298,33 @@ def test_teardown_session_stopped(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("--stepwise")
     result.assert_outcomes(failed=1, errors=1)
+
+
+def test_parametrized_exception_does_not_keep_frame_alive(pytester: Pytester) -> None:
+    """Exception instances passed via parametrize should not keep test frames alive (#15483)."""
+    pytester.makepyfile(
+        """
+        import gc
+        import weakref
+        import pytest
+
+        class Sentinel:
+            pass
+
+        refs = []
+
+        @pytest.mark.parametrize("error", [ValueError("boom")])
+        def test_raises_param_exception(error):
+            obj = Sentinel()
+            refs.append(weakref.ref(obj))
+            with pytest.raises(ValueError):
+                raise error
+
+        def test_frame_collected():
+            gc.collect()
+            assert len(refs) == 1
+            assert refs[0]() is None
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
