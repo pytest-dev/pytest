@@ -513,3 +513,129 @@ class TestRaises:
         # With -v: should NOT show "Skipping" — full diff shown
         result_v = pytester.runpytest("-v")
         assert "Skipping" not in result_v.stdout.str()
+
+
+class TestReusedContextManager:
+    """A single raises object used for several ``with`` blocks at once (#13410).
+
+    Each block must fill the ExceptionInfo returned by its own ``__enter__``.
+    """
+
+    def test_nested(self) -> None:
+        cm = pytest.raises(BaseException)
+        with cm as outer:
+            with cm as inner:
+                pass  # inner block fails with "DID NOT RAISE", outer catches it
+        assert outer.type is Failed
+        assert "DID NOT RAISE" in str(outer.value)
+        with pytest.raises(AssertionError, match="can only be used after"):
+            inner.type  # noqa: B018
+
+    def test_nested_group(self) -> None:
+        cm = pytest.RaisesGroup(ValueError)
+        # The inner "DID NOT RAISE" reaches the outer block, which rejects it.
+        with pytest.raises(Failed, match="is not an exception group"):
+            with cm as outer:
+                with cm:
+                    pass
+        with pytest.raises(AssertionError, match="can only be used after"):
+            outer.type  # noqa: B018
+
+    def test_recursive(self) -> None:
+        cm = pytest.raises(ValueError)
+
+        def helper(n: int) -> pytest.ExceptionInfo[ValueError]:
+            with cm as excinfo:
+                if n:
+                    assert str(helper(n - 1).value) == str(n - 1)
+                raise ValueError(n)
+            return excinfo
+
+        assert str(helper(2).value) == "2"
+
+    def test_interleaved_asyncio_tasks(self) -> None:
+        import asyncio
+
+        cm = pytest.raises(ValueError)
+        results: dict[str, str] = {}
+
+        async def task(name: str, delay: float) -> None:
+            with cm as excinfo:
+                await asyncio.sleep(delay)
+                raise ValueError(name)
+            results[name] = str(excinfo.value)
+
+        async def main() -> None:
+            # "first" enters first and also exits first: not LIFO.
+            await asyncio.gather(task("first", 0.01), task("second", 0.05))
+
+        asyncio.run(main())
+        assert results == {"first": "first", "second": "second"}
+
+    def test_threads(self) -> None:
+        import threading
+
+        cm = pytest.raises(ValueError)
+        barrier = threading.Barrier(2)
+        results: dict[int, str] = {}
+
+        def worker(n: int) -> None:
+            with cm as excinfo:
+                barrier.wait()
+                raise ValueError(n)
+            results[n] = str(excinfo.value)
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert results == {0: "0", 1: "1"}
+
+
+@pytest.mark.parametrize(
+    "expectation",
+    [
+        "pytest.raises(ZeroDivisionError)",
+        "pytest.RaisesExc(ZeroDivisionError)",
+        "pytest.RaisesGroup(ZeroDivisionError, allow_unwrapped=True)",
+    ],
+)
+def test_parametrized_raises_released_after_teardown(
+    pytester: Pytester, expectation: str
+) -> None:
+    """A raises object passed as a parameter must not keep the test frame
+    alive after the test (#13410)."""
+    pytester.makeconftest(
+        """
+        import gc
+
+        REFS = []
+
+        def pytest_sessionfinish(session):
+            gc.collect()
+            alive = [r for r in REFS if r() is not None]
+            print(f"ALIVE: {len(alive)}/{len(REFS)}")
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import weakref
+        import pytest
+        from conftest import REFS
+
+        class Big:
+            pass
+
+        @pytest.mark.parametrize("n", [1, 2])
+        @pytest.mark.parametrize("expectation", [{expectation}])
+        def test_it(n, expectation):
+            big = Big()
+            REFS.append(weakref.ref(big))
+            with expectation:
+                1 / 0
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=2)
+    result.stdout.fnmatch_lines(["*ALIVE: 0/2"])

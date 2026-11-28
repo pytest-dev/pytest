@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from contextvars import ContextVar
 import re
 from re import Pattern
 import sys
@@ -19,6 +20,7 @@ import warnings
 
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import stringify_exception
+from _pytest.deprecated import RAISES_EXCINFO_ATTRIBUTE
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestWarning
 
@@ -355,6 +357,15 @@ def unescape(s: str) -> str:
     return re.sub(r"\\([{}()+-.*?^$\[\]\s\\|])", r"\1", s)
 
 
+# (context manager, ExceptionInfo) pairs of the ``with`` blocks currently
+# executing in this context. Keeping the in-flight ExceptionInfo here instead
+# of on the context manager lets the context manager forget it once the block
+# exits, and keeps nested and concurrent use of one object apart.
+_active_excinfos: ContextVar[
+    tuple[tuple[AbstractRaises[Any], ExceptionInfo[Any]], ...]
+] = ContextVar("_pytest_raises_active_excinfos", default=())
+
+
 # These classes conceptually differ from ExceptionInfo in that ExceptionInfo is tied, and
 # constructed from, a particular exception - whereas these are constructed with expected
 # exceptions, and later allow matching towards particular exceptions.
@@ -363,6 +374,47 @@ def unescape(s: str) -> str:
 # The interaction between these classes should perhaps be improved.
 class AbstractRaises(ABC, Generic[BaseExcT_co]):
     """ABC with common functionality shared between RaisesExc and RaisesGroup"""
+
+    # The ExceptionInfo of the most recently exited ``with`` block, only kept
+    # for the deprecated ``excinfo`` attribute. Dropped after the test's
+    # teardown when this object is a parametrize value (#13410).
+    _last_excinfo: ExceptionInfo[Any] | None = None
+
+    def _push_excinfo(self, excinfo: ExceptionInfo[Any]) -> None:
+        _active_excinfos.set((*_active_excinfos.get(), (self, excinfo)))
+
+    def _pop_excinfo(self) -> ExceptionInfo[Any]:
+        # Find this object's innermost active block in the current context, so
+        # nested, recursive and interleaved (threads, asyncio tasks) use of the
+        # same context manager each fill the ExceptionInfo their own
+        # ``__enter__`` returned.
+        active = _active_excinfos.get()
+        for i in range(len(active) - 1, -1, -1):
+            owner, excinfo = active[i]
+            if owner is self:
+                _active_excinfos.set(active[:i] + active[i + 1 :])
+                self._last_excinfo = excinfo
+                return excinfo
+        raise AssertionError(
+            "Internal error - __exit__ called without a matching __enter__"
+        )
+
+    @property
+    def excinfo(self) -> ExceptionInfo[Any]:
+        """Deprecated, use the object returned by ``__enter__`` instead."""
+        warnings.warn(RAISES_EXCINFO_ATTRIBUTE.format(), stacklevel=2)
+        active = _active_excinfos.get()
+        for i in range(len(active) - 1, -1, -1):
+            if active[i][0] is self:
+                return active[i][1]
+        if self._last_excinfo is None:
+            raise AttributeError(
+                f"{type(self).__name__!r} object has no attribute 'excinfo'"
+            )
+        return self._last_excinfo
+
+    def _clear_last_excinfo(self) -> None:
+        self._last_excinfo = None
 
     def __init__(
         self,
@@ -681,8 +733,9 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         return self._fail_reason is None
 
     def __enter__(self) -> ExceptionInfo[BaseExcT_co_default]:
-        self.excinfo: ExceptionInfo[BaseExcT_co_default] = ExceptionInfo.for_later()
-        return self.excinfo
+        excinfo: ExceptionInfo[BaseExcT_co_default] = ExceptionInfo.for_later()
+        self._push_excinfo(excinfo)
+        return excinfo
 
     # TODO: move common code into superclass
     def __exit__(
@@ -692,6 +745,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         exc_tb: types.TracebackType | None,
     ) -> bool:
         __tracebackhide__ = True
+        excinfo: ExceptionInfo[BaseExcT_co_default] = self._pop_excinfo()
         if exc_type is None:
             if not self.expected_exceptions:
                 fail("DID NOT RAISE any exception")
@@ -700,10 +754,6 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             else:
                 names = ", ".join(x.__name__ for x in self.expected_exceptions)
                 fail(f"DID NOT RAISE any of ({names})")
-
-        assert self.excinfo is not None, (
-            "Internal error - should have been constructed in __enter__"
-        )
 
         if not self.matches(exc_val):
             if self._just_propagate:
@@ -716,7 +766,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             "tuple[type[BaseExcT_co_default], BaseExcT_co_default, types.TracebackType]",
             (exc_type, exc_val, exc_tb),
         )
-        self.excinfo.fill_unfilled(exc_info)
+        excinfo.fill_unfilled(exc_info)
         return True
 
 
@@ -1043,10 +1093,11 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     ) -> ExceptionInfo[BaseExceptionGroup[BaseExcT_1]]: ...
 
     def __enter__(self) -> ExceptionInfo[BaseExceptionGroup[BaseException]]:
-        self.excinfo: ExceptionInfo[BaseExceptionGroup[BaseExcT_co]] = (
+        excinfo: ExceptionInfo[BaseExceptionGroup[BaseExcT_co]] = (
             ExceptionInfo.for_later()
         )
-        return self.excinfo
+        self._push_excinfo(excinfo)
+        return excinfo
 
     def __repr__(self) -> str:
         reqs = [
@@ -1402,12 +1453,9 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         exc_tb: types.TracebackType | None,
     ) -> bool:
         __tracebackhide__ = True
+        excinfo: ExceptionInfo[BaseExceptionGroup[BaseExcT_co]] = self._pop_excinfo()
         if exc_type is None:
             fail(f"DID NOT RAISE any exception, expected `{self.expected_type()}`")
-
-        assert self.excinfo is not None, (
-            "Internal error - should have been constructed in __enter__"
-        )
 
         # group_str is the only thing that differs between RaisesExc and RaisesGroup...
         # I might just scrap it? Or make it part of fail_reason
@@ -1426,7 +1474,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             "tuple[type[BaseExceptionGroup[BaseExcT_co]], BaseExceptionGroup[BaseExcT_co], types.TracebackType]",
             (exc_type, exc_val, exc_tb),
         )
-        self.excinfo.fill_unfilled(exc_info)
+        excinfo.fill_unfilled(exc_info)
         return True
 
     def expected_type(self) -> str:

@@ -14,6 +14,33 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+.. _raises-excinfo-attribute:
+
+``excinfo`` attribute of ``pytest.raises()`` context managers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.3
+
+The ``excinfo`` attribute of the context managers returned by :func:`pytest.raises`,
+:class:`pytest.RaisesExc` and :class:`pytest.RaisesGroup` was never documented, and it kept
+the caught exception, its traceback and the frame locals alive for as long as the
+context manager lived. Accessing it now issues a deprecation warning, and it will be
+removed in pytest 10. Use the :class:`~pytest.ExceptionInfo` returned by ``__enter__`` instead:
+
+.. code-block:: python
+
+    # Deprecated
+    cm = pytest.raises(ValueError)
+    with cm:
+        int("x")
+    assert "invalid literal" in str(cm.excinfo.value)
+
+    # Use this instead
+    with pytest.raises(ValueError) as excinfo:
+        int("x")
+    assert "invalid literal" in str(excinfo.value)
+
+
 .. _toml-numeric-strings:
 
 Numeric strings for integer options in TOML

@@ -1,0 +1,1 @@
+The undocumented ``excinfo`` attribute of :func:`pytest.raises`, :class:`pytest.RaisesExc` and :class:`pytest.RaisesGroup` context managers is deprecated and will be removed in pytest 10 -- use the object returned by ``with ... as excinfo:`` instead. See :ref:`raises-excinfo-attribute`.
