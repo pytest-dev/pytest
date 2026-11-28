@@ -202,11 +202,15 @@ def get_extended_length_path_str(path: str) -> str:
     return long_path_prefix + path
 
 
-def rm_rf(path: Path) -> None:
+def rm_rf(path: Path, *, start_path: Path | None = None) -> None:
     """Remove the path contents recursively, even if some elements
-    are read-only."""
+    are read-only.
+
+    Parent directories are made writable up to ``start_path``, which defaults
+    to ``path``.
+    """
     path = ensure_extended_length_path(path)
-    onerror = partial(on_rm_rf_error, start_path=path)
+    onerror = partial(on_rm_rf_error, start_path=start_path or path)
     if sys.version_info >= (3, 12):
         shutil.rmtree(str(path), onexc=onerror)
     else:
@@ -320,6 +324,26 @@ def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
     return register(cleanup_on_exit)
 
 
+def _rm_rf_lock_last(path: Path) -> None:
+    """Remove a directory, but its lock only after everything else in it,
+    just before the directory itself.
+
+    Subdirectories are removed with rm_rf. An error removing anything else is
+    raised: the caller removes the lock and leaves the directory to a later
+    cleanup.
+    """
+    lock = get_lock_path(path)
+    with os.scandir(path) as it:
+        entries = [entry for entry in it if entry.name != lock.name]
+    for entry in entries:
+        if entry.is_dir(follow_symlinks=False):
+            rm_rf(Path(entry.path), start_path=path)
+        else:
+            os.unlink(entry.path)
+    os.unlink(lock)
+    os.rmdir(path)
+
+
 def maybe_delete_a_numbered_dir(path: Path) -> None:
     """Remove a numbered directory if its lock can be obtained and it does
     not seem to be in use."""
@@ -331,7 +355,11 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
 
         garbage = parent.joinpath(f"garbage-{uuid.uuid4()}")
         path.rename(garbage)
-        rm_rf(garbage)
+        # The lock moved with the directory. It is removed only after
+        # everything else, so that no other process can lock the directory
+        # while this one empties it (#15435).
+        lock_path = get_lock_path(garbage)
+        _rm_rf_lock_last(garbage)
     except OSError:
         #  known races:
         #  * other process did a cleanup at the same time
@@ -346,6 +374,34 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
                 lock_path.unlink()
             except OSError:
                 pass
+
+
+def maybe_delete_a_garbage_dir(path: Path) -> None:
+    """Remove a garbage directory, taking it over by renaming it.
+
+    Unlike :func:`maybe_delete_a_numbered_dir`, this writes no lock into the
+    directory first. A garbage directory without a lock may still be being
+    emptied by another process: by this function, which takes no lock, by
+    :func:`maybe_delete_a_numbered_dir` between removing its lock and its last
+    ``rmdir``, or by an older pytest, whose ``rm_rf`` removed the ``.lock``
+    long before its last ``rmdir``. A lock written into the directory in that
+    time is an entry that last ``rmdir`` finds, and it fails with "Directory
+    not empty".
+
+    Renaming is enough to take it over, since only one rename of a name can
+    succeed. A process still emptying the directory then finds its entries
+    already removed, or the directory itself gone, and ``rm_rf`` ignores both.
+    """
+    path = ensure_extended_length_path(path)
+    try:
+        garbage = path.parent.joinpath(f"garbage-{uuid.uuid4()}")
+        path.rename(garbage)
+        rm_rf(garbage)
+    except OSError:
+        #  known races:
+        #  * other process removed or took over the directory first
+        #  * other process emptying the same directory at the same time
+        return
 
 
 def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) -> bool:
@@ -397,8 +453,14 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
 def cleanup_dead_symlinks(root: Path) -> None:
     for left_dir in root.iterdir():
         if left_dir.is_symlink():
-            if not left_dir.resolve().exists():
-                left_dir.unlink()
+            try:
+                target = left_dir.resolve()
+            except OSError:
+                # The link cannot be followed, for example on Windows with
+                # RedirectionGuard enabled (WinError 448). Leave it alone.
+                continue
+            if not target.exists():
+                left_dir.unlink(missing_ok=True)
 
 
 def cleanup_numbered_dir(
@@ -410,7 +472,8 @@ def cleanup_numbered_dir(
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
     for path in root.glob("garbage-*"):
-        try_cleanup(path, consider_lock_dead_if_created_before)
+        if ensure_deletable(path, consider_lock_dead_if_created_before):
+            maybe_delete_a_garbage_dir(path)
 
     cleanup_dead_symlinks(root)
 

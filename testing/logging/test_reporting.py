@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
 import re
 from typing import cast
@@ -9,6 +10,7 @@ from typing import cast
 from _pytest.capture import CaptureManager
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.terminal import TerminalReporter
 import pytest
@@ -1420,6 +1422,34 @@ def test_disable_loggers(pytester: Pytester) -> None:
     result = pytester.runpytest("--log-disable=disabled", "-s")
     assert result.ret == ExitCode.OK
     assert not result.stderr.lines
+
+
+@pytest.mark.parametrize("initially_disabled", [False, True])
+def test_disable_loggers_restores_state(
+    pytester: Pytester, monkeypatch: MonkeyPatch, initially_disabled: bool
+) -> None:
+    logger = logging.getLogger("test_disable_loggers_restores_state")
+    monkeypatch.setattr(logger, "disabled", initially_disabled)
+    pytester.makepyfile(
+        f"""
+        import logging
+
+        def test_logger(caplog, pytestconfig):
+            logger = logging.getLogger("test_disable_loggers_restores_state")
+            logger.warning("test message")
+            if pytestconfig.getoption("--log-disable") or {initially_disabled!r}:
+                assert not caplog.messages
+            else:
+                assert caplog.messages == ["test message"]
+        """
+    )
+
+    disable_option = f"--log-disable={logger.name}"
+    pytester.runpytest_inprocess(disable_option, disable_option).assert_outcomes(
+        passed=1
+    )
+    assert logger.disabled is initially_disabled
+    pytester.runpytest_inprocess().assert_outcomes(passed=1)
 
 
 def test_disable_loggers_does_not_propagate(pytester: Pytester) -> None:
