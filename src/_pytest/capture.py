@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import abc
-import collections
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -24,12 +23,8 @@ from typing import final
 from typing import Generic
 from typing import Literal
 from typing import NamedTuple
+from typing import Self
 from typing import TextIO
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -610,25 +605,12 @@ class FDCapture(FDCaptureBase[str]):
 # MultiCapture
 
 
-# Generic NamedTuple only supported since Python 3.11.
-if sys.version_info >= (3, 11) or TYPE_CHECKING:
+@final
+class CaptureResult(NamedTuple, Generic[AnyStr]):
+    """The result of :method:`caplog.readouterr() <pytest.CaptureFixture.readouterr>`."""
 
-    @final
-    class CaptureResult(NamedTuple, Generic[AnyStr]):
-        """The result of :method:`caplog.readouterr() <pytest.CaptureFixture.readouterr>`."""
-
-        out: AnyStr
-        err: AnyStr
-
-else:
-
-    class CaptureResult(
-        collections.namedtuple("CaptureResult", ["out", "err"]),  # noqa: PYI024
-        Generic[AnyStr],
-    ):
-        """The result of :method:`caplog.readouterr() <pytest.CaptureFixture.readouterr>`."""
-
-        __slots__ = ()
+    out: AnyStr
+    err: AnyStr
 
 
 class MultiCapture(Generic[AnyStr]):

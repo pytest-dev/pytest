@@ -222,8 +222,7 @@ def getstatementrange_ast(
         content = str(source)
         # See #4260:
         # Don't produce duplicate warnings when compiling source to find AST.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+        with warnings.catch_warnings(action="ignore"):
             astnode = ast.parse(content, "source", "exec")
 
     start, end = get_statement_startend2(lineno, astnode)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from datetime import timezone
+from datetime import UTC
 import os
 from pathlib import Path
 import platform
@@ -289,11 +289,11 @@ class TestPython:
                 pass
         """
         )
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         _result, dom = run_and_parse(family=xunit_family)
         node = dom.get_first_by_tag("testsuite")
         timestamp = datetime.fromisoformat(node["timestamp"])
-        assert start_time <= timestamp < datetime.now(timezone.utc)
+        assert start_time <= timestamp < datetime.now(UTC)
 
     def test_timing_function(
         self,

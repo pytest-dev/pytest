@@ -30,10 +30,6 @@ import pytest
 if TYPE_CHECKING:
     from _pytest._code.code import TracebackStyle
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-    from exceptiongroup import ExceptionGroup
-
 
 @pytest.fixture
 def limited_recursion_depth():
@@ -931,10 +927,6 @@ raise ValueError()
         assert basename in str(reprtb.reprfileloc.path)
         assert reprtb.reprfileloc.lineno == 3
 
-    @pytest.mark.skipif(
-        "sys.version_info < (3,11)",
-        reason="Column level traceback info added in python 3.11",
-    )
     def test_repr_traceback_entry_short_carets(self, importasmod) -> None:
         mod = importasmod(
             """
@@ -1509,22 +1501,13 @@ raise ValueError()
         assert tw_mock.lines[40] == ("_ ", None)
         assert tw_mock.lines[41] == ""
         assert tw_mock.lines[42] == "    def h():"
-        # On python 3.11 and greater, check for carets in the traceback.
-        if sys.version_info >= (3, 11):
-            assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
-            assert tw_mock.lines[44] == "                 ^^^^^^^^^^^^^^^^^^^^^^"
-            assert tw_mock.lines[45] == "E       AttributeError"
-            assert tw_mock.lines[46] == ""
-            line = tw_mock.get_write_msg(47)
-            assert line.endswith("mod.py")
-            assert tw_mock.lines[48] == ":15: AttributeError"
-        else:
-            assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
-            assert tw_mock.lines[44] == "E       AttributeError"
-            assert tw_mock.lines[45] == ""
-            line = tw_mock.get_write_msg(46)
-            assert line.endswith("mod.py")
-            assert tw_mock.lines[47] == ":15: AttributeError"
+        assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
+        assert tw_mock.lines[44] == "                 ^^^^^^^^^^^^^^^^^^^^^^"
+        assert tw_mock.lines[45] == "E       AttributeError"
+        assert tw_mock.lines[46] == ""
+        line = tw_mock.get_write_msg(47)
+        assert line.endswith("mod.py")
+        assert tw_mock.lines[48] == ":15: AttributeError"
 
     @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
     def test_exc_repr_chain_suppression(self, importasmod, mode, tw_mock):
@@ -1762,44 +1745,24 @@ raise ValueError()
         r = excinfo.getrepr(style="short")
         r.toterminal(tw_mock)
         out = "\n".join(line for line in tw_mock.lines if isinstance(line, str))
-        # Assert highlighting carets in python3.11+
-        if sys.version_info >= (3, 11):
-            expected_out = textwrap.dedent(
-                """\
-                :13: in unreraise
-                    reraise()
-                :10: in reraise
-                    raise Err() from e
-                E   test_exc_chain_repr_cycle0.mod.Err
+        expected_out = textwrap.dedent(
+            """\
+            :13: in unreraise
+                reraise()
+            :10: in reraise
+                raise Err() from e
+            E   test_exc_chain_repr_cycle0.mod.Err
 
-                During handling of the above exception, another exception occurred:
-                :15: in unreraise
-                    raise e.__cause__
-                :8: in reraise
-                    fail()
-                :5: in fail
-                    return 0 / 0
-                           ^^^^^
-                E   ZeroDivisionError: division by zero"""
-            )
-        else:
-            expected_out = textwrap.dedent(
-                """\
-                :13: in unreraise
-                    reraise()
-                :10: in reraise
-                    raise Err() from e
-                E   test_exc_chain_repr_cycle0.mod.Err
-
-                During handling of the above exception, another exception occurred:
-                :15: in unreraise
-                    raise e.__cause__
-                :8: in reraise
-                    fail()
-                :5: in fail
-                    return 0 / 0
-                E   ZeroDivisionError: division by zero"""
-            )
+            During handling of the above exception, another exception occurred:
+            :15: in unreraise
+                raise e.__cause__
+            :8: in reraise
+                fail()
+            :5: in fail
+                return 0 / 0
+                       ^^^^^
+            E   ZeroDivisionError: division by zero"""
+        )
         assert out == expected_out
 
     def test_exec_type_error_filter(self, importasmod):
@@ -1963,16 +1926,10 @@ def test_no_recursion_index_on_recursion_error():
     assert "maximum recursion" in str(excinfo.getrepr())
 
 
-def _exceptiongroup_common(
-    pytester: Pytester,
-    outer_chain: str,
-    inner_chain: str,
-    native: bool,
-) -> None:
-    pre_raise = "exceptiongroup." if not native else ""
-    pre_catch = pre_raise if sys.version_info < (3, 11) else ""
+@pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
+@pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
+def test_exceptiongroup(pytester: Pytester, outer_chain: str, inner_chain: str) -> None:
     filestr = f"""
-    {"import exceptiongroup" if not native else ""}
     import pytest
 
     def f(): raise ValueError("From f()")
@@ -1987,19 +1944,19 @@ def _exceptiongroup_common(
                 excs.append(err)
         if excs:
             if inner_chain == "none":
-                raise {pre_raise}BaseExceptionGroup("Oops", excs)
+                raise BaseExceptionGroup("Oops", excs)
             try:
                 raise SyntaxError()
             except SyntaxError as e:
                 if inner_chain == "from":
-                    raise {pre_raise}BaseExceptionGroup("Oops", excs) from e
+                    raise BaseExceptionGroup("Oops", excs) from e
                 else:
-                    raise {pre_raise}BaseExceptionGroup("Oops", excs)
+                    raise BaseExceptionGroup("Oops", excs)
 
     def outer(outer_chain, inner_chain):
         try:
             inner(inner_chain)
-        except {pre_catch}BaseExceptionGroup as e:
+        except BaseExceptionGroup as e:
             if outer_chain == "none":
                 raise
             if outer_chain == "from":
@@ -2019,7 +1976,7 @@ def _exceptiongroup_common(
 
     match_lines += [
         r"  + Exception Group Traceback (most recent call last):",
-        rf"  \| {pre_catch}BaseExceptionGroup: Oops \(2 sub-exceptions\)",
+        r"  \| BaseExceptionGroup: Oops \(2 sub-exceptions\)",
         r"    \| ValueError: From f\(\)",
         r"    \| BaseException: From g\(\)",
         r"=* short test summary info =*",
@@ -2028,7 +1985,7 @@ def _exceptiongroup_common(
         match_lines.append(r"FAILED test_excgroup.py::test - IndexError")
     else:
         match_lines.append(
-            rf"FAILED test_excgroup.py::test - {pre_catch}BaseExceptionGroup: Oops \(2.*"
+            r"FAILED test_excgroup.py::test - BaseExceptionGroup: Oops \(2.*"
         )
     result.stdout.re_match_lines(match_lines)
     # Check for traceback filtering of pytest internals.
@@ -2036,31 +1993,9 @@ def _exceptiongroup_common(
     result.stdout.no_fnmatch_line("*, line *, in pytest_runtest_call")
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 11), reason="Native ExceptionGroup not implemented"
-)
-@pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
-@pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
-def test_native_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
-    _exceptiongroup_common(pytester, outer_chain, inner_chain, native=True)
-
-
-@pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
-@pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
-def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
-    # with py>=3.11 does not depend on exceptiongroup, though there is a toxenv for it
-    pytest.importorskip("exceptiongroup")
-    _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
-
-
 def test_exceptiongroup_short_summary_info(pytester: Pytester):
     pytester.makepyfile(
         """
-        import sys
-
-        if sys.version_info < (3, 11):
-            from exceptiongroup import BaseExceptionGroup, ExceptionGroup
-
         def test_base() -> None:
             raise BaseExceptionGroup("NOT IN SUMMARY", [SystemExit("a" * 10)])
 
@@ -2101,7 +2036,6 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
     # run with -vv to not truncate summary info, default width in tests is very low
     result = pytester.runpytest("-vv")
     assert result.ret == 1
-    backport_str = "exceptiongroup." if sys.version_info < (3, 11) else ""
     result.stdout.fnmatch_lines(
         [
             "*= short test summary info =*",
@@ -2119,11 +2053,11 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
             ),
             (
                 "FAILED test_exceptiongroup_short_summary_info.py::test_multiple - "
-                f"{backport_str}ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
+                "ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
             ),
             (
                 "FAILED test_exceptiongroup_short_summary_info.py::test_nested_multiple - "
-                f"{backport_str}ExceptionGroup: bbbbbbbbbb (1 sub-exception)"
+                "ExceptionGroup: bbbbbbbbbb (1 sub-exception)"
             ),
             "*= 5 failed in *",
         ]
@@ -2136,9 +2070,6 @@ def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> No
     """Regression test for #10903."""
     pytester.makepyfile(
         f"""
-        import sys
-        if sys.version_info < (3, 11):
-            from exceptiongroup import ExceptionGroup
         def test():
             __tracebackhide__ = True
             raise {'ExceptionGroup("", [ValueError("bar")])' if group else 'ValueError("bar")'}
@@ -2201,10 +2132,6 @@ def test_tracebackhide_in_exceptiongroup_is_respected(pytester: Pytester) -> Non
     """ExceptionGroup tracebacks respect __tracebackhide__ (#14036)."""
     p = pytester.makepyfile(
         """
-        import sys
-        if sys.version_info < (3, 11):
-            from exceptiongroup import ExceptionGroup
-
         def g1():
             __tracebackhide__ = True
             str.does_not_exist
@@ -2252,10 +2179,7 @@ def test_tracebackhide_in_exceptiongroup_is_respected(pytester: Pytester) -> Non
 
 def add_note(err: BaseException, msg: str) -> None:
     """Adds a note to an exception inplace."""
-    if sys.version_info < (3, 11):
-        err.__notes__ = [*getattr(err, "__notes__", []), msg]  # type: ignore[attr-defined]
-    else:
-        err.add_note(msg)
+    err.add_note(msg)
 
 
 @pytest.mark.parametrize(

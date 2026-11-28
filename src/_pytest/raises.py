@@ -4,7 +4,6 @@ from abc import ABC
 from abc import abstractmethod
 import re
 from re import Pattern
-import sys
 from textwrap import indent
 from typing import Any
 from typing import cast
@@ -29,9 +28,9 @@ if TYPE_CHECKING:
 
     # for some reason Sphinx does not play well with 'from types import TracebackType'
     import types
+    from typing import ParamSpec
     from typing import TypeGuard
 
-    from typing_extensions import ParamSpec
     from typing_extensions import TypeVar
 
     P = ParamSpec("P")
@@ -59,10 +58,6 @@ BaseExcT_1 = TypeVar("BaseExcT_1", bound=BaseException)
 BaseExcT_2 = TypeVar("BaseExcT_2", bound=BaseException)
 ExcT_1 = TypeVar("ExcT_1", bound=Exception)
 ExcT_2 = TypeVar("ExcT_2", bound=Exception)
-
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-    from exceptiongroup import ExceptionGroup
 
 
 # String patterns default to including the unicode flag.

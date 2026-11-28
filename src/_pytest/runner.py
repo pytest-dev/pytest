@@ -37,9 +37,6 @@ from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-
 if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.terminal import TerminalReporter

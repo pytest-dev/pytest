@@ -16,11 +16,6 @@ from _pytest.raises import repr_callable
 import pytest
 
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-    from exceptiongroup import ExceptionGroup
-
-
 def wrap_escape(s: str) -> str:
     return "^" + re.escape(s) + "$"
 
@@ -1253,10 +1248,7 @@ def test_assert_matches() -> None:
 def test_xfail_raisesgroup(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
-        import sys
         import pytest
-        if sys.version_info < (3, 11):
-            from exceptiongroup import ExceptionGroup
         @pytest.mark.xfail(raises=pytest.RaisesGroup(ValueError))
         def test_foo() -> None:
             raise ExceptionGroup("foo", [ValueError()])

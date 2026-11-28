@@ -6,6 +6,7 @@ from collections.abc import Sequence
 import os
 import shutil
 import sys
+from typing import assert_never
 from typing import final
 from typing import Literal
 from typing import TextIO
@@ -19,7 +20,6 @@ from pygments.lexer import Lexer
 from pygments.lexers.diff import DiffLexer
 from pygments.lexers.python import PythonLexer
 
-from ..compat import assert_never
 from .wcwidth import wcswidth
 
 

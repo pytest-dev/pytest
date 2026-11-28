@@ -12,6 +12,7 @@ from errno import ENOTDIR
 import fnmatch
 from functools import partial
 from importlib.machinery import ModuleSpec
+from importlib.machinery import NamespaceLoader
 from importlib.machinery import PathFinder
 import importlib.util
 import itertools
@@ -29,19 +30,14 @@ import sys
 import types
 from types import ModuleType
 from typing import Any
+from typing import assert_never
 from typing import TypeVar
 import uuid
 import warnings
 
-from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
-
-if sys.version_info < (3, 11):
-    from importlib._bootstrap_external import _NamespaceLoader as NamespaceLoader
-else:
-    from importlib.machinery import NamespaceLoader
 
 LOCK_TIMEOUT = 60 * 60 * 24 * 3
 

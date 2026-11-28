@@ -11,6 +11,8 @@ import errno
 import functools
 import importlib.abc
 import importlib.machinery
+from importlib.resources.abc import TraversableResources
+from importlib.resources.readers import FileReader
 import importlib.util
 import io
 import itertools
@@ -23,17 +25,6 @@ import tokenize
 import types
 from typing import IO
 from typing import TYPE_CHECKING
-
-
-if sys.version_info >= (3, 12):
-    from importlib.resources.abc import TraversableResources
-else:
-    from importlib.abc import TraversableResources
-if sys.version_info < (3, 11):
-    from importlib.readers import FileReader
-else:
-    from importlib.resources.readers import FileReader
-
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
