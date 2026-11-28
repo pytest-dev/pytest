@@ -1,0 +1,1 @@
+Documented how to enable UTF-8 mode for Python subprocesses launched by ``pytester.runpython_c()``.
