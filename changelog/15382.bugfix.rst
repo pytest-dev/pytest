@@ -1,0 +1,1 @@
+Fixed :option:`--last-failed` importing and collecting unrelated test files when all previously failed tests are methods inside test classes.
