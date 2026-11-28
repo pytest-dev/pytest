@@ -1,0 +1,1 @@
+Added documentation and hook usage examples for the experimental ``set_log_path()`` method in :ref:`logging` how-to.

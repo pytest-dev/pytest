@@ -239,8 +239,54 @@ option names are:
 * :confval:`log_file_format`
 * :confval:`log_file_date_format`
 
-You can call ``set_log_path()`` to customize the log_file path dynamically. This functionality
-is considered **experimental**. Note that ``set_log_path()`` respects the :confval:`log_file_mode` option.
+You can call ``set_log_path()`` to customize the ``log_file`` path dynamically. This functionality
+is considered **experimental**. Note that ``set_log_path()`` respects the :confval:`log_file_mode` option
+and creates parent directories automatically if they do not exist.
+
+``set_log_path()`` is a method of the ``LoggingPlugin`` instance. You can access it from hooks
+or fixtures by retrieving the plugin via ``config.pluginmanager.get_plugin("logging-plugin")``.
+
+For example, to configure a dynamic, timestamped log file per test session in a :file:`conftest.py`:
+
+.. code-block:: python
+
+    from datetime import datetime
+    from pathlib import Path
+    import pytest
+
+
+    @pytest.hookimpl(trylast=True)
+    def pytest_configure(config: pytest.Config) -> None:
+        logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
+        if logging_plugin is not None:
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            log_dir = Path(config.rootpath) / "logs"
+            logging_plugin.set_log_path(str(log_dir / f"pytest-{timestamp}.log"))
+
+.. note::
+
+    In ``pytest_configure``, mark the hook with ``@pytest.hookimpl(trylast=True)`` so that
+    ``logging-plugin`` is already registered and initialized when your hook runs.
+
+You can also call ``set_log_path()`` in ``pytest_runtest_setup`` to record separate log files for each test item:
+
+.. code-block:: python
+
+    from hashlib import sha256
+    from pathlib import Path
+    import pytest
+
+
+    @pytest.hookimpl(wrapper=True, tryfirst=True)
+    def pytest_runtest_setup(item: pytest.Item):
+        logging_plugin = item.config.pluginmanager.get_plugin("logging-plugin")
+        if logging_plugin is not None:
+            # item.nodeid uniquely identifies each test; hashing avoids
+            # filesystem-unsafe characters (such as "::" or parameters).
+            log_name = sha256(item.nodeid.encode()).hexdigest()
+            log_file = Path(item.config.rootpath) / "logs" / f"{log_name}.log"
+            logging_plugin.set_log_path(str(log_file))
+        return (yield)
 
 .. _log_colors:
 
