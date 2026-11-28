@@ -1,0 +1,7 @@
+pytest now warns with :class:`~pytest.PytestCollectionWarning` when a test class is skipped
+because it is abstract, but looks like it was meant to be collected -- it inherits abstract
+methods it does not implement and does not declare any of its own, yet carries tests.
+
+Such a class is most often a test class whose base class grew a new abstract method, which
+silently stops its tests from running. Classes that declare abstract methods of their own are
+still skipped silently, as are classes that set ``__test__ = False`` in their body.
