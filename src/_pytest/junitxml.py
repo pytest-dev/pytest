@@ -11,6 +11,7 @@ https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jen
 from __future__ import annotations
 
 from collections.abc import Callable
+from collections.abc import Generator
 import functools
 import os
 import platform
@@ -29,15 +30,18 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodeid import coerce_node_id
 from _pytest.nodeid import NodeId
+from _pytest.nodes import Item
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+from _pytest.runner import CallInfo
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 import pytest
 
 
 xml_key = StashKey["LogXML"]()
+xml_attributes_key = StashKey[dict[str, str]]()
 
 _JunitLogging = Literal["no", "log", "system-out", "system-err", "out-err", "all"]
 _JunitDurationReport = Literal["total", "call"]
@@ -304,16 +308,23 @@ class _NodeReporter:
 
 
 def _warn_incompatibility_with_xunit2(
-    request: FixtureRequest, fixture_name: str
+    request: FixtureRequest, fixture_name: str, *, include_workers: bool = False
 ) -> None:
     """Emit a PytestWarning about the given fixture being incompatible with newer xunit revisions."""
     from _pytest.warning_types import PytestWarning
 
-    xml = request.config.stash.get(xml_key, None)
-    if xml is not None and xml.family not in ("xunit1", "legacy"):
+    config = request.config
+    xml = config.stash.get(xml_key, None)
+    if xml is not None:
+        family = xml.family
+    elif include_workers and config.option.xmlpath:
+        family = config.getini("junit_family")
+    else:
+        return
+    if family not in ("xunit1", "legacy"):
         request.node.warn(
             PytestWarning(
-                f"{fixture_name} is incompatible with junit_family '{xml.family}' (use 'legacy' or 'xunit1')"
+                f"{fixture_name} is incompatible with junit_family '{family}' (use 'legacy' or 'xunit1')"
             )
         )
 
@@ -354,7 +365,9 @@ def record_xml_attribute(request: FixtureRequest) -> Callable[[str, object], Non
         PytestExperimentalApiWarning("record_xml_attribute is an experimental feature")
     )
 
-    _warn_incompatibility_with_xunit2(request, "record_xml_attribute")
+    _warn_incompatibility_with_xunit2(
+        request, "record_xml_attribute", include_workers=True
+    )
 
     # Declare noop
     def add_attr_noop(name: str, value: object) -> None:
@@ -362,12 +375,30 @@ def record_xml_attribute(request: FixtureRequest) -> Callable[[str, object], Non
 
     attr_func = add_attr_noop
 
-    xml = request.config.stash.get(xml_key, None)
-    if xml is not None:
-        node_reporter = xml.node_reporter(request.node.id)
-        attr_func = node_reporter.add_attribute
+    # Keep the attributes on the item, they get to LogXML through the test
+    # reports (see pytest_runtest_makereport below). With pytest-xdist the
+    # worker running the test has no LogXML, the controller writes the file.
+    if request.config.option.xmlpath:
+        xml_attributes = request.node.stash.setdefault(xml_attributes_key, {})
+
+        def add_attr(name: str, value: object) -> None:
+            xml_attributes[str(name)] = str(value)
+
+        attr_func = add_attr
 
     return attr_func
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_makereport(
+    item: Item, call: CallInfo[None]
+) -> Generator[None, TestReport, TestReport]:
+    report = yield
+    xml_attributes = item.stash.get(xml_attributes_key, None)
+    if xml_attributes:
+        # A copy with plain str values, so the report can be serialized.
+        report._junitxml_attributes = dict(xml_attributes)  # type: ignore[attr-defined]
+    return report
 
 
 def _check_record_param_type(param: str, v: str) -> None:
@@ -581,6 +612,9 @@ class LogXML:
 
     def _opentestcase(self, report: TestReport | CollectReport) -> _NodeReporter:
         reporter = self.node_reporter(report)
+        # Attributes from record_xml_attribute.
+        for name, value in getattr(report, "_junitxml_attributes", {}).items():
+            reporter.add_attribute(name, value)
         reporter.record_testreport(report)
         return reporter
 

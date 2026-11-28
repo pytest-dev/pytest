@@ -1451,6 +1451,103 @@ def test_record_attribute(pytester: Pytester, run_and_parse: RunAndParse) -> Non
 
 
 @pytest.mark.filterwarnings("default")
+@parametrize_families
+def test_record_attribute_on_test_and_teardown_failure(
+    pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily
+) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def other(record_xml_attribute):
+            record_xml_attribute("bar", 1)
+            yield
+            record_xml_attribute("baz", 2)
+            assert 0
+
+        def test_record(record_xml_attribute, other):
+            record_xml_attribute("foo", "<1")
+            assert 0
+    """
+    )
+    result, dom = run_and_parse(family=xunit_family)
+    result.assert_outcomes(failed=1, errors=1)
+    failure, error = dom.find_by_tag("testcase")
+    if xunit_family == "xunit1":
+        failure.assert_attr(bar="1", foo="<1")
+        error.assert_attr(bar="1", foo="<1", baz="2")
+    # For xunit2, run_and_parse validates the schema, which rejects the
+    # custom attributes, including the one recorded during teardown.
+
+
+@pytest.mark.filterwarnings("default")
+@parametrize_families
+def test_record_attribute_xdist(
+    pytester: Pytester,
+    monkeypatch: MonkeyPatch,
+    run_and_parse: RunAndParse,
+    xunit_family: _JunitFamily,
+) -> None:
+    """Attributes recorded on xdist workers end up in the XML written by the
+    controller (#8654)."""
+    pytest.importorskip("xdist")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Value:
+            def __str__(self):
+                return "value"
+
+        @pytest.fixture
+        def other(record_xml_attribute):
+            record_xml_attribute("bar", 1)
+        def test_record(record_xml_attribute, other):
+            record_xml_attribute("foo", "<1")
+            record_xml_attribute("obj", Value())
+            record_xml_attribute("classname", "custom_classname")
+    """
+    )
+    result, dom = run_and_parse("-n1", family=xunit_family)
+    tnode = dom.get_first_by_tag("testcase")
+    tnode.assert_attr(classname="custom_classname")
+    if xunit_family == "xunit1":
+        tnode.assert_attr(bar="1", foo="<1", obj="value")
+    else:
+        # run_and_parse validates that the custom attributes are dropped.
+        result.stdout.fnmatch_lines(
+            ["*record_xml_attribute is incompatible with junit_family 'xunit2'*"]
+        )
+    result.stdout.fnmatch_lines(["*record_xml_attribute is an experimental feature"])
+
+
+def test_record_property_xdist(
+    pytester: Pytester, monkeypatch: MonkeyPatch, run_and_parse: RunAndParse
+) -> None:
+    pytest.importorskip("xdist")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def other(record_property):
+            record_property("bar", 1)
+        def test_record(record_property, other):
+            record_property("foo", "<1")
+    """
+    )
+    _result, dom = run_and_parse("-n1")
+    tnode = dom.get_first_by_tag("testcase")
+    psnode = tnode.get_first_by_tag("properties")
+    pnodes = psnode.find_by_tag("property")
+    pnodes[0].assert_attr(name="bar", value="1")
+    pnodes[1].assert_attr(name="foo", value="<1")
+
+
+@pytest.mark.filterwarnings("default")
 @pytest.mark.parametrize("fixture_name", ["record_xml_attribute", "record_property"])
 def test_record_fixtures_xunit2(
     pytester: Pytester, fixture_name: str, run_and_parse: RunAndParse
