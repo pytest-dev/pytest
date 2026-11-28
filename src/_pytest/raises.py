@@ -358,13 +358,21 @@ def unescape(s: str) -> str:
     return re.sub(r"\\([{}()+-.*?^$\[\]\s\\|])", r"\1", s)
 
 
+_ACTIVE_BLOCK_VAR_NAME = "pytest.raises active block"
+
+
 class _ActiveBlock:
-    """A ``with`` block of a raises object that has been entered and not exited."""
+    """A ``with`` block of a raises object.
+
+    ``excinfo`` is None once the block has exited. Copied contexts (e.g. a task
+    created inside the block) can keep the block object alive after that, so it
+    must not keep the ExceptionInfo.
+    """
 
     __slots__ = ("excinfo", "outer", "token")
 
     def __init__(self, excinfo: ExceptionInfo[Any], outer: _ActiveBlock | None) -> None:
-        self.excinfo = excinfo
+        self.excinfo: ExceptionInfo[Any] | None = excinfo
         # The enclosing block of the same object in the same context, if any.
         self.outer = outer
         self.token: Token[_ActiveBlock | None] | None = None
@@ -394,21 +402,28 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
     def _push_excinfo(self, excinfo: ExceptionInfo[Any]) -> None:
         var = self._active_block
         if var is None:
-            var = self._active_block = ContextVar(
-                f"pytest-raises-{id(self):x}", default=None
-            )
+            var = self._active_block = ContextVar(_ACTIVE_BLOCK_VAR_NAME, default=None)
         block = _ActiveBlock(excinfo, var.get())
         block.token = var.set(block)
 
+    def _open_block(self) -> _ActiveBlock | None:
+        block = self._active_block.get() if self._active_block is not None else None
+        # Skip blocks that were exited from another context.
+        while block is not None and block.excinfo is None:
+            block = block.outer
+        return block
+
     def _pop_excinfo(self) -> ExceptionInfo[Any]:
         var = self._active_block
-        block = var.get() if var is not None else None
-        if var is None or block is None:
+        block = self._open_block()
+        if var is None or block is None or block.excinfo is None:
             raise AssertionError(
                 "Internal error - __exit__ called without a matching __enter__ "
                 "in the same context"
             )
         assert block.token is not None
+        excinfo = block.excinfo
+        block.excinfo = None
         try:
             # Removes the variable from the context again after the outermost
             # block, so contexts do not collect one entry per raises object.
@@ -416,8 +431,8 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
         except ValueError:
             # Entered in another (parent) context, e.g. a copied context.
             var.set(block.outer)
-        self._last_excinfo = block.excinfo
-        return block.excinfo
+        self._last_excinfo = excinfo
+        return excinfo
 
     def __getstate__(self) -> dict[str, Any]:
         # ContextVar can be neither copied nor pickled, and active blocks
@@ -431,8 +446,8 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
     def excinfo(self) -> ExceptionInfo[Any]:
         """Deprecated, use the object returned by ``__enter__`` instead."""
         warnings.warn(RAISES_EXCINFO_ATTRIBUTE.format(), stacklevel=2)
-        block = self._active_block.get() if self._active_block is not None else None
-        if block is not None:
+        block = self._open_block()
+        if block is not None and block.excinfo is not None:
             return block.excinfo
         if self._last_excinfo is None:
             raise AttributeError(

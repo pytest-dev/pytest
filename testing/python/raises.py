@@ -661,7 +661,7 @@ def test_raises_copy_and_pickle_after_use() -> None:
     assert not [
         var
         for var in contextvars.copy_context()
-        if var.name.startswith("pytest-raises-")
+        if var.name == "pytest.raises active block"
     ]
 
 
@@ -679,6 +679,12 @@ def test_raises_exit_in_other_context() -> None:
         cm.__exit__, ValueError, exc, exc.__traceback__
     )
     assert excinfo.value is exc
+    # This context still sees the exited block; it holds nothing and is skipped.
+    with pytest.warns(pytest.PytestRemovedIn10Warning):
+        assert cm.excinfo is excinfo
+    with cm as again:
+        int("x")
+    assert again.type is ValueError
 
     # Entered in a context this one cannot see.
     cm = pytest.raises(ValueError)
@@ -744,3 +750,33 @@ class TestAsyncWith:
 
         asyncio.run(main())
         assert results == {"first": "first", "second": "second"}
+
+
+def test_raises_block_kept_by_child_task_holds_no_excinfo() -> None:
+    import asyncio
+    import gc
+    import weakref
+
+    class Local:
+        pass
+
+    async def main() -> None:
+        cm = pytest.raises(ValueError)
+        refs = []
+
+        def block() -> asyncio.Task[None]:
+            local = Local()
+            refs.append(weakref.ref(local))
+            with cm:
+                # The task's context is a copy taken inside the block.
+                task = asyncio.create_task(asyncio.sleep(0.05))
+                raise ValueError
+            return task
+
+        task = block()
+        cm._clear_last_excinfo()
+        gc.collect()
+        assert refs[0]() is None
+        await task
+
+    asyncio.run(main())
