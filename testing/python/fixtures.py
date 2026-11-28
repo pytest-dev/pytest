@@ -6421,3 +6421,35 @@ def test_classmethod_above_fixture_warning_inherited(pytester: Pytester) -> None
     )
     result.stdout.fnmatch_lines(["*fixture 'fixt' not found*"])
     result.assert_outcomes(errors=1)
+
+
+def test_base_exception_group_teardown_runs_remaining_finalizers(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import asyncio
+        import pytest
+
+        events = []
+
+        @pytest.fixture
+        def owner():
+            events.append("owner_setup")
+            yield "owner"
+            events.append("owner_teardown")
+
+        @pytest.fixture
+        def failing(owner):
+            yield
+            raise BaseExceptionGroup("teardown", [asyncio.CancelledError()])
+
+        def test_first(failing):
+            pass
+
+        def test_second(owner):
+            assert events == ["owner_setup", "owner_teardown", "owner_setup"]
+        """
+    )
+    result = pytester.runpytest_inprocess()
+    result.assert_outcomes(passed=2, errors=1)
