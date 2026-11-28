@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import asyncio
 from functools import partial
 import inspect
 import os
@@ -23,6 +24,7 @@ import pytest
 
 
 if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
 
 
@@ -140,6 +142,66 @@ class TestSetupState:
         assert isinstance(mod, KeyError)
         assert isinstance(func.exceptions[0], TypeError)
         assert isinstance(func.exceptions[1], ValueError)
+
+    def test_teardown_base_exception_group(self, pytester: Pytester) -> None:
+        """Ensure BaseExceptionGroup during teardown does not abort remaining finalizers (#15329)."""
+        orders: list[str] = []
+
+        def fin_beg() -> None:
+            orders.append("beg")
+            raise BaseExceptionGroup("teardown", [asyncio.CancelledError("cancel")])
+
+        def fin_ok() -> None:
+            orders.append("ok")
+
+        item = pytester.getitem("def test_func(): pass")
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.addfinalizer(fin_ok, item)
+        ss.addfinalizer(fin_beg, item)
+
+        with pytest.raises(BaseExceptionGroup) as exc_info:
+            ss.teardown_exact(None)
+
+        assert orders == ["beg", "ok"]
+        assert exc_info.value.message == "teardown"
+
+    def test_teardown_base_exception_group_cleans_fixture_cache(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #15329: BaseExceptionGroup during teardown does not leak cached fixtures."""
+        pytester.makepyfile(
+            """
+            import asyncio
+            import pytest
+
+            allocations = 0
+
+            @pytest.fixture
+            def owner(request):
+                global allocations
+                allocations += 1
+                token = allocations
+                yield token
+
+            @pytest.fixture
+            def resource(owner, request):
+                yield owner
+                if request.node.name == "test_first":
+                    raise BaseExceptionGroup(
+                        "cleanup",
+                        [asyncio.CancelledError("cancel marker"), RuntimeError("ordinary marker")],
+                    )
+
+            def test_first(resource):
+                assert resource == 1
+
+            def test_next(resource):
+                assert resource == 2
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, errors=1)
 
     def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
         """Regression test for #12204 (the "BTW" case)."""
