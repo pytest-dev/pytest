@@ -142,7 +142,7 @@ class _NodeReporter:
         self.nodes.append(node)
 
     def add_property(self, name: str, value: object) -> None:
-        self.properties.append((str(name), bin_xml_escape(value)))
+        self.properties.append((bin_xml_escape(name), bin_xml_escape(value)))
 
     def add_attribute(self, name: str, value: object) -> None:
         self.attrs[str(name)] = bin_xml_escape(value)
@@ -749,7 +749,7 @@ class LogXML:
     def add_global_property(self, name: str, value: object) -> None:
         __tracebackhide__ = True
         _check_record_param_type("name", name)
-        self.global_properties.append((name, bin_xml_escape(value)))
+        self.global_properties.append((bin_xml_escape(name), bin_xml_escape(value)))
 
     def _get_global_properties_node(self) -> ET.Element | None:
         """Return a Junit node containing custom properties, if any."""
