@@ -2532,7 +2532,12 @@ def _showfixtures_main(config: Config, session: Session) -> None:
 
     fm = session._fixturemanager
     available = []
+    seen: set[tuple[str, str]] = set()
     for fixturedef in fm._get_all_fixture_defs():
+        loc = getlocation(fixturedef.func, invocation_dir)
+        if (fixturedef.argname, loc) in seen:
+            continue
+        seen.add((fixturedef.argname, loc))
         available.append(
             (
                 len(fixturedef.baseid),
@@ -2542,7 +2547,11 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 fixturedef,
             )
         )
-    available.sort()
+    # Sort by the display columns only. The tuple also carries the
+    # FixtureDef itself, which is not orderable: when the display
+    # columns tie (e.g. the same fixture function registered under
+    # two nodes), sorting the bare tuples raises TypeError (#15378).
+    available.sort(key=lambda item: item[:4])
 
     currentmodule = None
     for baseid, module, prettypath, argname, fixturedef in available:

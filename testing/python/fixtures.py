@@ -4197,6 +4197,41 @@ class TestShowFixtures:
             ]
         )
 
+    def test_show_fixtures_same_fixture_registered_twice(
+        self, pytester: Pytester
+    ) -> None:
+        """--fixtures must not crash when the same fixture function is
+        registered under two nodes, and must list it only once (#15378)."""
+        pytester.syspathinsert()
+        pytester.makefile(
+            ".py",
+            shared="""
+                import pytest
+
+                @pytest.fixture
+                def foo():
+                    \"\"\"Shared fixture.\"\"\"
+                    return 42
+            """,
+        )
+        for dirname in ("a", "b"):
+            subdir = pytester.path / dirname
+            subdir.mkdir()
+            (subdir / "conftest.py").write_text(
+                "from shared import foo\n", encoding="utf-8"
+            )
+            (subdir / f"test_{dirname}.py").write_text(
+                "def test_it(foo):\n    assert foo == 42\n", encoding="utf-8"
+            )
+        result = pytester.runpytest("--fixtures")
+        assert result.ret == 0
+        foo_lines = [
+            line
+            for line in result.stdout.lines
+            if line.strip().startswith("foo -- shared.py:")
+        ]
+        assert len(foo_lines) == 1
+
 
 class TestContextManagerFixtureFuncs:
     def test_simple(self, pytester: Pytester) -> None:
