@@ -1,0 +1,1 @@
+Exception instances passed as ``@pytest.mark.parametrize`` values no longer retain attached tracebacks, chained exceptions, or test frame locals after teardown.

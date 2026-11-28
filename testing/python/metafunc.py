@@ -2532,3 +2532,133 @@ class TestHiddenParam:
             "test_func[x]",
             "test_func[y]",
         ]
+
+
+class TestParametrizedExceptionTracebackLeak:
+    """#15483"""
+
+    def test_parametrized_exception_releases_frame_after_raises(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import gc
+            import weakref
+            import pytest
+
+            class Marker:
+                pass
+
+            SHARED_ERROR = ValueError("boom")
+            marker_ref = None
+
+            @pytest.mark.parametrize("err", [SHARED_ERROR])
+            def test_first(err):
+                global marker_ref
+                big = Marker()
+                marker_ref = weakref.ref(big)
+                with pytest.raises(ValueError):
+                    raise err
+
+            def test_second():
+                gc.collect()
+                assert marker_ref is not None
+                assert marker_ref() is None
+                assert SHARED_ERROR.__traceback__ is None
+                assert SHARED_ERROR.__cause__ is None
+                assert SHARED_ERROR.__context__ is None
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_unhandled_parametrized_exception_formats_and_releases_frame(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import gc
+            import weakref
+            import pytest
+
+            class Marker:
+                pass
+
+            SHARED_ERROR = RuntimeError("unhandled boom")
+            marker_ref = None
+
+            @pytest.mark.parametrize("err", [SHARED_ERROR])
+            def test_fail_chained(err):
+                global marker_ref
+                local_obj = Marker()
+                marker_ref = weakref.ref(local_obj)
+                try:
+                    raise ValueError("cause")
+                except ValueError as inner:
+                    raise err from inner
+
+            def test_after_failure():
+                # Clear sys.last_* after the next test call begins and check release on the third test.
+                pass
+
+            def test_frame_released():
+                gc.collect()
+                assert marker_ref is not None
+                assert marker_ref() is None
+                assert SHARED_ERROR.__traceback__ is None
+                assert SHARED_ERROR.__cause__ is None
+            """
+        )
+        result = pytester.runpytest_subprocess()
+        assert result.ret == pytest.ExitCode.TESTS_FAILED
+        result.assert_outcomes(passed=2, failed=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*ValueError: cause*",
+                "*direct cause of the following exception*",
+                "*RuntimeError: unhandled boom*",
+            ]
+        )
+
+    def test_preserves_preexisting_cause_context_and_group_exceptions(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import gc
+            import sys
+            import weakref
+            import pytest
+
+            if sys.version_info < (3, 11):
+                from exceptiongroup import ExceptionGroup
+
+            class Marker:
+                pass
+
+            PRE_CAUSE = ValueError("original cause")
+            SUB_ERR = RuntimeError("grouped child")
+            GROUP_ERR = ExceptionGroup("group", [SUB_ERR])
+            GROUP_ERR.__cause__ = PRE_CAUSE
+            marker_ref = None
+
+            @pytest.mark.parametrize("err", [GROUP_ERR])
+            def test_raise_prechained(err):
+                global marker_ref
+                local_obj = Marker()
+                marker_ref = weakref.ref(local_obj)
+                with pytest.raises(ExceptionGroup):
+                    raise err
+
+            def test_restored_state():
+                gc.collect()
+                assert marker_ref is not None
+                assert marker_ref() is None
+                assert GROUP_ERR.__cause__ is PRE_CAUSE
+                assert GROUP_ERR.__traceback__ is None
+                assert PRE_CAUSE.__traceback__ is None
+                assert SUB_ERR.__traceback__ is None
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=2)

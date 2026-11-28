@@ -22,6 +22,7 @@ import itertools
 import os
 from pathlib import Path
 import re
+import sys
 import textwrap
 import types
 from typing import Any
@@ -32,6 +33,10 @@ from typing import Literal
 from typing import NoReturn
 from typing import TYPE_CHECKING
 import warnings
+
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 import _pytest
 from _pytest import fixtures
@@ -88,6 +93,9 @@ from _pytest.warning_types import PytestReturnNotNoneWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Self
+
+    from _pytest.reports import TestReport
+    from _pytest.runner import CallInfo
 
 LongStrIdStrategy = Literal["short", "sha256", "legacy", "disallow"]
 _LONG_STR_STRATEGIES: frozenset[LongStrIdStrategy] = frozenset(
@@ -181,6 +189,85 @@ def async_fail(nodeid: str) -> None:
         "  - pytest-twisted"
     )
     fail(msg, pytrace=False)
+
+
+_param_exc_state_key = StashKey[
+    list[
+        tuple[
+            BaseException,
+            types.TracebackType | None,
+            BaseException | None,
+            BaseException | None,
+            bool,
+        ]
+    ]
+]()
+
+
+def _iter_param_exceptions(value: object, seen: set[int]) -> Iterator[BaseException]:
+    if not isinstance(value, BaseException):
+        return
+    stack = [value]
+    while stack:
+        exc = stack.pop()
+        exc_id = id(exc)
+        if exc_id in seen:
+            continue
+        seen.add(exc_id)
+        yield exc
+        if exc.__cause__ is not None:
+            stack.append(exc.__cause__)
+        if exc.__context__ is not None:
+            stack.append(exc.__context__)
+        if isinstance(exc, BaseExceptionGroup):
+            stack.extend(exc.exceptions)
+
+
+@hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_setup(item: nodes.Item) -> Generator[None]:
+    callspec = getattr(item, "callspec", None)
+    if callspec is not None:
+        seen: set[int] = set()
+        saved: list[
+            tuple[
+                BaseException,
+                types.TracebackType | None,
+                BaseException | None,
+                BaseException | None,
+                bool,
+            ]
+        ] = []
+        for value in callspec.params.values():
+            for exc in _iter_param_exceptions(value, seen):
+                saved.append(
+                    (
+                        exc,
+                        exc.__traceback__,
+                        exc.__context__,
+                        exc.__cause__,
+                        exc.__suppress_context__,
+                    )
+                )
+        if saved:
+            item.stash[_param_exc_state_key] = saved
+    return (yield)
+
+
+@hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_makereport(
+    item: nodes.Item, call: CallInfo[None]
+) -> Generator[None, TestReport, TestReport]:
+    try:
+        return (yield)
+    finally:
+        if call.when == "teardown":
+            saved = item.stash.get(_param_exc_state_key, None)
+            if saved is not None:
+                for exc, tb, context, cause, suppress_context in saved:
+                    exc.__traceback__ = tb
+                    exc.__context__ = context
+                    exc.__cause__ = cause
+                    exc.__suppress_context__ = suppress_context
 
 
 @hookimpl(trylast=True)
