@@ -212,7 +212,13 @@ def _update_current_test_var(
         value = f"{item.nodeid} ({when})"
         # don't allow null bytes on environment variables (see #2644, #2957)
         value = value.replace("\x00", "(null)")
-        os.environ[var_name] = value
+        try:
+            os.environ[var_name] = value
+        except UnicodeEncodeError:
+            encoding = sys.getfilesystemencoding()
+            os.environ[var_name] = value.encode(encoding, "backslashreplace").decode(
+                encoding
+            )
     else:
         os.environ.pop(var_name)
 
