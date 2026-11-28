@@ -1,0 +1,1 @@
+:fixture:`record_xml_attribute` now works with :pypi:`pytest-xdist`: attributes recorded in the workers are written to the JUnit XML report. When a test fails and its teardown also errors, the attributes now show up on both ``testcase`` elements, like :fixture:`record_property` already does for properties.
