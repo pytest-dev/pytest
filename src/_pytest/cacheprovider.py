@@ -291,6 +291,11 @@ class LFPluginCollWrapper:
                     )
                     self._collected_at_least_one_failure = True
 
+                # Keep all children of a previously failed collector so that
+                # pytest_collectreport can update lastfailed with their IDs.
+                if collector.id in lastfailed:
+                    return res
+
                 session = collector.session
                 result[:] = [
                     x

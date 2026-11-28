@@ -634,6 +634,36 @@ class TestLastFailed:
         lastfailed = rlf(fail_import=0, fail_run=1)
         assert list(lastfailed) == ["test_maybe.py::test_hello"]
 
+    def test_lastfailed_recovered_collection_failure_after_test_failure(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        pytester.makepyfile(
+            # Collect this cached test failure first to activate early filtering.
+            test_a="def test_fail(): assert False",
+            test_b="""
+                import os
+
+                if os.environ["FAILIMPORT"] == "1":
+                    raise ImportError("collection failed")
+
+                def test_one(): pass
+                def test_two(): pass
+            """,
+        )
+        monkeypatch.setenv("FAILIMPORT", "1")
+        result = pytester.runpytest("--continue-on-collection-errors")
+        result.assert_outcomes(failed=1, errors=1)
+        assert self.get_cached_last_failed(pytester) == [
+            "test_a.py::test_fail",
+            "test_b.py",
+        ]
+
+        monkeypatch.setenv("FAILIMPORT", "0")
+        result = pytester.runpytest("--lf")
+        # A repaired collection failure should select all tests in that file.
+        result.assert_outcomes(failed=1, passed=2)
+        assert self.get_cached_last_failed(pytester) == ["test_a.py::test_fail"]
+
     def test_lastfailed_failure_subset(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
