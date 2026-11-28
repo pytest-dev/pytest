@@ -1333,6 +1333,9 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestUnraisableExceptionWarning
    :show-inheritance:
 
+.. autoclass:: pytest.PytestUnusedXunitFixtureWarning
+   :show-inheritance:
+
 .. autoclass:: pytest.PytestUnhandledThreadExceptionWarning
    :show-inheritance:
 
