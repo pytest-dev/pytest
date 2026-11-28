@@ -131,6 +131,182 @@ def test_capturing_bytes_in_utf8_encoding(pytester: Pytester, method: str) -> No
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsys"),
+        ("fd", "capfd"),
+        ("tee-sys", "capteesys"),
+    ],
+)
+def test_capture_uses_replaced_stream_codec(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str, capture_fixture: str
+) -> None:
+    """Bytes written using .encoding round-trip through readouterr()."""
+    pytester.makepyfile(
+        f"""\
+        import sys
+
+        def test_encoding({capture_fixture}):
+            text = "b\\u00f6y\\n"
+            assert sys.stdout.encoding == sys.__stdout__.encoding
+            assert sys.stdout.errors == sys.__stdout__.errors
+            assert sys.stderr.encoding == sys.__stderr__.encoding
+            assert sys.stderr.errors == sys.__stderr__.errors
+            for stream in (sys.stdout, sys.stderr):
+                stream.buffer.write(text.encode(stream.encoding))
+                stream.flush()
+            out, err = {capture_fixture}.readouterr()
+            assert out == text
+            assert err == text
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize("method", ["sys", "fd", "tee-sys"])
+def test_capture_uses_replaced_stream_errors(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str
+) -> None:
+    """Text the replaced stream cannot encode fails the same way."""
+    pytester.makepyfile(
+        """\
+        import pytest
+        import sys
+
+        def test_encoding():
+            with pytest.raises(UnicodeEncodeError):
+                sys.stdout.write("\\u65e5\\u672c\\u8a9e")
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsysbinary"),
+        ("fd", "capfdbinary"),
+    ],
+)
+def test_capture_binary_uses_replaced_stream_codec(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str, capture_fixture: str
+) -> None:
+    """Text writes use the replaced stream's encoding and error handler during binary capture."""
+    pytester.makepyfile(
+        f"""\
+        def test_encoding({capture_fixture}):
+            print("b\\u00f6y")
+            out, err = {capture_fixture}.readouterr()
+            assert out == "b\\u00f6y\\n".encode("latin-1")
+            assert err == b""
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsys"),
+        ("fd", "capfd"),
+    ],
+)
+def test_capture_flushes_undecodable_bytes(
+    pytester: Pytester, monkeypatch: MonkeyPatch, method: str, capture_fixture: str
+) -> None:
+    """Raw bytes that decode with replacement do not break capture teardown."""
+    pytester.makepyfile(
+        f"""\
+        import sys
+
+        def test_encoding({capture_fixture}):
+            sys.stdout.buffer.write(b"\\xff")
+            sys.stdout.flush()
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "ascii")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize(
+    ("method", "capture_fixture"),
+    [
+        ("sys", "capsys"),
+        ("fd", "capfd"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("encoding", "errors", "data", "expected"),
+    [
+        ("utf-8", "surrogateescape", b"\xff", "\udcff"),
+        ("utf-8", "surrogatepass", b"\xed\xa0\x80", "\ud800"),
+        ("utf-8", "surrogatepass", b"\xff", "\ufffd"),
+        ("utf-8", "surrogatepass", b"\xed\xa0\x80\xff", "\ud800\ufffd"),
+        ("utf-8-sig", "surrogatepass", b"\xef\xbb\xbf\xed\xa0\x80\xff", "\ud800\ufffd"),
+        (
+            "utf-8-sig",
+            "surrogatepass",
+            b"\xef\xbb\xbf\xff\xef\xbb\xbf\xed\xa0\x80",
+            "\ufffd\ufeff\ud800",
+        ),
+        (
+            "iso2022_jp",
+            "surrogatepass",
+            b"\x1b$BK \x4c\x5c\x1b(BX",
+            "\ufffd\u76eeX",
+        ),
+    ],
+)
+def test_capture_decodes_surrogate_bytes(
+    pytester: Pytester,
+    monkeypatch: MonkeyPatch,
+    method: str,
+    capture_fixture: str,
+    encoding: str,
+    errors: str,
+    data: bytes,
+    expected: str,
+) -> None:
+    """Surrogate handlers round-trip; undecodable bytes still use replacement."""
+    pytester.makepyfile(
+        f"""\
+        import sys
+
+        def test_encoding({capture_fixture}):
+            sys.stdout.buffer.write({data!r})
+            sys.stdout.flush()
+            out, err = {capture_fixture}.readouterr()
+            assert out == {expected!r}
+            assert err == ""
+        """
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", f"{encoding}:{errors}")
+    result = pytester.runpytest_subprocess(f"--capture={method}")
+    result.assert_outcomes(passed=1)
+
+
+def test_capture_wrappers_use_configured_codec() -> None:
+    with capture.CaptureIO() as stream:
+        assert (stream.encoding, stream.errors) == ("UTF-8", "strict")
+    with capture.CaptureIO(encoding="latin-1", errors="strict") as stream:
+        assert (stream.encoding, stream.errors) == ("latin-1", "strict")
+        stream.write("b\u00f6y")
+        stream.buffer.write(b" na\xefve")
+        assert stream.getvalue() == "b\u00f6y na\xefve"
+    with capture.EncodedFile(
+        io.BytesIO(), encoding="latin-1", errors="strict"
+    ) as stream:
+        assert (stream.encoding, stream.errors) == ("latin-1", "strict")
+
+
 def test_collect_capturing(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """
@@ -1093,6 +1269,427 @@ class TestFDCapture:
             stmp = stmp_file.read()
             assert stmp == data2
 
+    def test_writeorg_preserves_stream_encoder(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTHONIOENCODING", "utf-8-sig")
+        script = pytester.makepyfile(
+            """
+            import os
+            import pathlib
+            import sys
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            fd = os.open(str(out), os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            sys.stdout.write("before|")
+            sys.stdout.flush()
+
+            cap = FDCapture(1)
+            cap.start()
+            sys.stdout.write("captured|")
+            sys.stdout.flush()
+            cap.writeorg(cap.snap())
+            cap.done()
+
+            sys.stdout.write("after|")
+            sys.stdout.flush()
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == (
+            b"\xef\xbb\xbfbefore|captured|after|"
+        )
+
+    def test_writeorg_nested_capture_no_repeated_bom(self, pytester: Pytester) -> None:
+        script = pytester.makepyfile(
+            """
+            import os
+            import pathlib
+            import sys
+            from io import BytesIO, TextIOWrapper
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            fd = os.open(str(out), os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            # Simulate an enclosing capture: no fileno, so replay uses the fd.
+            sys.stdout = TextIOWrapper(BytesIO(), encoding="utf-8-sig")
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("foo|")
+            cap.writeorg("bar|")
+            cap.done()
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == (b"\xef\xbb\xbffoo|bar|")
+
+    def test_writeorg_replaces_unencodable_text(self, pytester: Pytester) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+            from io import BytesIO, TextIOWrapper
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            fd = os.open(str(out), os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            sys.stdout = TextIOWrapper(BytesIO(), encoding="ascii", errors="strict")
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("\u00e9")
+            cap.done()
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == b"\\xe9"
+
+    def test_writeorg_does_not_repeat_bom_after_existing_output(
+        self, pytester: Pytester
+    ) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+            from io import BytesIO, TextIOWrapper
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            out.write_bytes(b"before|")
+            fd = os.open(str(out), os.O_WRONLY)
+            os.lseek(fd, 0, os.SEEK_END)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            sys.stdout = TextIOWrapper(BytesIO(), encoding="utf-8-sig")
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("after|")
+            cap.done()
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == b"before|after|"
+
+    def test_writeorg_while_suspended(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTHONIOENCODING", "utf-8-sig")
+        script = pytester.makepyfile(
+            """
+            import os
+            import pathlib
+            import sys
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            fd = os.open(str(out), os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            sys.stdout.write("before|")
+            sys.stdout.flush()
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.suspend()
+            cap.writeorg("suspended|")
+            cap.resume()
+            cap.done()
+
+            sys.stdout.write("after|")
+            sys.stdout.flush()
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == (
+            b"\xef\xbb\xbfbefore|suspended|after|"
+        )
+
+    def test_writeorg_preserves_literal_bom(self, pytester: Pytester) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+            from io import BytesIO, TextIOWrapper
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            fd = os.open(str(out), os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            sys.stdout = TextIOWrapper(BytesIO(), encoding="utf-8-sig")
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("first|")
+            cap.writeorg("\ufeffliteral|")
+            cap.done()
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == (
+            b"\xef\xbb\xbffirst|\xef\xbb\xbfliteral|"
+        )
+
+    def test_writeorg_keeps_bom_at_start_of_nonempty_file(
+        self, pytester: Pytester
+    ) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+            from io import BytesIO, TextIOWrapper
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            out.write_bytes(b"original-tail")
+            fd = os.open(str(out), os.O_WRONLY)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            sys.stdout = TextIOWrapper(BytesIO(), encoding="utf-8-sig")
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("new|")
+            cap.done()
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == (b"\xef\xbb\xbfnew|l-tail")
+
+    def test_writeorg_starts_empty_pipe_with_bom(self, pytester: Pytester) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+            from io import BytesIO, TextIOWrapper
+
+            from _pytest.capture import FDCapture
+
+            read_fd, write_fd = os.pipe()
+            os.dup2(write_fd, 1)
+            os.close(write_fd)
+
+            sys.stdout = TextIOWrapper(BytesIO(), encoding="utf-8-sig")
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("first|")
+            cap.done()
+
+            os.close(1)
+            data = os.read(read_fd, 4096)
+            (pathlib.Path(__file__).with_name("out.bin")).write_bytes(data)
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == b"\xef\xbb\xbffirst|"
+
+    def test_writeorg_appends_to_pipe_without_second_bom(
+        self, pytester: Pytester
+    ) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+            from io import TextIOWrapper
+
+            from _pytest.capture import FDCapture
+            from _pytest.capture import SysCapture
+
+            read_fd, write_fd = os.pipe()
+            os.dup2(write_fd, 1)
+            os.close(write_fd)
+
+            pipe_stdout = TextIOWrapper(os.fdopen(1, "wb"), encoding="utf-8-sig")
+            sys.stdout = pipe_stdout
+            pipe_stdout.write("before|")
+            pipe_stdout.flush()
+
+            outer = SysCapture(1)
+            outer.start()
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("after|")
+            cap.done()
+            outer.done()
+
+            pipe_stdout.close()
+            data = os.read(read_fd, 4096)
+            (pathlib.Path(__file__).with_name("out.bin")).write_bytes(data)
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == (
+            b"\xef\xbb\xbfbefore|after|"
+        )
+
+    def test_writeorg_does_not_use_independent_handle_to_same_file(
+        self, pytester: Pytester
+    ) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            out.write_bytes(b"0123456789")
+
+            target = os.open(str(out), os.O_WRONLY)
+            os.dup2(target, 1)
+            os.close(target)
+
+            other = open(str(out), "r+", encoding="utf-8")
+            other.seek(5)
+            sys.stdout = other
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("X")
+            cap.done()
+
+            other.close()
+            os.close(1)
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        assert (pytester.path / "out.bin").read_bytes() == b"X123456789"
+
+    def test_writeorg_preserves_encoder_state_of_duplicated_fd(
+        self, pytester: Pytester
+    ) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+            from io import TextIOWrapper
+
+            from _pytest.capture import FDCapture
+
+            read_fd, write_fd = os.pipe()
+            os.dup2(write_fd, 1)
+            os.close(write_fd)
+
+            sys.stdout = TextIOWrapper(
+                os.fdopen(os.dup(1), "wb"), encoding="iso2022_jp"
+            )
+            sys.stdout.write("\u65e5")
+            sys.stdout.flush()
+
+            cap = FDCapture(1)
+            cap.start()
+            sys.stdout.write("\u672c")
+            sys.stdout.flush()
+            cap.writeorg(cap.snap())
+            cap.done()
+
+            sys.stdout.write("\u8a9e")
+            sys.stdout.flush()
+
+            sys.stdout.close()
+            os.close(1)
+            data = os.read(read_fd, 4096)
+            (pathlib.Path(__file__).with_name("out.bin")).write_bytes(data)
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        data = (pytester.path / "out.bin").read_bytes()
+        assert data.decode("iso2022_jp") == "\u65e5\u672c\u8a9e"
+
+    def test_nested_capture_does_not_repeat_outer_bom(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTHONIOENCODING", "utf-8-sig")
+        pytester.makepyfile(
+            """
+            def test_nested(pytester, capfd):
+                pytester.makeconftest('print("should not be seen")')
+                print("before nested")
+                pytester.runpytest()
+                out, _ = capfd.readouterr()
+                assert "\\ufeff" not in out, repr(out)
+            """
+        )
+        result = pytester.runpytest_subprocess("-p", "pytester")
+        result.assert_outcomes(passed=1)
+
+    def test_writeorg_nested_capture_finalizes_stateful_encoder(
+        self, pytester: Pytester
+    ) -> None:
+        script = pytester.makepyfile(
+            r"""
+            import os
+            import pathlib
+            import sys
+            from io import BytesIO, TextIOWrapper
+
+            from _pytest.capture import FDCapture
+
+            out = pathlib.Path(__file__).with_name("out.bin")
+            fd = os.open(str(out), os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+            os.dup2(fd, 1)
+            os.close(fd)
+
+            sys.stdout = TextIOWrapper(BytesIO(), encoding="iso2022_jp")
+
+            cap = FDCapture(1)
+            cap.start()
+            cap.writeorg("\u65e5\u672c")
+            cap.writeorg("\u8a9e")
+            cap.done()
+
+            os.write(1, b"X")
+            """
+        )
+        result = pytester.runpython(script)
+        assert result.ret == 0, result.stderr.str()
+        captured = (pytester.path / "out.bin").read_bytes()
+        assert captured.decode("iso2022_jp") == "\u65e5\u672c\u8a9eX"
+
     def test_simple_resume_suspend(self) -> None:
         with saved_fd(1):
             cap = capture.FDCapture(1)
@@ -1186,11 +1783,15 @@ class TestStdCapture:
         assert capture_result.out == "hello"
         assert capture_result.err == "world"
 
-    def test_capturing_readouterr_unicode(self) -> None:
+    def test_capturing_readouterr_unicode(self, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.setattr(
+            sys, "stdout", io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+        )
+        text = "hx\u0105\u0107"
         with self.getcapture() as cap:
-            print("hxąć")
+            print(text)
             out, _err = cap.readouterr()
-        assert out == "hxąć\n"
+        assert out == text + "\n"
 
     def test_reset_twice_error(self) -> None:
         with self.getcapture() as cap:
@@ -1497,12 +2098,14 @@ def test_capturing_and_logging_fundamentals(pytester: Pytester, method: str) -> 
 
 
 def test_error_attribute_issue555(pytester: Pytester) -> None:
+    stdout_errors = sys.stdout.errors
+    stderr_errors = sys.stderr.errors
     pytester.makepyfile(
-        """
+        f"""
         import sys
         def test_capattr():
-            assert sys.stdout.errors == "replace"
-            assert sys.stderr.errors == "replace"
+            assert sys.stdout.errors == {stdout_errors!r}
+            assert sys.stderr.errors == {stderr_errors!r}
     """
     )
     reprec = pytester.inline_run()
