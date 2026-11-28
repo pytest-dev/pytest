@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from contextvars import ContextVar
+from contextvars import Token
 import re
 from re import Pattern
 import sys
@@ -357,13 +358,16 @@ def unescape(s: str) -> str:
     return re.sub(r"\\([{}()+-.*?^$\[\]\s\\|])", r"\1", s)
 
 
-# (context manager, ExceptionInfo) pairs of the ``with`` blocks currently
-# executing in this context. Keeping the in-flight ExceptionInfo here instead
-# of on the context manager lets the context manager forget it once the block
-# exits, and keeps nested and concurrent use of one object apart.
-_active_excinfos: ContextVar[
-    tuple[tuple[AbstractRaises[Any], ExceptionInfo[Any]], ...]
-] = ContextVar("_pytest_raises_active_excinfos", default=())
+class _ActiveBlock:
+    """A ``with`` block of a raises object that has been entered and not exited."""
+
+    __slots__ = ("excinfo", "outer", "token")
+
+    def __init__(self, excinfo: ExceptionInfo[Any], outer: _ActiveBlock | None) -> None:
+        self.excinfo = excinfo
+        # The enclosing block of the same object in the same context, if any.
+        self.outer = outer
+        self.token: Token[_ActiveBlock | None] | None = None
 
 
 # These classes conceptually differ from ExceptionInfo in that ExceptionInfo is tied, and
@@ -380,33 +384,56 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
     # teardown when this object is a parametrize value (#13410).
     _last_excinfo: ExceptionInfo[Any] | None = None
 
+    # The innermost active block of this object in the current context. Each
+    # raises object gets its own variable (created on first ``__enter__``), so
+    # nested, recursive and concurrent (threads, asyncio tasks) use of one
+    # object each fill the ExceptionInfo their own ``__enter__`` returned, and
+    # the object itself holds no reference to an in-flight ExceptionInfo.
+    _active_block: ContextVar[_ActiveBlock | None] | None = None
+
     def _push_excinfo(self, excinfo: ExceptionInfo[Any]) -> None:
-        _active_excinfos.set((*_active_excinfos.get(), (self, excinfo)))
+        var = self._active_block
+        if var is None:
+            var = self._active_block = ContextVar(
+                f"pytest-raises-{id(self):x}", default=None
+            )
+        block = _ActiveBlock(excinfo, var.get())
+        block.token = var.set(block)
 
     def _pop_excinfo(self) -> ExceptionInfo[Any]:
-        # Find this object's innermost active block in the current context, so
-        # nested, recursive and interleaved (threads, asyncio tasks) use of the
-        # same context manager each fill the ExceptionInfo their own
-        # ``__enter__`` returned.
-        active = _active_excinfos.get()
-        for i in range(len(active) - 1, -1, -1):
-            owner, excinfo = active[i]
-            if owner is self:
-                _active_excinfos.set(active[:i] + active[i + 1 :])
-                self._last_excinfo = excinfo
-                return excinfo
-        raise AssertionError(
-            "Internal error - __exit__ called without a matching __enter__"
-        )
+        var = self._active_block
+        block = var.get() if var is not None else None
+        if var is None or block is None:
+            raise AssertionError(
+                "Internal error - __exit__ called without a matching __enter__ "
+                "in the same context"
+            )
+        assert block.token is not None
+        try:
+            # Removes the variable from the context again after the outermost
+            # block, so contexts do not collect one entry per raises object.
+            var.reset(block.token)
+        except ValueError:
+            # Entered in another (parent) context, e.g. a copied context.
+            var.set(block.outer)
+        self._last_excinfo = block.excinfo
+        return block.excinfo
+
+    def __getstate__(self) -> dict[str, Any]:
+        # ContextVar can be neither copied nor pickled, and active blocks
+        # belong to this object only.
+        state = self.__dict__.copy()
+        state.pop("_active_block", None)
+        state.pop("_last_excinfo", None)
+        return state
 
     @property
     def excinfo(self) -> ExceptionInfo[Any]:
         """Deprecated, use the object returned by ``__enter__`` instead."""
         warnings.warn(RAISES_EXCINFO_ATTRIBUTE.format(), stacklevel=2)
-        active = _active_excinfos.get()
-        for i in range(len(active) - 1, -1, -1):
-            if active[i][0] is self:
-                return active[i][1]
+        block = self._active_block.get() if self._active_block is not None else None
+        if block is not None:
+            return block.excinfo
         if self._last_excinfo is None:
             raise AttributeError(
                 f"{type(self).__name__!r} object has no attribute 'excinfo'"

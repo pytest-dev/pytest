@@ -639,3 +639,23 @@ def test_parametrized_raises_released_after_teardown(
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=2)
     result.stdout.fnmatch_lines(["*ALIVE: 0/2"])
+
+
+def test_raises_copy_and_pickle_after_use() -> None:
+    import contextvars
+    import copy
+    import pickle
+
+    cm = pytest.raises(ValueError, match="x")
+    with cm:
+        int("x")
+    for clone in (copy.copy(cm), copy.deepcopy(cm), pickle.loads(pickle.dumps(cm))):
+        with clone as excinfo:
+            int("x")
+        assert excinfo.type is ValueError
+    # Exiting the outermost block removes the object's variable from the context.
+    assert not [
+        var
+        for var in contextvars.copy_context()
+        if var.name.startswith("pytest-raises-")
+    ]
