@@ -1,0 +1,1 @@
+The error raised for an unknown mark when :confval:`strict_markers` (or :confval:`strict`) is enabled now uses the same message as the :class:`~pytest.PytestUnknownMarkWarning` warning, including the link to the documentation on how to register custom marks.
