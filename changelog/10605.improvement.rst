@@ -1,0 +1,1 @@
+Reduced memory consumption when executing large test suites by avoiding retention of empty passed setup and teardown reports in :attr:`TerminalReporter.stats <pytest.TerminalReporter.stats>` when they contain no captured output and duration reporting is not requested.

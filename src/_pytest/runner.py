@@ -148,6 +148,7 @@ def runtestprotocol(
         if hasrequest:
             item._request = False  # type: ignore[attr-defined]
             item.funcargs = None  # type: ignore[attr-defined]
+        item._report_sections.clear()
     return reports
 
 
