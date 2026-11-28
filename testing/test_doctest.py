@@ -1834,6 +1834,27 @@ def test_doctest_mock_objects_unwrap_stops_early(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
+def test_doctest_wrapped_cycle_is_not_a_routine(pytester: Pytester) -> None:
+    """A ``__wrapped__`` cycle makes ``inspect.unwrap`` raise ValueError;
+    collection must treat the object as a non-routine, like the stdlib."""
+    pytester.makepyfile(
+        """
+        '''
+        >>> 1 + 1
+        2
+        '''
+
+        class Loop:
+            pass
+
+        loop = Loop()
+        loop.__wrapped__ = loop
+        """
+    )
+    result = pytester.runpytest("--doctest-modules")
+    result.assert_outcomes(passed=1)
+
+
 def test_is_setup_py_not_named_setup_py(tmp_path: Path) -> None:
     not_setup_py = tmp_path.joinpath("not_setup.py")
     not_setup_py.write_text(
