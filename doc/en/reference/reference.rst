@@ -721,8 +721,13 @@ Initialization hooks called for plugins and ``conftest.py`` files.
 .. hook:: pytest_plugin_registered
 .. autofunction:: pytest_plugin_registered
 
+.. _`collection-hooks`:
+
 Collection hooks
 ~~~~~~~~~~~~~~~~
+
+Hooks that report collection events, such as :hook:`pytest_collectstart` and
+:hook:`pytest_itemcollected`, are listed under :ref:`reporting-hooks`.
 
 ``pytest`` calls the following hooks for collecting files and directories:
 
@@ -800,8 +805,16 @@ into interactive debugging when a test failure occurs.
 .. hook:: pytest_pyfunc_call
 .. autofunction:: pytest_pyfunc_call
 
+.. _`reporting-hooks`:
+
 Reporting hooks
 ~~~~~~~~~~~~~~~
+
+Reporting hooks let plugins observe events and reports from pytest, including
+events during collection and test execution. A plugin can use these notifications
+to produce output, but implementing a reporting hook does not require displaying
+anything to the user. Hooks that perform or modify collection are listed under
+:ref:`collection-hooks`.
 
 Session related reporting hooks:
 
