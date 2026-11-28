@@ -412,7 +412,7 @@ def test_rootdir_option_arg(
     result.stdout.fnmatch_lines(
         [
             f"*rootdir: {pytester.path}/root",
-            "root/test_rootdir_option_arg.py *",
+            "test_rootdir_option_arg.py *",
             "*1 passed*",
         ]
     )

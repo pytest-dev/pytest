@@ -488,8 +488,13 @@ class TerminalReporter:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
         return char in self.reportchars
 
-    def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
-        fspath = self.config.rootpath / NodeId.parse(nodeid).path
+    def write_fspath_result(
+        self, nodeid: str, res: str, location_path: str = "", **markup: bool
+    ) -> None:
+        parsed_nodeid = NodeId.parse(nodeid)
+        fspath = _outside_root_fspath(self.config, parsed_nodeid, location_path)
+        if fspath is None:
+            fspath = self.config.rootpath / parsed_nodeid.path
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
@@ -633,7 +638,7 @@ class TerminalReporter:
             self.write_ensure_prefix(line, "")
             self.flush()
         elif self.showfspath:
-            self.write_fspath_result(nodeid, "")
+            self.write_fspath_result(nodeid, "", fspath)
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
@@ -1074,7 +1079,7 @@ class TerminalReporter:
         self, nodeid: NodeId, fspath: str, lineno: int | None, domain: str
     ) -> str:
         def mkrel() -> str:
-            line = str(self.config.cwd_relative_nodeid(nodeid))
+            line = str(_cwd_relative_report_nodeid(self.config, nodeid, fspath))
             if domain and line.endswith(domain):
                 line = line[: -len(domain)]
                 values = domain.split("[")
@@ -1539,10 +1544,44 @@ class TerminalReporter:
         return parts, main_color
 
 
+def _outside_root_fspath(
+    config: Config, nodeid: NodeId, location_path: str
+) -> Path | None:
+    """Return the actual file path when it lies above the configured rootpath.
+
+    Such files have initial-path-relative node IDs, so the node ID alone cannot
+    be used to locate them relative to the configured rootpath.
+    """
+    path = Path(location_path)
+    if path.parts and path.parts[0] == "..":
+        actual_path = absolutepath(config.rootpath / path)
+        node_path = config.rootpath / nodeid.path
+        try:
+            if node_path.samefile(actual_path):
+                # A symlink can point outside rootpath while its logical node ID
+                # still names the file correctly within rootpath.
+                return None
+        except OSError:
+            pass
+        return actual_path
+    return None
+
+
+def _cwd_relative_report_nodeid(
+    config: Config, nodeid: NodeId, location_path: str
+) -> NodeId:
+    actual_path = _outside_root_fspath(config, nodeid, location_path)
+    if actual_path is None:
+        return config.cwd_relative_nodeid(nodeid)
+    relative_path = bestrelpath(config.invocation_params.dir, actual_path)
+    return dataclasses.replace(nodeid, path=nodes.norm_sep(relative_path))
+
+
 def _get_node_id_with_markup(
     tw: TerminalWriter, config: Config, rep: BaseReport
 ) -> str:
-    nodeid = config.cwd_relative_nodeid(rep.id)
+    location_path = rep.location[0] if rep.location is not None else ""
+    nodeid = _cwd_relative_report_nodeid(config, rep.id, location_path)
     if nodeid.rest is not None:
         return f"{nodeid.path}::{tw.markup(nodeid.rest, bold=True)}"
     return nodeid.path
