@@ -1,0 +1,5 @@
+Mocks passed as keyword arguments by :func:`unittest.mock.patch.multiple` are no longer requested as fixtures.
+With ``@patch.multiple(Foo, bar=DEFAULT)``, pytest no longer sets up a fixture
+named ``bar`` just to supply that argument. If nothing else requests ``bar``,
+``@pytest.mark.parametrize("bar", [1])`` now fails during collection with
+``function uses no argument 'bar'``, as it already does for positional mocks.
