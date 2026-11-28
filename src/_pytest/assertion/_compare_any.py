@@ -79,6 +79,9 @@ def _compare_eq_any(
             )
 
         if isiterable(left) and isiterable(right):
+            if isinstance(left, range) and isinstance(right, range):
+                # Sequence output already covers ranges; skip the noisy repr diff.
+                return
             yield from _compare_eq_iterable(
                 left, right, highlighter, verbose, truncation_budget
             )

@@ -52,7 +52,11 @@ def _compare_eq_sequence(
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
     len_left = len(left)
     len_right = len(right)
-    for i in range(min(len_left, len_right)):
+    common_length = min(len_left, len_right)
+    if isinstance(left, range) and isinstance(right, range):
+        # First two items fix start and step, so the prefix check is O(1).
+        common_length = min(common_length, 2)
+    for i in range(common_length):
         if left[i] != right[i]:
             if comparing_bytes:
                 # when comparing bytes, we want to see their ascii representation
