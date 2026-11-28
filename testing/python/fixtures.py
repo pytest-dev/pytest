@@ -4584,6 +4584,60 @@ def test_fixture_post_finalizer_called_once(pytester: Pytester) -> None:
     result.assert_outcomes(passed=2)
 
 
+@pytest.mark.parametrize("outcome", ["skip", "error"])
+@pytest.mark.parametrize("scope", ["function", "module"])
+def test_fixture_setup_hook_failure_finalizes(
+    pytester: Pytester, outcome: str, scope: str
+) -> None:
+    """A hook failure before caching must not leave finalizers for the next parameter."""
+    expected_events = ["cleanup", "broken", "first", "second"]
+    if scope == "function":
+        expected_events *= 2
+    pytester.makeconftest(
+        f"""
+        import pytest
+
+        events = []
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_fixture_setup(fixturedef, request):
+            if fixturedef.argname == "value" and request.param == "broken":
+                request.addfinalizer(lambda: events.append("cleanup"))
+                if {outcome!r} == "skip":
+                    pytest.skip("unavailable")
+                raise RuntimeError("unavailable")
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            if fixturedef.argname == "value":
+                events.append(request.param)
+
+        def pytest_sessionfinish():
+            assert events == {expected_events!r}
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.fixture(scope={scope!r}, params=["broken", "first", "second"])
+        def value(request):
+            return request.param
+
+        def test_value(value):
+            assert value in ("first", "second")
+
+        def test_shared_value(value):
+            assert value in ("first", "second")
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(
+        passed=4,
+        skipped=2 if outcome == "skip" else 0,
+        errors=2 if outcome == "error" else 0,
+    )
+
+
 def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
     """Test that exceptions in pytest_fixture_post_finalizer hook are caught.
 
