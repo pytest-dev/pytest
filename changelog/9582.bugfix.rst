@@ -1,0 +1,1 @@
+Assertion rewriting now skips ``assert`` statements directly inside class bodies (while continuing to rewrite assertions inside methods), fixing ``TypeError`` errors in :class:`enum.Enum` subclasses and avoiding polluting class namespaces with temporary ``@py_assert*`` attributes.
